@@ -1,15 +1,27 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
-import { useDB, DEFAULT_MISSIONS, TIER_RANK, formatKRW, type Mission, type Tier } from "@/lib/store";
-import { CheckCircle2, Sparkles, Lock, Crown, Upload, Gamepad2, X, Zap } from "lucide-react";
+import JackpotBanner from "@/components/JackpotBanner";
+import { useDB, DEFAULT_MISSIONS, TIER_RANK, formatKRW, JACKPOT_CHANCE, jackpotPayoutPct, randomFakeNick, type Mission, type Tier } from "@/lib/store";
+import { CheckCircle2, Sparkles, Lock, Crown, Upload, Gamepad2, X, Zap, Flame, Trophy, Heart } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 const tierFilters: { key: Tier; label: string; color: string }[] = [
-  { key: "NORMAL", label: "일반",  color: "text-secondary" },
-  { key: "VIP",    label: "VIP",   color: "text-primary" },
-  { key: "GOD",    label: "GOD",   color: "text-accent" },
+  { key: "NORMAL", label: "일반",   color: "text-secondary" },
+  { key: "VIP",    label: "VIP",    color: "text-primary" },
+  { key: "GOD",    label: "GOD",    color: "text-accent" },
   { key: "EMPIRE", label: "EMPIRE", color: "text-gold" },
+];
+
+// Tier reward multiplier (reverse difficulty: higher tier = more boost)
+const TIER_BOOST: Record<Tier, number> = { NORMAL: 1, VIP: 1.5, GOD: 2.5, EMPIRE: 4 };
+
+// Smart failure motivation messages
+const FAIL_MSGS = [
+  "거의 다 왔어요! 다음 판은 분명 잡힙니다 🔥",
+  "방금 잭팟이 0.7% 더 가까워졌어요 ⚡",
+  "Empire 유저 평균 12회만에 잭팟 🎯",
+  "프로들도 처음엔 다 실패해요. 계속 가요!",
 ];
 
 export default function Missions() {
@@ -19,17 +31,55 @@ export default function Missions() {
   const [completing, setCompleting] = useState<string | null>(null);
   const [ugcOpen, setUgcOpen] = useState<Mission | null>(null);
   const [gameOpen, setGameOpen] = useState<Mission | null>(null);
-  const [catTab, setCatTab] = useState<"전체" | "게임">("전체");
+  const [catTab, setCatTab] = useState<"전체" | "게임">("게임");
+  const [jackpotWin, setJackpotWin] = useState<{ amount: number; type: "main" | "mini" } | null>(null);
 
   if (!db.user) { nav("/auth"); return null; }
-  const userTierRank = TIER_RANK[db.user.tier];
+  const userTier = db.user.tier;
+  const userTierRank = TIER_RANK[userTier];
 
   const missions = [...DEFAULT_MISSIONS, ...db.customMissions];
   const list = missions.filter(m => m.tier === tierTab && (catTab === "전체" || m.category === catTab));
 
+  // Every game play contributes to jackpot + rolls for win
+  function rollJackpot(): { won: boolean; amount: number; type: "main" | "mini" } | null {
+    const ch = JACKPOT_CHANCE[userTier];
+    const r = Math.random();
+    if (r < ch.main) {
+      const pct = jackpotPayoutPct();
+      const amount = Math.floor(db.jackpot.amount * pct);
+      setDb(d => ({
+        ...d,
+        jackpot: {
+          ...d.jackpot,
+          amount: Math.max(20_000_000, d.jackpot.amount - amount),
+          lastMainExplode: Date.now(),
+          recentWins: [{ nickname: d.user!.nickname, amount, tier: d.user!.tier, when: Date.now(), type: "main" as const }, ...d.jackpot.recentWins].slice(0, 12),
+        },
+      }));
+      return { won: true, amount, type: "main" };
+    }
+    if (r < ch.main + ch.mini) {
+      const amount = Math.floor(db.jackpot.mini * (0.3 + Math.random() * 0.5));
+      setDb(d => ({
+        ...d,
+        jackpot: {
+          ...d.jackpot,
+          mini: Math.max(200_000, d.jackpot.mini - amount),
+          lastMiniExplode: Date.now(),
+          recentWins: [{ nickname: d.user!.nickname, amount, tier: d.user!.tier, when: Date.now(), type: "mini" as const }, ...d.jackpot.recentWins].slice(0, 12),
+        },
+      }));
+      return { won: true, amount, type: "mini" };
+    }
+    // Add small contribution
+    setDb(d => ({ ...d, jackpot: { ...d.jackpot, amount: d.jackpot.amount + 1500, mini: d.jackpot.mini + 300 } }));
+    return null;
+  }
+
   function complete(m: Mission) {
-    if (db.completedMissions.includes(m.id)) { toast({ title: "이미 완료한 미션입니다" }); return; }
-    if (TIER_RANK[m.tier] > userTierRank) { toast({ title: "잠긴 미션", description: "패키지를 업그레이드하면 잠금이 해제됩니다." }); return; }
+    if (db.completedMissions.includes(m.id) && !m.game) { toast({ title: "이미 완료한 미션입니다" }); return; }
+    if (TIER_RANK[m.tier] > userTierRank) { toast({ title: "잠긴 미션", description: "패키지 업그레이드 필요" }); return; }
     if (m.game) { setGameOpen(m); return; }
     if (m.ugc) { setUgcOpen(m); return; }
     setCompleting(m.id);
@@ -41,29 +91,98 @@ export default function Missions() {
       }));
       setCompleting(null);
       toast({ title: `🎉 +${formatKRW(m.reward)} 적립`, description: `${m.title} 완료!` });
-    }, 1500);
+    }, 1200);
+  }
+
+  function awardGame(m: Mission, won: boolean, bonus: number) {
+    // Jackpot roll happens on EVERY play (win or lose)
+    const jp = rollJackpot();
+
+    // Tier-boosted reward when winning
+    const boost = m.boostable ? TIER_BOOST[userTier] : 1;
+    const baseReward = won ? Math.floor((m.reward + bonus) * boost) : 0;
+    const jpReward = jp?.amount ?? 0;
+    const totalReward = baseReward + jpReward;
+
+    setDb(d => {
+      const newMomentum = won ? d.momentum + 1 : 0;
+      // Recovery mission triggers after 2 losses in a row → won=false twice
+      const triggerRecovery = !won && d.momentum === 0;
+      return {
+        ...d,
+        momentum: newMomentum,
+        recoveryMission: triggerRecovery ? { id: m.id, reward: Math.floor(m.reward * 1.8), expiresAt: Date.now() + 1000 * 60 * 30 } : d.recoveryMission,
+        user: d.user ? {
+          ...d.user,
+          balance: d.user.balance + totalReward,
+          todayEarnings: d.user.todayEarnings + totalReward,
+          xp: d.user.xp + Math.floor(totalReward / 100),
+        } : null,
+      };
+    });
+
+    if (jp) {
+      setJackpotWin(jp);
+    } else if (won) {
+      const momentumBadge = db.momentum >= 2 ? ` · 🔥 ${db.momentum + 1}연승!` : "";
+      toast({ title: `🎉 +${formatKRW(baseReward)}${momentumBadge}`, description: m.title });
+    } else {
+      toast({ title: "아쉬워요!", description: FAIL_MSGS[Math.floor(Math.random() * FAIL_MSGS.length)] });
+    }
+    setGameOpen(null);
   }
 
   return (
     <Layout>
       <div className="container pt-6 pb-10 animate-liquid-in">
-        <div className="mb-5">
+        <div className="mb-4">
           <h1 className="font-display font-black text-2xl flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-primary" /> <span className="text-gradient-primary">사이버 미션</span>
           </h1>
-          <p className="text-xs text-muted-foreground mt-1">VIP 등급에 따라 차등 공개되는 실시간 보상 미션</p>
+          <p className="text-xs text-muted-foreground mt-1">모든 게임 플레이가 잭팟에 자동 적립됩니다</p>
         </div>
 
+        {/* MEGA JACKPOT BANNER */}
+        <div className="mb-5">
+          <JackpotBanner />
+        </div>
+
+        {/* Momentum + Recovery */}
+        {(db.momentum > 0 || db.recoveryMission) && (
+          <div className="grid grid-cols-2 gap-2 mb-4">
+            {db.momentum > 0 && (
+              <div className="glass rounded-2xl p-3 flex items-center gap-2 neon-border">
+                <Flame className="w-5 h-5 text-primary animate-pulse" />
+                <div>
+                  <div className="text-[9px] tracking-widest text-primary font-black">MOMENTUM</div>
+                  <div className="text-sm font-display font-black">{db.momentum}연승 · 잭팟 확률 +{db.momentum * 5}%</div>
+                </div>
+              </div>
+            )}
+            {db.recoveryMission && (
+              <div className="glass rounded-2xl p-3 flex items-center gap-2 neon-border">
+                <Heart className="w-5 h-5 text-accent animate-pulse" />
+                <div>
+                  <div className="text-[9px] tracking-widest text-accent font-black">RECOVERY</div>
+                  <div className="text-sm font-display font-black">+{formatKRW(db.recoveryMission.reward)} 보상</div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Tier tabs */}
-        <div className="grid grid-cols-4 gap-2 mb-5">
+        <div className="grid grid-cols-4 gap-2 mb-4">
           {tierFilters.map(t => {
             const active = tierTab === t.key;
             const locked = TIER_RANK[t.key] > userTierRank;
+            const ch = JACKPOT_CHANCE[t.key];
             return (
               <button key={t.key} onClick={() => setTierTab(t.key)}
-                className={`relative py-3 rounded-2xl text-xs font-display font-black transition ${active ? "bg-gradient-primary text-primary-foreground glow-primary" : "glass text-muted-foreground"}`}>
+                className={`relative py-3 rounded-2xl text-xs font-display font-black transition press ${active ? "bg-gradient-primary text-primary-foreground glow-primary" : "glass text-muted-foreground"}`}>
                 {locked && <Lock className="absolute top-1.5 right-1.5 w-3 h-3 text-gold" />}
                 {t.label}
+                <div className="text-[8px] opacity-70 mt-0.5 normal-case">잭팟 {((ch.main + ch.mini) * 100).toFixed(0)}%</div>
               </button>
             );
           })}
@@ -73,11 +192,12 @@ export default function Missions() {
         <div className="flex gap-2 mb-5">
           {(["전체", "게임"] as const).map(c => (
             <button key={c} onClick={() => setCatTab(c)}
-              className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition ${catTab === c ? "bg-gradient-cyber text-primary-foreground" : "glass text-muted-foreground"}`}>
+              className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition press ${catTab === c ? "bg-gradient-cyber text-primary-foreground" : "glass text-muted-foreground"}`}>
               {c === "게임" && <Gamepad2 className="w-3.5 h-3.5" />} {c}
             </button>
           ))}
         </div>
+
         {TIER_RANK[tierTab] > userTierRank && (
           <div className="glass-strong rounded-2xl p-5 neon-border mb-5 relative overflow-hidden">
             <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-gold/40 blur-3xl" />
@@ -87,17 +207,17 @@ export default function Missions() {
               </div>
               <div className="flex-1">
                 <div className="text-[10px] tracking-widest text-gold font-black">PREMIUM LOCKED</div>
-                <div className="font-display font-bold text-sm mt-0.5">{tierFilters.find(t => t.key === tierTab)?.label} 등급 미션이 잠겨있어요</div>
-                <div className="text-[10px] text-muted-foreground mt-0.5">VIP 패키지 가입 시 즉시 해제</div>
+                <div className="font-display font-bold text-sm mt-0.5">{tierFilters.find(t => t.key === tierTab)?.label} 잭팟 확률 {((JACKPOT_CHANCE[tierTab].main + JACKPOT_CHANCE[tierTab].mini) * 100).toFixed(0)}%</div>
+                <div className="text-[10px] text-muted-foreground mt-0.5">패키지 업그레이드 시 즉시 해제</div>
               </div>
-              <button onClick={() => nav("/packages")} className="px-3 py-2 rounded-xl bg-gradient-gold text-gold-foreground text-xs font-bold glow-gold">업그레이드</button>
+              <button onClick={() => nav("/packages")} className="press px-3 py-2 rounded-xl bg-gradient-gold text-gold-foreground text-xs font-bold glow-gold">업그레이드</button>
             </div>
           </div>
         )}
 
         <div className="grid sm:grid-cols-2 gap-3">
           {list.map(m => {
-            const done = db.completedMissions.includes(m.id);
+            const done = !m.game && db.completedMissions.includes(m.id);
             const inProgress = completing === m.id;
             const locked = TIER_RANK[m.tier] > userTierRank;
             return (
@@ -108,13 +228,15 @@ export default function Missions() {
                   <div className="absolute inset-0 bg-background/70 backdrop-blur-sm flex flex-col items-center justify-center gap-2 z-10">
                     <Lock className="w-7 h-7 text-gold" />
                     <div className="text-xs font-bold text-gold">{m.tier} 전용</div>
-                    <button onClick={() => nav("/packages")} className="px-3 py-1.5 rounded-lg bg-gradient-gold text-gold-foreground text-[10px] font-bold">업그레이드</button>
+                    <button onClick={() => nav("/packages")} className="press px-3 py-1.5 rounded-lg bg-gradient-gold text-gold-foreground text-[10px] font-bold">업그레이드</button>
                   </div>
                 )}
                 <div className="relative">
                   <div className="flex items-center justify-between text-[10px] mb-2">
                     <span className="px-2 py-0.5 rounded-full bg-primary/15 text-primary font-bold">{m.category}</span>
                     <div className="flex items-center gap-1">
+                      {m.fomoLimit && <span className="px-2 py-0.5 rounded-full bg-destructive/20 text-destructive font-bold animate-pulse">🔥 잔여 {Math.max(3, m.fomoLimit - Math.floor(Math.random() * (m.fomoLimit - 5)))}</span>}
+                      {m.boostable && userTier !== "NORMAL" && <span className="px-2 py-0.5 rounded-full bg-gold/20 text-gold font-bold">×{TIER_BOOST[userTier]}</span>}
                       {m.ugc && <span className="px-2 py-0.5 rounded-full bg-accent/20 text-accent font-bold">UGC</span>}
                       <span className={`px-2 py-0.5 rounded-full font-bold ${m.difficulty === "VIP" ? "bg-gold/20 text-gold" : m.difficulty === "HARD" ? "bg-accent/20 text-accent" : "bg-muted text-muted-foreground"}`}>{m.difficulty}</span>
                     </div>
@@ -123,11 +245,11 @@ export default function Missions() {
                   <p className="text-[11px] text-muted-foreground mt-1">{m.desc}</p>
                   <div className="flex items-center justify-between mt-4">
                     <div>
-                      <div className="font-display font-black text-xl text-gradient-gold">+{formatKRW(m.reward)}</div>
+                      <div className="font-display font-black text-xl text-gradient-gold">+{formatKRW(m.boostable ? Math.floor(m.reward * TIER_BOOST[userTier]) : m.reward)}</div>
                       <div className="text-[10px] text-muted-foreground">소요 {m.duration}</div>
                     </div>
                     <button disabled={done || inProgress || locked} onClick={() => complete(m)}
-                      className="px-4 py-2 rounded-xl bg-gradient-primary text-primary-foreground text-xs font-bold glow-primary disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 transition">
+                      className="press sheen px-4 py-2 rounded-xl bg-gradient-primary text-primary-foreground text-xs font-bold glow-primary disabled:opacity-50 disabled:cursor-not-allowed transition">
                       {inProgress ? "진행 중..." : done ? "완료됨" : m.game ? "🎮 플레이" : m.ugc ? "제출하기" : "시작하기"}
                     </button>
                   </div>
@@ -152,28 +274,49 @@ export default function Missions() {
       )}
 
       {gameOpen && (
-        <GameModal mission={gameOpen} onClose={() => setGameOpen(null)} onWin={(bonus) => {
-          const reward = gameOpen.reward + bonus;
-          setDb(d => ({
-            ...d,
-            completedMissions: [...d.completedMissions, gameOpen.id],
-            user: d.user ? { ...d.user, balance: d.user.balance + reward, todayEarnings: d.user.todayEarnings + reward, xp: d.user.xp + Math.floor(reward / 100) } : null,
-          }));
-          toast({ title: `🎉 +${formatKRW(reward)} 적립`, description: `${gameOpen.title} 클리어!` });
-          setGameOpen(null);
-        }} />
+        <GameModal mission={gameOpen} onClose={() => setGameOpen(null)} onResult={(won, bonus) => awardGame(gameOpen, won, bonus)} />
       )}
+
+      {jackpotWin && <JackpotWinOverlay win={jackpotWin} onClose={() => setJackpotWin(null)} />}
     </Layout>
   );
 }
 
+/* ─────────── Jackpot win celebration overlay ─────────── */
+function JackpotWinOverlay({ win, onClose }: { win: { amount: number; type: "main" | "mini" }; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-[60] bg-background/90 backdrop-blur-md flex items-center justify-center p-4 animate-fade-up">
+      <div className="absolute inset-0 pointer-events-none">
+        {Array.from({ length: 40 }).map((_, i) => {
+          const angle = (i / 40) * Math.PI * 2;
+          const tx = Math.cos(angle) * (200 + Math.random() * 200);
+          const ty = Math.sin(angle) * (200 + Math.random() * 200);
+          return <span key={i} className="absolute left-1/2 top-1/2 text-3xl animate-money-burst"
+            style={{ ["--tx" as any]: `${tx}px`, ["--ty" as any]: `${ty}px`, ["--r" as any]: `${i * 18}deg`, animationDelay: `${i * 30}ms` }}>
+            {["💰","💎","👑","🎰","💸","✨"][i % 6]}
+          </span>;
+        })}
+      </div>
+      <div className="relative w-full max-w-sm glass-strong rounded-3xl p-8 neon-border text-center animate-pulse-glow">
+        <div className="text-[10px] tracking-[0.3em] text-gold font-black flex items-center justify-center gap-1">
+          {win.type === "main" ? <><Trophy className="w-3 h-3" /> MEGA JACKPOT</> : <><Sparkles className="w-3 h-3" /> MINI JACKPOT</>}
+        </div>
+        <div className="mt-3 font-display font-black text-4xl text-gradient-gold tabular-nums">+{formatKRW(win.amount)}</div>
+        <div className="mt-2 text-xs text-muted-foreground">잔고에 즉시 적립되었습니다</div>
+        <button onClick={onClose} className="press sheen mt-6 w-full py-3 rounded-xl bg-gradient-gold text-gold-foreground font-display font-black glow-gold">받기</button>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────── UGC ─────────── */
 function UGCModal({ mission, onClose, onSubmit }: { mission: Mission; onClose: () => void; onSubmit: () => void }) {
   const [file, setFile] = useState<string>();
   return (
     <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-md flex items-end sm:items-center justify-center p-4">
       <div className="w-full max-w-md glass-strong rounded-3xl p-6 neon-border relative animate-fade-up">
         <h2 className="font-display font-black text-lg">UGC 제출 — {mission.title}</h2>
-        <p className="text-[11px] text-muted-foreground mt-1">사진 또는 영상을 업로드하면 Gemini Vision이 1차 검토 후 관리자 큐에 등록됩니다.</p>
+        <p className="text-[11px] text-muted-foreground mt-1">사진/영상을 업로드하면 Gemini Vision이 1차 검토합니다.</p>
         <label className="mt-4 block">
           <div className="glass rounded-2xl p-6 border-2 border-dashed border-border hover:border-primary text-center cursor-pointer">
             {file ? <img src={file} className="max-h-40 mx-auto rounded-lg" alt="" /> : (
@@ -189,15 +332,16 @@ function UGCModal({ mission, onClose, onSubmit }: { mission: Mission; onClose: (
           }} />
         </label>
         <div className="grid grid-cols-2 gap-2 mt-4">
-          <button onClick={onClose} className="py-3 rounded-xl glass text-sm font-bold">취소</button>
-          <button onClick={onSubmit} disabled={!file} className="py-3 rounded-xl bg-gradient-primary text-primary-foreground text-sm font-bold glow-primary disabled:opacity-50">제출</button>
+          <button onClick={onClose} className="press py-3 rounded-xl glass text-sm font-bold">취소</button>
+          <button onClick={onSubmit} disabled={!file} className="press sheen py-3 rounded-xl bg-gradient-primary text-primary-foreground text-sm font-bold glow-primary disabled:opacity-50">제출</button>
         </div>
       </div>
     </div>
   );
 }
 
-function GameModal({ mission, onClose, onWin }: { mission: Mission; onClose: () => void; onWin: (bonus: number) => void }) {
+/* ─────────── Game Modal ─────────── */
+function GameModal({ mission, onClose, onResult }: { mission: Mission; onClose: () => void; onResult: (won: boolean, bonus: number) => void }) {
   return (
     <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-md flex items-end sm:items-center justify-center p-4">
       <div className="w-full max-w-md glass-strong rounded-3xl p-6 neon-border relative animate-fade-up">
@@ -205,59 +349,49 @@ function GameModal({ mission, onClose, onWin }: { mission: Mission; onClose: () 
         <h2 className="font-display font-black text-lg flex items-center gap-2"><Gamepad2 className="w-5 h-5 text-primary" /> {mission.title}</h2>
         <p className="text-[11px] text-muted-foreground mt-1">{mission.desc}</p>
         <div className="mt-5">
-          {mission.game === "tap" && <TapGame reward={mission.reward} onWin={onWin} />}
-          {mission.game === "lucky" && <LuckyGame reward={mission.reward} onWin={onWin} />}
-          {mission.game === "memory" && <MemoryGame onWin={() => onWin(0)} />}
-          {mission.game === "reaction" && <ReactionGame reward={mission.reward} onWin={onWin} />}
+          {mission.game === "tap"      && <TapGame reward={mission.reward} onResult={onResult} />}
+          {mission.game === "lucky"    && <LuckyGame reward={mission.reward} onResult={onResult} />}
+          {mission.game === "memory"   && <MemoryGame onResult={onResult} />}
+          {mission.game === "reaction" && <ReactionGame reward={mission.reward} onResult={onResult} />}
+          {mission.game === "scratch"  && <ScratchGame reward={mission.reward} onResult={onResult} />}
+          {mission.game === "dice"     && <DiceGame reward={mission.reward} onResult={onResult} />}
+          {mission.game === "slot"     && <SlotGame reward={mission.reward} onResult={onResult} />}
+          {mission.game === "highlow"  && <HighLowGame reward={mission.reward} onResult={onResult} />}
         </div>
       </div>
     </div>
   );
 }
 
-function ReactionGame({ reward, onWin }: { reward: number; onWin: (bonus: number) => void }) {
+/* ─────────── Games ─────────── */
+function ReactionGame({ reward, onResult }: { reward: number; onResult: (w: boolean, b: number) => void }) {
   const [phase, setPhase] = useState<"idle" | "wait" | "go" | "done" | "fail">("idle");
   const [start, setStart] = useState(0);
   const [ms, setMs] = useState(0);
-  function begin() {
-    setPhase("wait");
-    const delay = 1200 + Math.random() * 2200;
-    setTimeout(() => { setStart(Date.now()); setPhase("go"); }, delay);
-  }
+  function begin() { setPhase("wait"); const d = 1200 + Math.random() * 2200; setTimeout(() => { setStart(Date.now()); setPhase("go"); }, d); }
   function tap() {
-    if (phase === "wait") { setPhase("fail"); return; }
-    if (phase === "go") {
-      const t = Date.now() - start;
-      setMs(t);
-      setPhase("done");
-    }
+    if (phase === "wait") { setPhase("fail"); setTimeout(() => onResult(false, 0), 800); return; }
+    if (phase === "go") { const t = Date.now() - start; setMs(t); setPhase("done"); }
   }
   const bonus = phase === "done" ? Math.max(0, Math.floor((500 - ms) * (reward / 250))) : 0;
   return (
     <div className="text-center">
-      <button onClick={phase === "idle" || phase === "fail" || phase === "done" ? begin : tap}
-        className={`w-full h-44 rounded-2xl font-display font-black text-2xl glow-primary transition
+      <button onClick={phase === "idle" ? begin : tap}
+        className={`press w-full h-44 rounded-2xl font-display font-black text-2xl glow-primary transition
           ${phase === "go" ? "bg-secondary text-secondary-foreground" :
             phase === "wait" ? "bg-destructive/80 text-destructive-foreground" :
             phase === "done" ? "bg-gradient-gold text-gold-foreground" :
             phase === "fail" ? "bg-destructive text-destructive-foreground" :
             "bg-gradient-primary text-primary-foreground"}`}>
-        {phase === "idle" && "시작"}
-        {phase === "wait" && "기다려..."}
-        {phase === "go" && "지금 탭!"}
-        {phase === "done" && `${ms}ms · +${formatKRW(reward + bonus)}`}
-        {phase === "fail" && "너무 빨라요! 다시"}
+        {phase === "idle" && "시작"}{phase === "wait" && "기다려..."}{phase === "go" && "지금 탭!"}
+        {phase === "done" && `${ms}ms · +${formatKRW(reward + bonus)}`}{phase === "fail" && "너무 빨라요!"}
       </button>
-      {phase === "done" && (
-        <button onClick={() => onWin(bonus)} className="mt-4 px-8 py-3 rounded-xl bg-gradient-gold text-gold-foreground font-bold glow-gold">
-          보상 받기
-        </button>
-      )}
+      {phase === "done" && <button onClick={() => onResult(true, bonus)} className="press sheen mt-4 px-8 py-3 rounded-xl bg-gradient-gold text-gold-foreground font-bold glow-gold">보상 받기</button>}
     </div>
   );
 }
 
-function TapGame({ reward, onWin }: { reward: number; onWin: (bonus: number) => void }) {
+function TapGame({ reward, onResult }: { reward: number; onResult: (w: boolean, b: number) => void }) {
   const [count, setCount] = useState(0);
   const [time, setTime] = useState(10);
   const [running, setRunning] = useState(false);
@@ -265,8 +399,9 @@ function TapGame({ reward, onWin }: { reward: number; onWin: (bonus: number) => 
     if (!running) return;
     if (time <= 0) {
       const bonus = Math.min(count * 50, reward * 2);
+      const won = count >= 25;
       setRunning(false);
-      setTimeout(() => onWin(bonus), 400);
+      setTimeout(() => onResult(won, bonus), 400);
       return;
     }
     const t = setTimeout(() => setTime(s => s - 1), 1000);
@@ -275,83 +410,206 @@ function TapGame({ reward, onWin }: { reward: number; onWin: (bonus: number) => 
   return (
     <div className="text-center">
       <div className="font-display font-black text-5xl text-gradient-primary tabular-nums">{count}</div>
-      <div className="text-xs text-muted-foreground mt-1">남은 시간 {time}초 · 보너스 +{formatKRW(Math.min(count * 50, reward * 2))}</div>
-      <button
-        onClick={() => { if (!running) { setRunning(true); setCount(0); setTime(10); } setCount(c => c + 1); }}
-        className="mt-5 w-40 h-40 rounded-full bg-gradient-cyber text-primary-foreground font-display font-black text-xl glow-primary mx-auto block hover:scale-95 active:scale-90 transition">
+      <div className="text-xs text-muted-foreground mt-1">남은 {time}초 · 25탭 이상 성공 · 보너스 +{formatKRW(Math.min(count * 50, reward * 2))}</div>
+      <button onClick={() => { if (!running) { setRunning(true); setCount(0); setTime(10); } setCount(c => c + 1); }}
+        className="press mt-5 w-40 h-40 rounded-full bg-gradient-cyber text-primary-foreground font-display font-black text-xl glow-primary mx-auto block">
         {running ? "TAP!" : "시작"}
       </button>
     </div>
   );
 }
 
-function LuckyGame({ reward, onWin }: { reward: number; onWin: (bonus: number) => void }) {
+function LuckyGame({ reward, onResult }: { reward: number; onResult: (w: boolean, b: number) => void }) {
   const [spinning, setSpinning] = useState(false);
   const [result, setResult] = useState<number | null>(null);
   function spin() {
     setSpinning(true);
     setTimeout(() => {
-      const r = Math.floor(Math.random() * reward * 5);
-      setResult(r);
-      setSpinning(false);
+      const win = Math.random() > 0.25;
+      const r = win ? Math.floor(reward * (0.5 + Math.random() * 4.5)) : 0;
+      setResult(r); setSpinning(false);
     }, 1800);
   }
   return (
     <div className="text-center">
       <div className={`w-44 h-44 rounded-full bg-gradient-aurora mx-auto flex items-center justify-center relative overflow-hidden ${spinning ? "animate-spin-slow" : ""}`}>
-        <div className="absolute inset-2 rounded-full bg-background flex items-center justify-center font-display font-black text-2xl">
-          {result !== null ? `+${formatKRW(result)}` : "🎁"}
+        <div className="absolute inset-2 rounded-full bg-background flex items-center justify-center font-display font-black text-xl text-center px-2">
+          {result !== null ? (result > 0 ? `+${formatKRW(result)}` : "꽝") : "🎁"}
         </div>
       </div>
       {result === null ? (
-        <button onClick={spin} disabled={spinning} className="mt-5 px-8 py-3 rounded-xl bg-gradient-primary text-primary-foreground font-bold glow-primary disabled:opacity-50">
-          {spinning ? "돌리는 중..." : "휠 돌리기"}
-        </button>
+        <button onClick={spin} disabled={spinning} className="press sheen mt-5 px-8 py-3 rounded-xl bg-gradient-primary text-primary-foreground font-bold glow-primary disabled:opacity-50">{spinning ? "돌리는 중..." : "휠 돌리기"}</button>
       ) : (
-        <button onClick={() => onWin(result)} className="mt-5 px-8 py-3 rounded-xl bg-gradient-gold text-gold-foreground font-bold glow-gold">
-          <Zap className="inline w-4 h-4" /> 보상 받기
-        </button>
+        <button onClick={() => onResult(result > 0, result)} className="press sheen mt-5 px-8 py-3 rounded-xl bg-gradient-gold text-gold-foreground font-bold glow-gold"><Zap className="inline w-4 h-4" /> 결과 받기</button>
       )}
     </div>
   );
 }
 
-function MemoryGame({ onWin }: { onWin: () => void }) {
+function MemoryGame({ onResult }: { onResult: (w: boolean, b: number) => void }) {
   const symbols = ["🚀","💎","⚡","🔥","🌌","👑"];
-  const init = useRef(
-    [...symbols, ...symbols].map((s, i) => ({ id: i, s, flipped: false, matched: false }))
-      .sort(() => Math.random() - 0.5)
-  );
+  const init = useRef([...symbols, ...symbols].map((s, i) => ({ id: i, s, flipped: false, matched: false })).sort(() => Math.random() - 0.5));
   const [cards, setCards] = useState(init.current);
   const [pick, setPick] = useState<number[]>([]);
   function tap(i: number) {
     if (pick.length === 2 || cards[i].flipped) return;
     const next = cards.map((c, j) => j === i ? { ...c, flipped: true } : c);
     setCards(next);
-    const np = [...pick, i];
-    setPick(np);
+    const np = [...pick, i]; setPick(np);
     if (np.length === 2) {
       const [a, b] = np;
       if (next[a].s === next[b].s) {
         const matched = next.map((c, j) => (j === a || j === b) ? { ...c, matched: true } : c);
         setCards(matched); setPick([]);
-        if (matched.every(c => c.matched)) setTimeout(onWin, 600);
+        if (matched.every(c => c.matched)) setTimeout(() => onResult(true, 0), 600);
       } else {
-        setTimeout(() => {
-          setCards(cards => cards.map((c, j) => (j === a || j === b) ? { ...c, flipped: false } : c));
-          setPick([]);
-        }, 700);
+        setTimeout(() => { setCards(cs => cs.map((c, j) => (j === a || j === b) ? { ...c, flipped: false } : c)); setPick([]); }, 700);
       }
     }
   }
   return (
     <div className="grid grid-cols-4 gap-2">
       {cards.map((c, i) => (
-        <button key={c.id} onClick={() => tap(i)}
-          className={`aspect-square rounded-xl text-3xl flex items-center justify-center font-bold transition ${c.flipped || c.matched ? "bg-gradient-cyber" : "glass"}`}>
+        <button key={c.id} onClick={() => tap(i)} className={`aspect-square rounded-xl text-3xl flex items-center justify-center font-bold transition ${c.flipped || c.matched ? "bg-gradient-cyber" : "glass"}`}>
           {c.flipped || c.matched ? c.s : "?"}
         </button>
       ))}
+    </div>
+  );
+}
+
+function ScratchGame({ reward, onResult }: { reward: number; onResult: (w: boolean, b: number) => void }) {
+  const [scratched, setScratched] = useState<boolean[]>(Array(9).fill(false));
+  const cells = useRef(Array.from({ length: 9 }, () => Math.random() > 0.55 ? Math.floor(reward * (0.3 + Math.random() * 2)) : 0));
+  function scratch(i: number) { setScratched(s => s.map((v, j) => j === i ? true : v)); }
+  const allDone = scratched.filter(Boolean).length >= 6;
+  const total = cells.current.reduce((a, b, i) => a + (scratched[i] ? b : 0), 0);
+  return (
+    <div>
+      <div className="grid grid-cols-3 gap-2">
+        {cells.current.map((v, i) => (
+          <button key={i} onClick={() => scratch(i)} className={`aspect-square rounded-xl flex items-center justify-center font-display font-black text-sm transition ${scratched[i] ? (v > 0 ? "bg-gradient-gold text-gold-foreground" : "bg-muted text-muted-foreground") : "bg-gradient-primary text-primary-foreground glow-primary"}`}>
+            {scratched[i] ? (v > 0 ? `+${(v/1000).toFixed(0)}k` : "꽝") : "긁기"}
+          </button>
+        ))}
+      </div>
+      {allDone && <button onClick={() => onResult(total > 0, total)} className="press sheen mt-4 w-full py-3 rounded-xl bg-gradient-gold text-gold-foreground font-bold glow-gold">결과 받기 +{formatKRW(total)}</button>}
+    </div>
+  );
+}
+
+function DiceGame({ reward, onResult }: { reward: number; onResult: (w: boolean, b: number) => void }) {
+  const [d, setD] = useState<[number, number] | null>(null);
+  const [rolling, setRolling] = useState(false);
+  function roll() {
+    setRolling(true);
+    let n = 0;
+    const i = setInterval(() => {
+      setD([1 + Math.floor(Math.random() * 6), 1 + Math.floor(Math.random() * 6)]);
+      n++;
+      if (n > 12) { clearInterval(i); setRolling(false); }
+    }, 80);
+  }
+  const sum = d ? d[0] + d[1] : 0;
+  const won = sum >= 7;
+  return (
+    <div className="text-center">
+      <div className="flex items-center justify-center gap-4 my-6">
+        {[0,1].map(i => (
+          <div key={i} className={`w-24 h-24 rounded-2xl glass-strong neon-border flex items-center justify-center font-display font-black text-5xl ${rolling ? "animate-pulse" : ""}`}>
+            {d ? d[i] : "?"}
+          </div>
+        ))}
+      </div>
+      <div className="text-sm text-muted-foreground">합계 7 이상 시 승리 · 현재 {sum}</div>
+      {!d || rolling ? (
+        <button onClick={roll} disabled={rolling} className="press sheen mt-4 px-8 py-3 rounded-xl bg-gradient-primary text-primary-foreground font-bold glow-primary disabled:opacity-50">{rolling ? "굴리는 중..." : "주사위 굴리기"}</button>
+      ) : (
+        <button onClick={() => onResult(won, won ? Math.floor(reward * (sum / 7)) : 0)} className={`press sheen mt-4 px-8 py-3 rounded-xl font-bold ${won ? "bg-gradient-gold text-gold-foreground glow-gold" : "bg-muted text-muted-foreground"}`}>
+          {won ? `🎉 +${formatKRW(Math.floor(reward * (sum / 7)))}` : "다음 기회에"}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function SlotGame({ reward, onResult }: { reward: number; onResult: (w: boolean, b: number) => void }) {
+  const sym = ["💎","🔥","⚡","👑","🎰","🌟"];
+  const [reels, setReels] = useState<string[]>(["?","?","?"]);
+  const [spinning, setSpinning] = useState(false);
+  function spin() {
+    setSpinning(true);
+    let n = 0;
+    const i = setInterval(() => {
+      setReels([sym[Math.floor(Math.random()*sym.length)], sym[Math.floor(Math.random()*sym.length)], sym[Math.floor(Math.random()*sym.length)]]);
+      n++;
+      if (n > 18) {
+        clearInterval(i);
+        // weighted: 22% triple match, 35% double
+        const r = Math.random();
+        let final: string[];
+        if (r < 0.22) { const s = sym[Math.floor(Math.random()*sym.length)]; final = [s,s,s]; }
+        else if (r < 0.55) { const s = sym[Math.floor(Math.random()*sym.length)]; final = [s, s, sym[Math.floor(Math.random()*sym.length)]]; }
+        else { final = [sym[Math.floor(Math.random()*sym.length)], sym[Math.floor(Math.random()*sym.length)], sym[Math.floor(Math.random()*sym.length)]]; }
+        setReels(final); setSpinning(false);
+      }
+    }, 70);
+  }
+  const isTriple = reels[0] !== "?" && reels[0] === reels[1] && reels[1] === reels[2];
+  const isDouble = !isTriple && reels[0] !== "?" && (reels[0] === reels[1] || reels[1] === reels[2] || reels[0] === reels[2]);
+  const bonus = isTriple ? reward * 5 : isDouble ? Math.floor(reward * 1.5) : 0;
+  const done = !spinning && reels[0] !== "?";
+  return (
+    <div className="text-center">
+      <div className="grid grid-cols-3 gap-2 my-5">
+        {reels.map((s, i) => (
+          <div key={i} className={`aspect-square rounded-2xl glass-strong neon-border flex items-center justify-center text-5xl ${spinning ? "animate-pulse" : ""}`}>{s}</div>
+        ))}
+      </div>
+      {isTriple && <div className="font-display font-black text-2xl text-gradient-gold animate-pulse">⭐ TRIPLE! ×5 ⭐</div>}
+      {isDouble && <div className="font-display font-black text-lg text-secondary">DOUBLE! ×1.5</div>}
+      {!done ? (
+        <button onClick={spin} disabled={spinning} className="press sheen mt-4 px-8 py-3 rounded-xl bg-gradient-cyber text-primary-foreground font-bold glow-cyber disabled:opacity-50">{spinning ? "스핀 중..." : "스핀"}</button>
+      ) : (
+        <button onClick={() => onResult(bonus > 0, bonus)} className={`press sheen mt-4 px-8 py-3 rounded-xl font-bold ${bonus > 0 ? "bg-gradient-gold text-gold-foreground glow-gold" : "bg-muted text-muted-foreground"}`}>
+          {bonus > 0 ? `+${formatKRW(bonus)} 받기` : "결과 받기"}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function HighLowGame({ reward, onResult }: { reward: number; onResult: (w: boolean, b: number) => void }) {
+  const [card, setCard] = useState(() => 1 + Math.floor(Math.random() * 13));
+  const [next, setNext] = useState<number | null>(null);
+  const [streak, setStreak] = useState(0);
+  const [done, setDone] = useState(false);
+  function pick(dir: "high" | "low") {
+    const n = 1 + Math.floor(Math.random() * 13);
+    setNext(n);
+    const win = (dir === "high" && n > card) || (dir === "low" && n < card);
+    setTimeout(() => {
+      if (!win) { setDone(true); }
+      else { setStreak(s => s + 1); setCard(n); setNext(null); }
+    }, 700);
+  }
+  const bonus = streak * Math.floor(reward * 0.4);
+  return (
+    <div className="text-center">
+      <div className="flex items-center justify-center gap-3 my-5">
+        <div className="w-24 h-32 rounded-2xl glass-strong neon-border flex items-center justify-center font-display font-black text-4xl">{card}</div>
+        {next !== null && <div className="w-24 h-32 rounded-2xl bg-gradient-gold flex items-center justify-center font-display font-black text-4xl text-gold-foreground animate-fade-up">{next}</div>}
+      </div>
+      <div className="text-xs text-muted-foreground">연승 {streak} · 보너스 +{formatKRW(bonus)}</div>
+      {!done ? (
+        <div className="grid grid-cols-2 gap-2 mt-4">
+          <button onClick={() => pick("low")} className="press py-3 rounded-xl bg-secondary text-secondary-foreground font-bold">LOW ↓</button>
+          <button onClick={() => pick("high")} className="press py-3 rounded-xl bg-primary text-primary-foreground font-bold glow-primary">HIGH ↑</button>
+          {streak > 0 && <button onClick={() => onResult(true, bonus)} className="col-span-2 press sheen py-3 rounded-xl bg-gradient-gold text-gold-foreground font-bold glow-gold">{formatKRW(bonus)} 챙기기</button>}
+        </div>
+      ) : (
+        <button onClick={() => onResult(streak > 0, bonus)} className="press sheen mt-4 px-8 py-3 rounded-xl bg-muted text-foreground font-bold">결과 받기</button>
+      )}
     </div>
   );
 }
