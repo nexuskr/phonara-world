@@ -34,7 +34,9 @@ export type Mission = {
   tier: MissionTier;
   duration: string;
   ugc?: boolean;
-  game?: "tap" | "lucky" | "memory" | "reaction"; // game mission
+  game?: "tap" | "lucky" | "memory" | "reaction" | "scratch" | "dice" | "slot" | "highlow";
+  fomoLimit?: number; // FOMO: only N plays remain today
+  boostable?: boolean; // tier-boost reward effect
 };
 
 export type Pkg = {
