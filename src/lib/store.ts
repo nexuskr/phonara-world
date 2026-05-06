@@ -29,11 +29,12 @@ export type Mission = {
   title: string;
   desc: string;
   reward: number;
-  category: "광고" | "설문" | "리뷰" | "추천" | "데이터" | "AI" | "UGC";
+  category: "광고" | "설문" | "리뷰" | "추천" | "데이터" | "AI" | "UGC" | "게임";
   difficulty: "EASY" | "NORMAL" | "HARD" | "VIP";
   tier: MissionTier;
   duration: string;
-  ugc?: boolean; // requires photo/video upload
+  ugc?: boolean;
+  game?: "tap" | "lucky" | "memory"; // game mission
 };
 
 export type Pkg = {
@@ -44,9 +45,12 @@ export type Pkg = {
   dailyReturn: number;
   duration: number;
   totalReturn: number;
-  tier: "FOUNDER" | "GOD" | "AI" | "PHANTOM" | "EMPIRE" | "STARTER";
+  tier: "FREE" | "STARTER" | "PRO" | "VIP" | "GOD" | "EMPIRE" | "PHANTOM";
   unlocksTier: Tier;
   perks: string[];
+  badge?: string;
+  fomo?: string;
+  seatsLeft?: number; // limited slots
 };
 
 export type DepositReq = {
