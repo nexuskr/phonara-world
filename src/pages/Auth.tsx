@@ -168,11 +168,11 @@ export default function Auth() {
 function Field({ icon: Icon, ...p }: any) {
   return (
     <div className="relative">
-      <Icon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+      <Icon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground transition-colors duration-300 peer-focus:text-primary" />
       <input
         {...p}
         onChange={e => p.onChange(e.target.value)}
-        className="w-full pl-11 pr-4 py-3.5 rounded-xl bg-input/60 border border-border text-sm placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:bg-input transition"
+        className="peer w-full pl-11 pr-4 py-3.5 rounded-xl bg-input/60 border border-border text-sm placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:bg-input focus:shadow-[0_0_0_4px_hsl(var(--primary)/0.15)] transition-all duration-300"
       />
     </div>
   );
