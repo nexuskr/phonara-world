@@ -18,7 +18,7 @@ export default {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
 
-        // === Cyber Luxury Color Palette ===
+        // Cyber Luxury Color Palette
         neon: {
           orange: "#FF3B00",
           blue: "#00F0FF",
@@ -45,8 +45,8 @@ export default {
         },
 
         glass: {
-          DEFAULT: "rgba(17, 17, 17, 0.65)",
-          border: "rgba(255, 255, 255, 0.08)",
+          DEFAULT: "rgba(17, 17, 17, 0.72)",
+          border: "rgba(255, 255, 255, 0.09)",
         },
 
         muted: {
@@ -92,9 +92,10 @@ export default {
       },
 
       fontFamily: {
-        display: ["Orbitron", "Pretendard", "sans-serif"], // Cyber 느낌 강하게
+        display: ["Orbitron", "Pretendard", "sans-serif"],
         sans: ["Pretendard", "system-ui", "sans-serif"],
-        title: ["Satoshi", "Orbitron", "sans-serif"],
+        title: ["Satoshi", "Orbitron", "var(--font-sans)"],
+        mono: ["JetBrains Mono", "monospace"], // 숫자, Ledger용
       },
 
       keyframes: {
@@ -124,6 +125,18 @@ export default {
           "50%": { transform: "scale(1.15)" },
           "100%": { transform: "scale(1)" },
         },
+        "jackpot-burst": {
+          "0%": { transform: "scale(0.6)", opacity: "0" },
+          "40%": { transform: "scale(1.15)" },
+          "70%": { transform: "scale(0.95)" },
+          "100%": { transform: "scale(1)", opacity: "1" },
+        },
+        "neon-flicker": {
+          "0%, 100%": { opacity: "1" },
+          "42%": { opacity: "0.8" },
+          "64%": { opacity: "1" },
+          "82%": { opacity: "0.9" },
+        },
       },
 
       animation: {
@@ -133,6 +146,8 @@ export default {
         aurora: "aurora-shift 15s ease infinite",
         particle: "particle-float 3s ease-out forwards",
         "balance-pop": "balance-pop 0.4s ease-out",
+        "jackpot-burst": "jackpot-burst 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)",
+        "neon-flicker": "neon-flicker 1.2s infinite",
       },
     },
   },
