@@ -42,36 +42,71 @@ export default function Packages() {
                   <div className="relative">
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] tracking-widest font-display font-black px-2 py-1 rounded-full glass">
-                        {t.label}
+                        {p.badge ?? t.label}
                       </span>
                       {p.tier === "PHANTOM" && <span className="text-xs font-bold text-gold animate-pulse">초대 전용</span>}
                     </div>
                     <h3 className="font-display font-black text-2xl mt-3">{p.name}</h3>
                     <p className="text-xs text-muted-foreground mt-1">{p.tagline}</p>
 
-                    <div className="mt-5 grid grid-cols-3 gap-2">
-                      <Stat label="투자금" value={formatKRW(p.price)} />
-                      <Stat label="일일 정산" value={formatKRW(p.dailyReturn)} highlight />
-                      <Stat label="기간" value={`${p.duration}일`} />
-                    </div>
+                    {p.fomo && (
+                      <div className="mt-3 flex items-center gap-1.5 text-[11px] text-gold">
+                        <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" /> {p.fomo}
+                      </div>
+                    )}
 
-                    <div className="mt-3 glass rounded-xl p-3 flex items-center justify-between">
-                      <span className="text-[11px] text-muted-foreground">총 예상 수익</span>
-                      <span className="font-display font-black text-lg text-gradient-gold">{formatKRW(p.totalReturn)}</span>
-                    </div>
+                    {p.tier === "FREE" ? (
+                      <>
+                        <ul className="mt-5 space-y-1.5">
+                          {p.perks.map(perk => (
+                            <li key={perk} className="flex items-center gap-2 text-xs">
+                              <Check className="w-3.5 h-3.5 text-secondary shrink-0" /> {perk}
+                            </li>
+                          ))}
+                        </ul>
+                        <button onClick={() => nav("/missions")}
+                          className="mt-5 w-full py-3 rounded-xl glass border border-border font-bold text-sm hover:scale-[1.02] transition flex items-center justify-center gap-2">
+                          무료로 미션 시작하기
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <div className="mt-5 grid grid-cols-3 gap-2">
+                          <Stat label="투자금" value={formatKRW(p.price)} />
+                          <Stat label="일일 정산" value={formatKRW(p.dailyReturn)} highlight />
+                          <Stat label="기간" value={`${p.duration}일`} />
+                        </div>
 
-                    <ul className="mt-4 space-y-1.5">
-                      {p.perks.map(perk => (
-                        <li key={perk} className="flex items-center gap-2 text-xs">
-                          <Check className="w-3.5 h-3.5 text-secondary shrink-0" /> {perk}
-                        </li>
-                      ))}
-                    </ul>
+                        <div className="mt-3 glass rounded-xl p-3 flex items-center justify-between">
+                          <span className="text-[11px] text-muted-foreground">총 예상 수익</span>
+                          <span className="font-display font-black text-lg text-gradient-gold">{formatKRW(p.totalReturn)}</span>
+                        </div>
 
-                    <button onClick={() => setSelected(p)}
-                      className="mt-5 w-full py-3 rounded-xl bg-gradient-primary text-primary-foreground font-bold text-sm glow-primary hover:scale-[1.02] transition flex items-center justify-center gap-2">
-                      <Sparkles className="w-4 h-4" /> 가입하기
-                    </button>
+                        <ul className="mt-4 space-y-1.5">
+                          {p.perks.map(perk => (
+                            <li key={perk} className="flex items-center gap-2 text-xs">
+                              <Check className="w-3.5 h-3.5 text-secondary shrink-0" /> {perk}
+                            </li>
+                          ))}
+                        </ul>
+
+                        {p.seatsLeft !== undefined && (
+                          <div className="mt-3">
+                            <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
+                              <span>잔여 좌석</span><span className="text-gold font-bold">{p.seatsLeft}석</span>
+                            </div>
+                            <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                              <div className="h-full bg-gradient-gold" style={{ width: `${Math.min(100, (p.seatsLeft / 100) * 100)}%` }} />
+                            </div>
+                          </div>
+                        )}
+
+                        <button onClick={() => setSelected(p)}
+                          className="mt-5 w-full py-3 rounded-xl bg-gradient-primary text-primary-foreground font-bold text-sm glow-primary hover:scale-[1.02] transition flex items-center justify-center gap-2">
+                          <Sparkles className="w-4 h-4" /> 가입하기
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
