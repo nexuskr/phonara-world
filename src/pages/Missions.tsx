@@ -196,3 +196,119 @@ function UGCModal({ mission, onClose, onSubmit }: { mission: Mission; onClose: (
     </div>
   );
 }
+
+function GameModal({ mission, onClose, onWin }: { mission: Mission; onClose: () => void; onWin: (bonus: number) => void }) {
+  return (
+    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-md flex items-end sm:items-center justify-center p-4">
+      <div className="w-full max-w-md glass-strong rounded-3xl p-6 neon-border relative animate-fade-up">
+        <button onClick={onClose} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-muted/40 flex items-center justify-center"><X className="w-4 h-4" /></button>
+        <h2 className="font-display font-black text-lg flex items-center gap-2"><Gamepad2 className="w-5 h-5 text-primary" /> {mission.title}</h2>
+        <p className="text-[11px] text-muted-foreground mt-1">{mission.desc}</p>
+        <div className="mt-5">
+          {mission.game === "tap" && <TapGame reward={mission.reward} onWin={onWin} />}
+          {mission.game === "lucky" && <LuckyGame reward={mission.reward} onWin={onWin} />}
+          {mission.game === "memory" && <MemoryGame onWin={() => onWin(0)} />}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TapGame({ reward, onWin }: { reward: number; onWin: (bonus: number) => void }) {
+  const [count, setCount] = useState(0);
+  const [time, setTime] = useState(10);
+  const [running, setRunning] = useState(false);
+  useEffect(() => {
+    if (!running) return;
+    if (time <= 0) {
+      const bonus = Math.min(count * 50, reward * 2);
+      setRunning(false);
+      setTimeout(() => onWin(bonus), 400);
+      return;
+    }
+    const t = setTimeout(() => setTime(s => s - 1), 1000);
+    return () => clearTimeout(t);
+  }, [time, running]);
+  return (
+    <div className="text-center">
+      <div className="font-display font-black text-5xl text-gradient-primary tabular-nums">{count}</div>
+      <div className="text-xs text-muted-foreground mt-1">남은 시간 {time}초 · 보너스 +{formatKRW(Math.min(count * 50, reward * 2))}</div>
+      <button
+        onClick={() => { if (!running) { setRunning(true); setCount(0); setTime(10); } setCount(c => c + 1); }}
+        className="mt-5 w-40 h-40 rounded-full bg-gradient-cyber text-primary-foreground font-display font-black text-xl glow-primary mx-auto block hover:scale-95 active:scale-90 transition">
+        {running ? "TAP!" : "시작"}
+      </button>
+    </div>
+  );
+}
+
+function LuckyGame({ reward, onWin }: { reward: number; onWin: (bonus: number) => void }) {
+  const [spinning, setSpinning] = useState(false);
+  const [result, setResult] = useState<number | null>(null);
+  function spin() {
+    setSpinning(true);
+    setTimeout(() => {
+      const r = Math.floor(Math.random() * reward * 5);
+      setResult(r);
+      setSpinning(false);
+    }, 1800);
+  }
+  return (
+    <div className="text-center">
+      <div className={`w-44 h-44 rounded-full bg-gradient-aurora mx-auto flex items-center justify-center relative overflow-hidden ${spinning ? "animate-spin-slow" : ""}`}>
+        <div className="absolute inset-2 rounded-full bg-background flex items-center justify-center font-display font-black text-2xl">
+          {result !== null ? `+${formatKRW(result)}` : "🎁"}
+        </div>
+      </div>
+      {result === null ? (
+        <button onClick={spin} disabled={spinning} className="mt-5 px-8 py-3 rounded-xl bg-gradient-primary text-primary-foreground font-bold glow-primary disabled:opacity-50">
+          {spinning ? "돌리는 중..." : "휠 돌리기"}
+        </button>
+      ) : (
+        <button onClick={() => onWin(result)} className="mt-5 px-8 py-3 rounded-xl bg-gradient-gold text-gold-foreground font-bold glow-gold">
+          <Zap className="inline w-4 h-4" /> 보상 받기
+        </button>
+      )}
+    </div>
+  );
+}
+
+function MemoryGame({ onWin }: { onWin: () => void }) {
+  const symbols = ["🚀","💎","⚡","🔥","🌌","👑"];
+  const init = useRef(
+    [...symbols, ...symbols].map((s, i) => ({ id: i, s, flipped: false, matched: false }))
+      .sort(() => Math.random() - 0.5)
+  );
+  const [cards, setCards] = useState(init.current);
+  const [pick, setPick] = useState<number[]>([]);
+  function tap(i: number) {
+    if (pick.length === 2 || cards[i].flipped) return;
+    const next = cards.map((c, j) => j === i ? { ...c, flipped: true } : c);
+    setCards(next);
+    const np = [...pick, i];
+    setPick(np);
+    if (np.length === 2) {
+      const [a, b] = np;
+      if (next[a].s === next[b].s) {
+        const matched = next.map((c, j) => (j === a || j === b) ? { ...c, matched: true } : c);
+        setCards(matched); setPick([]);
+        if (matched.every(c => c.matched)) setTimeout(onWin, 600);
+      } else {
+        setTimeout(() => {
+          setCards(cards => cards.map((c, j) => (j === a || j === b) ? { ...c, flipped: false } : c));
+          setPick([]);
+        }, 700);
+      }
+    }
+  }
+  return (
+    <div className="grid grid-cols-4 gap-2">
+      {cards.map((c, i) => (
+        <button key={c.id} onClick={() => tap(i)}
+          className={`aspect-square rounded-xl text-3xl flex items-center justify-center font-bold transition ${c.flipped || c.matched ? "bg-gradient-cyber" : "glass"}`}>
+          {c.flipped || c.matched ? c.s : "?"}
+        </button>
+      ))}
+    </div>
+  );
+}
