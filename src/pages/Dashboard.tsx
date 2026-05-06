@@ -17,6 +17,10 @@ export default function Dashboard() {
 
   if (!user) { nav("/auth"); return null; }
   const featured = DEFAULT_MISSIONS.slice(0, 5);
+  // Context-aware particle intensity based on balance
+  const wealth = user.balance + user.coinBalance * 1300;
+  const particleDensity = wealth > 5_000_000 ? 80 : wealth > 1_000_000 ? 55 : 30;
+  const burstCount = wealth > 5_000_000 ? 24 : wealth > 1_000_000 ? 16 : 10;
 
   return (
     <Layout>
