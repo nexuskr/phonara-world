@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { useDB, DEFAULT_MISSIONS, TIER_RANK, formatKRW, type Mission, type Tier } from "@/lib/store";
-import { CheckCircle2, Sparkles, Lock, Crown, Upload } from "lucide-react";
+import { CheckCircle2, Sparkles, Lock, Crown, Upload, Gamepad2, X, Zap } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 const tierFilters: { key: Tier; label: string; color: string }[] = [
