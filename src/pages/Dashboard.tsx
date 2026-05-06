@@ -71,14 +71,15 @@ export default function Dashboard() {
 
               {burst && (
                 <div className="absolute inset-0 pointer-events-none">
-                  {Array.from({ length: 14 }).map((_, i) => {
-                    const angle = (i / 14) * Math.PI * 2;
-                    const tx = Math.cos(angle) * 200;
-                    const ty = Math.sin(angle) * 200 - 50;
+                  {Array.from({ length: burstCount }).map((_, i) => {
+                    const angle = (i / burstCount) * Math.PI * 2;
+                    const tx = Math.cos(angle) * 220;
+                    const ty = Math.sin(angle) * 220 - 40;
+                    const icons = ["💸", "💰", "✨", "💎"];
                     return (
                       <span key={i} className="absolute left-1/2 top-1/2 text-2xl animate-money-burst"
-                        style={{ ["--tx" as any]: `${tx}px`, ["--ty" as any]: `${ty}px`, ["--r" as any]: `${i * 25}deg` }}>
-                        💸
+                        style={{ ["--tx" as any]: `${tx}px`, ["--ty" as any]: `${ty}px`, ["--r" as any]: `${i * 25}deg`, animationDelay: `${i * 25}ms` }}>
+                        {icons[i % icons.length]}
                       </span>
                     );
                   })}
