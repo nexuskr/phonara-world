@@ -106,7 +106,7 @@ export default function Support() {
                   <span className="text-sm font-bold">Q. {f.q}</span>
                   <ChevronDown className={`w-4 h-4 transition ${open === i ? "rotate-180 text-primary" : "text-muted-foreground"}`} />
                 </div>
-                {open === i && <p className="mt-3 text-xs text-muted-foreground leading-relaxed border-t border-border/40 pt-3">{f.a}</p>}
+                {open === i && <p className="mt-3 text-xs text-muted-foreground leading-relaxed border-t border-border/40 pt-3 whitespace-pre-line">{f.a}</p>}
               </button>
             ))}
           </div>
