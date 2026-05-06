@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
-import { useDB, formatKRW, uid, type Mission, type MissionTier, type Tier, TIER_RANK } from "@/lib/store";
+import { useDB, formatKRW, uid, PACKAGES, type Mission, type MissionTier, type Tier, TIER_RANK } from "@/lib/store";
 import { ShieldCheck, Users, TrendingUp, ArrowDownToLine, ArrowUpFromLine, Check, X, Plus, MessageSquare, Send, Coins, Target, Crown } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
@@ -36,8 +36,10 @@ export default function Admin() {
       if (!dep) return d;
       const apply = (u: any) => {
         if (u.id !== dep.userId || status !== "approved") return u;
-        if (dep.method === "coin") return { ...u, coinBalance: u.coinBalance + dep.amount };
-        return { ...u, balance: u.balance + dep.amount };
+        const pkg = PACKAGES.find(p => p.id === dep.packageId);
+        const newTier: Tier = pkg && TIER_RANK[pkg.unlocksTier] > TIER_RANK[u.tier] ? pkg.unlocksTier : u.tier;
+        if (dep.method === "coin") return { ...u, coinBalance: u.coinBalance + dep.amount, tier: newTier };
+        return { ...u, balance: u.balance + dep.amount, tier: newTier };
       };
       return {
         ...d,
