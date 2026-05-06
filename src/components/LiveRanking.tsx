@@ -35,19 +35,26 @@ export default function LiveRanking() {
           <span className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse" /> LIVE
         </span>
       </div>
-      {list.map((r, i) => (
-        <div key={r.n} className="flex items-center justify-between py-2 border-b border-border/40 last:border-0 transition-all">
-          <div className="flex items-center gap-3">
-            <div className={`w-7 h-7 rounded-full flex items-center justify-center font-display font-black text-xs
-              ${i === 0 ? "bg-gradient-gold text-gold-foreground" : i === 1 ? "bg-secondary/30 text-secondary" : i === 2 ? "bg-accent/30 text-accent" : "bg-muted"}`}>
-              {i + 1}
+      <div className="relative">
+        {list.map((r, i) => (
+          <div
+            key={r.n}
+            style={{ transform: `translateY(${i * 44}px)` }}
+            className="absolute left-0 right-0 flex items-center justify-between py-2 transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]"
+          >
+            <div className="flex items-center gap-3">
+              <div className={`w-7 h-7 rounded-full flex items-center justify-center font-display font-black text-xs transition-all duration-500
+                ${i === 0 ? "bg-gradient-gold text-gold-foreground glow-gold scale-110" : i === 1 ? "bg-secondary/30 text-secondary" : i === 2 ? "bg-accent/30 text-accent" : "bg-muted"}`}>
+                {i + 1}
+              </div>
+              <span className="text-2xl">{r.c}</span>
+              <span className="text-sm font-bold">{r.n}</span>
             </div>
-            <span className="text-2xl">{r.c}</span>
-            <span className="text-sm font-bold">{r.n}</span>
+            <div className="text-sm font-display font-bold text-gradient-primary tabular-nums">{formatKRW(r.v)}</div>
           </div>
-          <div className="text-sm font-display font-bold text-gradient-primary tabular-nums">{formatKRW(r.v)}</div>
-        </div>
-      ))}
+        ))}
+        <div style={{ height: list.length * 44 }} />
+      </div>
     </div>
   );
 }
