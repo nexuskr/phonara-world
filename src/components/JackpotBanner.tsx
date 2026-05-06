@@ -29,7 +29,7 @@ export function useJackpotEngine() {
           const won = Math.floor(j.amount * pct);
           const tiers: Tier[] = ["EMPIRE","EMPIRE","GOD","VIP"];
           const wt = tiers[Math.floor(Math.random() * tiers.length)];
-          j.recentWins = [{ nickname: randomFakeNick(), amount: won, tier: wt, when: now, type: "main" }, ...j.recentWins].slice(0, 12);
+          j.recentWins = [{ nickname: randomFakeNick(), amount: won, tier: wt, when: now, type: "main" as const }, ...j.recentWins].slice(0, 12);
           j.amount = Math.max(20_000_000, j.amount - won);
           j.lastMainExplode = now;
         }
@@ -38,7 +38,7 @@ export function useJackpotEngine() {
           const won = Math.floor(j.mini * (0.3 + Math.random() * 0.4));
           const tiers: Tier[] = ["NORMAL","NORMAL","VIP","GOD"];
           const wt = tiers[Math.floor(Math.random() * tiers.length)];
-          j.recentWins = [{ nickname: randomFakeNick(), amount: won, tier: wt, when: now, type: "mini" }, ...j.recentWins].slice(0, 12);
+          j.recentWins = [{ nickname: randomFakeNick(), amount: won, tier: wt, when: now, type: "mini" as const }, ...j.recentWins].slice(0, 12);
           j.mini = Math.max(200_000, j.mini - won);
           j.lastMiniExplode = now;
         }
