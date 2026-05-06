@@ -69,6 +69,19 @@ export default function Support() {
           ))}
         </div>
 
+        <button onClick={() => nav("/guide")} className="w-full glass-strong neon-border rounded-2xl p-3 mb-4 flex items-center justify-between hover:bg-muted/30 transition press">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-gradient-gold glow-gold flex items-center justify-center">
+              <BookOpen className="w-4 h-4 text-gold-foreground" />
+            </div>
+            <div className="text-left">
+              <div className="text-xs font-black">운영원칙 & 이용가이드</div>
+              <div className="text-[10px] text-muted-foreground">등급 · 잭팟 · 충전/환전 완전 정리</div>
+            </div>
+          </div>
+          <ChevronDown className="w-4 h-4 -rotate-90 text-gold" />
+        </button>
+
         {tab === "chat" && (
           <div className="glass-strong rounded-3xl neon-border overflow-hidden flex flex-col h-[60vh]">
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
