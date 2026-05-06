@@ -25,7 +25,7 @@ export default function Auth() {
       const isAdmin = form.email === "admin@phonemission.kr";
       const user = existing || {
         id: uid(), nickname: form.email.split("@")[0], email: form.email, phone: "", realName: "", birth: "",
-        balance: 50000, todayEarnings: 0, streak: 1, level: 1, xp: 120, isAdmin,
+        balance: 50000, coinBalance: 0, todayEarnings: 0, streak: 1, level: 1, xp: 120, tier: "NORMAL" as const, isAdmin,
       };
       if (isAdmin) user.isAdmin = true;
       return { ...d, user, users: existing ? d.users : [...d.users, user] };
@@ -42,7 +42,7 @@ export default function Auth() {
     const user = {
       id: uid(), nickname: form.nickname, email: form.email, phone: form.phone,
       realName: form.realName, birth: form.birth, referralCode: form.referralCode,
-      balance: 5000, todayEarnings: 5000, streak: 1, level: 1, xp: 100,
+      balance: 5000, coinBalance: 0, todayEarnings: 5000, streak: 1, level: 1, xp: 100, tier: "NORMAL" as const,
     };
     setDb(d => ({ ...d, user, users: [...d.users, user] }));
     toast({ title: "🎉 가입 완료!", description: "5,000원 신규 보너스가 지급되었습니다." });
@@ -52,7 +52,7 @@ export default function Auth() {
   function social(provider: string) {
     const user = {
       id: uid(), nickname: provider + "유저", email: provider.toLowerCase() + "@user.kr", phone: "", realName: "", birth: "",
-      balance: 50000, todayEarnings: 0, streak: 1, level: 2, xp: 250,
+      balance: 50000, coinBalance: 0, todayEarnings: 0, streak: 1, level: 2, xp: 250, tier: "NORMAL" as const,
     };
     setDb(d => ({ ...d, user, users: [...d.users, user] }));
     toast({ title: `${provider} 로그인 성공` });

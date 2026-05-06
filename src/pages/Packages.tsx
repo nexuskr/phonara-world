@@ -105,7 +105,7 @@ function PurchaseModal({ pkg, onClose }: { pkg: Pkg; onClose: () => void }) {
       deposits: [{
         id: uid(), userId: d.user!.id, nickname: d.user!.nickname,
         packageId: pkg.id, packageName: pkg.name, amount: pkg.price,
-        screenshot, status: "pending", createdAt: Date.now(),
+        method: "bank", screenshot, status: "pending", createdAt: Date.now(),
       }, ...d.deposits],
     }));
     onClose();

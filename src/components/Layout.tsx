@@ -1,5 +1,5 @@
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Home, Target, Wallet, Crown, User as UserIcon, Sparkles, LogOut, ShieldCheck } from "lucide-react";
+import { Home, Target, Wallet, Crown, User as UserIcon, Sparkles, LogOut, ShieldCheck, MessageSquare } from "lucide-react";
 import { useDB } from "@/lib/store";
 
 const items = [
@@ -7,6 +7,7 @@ const items = [
   { to: "/missions", icon: Target, label: "미션" },
   { to: "/packages", icon: Crown, label: "패키지" },
   { to: "/wallet", icon: Wallet, label: "지갑" },
+  { to: "/support", icon: MessageSquare, label: "고객센터" },
   { to: "/profile", icon: UserIcon, label: "MY" },
 ];
 
