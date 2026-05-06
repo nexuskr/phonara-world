@@ -11,6 +11,7 @@ import Packages from "./pages/Packages.tsx";
 import Wallet from "./pages/Wallet.tsx";
 import Profile from "./pages/Profile.tsx";
 import Support from "./pages/Support.tsx";
+import Guide from "./pages/Guide.tsx";
 import Admin from "./pages/Admin.tsx";
 import SecureAuth from "./pages/SecureAuth.tsx";
 import SecureWallet from "./pages/SecureWallet.tsx";
@@ -33,6 +34,7 @@ const App = () => (
           <Route path="/wallet" element={<Wallet />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/support" element={<Support />} />
+          <Route path="/guide" element={<Guide />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/secure-auth" element={<SecureAuth />} />
           <Route path="/secure-wallet" element={<SecureWallet />} />

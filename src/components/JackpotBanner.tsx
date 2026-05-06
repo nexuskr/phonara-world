@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useDB, formatKRW, MAIN_MILESTONES, MAIN_MAX_INTERVAL_MS, MINI_MAX_INTERVAL_MS, jackpotPayoutPct, randomFakeNick, type Tier } from "@/lib/store";
+import { useDB, formatKRW, MAIN_MILESTONE_AMOUNT, MAIN_MAX_INTERVAL_MS, MINI_MAX_INTERVAL_MS, jackpotPayoutPct, jackpotResetBase, miniJackpotResetBase, miniJackpotAmount, randomFakeNick, type Tier } from "@/lib/store";
 import { Flame, Crown, Trophy, Sparkles } from "lucide-react";
 
 // Global jackpot ticker that grows every second (shared across all sessions via localStorage).
@@ -16,30 +16,30 @@ export function useJackpotEngine() {
       setDb(d => {
         const now = Date.now();
         const j = { ...d.jackpot };
-        // Organic growth — varies per second
-        j.amount += Math.floor(8000 + Math.random() * 42000);
-        j.mini   += Math.floor(800 + Math.random() * 4200);
+        // Organic growth from simulated game contributions (8% of stakes)
+        j.amount += Math.floor(3000 + Math.random() * 18000);
+        j.mini   += Math.floor(400 + Math.random() * 2200);
         j.totalContrib += 1;
 
-        // Milestone or time-based main explosion (auto-claim by bot/fake winner)
-        const milestoneHit = MAIN_MILESTONES.some(m => j.amount >= m && j.amount < m + 500_000);
+        // Main explosion: hit milestone (3천만원) OR 6h cap
+        const milestoneHit = j.amount >= MAIN_MILESTONE_AMOUNT;
         const timeExpired = now - j.lastMainExplode > MAIN_MAX_INTERVAL_MS;
         if (milestoneHit || timeExpired) {
-          const pct = jackpotPayoutPct();
-          const won = Math.floor(j.amount * pct);
-          const tiers: Tier[] = ["EMPIRE","EMPIRE","GOD","VIP"];
+          const won = Math.floor(j.amount * jackpotPayoutPct());
+          const tiers: Tier[] = ["EMPIRE","EMPIRE","EMPIRE","GOD","VIP"];
           const wt = tiers[Math.floor(Math.random() * tiers.length)];
           j.recentWins = [{ nickname: randomFakeNick(), amount: won, tier: wt, when: now, type: "main" as const }, ...j.recentWins].slice(0, 12);
-          j.amount = Math.max(20_000_000, j.amount - won);
+          // Reset pool to random 1천만~1.5천만원 base
+          j.amount = jackpotResetBase();
           j.lastMainExplode = now;
         }
-        // Mini explosion
-        if (now - j.lastMiniExplode > MINI_MAX_INTERVAL_MS) {
-          const won = Math.floor(j.mini * (0.3 + Math.random() * 0.4));
+        // Mini explosion (every 1h or amount cap)
+        if (now - j.lastMiniExplode > MINI_MAX_INTERVAL_MS || j.mini > 3_000_000) {
+          const won = miniJackpotAmount();
           const tiers: Tier[] = ["NORMAL","NORMAL","VIP","GOD"];
           const wt = tiers[Math.floor(Math.random() * tiers.length)];
           j.recentWins = [{ nickname: randomFakeNick(), amount: won, tier: wt, when: now, type: "mini" as const }, ...j.recentWins].slice(0, 12);
-          j.mini = Math.max(200_000, j.mini - won);
+          j.mini = miniJackpotResetBase();
           j.lastMiniExplode = now;
         }
         return { ...d, jackpot: j };
@@ -64,7 +64,7 @@ export default function JackpotBanner({ compact = false }: { compact?: boolean }
   const nextMs = Math.max(0, j.lastMainExplode + MAIN_MAX_INTERVAL_MS - Date.now());
   const h = Math.floor(nextMs / 3_600_000);
   const m = Math.floor((nextMs % 3_600_000) / 60_000);
-  const nextMile = MAIN_MILESTONES.find(x => x > j.amount) ?? 500_000_000;
+  const nextMile = MAIN_MILESTONE_AMOUNT;
   const pctMile = Math.min(100, (j.amount / nextMile) * 100);
 
   if (compact) {

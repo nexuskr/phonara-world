@@ -157,22 +157,33 @@ const initialDB: DB = {
   recoveryMission: null,
 };
 
-// Tier-based jackpot win chances (per game play)
+// Tier-based jackpot win chances (per game play) — Empire 입금 유도 극대화
 export const JACKPOT_CHANCE: Record<Tier, { main: number; mini: number; multi: boolean }> = {
-  NORMAL: { main: 0.0008, mini: 0.065,  multi: false },
-  VIP:    { main: 0.004,  mini: 0.175,  multi: false },
-  GOD:    { main: 0.018,  mini: 0.40,   multi: false },
-  EMPIRE: { main: 0.055,  mini: 0.675,  multi: true  },
+  NORMAL: { main: 0.04, mini: 0.18, multi: false },
+  VIP:    { main: 0.12, mini: 0.32, multi: false },
+  GOD:    { main: 0.28, mini: 0.50, multi: false },
+  EMPIRE: { main: 0.65, mini: 0.85, multi: true  },
 };
 
-// Milestone thresholds for guaranteed main explosion
-export const MAIN_MILESTONES = [50_000_000, 100_000_000, 300_000_000];
-export const MAIN_MAX_INTERVAL_MS = 6 * 60 * 60 * 1000; // 6h hard cap
-export const MINI_MAX_INTERVAL_MS = 25 * 60 * 1000;     // 25min hard cap
+// Contribution & payout policy
+export const JACKPOT_CONTRIB_PCT = 0.08; // 8% of every game stake
+export const JACKPOT_PAYOUT_PCT  = 0.55; // 55% of pool to winner, 45% house
+export const MAIN_MILESTONE_AMOUNT = 30_000_000; // 3천만원 도달 시 폭발
+export const MAIN_MILESTONES = [MAIN_MILESTONE_AMOUNT];
+export const MAIN_MAX_INTERVAL_MS = 6 * 60 * 60 * 1000; // 6h
+export const MINI_MAX_INTERVAL_MS = 60 * 60 * 1000;     // 1h
 
-export function jackpotPayoutPct() {
-  // 40~70% for main winner
-  return 0.4 + Math.random() * 0.3;
+// Reset base after explosion: random 1천만 ~ 1.5천만 KRW
+export function jackpotResetBase() {
+  return 10_000_000 + Math.floor(Math.random() * 5_000_000);
+}
+export function miniJackpotResetBase() {
+  return 500_000 + Math.floor(Math.random() * 800_000);
+}
+export function jackpotPayoutPct() { return JACKPOT_PAYOUT_PCT; }
+export function miniJackpotAmount() {
+  // 50만 ~ 300만원
+  return 500_000 + Math.floor(Math.random() * 2_500_000);
 }
 
 const FAKE_NICKS = ["Cyber***K","Neon***J","Aurora***","Phantom***","Quantum***","Nova***L","Zero***X","Echo***","Pulse***M","Helix***","Orbit***Q","Vexa***","Lyric***N","Mirage***"];
