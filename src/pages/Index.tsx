@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
-import { ShieldCheck, Zap, Lock, Sparkles, ArrowRight, TrendingUp, Globe, Cpu, Users, Activity } from "lucide-react";
+import { ShieldCheck, Zap, Lock, Sparkles, ArrowRight, TrendingUp, Globe, Cpu, Users, Activity, Heart } from "lucide-react";
 import Particles from "@/components/Particles";
+import PayoutTicker from "@/components/PayoutTicker";
 import { useOnline, useTotalPayout, useTodayPayout, useMembers } from "@/components/LiveStats";
 
 export default function Index() {
@@ -89,6 +90,9 @@ export default function Index() {
           <Link to="/auth" className="text-sm text-muted-foreground hover:text-foreground transition">이미 회원이신가요? →</Link>
         </div>
 
+        <div className="mt-4 inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass text-[11px] text-secondary animate-fade-up" style={{ animationDelay: "0.35s" }}>
+          <Heart className="w-3.5 h-3.5 fill-secondary" /> FREE 플랜 평생 무료 · 결제 압박 0% · 광고 없음
+
         {/* Trust badges */}
         <div className="mt-16 grid grid-cols-3 gap-3 sm:gap-6 max-w-2xl mx-auto animate-fade-up" style={{ animationDelay: "0.4s" }}>
           {[
@@ -115,6 +119,35 @@ export default function Index() {
               <br className="sm:hidden" /> 매일 돈을 벌고 있습니다
             </div>
             <p className="text-xs sm:text-sm text-muted-foreground mt-2">2026년 한국 No.1 사이버 수익 플랫폼 · 금융위 보안 수준 · 평균 정산 12분</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Live payout ticker */}
+      <section className="relative z-10 container py-12">
+        <div className="grid md:grid-cols-2 gap-5">
+          <PayoutTicker />
+          <div className="glass-strong rounded-3xl p-6 neon-border relative overflow-hidden">
+            <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-gradient-gold blur-3xl opacity-50" />
+            <div className="relative">
+              <div className="text-[10px] text-gold tracking-widest font-black">EMPIRE COUNCIL · LIMITED</div>
+              <h3 className="font-display font-black text-2xl mt-2 text-gradient-gold">선착순 20명 EMPIRE 오너</h3>
+              <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
+                플랫폼 전체 수익의 <span className="text-gold font-bold">10%를 매주 분배</span>받는 정식 오너십.
+                Syndicate Crew, 무제한 출금, 평생 자산매니저.
+              </p>
+              <div className="mt-4">
+                <div className="flex justify-between text-[10px] text-muted-foreground mb-1.5">
+                  <span>잔여 좌석</span><span className="text-gold font-bold animate-pulse">단 7석 남음</span>
+                </div>
+                <div className="h-2 bg-muted rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-gold glow-gold" style={{ width: "65%" }} />
+                </div>
+              </div>
+              <Link to="/auth?signup=1" className="mt-5 inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-gradient-gold text-gold-foreground font-bold text-sm glow-gold">
+                <Sparkles className="w-4 h-4" /> EMPIRE 입성하기
+              </Link>
+            </div>
           </div>
         </div>
       </section>
