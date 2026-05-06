@@ -111,7 +111,7 @@ export default function Packages() {
                         )}
 
                         <button onClick={() => setSelected(p)}
-                          className="mt-5 w-full py-3 rounded-xl bg-gradient-primary text-primary-foreground font-bold text-sm glow-primary hover:scale-[1.02] transition flex items-center justify-center gap-2">
+                          className="press sheen mt-5 w-full py-3 rounded-xl bg-gradient-primary text-primary-foreground font-bold text-sm glow-primary flex items-center justify-center gap-2">
                           <Sparkles className="w-4 h-4" /> 가입하기
                         </button>
                       </>
