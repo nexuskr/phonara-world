@@ -61,10 +61,12 @@ export default function Auth() {
 
   return (
     <div className="relative min-h-screen flex items-center justify-center overflow-hidden py-10 px-4">
-      <div className="absolute inset-0 bg-grid opacity-30" />
-      <div className="absolute -top-40 -left-40 w-[500px] h-[500px] rounded-full bg-primary/30 blur-3xl animate-float" />
-      <div className="absolute -bottom-40 -right-40 w-[600px] h-[600px] rounded-full bg-accent/30 blur-3xl animate-float-slow" />
-      <Particles density={50} />
+      {/* Elegant ambient background — full coverage, no isolated orbs */}
+      <div className="absolute inset-0 bg-grid opacity-20" />
+      <div className="absolute inset-0 bg-gradient-aurora opacity-[0.08] animate-gradient" style={{ backgroundSize: "300% 300%" }} />
+      <div className="absolute inset-x-0 top-0 h-[60vh] bg-[radial-gradient(ellipse_at_top,hsl(var(--primary)/0.18),transparent_60%)]" />
+      <div className="absolute inset-x-0 bottom-0 h-[60vh] bg-[radial-gradient(ellipse_at_bottom,hsl(var(--accent)/0.18),transparent_60%)]" />
+      <Particles density={45} />
 
       <div className="relative z-10 w-full max-w-md">
         <Link to="/" className="flex items-center gap-2 justify-center mb-6">
