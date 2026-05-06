@@ -57,12 +57,17 @@ export default function Index() {
           <div className="glass-strong rounded-3xl p-6 sm:p-8 neon-border relative overflow-hidden">
             <div className="absolute inset-0 bg-grid opacity-20" />
             <div className="relative">
-              <div className="text-xs text-muted-foreground tracking-widest">실시간 누적 정산</div>
-              <div className="font-display font-black text-4xl sm:text-5xl mt-2 text-gradient-gold">
-                ₩ 12,847,592,310
+              <div className="text-xs text-muted-foreground tracking-widest flex items-center justify-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse" /> 실시간 누적 정산
+              </div>
+              <div className="font-display font-black text-4xl sm:text-5xl mt-2 text-gradient-gold tabular-nums">
+                ₩ {total.toLocaleString()}
               </div>
               <div className="mt-3 flex items-center justify-center gap-2 text-xs text-secondary">
-                <TrendingUp className="w-4 h-4" /> +₩ 38,420,000 오늘 정산됨
+                <TrendingUp className="w-4 h-4" /> +₩ {today.toLocaleString()} 오늘 정산됨
+              </div>
+              <div className="mt-2 flex items-center justify-center gap-2 text-xs text-muted-foreground">
+                <Users className="w-3.5 h-3.5 text-primary" /> 현재 <span className="text-primary font-bold">{online.toLocaleString()}</span>명 접속중
               </div>
             </div>
             {/* floating orbs */}
@@ -124,13 +129,13 @@ export default function Index() {
           <div className="absolute inset-0 bg-gradient-cyber opacity-10" />
           <div className="relative grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
             {[
-              { v: "284,392", k: "활성 회원" },
+              { v: members.toLocaleString(), k: "활성 회원" },
               { v: "₩ 128억+", k: "누적 정산" },
               { v: "99.97%", k: "정산 성공률" },
               { v: "4.9/5", k: "유저 만족도" },
             ].map((s, i) => (
               <div key={i}>
-                <div className="font-display font-black text-2xl sm:text-4xl text-gradient-aurora animate-gradient">{s.v}</div>
+                <div className="font-display font-black text-2xl sm:text-4xl text-gradient-aurora animate-gradient tabular-nums">{s.v}</div>
                 <div className="text-xs text-muted-foreground mt-1">{s.k}</div>
               </div>
             ))}
