@@ -34,10 +34,18 @@ export default function Auth() {
     nav("/dashboard");
   }
 
+  function checkAge(birth: string) {
+    if (!birth) return false;
+    const d = new Date(birth);
+    const age = (Date.now() - d.getTime()) / (365.25 * 24 * 3600 * 1000);
+    return age >= 14;
+  }
+
   function signup() {
     if (!form.nickname || !form.email || !form.password || !form.phone || !form.realName || !form.birth) {
       toast({ title: "모든 필수 항목을 입력해주세요" }); return;
     }
+    if (!checkAge(form.birth)) { toast({ title: "만 14세 이상부터 가입 가능합니다", description: "청소년 보호를 위해 가입이 제한됩니다." }); return; }
     if (!phoneSent || form.phoneCode !== "0000") { toast({ title: "휴대폰 인증을 완료해주세요", description: "테스트 인증번호: 0000" }); return; }
     const user = {
       id: uid(), nickname: form.nickname, email: form.email, phone: form.phone,
