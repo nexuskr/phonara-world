@@ -140,8 +140,8 @@ export default function SecureAuth() {
           <ShieldCheck className="w-5 h-5 text-secondary" />
           <span className="text-[11px] tracking-[0.3em] text-muted-foreground font-bold">SECURE • V3</span>
         </div>
-        <h1 className="font-display font-black text-3xl text-gradient-primary">폰미션</h1>
-        <p className="text-xs text-muted-foreground mt-1">{mode === "login" ? "로그인하고 오늘의 보상을 받으세요" : "가입 즉시 5,000원 보너스"}</p>
+        <h1 className="font-imperial font-black text-4xl text-gradient-imperial tracking-[0.18em]">PHONARA</h1>
+        <p className="text-xs text-muted-foreground mt-1">{mode === "login" ? "지구 반대편에서도 Empire를 세우다" : "가입 즉시 5,000원 보너스"}</p>
 
         <div className="grid grid-cols-2 gap-2 mt-5 mb-4">
           {(["login","signup"] as const).map(m => (
