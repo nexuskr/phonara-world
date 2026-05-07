@@ -182,6 +182,7 @@ export default function Index() {
               </div>
               <Link
                 to="/secure-auth?signup=1"
+                onClick={() => onCta("council")}
                 className="mt-5 inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-gradient-imperial text-primary-foreground font-bold text-sm glow-imperial hover:scale-105 transition"
               >
                 <Crown className="w-4 h-4" /> {t("councilCta")}
