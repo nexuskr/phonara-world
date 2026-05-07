@@ -38,8 +38,11 @@ export default function Admin() {
         if (u.id !== dep.userId || status !== "approved") return u;
         const pkg = PACKAGES.find(p => p.id === dep.packageId);
         const newTier: Tier = pkg && TIER_RANK[pkg.unlocksTier] > TIER_RANK[u.tier] ? pkg.unlocksTier : u.tier;
-        if (dep.method === "coin") return { ...u, coinBalance: u.coinBalance + dep.amount, tier: newTier };
-        return { ...u, balance: u.balance + dep.amount, tier: newTier };
+        // Auto level-up to match tier (level is bound to tier)
+        const tierLevel = LEVEL_BY_TIER[newTier] ?? 1;
+        const newLevel = Math.max(u.level || 1, tierLevel);
+        if (dep.method === "coin") return { ...u, coinBalance: u.coinBalance + dep.amount, tier: newTier, level: newLevel };
+        return { ...u, balance: u.balance + dep.amount, tier: newTier, level: newLevel };
       };
       return {
         ...d,
