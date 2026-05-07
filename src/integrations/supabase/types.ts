@@ -137,6 +137,24 @@ export type Database = {
         }
         Relationships: []
       }
+      boost_schedule: {
+        Row: {
+          label: string | null
+          multiplier: number
+          schedule_date: string
+        }
+        Insert: {
+          label?: string | null
+          multiplier?: number
+          schedule_date: string
+        }
+        Update: {
+          label?: string | null
+          multiplier?: number
+          schedule_date?: string
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           created_at: string | null
@@ -251,6 +269,27 @@ export type Database = {
         }
         Relationships: []
       }
+      empire_founding_seats: {
+        Row: {
+          claimed_at: string | null
+          claimed_by: string | null
+          purchase_id: string | null
+          seat_no: number
+        }
+        Insert: {
+          claimed_at?: string | null
+          claimed_by?: string | null
+          purchase_id?: string | null
+          seat_no: number
+        }
+        Update: {
+          claimed_at?: string | null
+          claimed_by?: string | null
+          purchase_id?: string | null
+          seat_no?: number
+        }
+        Relationships: []
+      }
       jackpot_pool: {
         Row: {
           amount: number
@@ -328,12 +367,18 @@ export type Database = {
           admin_id: string | null
           amount: number
           approved_at: string | null
+          boost_multiplier: number
+          boost_until: string | null
           completed_at: string | null
           created_at: string
           daily_return: number
           duration_days: number
+          founding_bonus_paid: boolean
+          founding_seat_no: number | null
           harvest_streak: number
           id: string
+          instant_300k_paid: boolean
+          is_empire_founding_member: boolean
           last_harvest_date: string | null
           next_settle_at: string | null
           package_id: string
@@ -341,6 +386,7 @@ export type Database = {
           receipt_url: string | null
           rejected_reason: string | null
           settled_count: number
+          seven_day_bonus_paid: boolean
           status: Database["public"]["Enums"]["package_status"]
           total_return: number
           total_settled: number
@@ -351,12 +397,18 @@ export type Database = {
           admin_id?: string | null
           amount: number
           approved_at?: string | null
+          boost_multiplier?: number
+          boost_until?: string | null
           completed_at?: string | null
           created_at?: string
           daily_return: number
           duration_days: number
+          founding_bonus_paid?: boolean
+          founding_seat_no?: number | null
           harvest_streak?: number
           id?: string
+          instant_300k_paid?: boolean
+          is_empire_founding_member?: boolean
           last_harvest_date?: string | null
           next_settle_at?: string | null
           package_id: string
@@ -364,6 +416,7 @@ export type Database = {
           receipt_url?: string | null
           rejected_reason?: string | null
           settled_count?: number
+          seven_day_bonus_paid?: boolean
           status?: Database["public"]["Enums"]["package_status"]
           total_return: number
           total_settled?: number
@@ -374,12 +427,18 @@ export type Database = {
           admin_id?: string | null
           amount?: number
           approved_at?: string | null
+          boost_multiplier?: number
+          boost_until?: string | null
           completed_at?: string | null
           created_at?: string
           daily_return?: number
           duration_days?: number
+          founding_bonus_paid?: boolean
+          founding_seat_no?: number | null
           harvest_streak?: number
           id?: string
+          instant_300k_paid?: boolean
+          is_empire_founding_member?: boolean
           last_harvest_date?: string | null
           next_settle_at?: string | null
           package_id?: string
@@ -387,6 +446,7 @@ export type Database = {
           receipt_url?: string | null
           rejected_reason?: string | null
           settled_count?: number
+          seven_day_bonus_paid?: boolean
           status?: Database["public"]["Enums"]["package_status"]
           total_return?: number
           total_settled?: number
@@ -1218,6 +1278,7 @@ export type Database = {
       }
       gacha_pull: { Args: never; Returns: Json }
       gen_referral_code: { Args: never; Returns: string }
+      get_active_boost_count: { Args: never; Returns: number }
       get_admin_metrics: {
         Args: { _days?: number }
         Returns: {
@@ -1241,7 +1302,9 @@ export type Database = {
           total_reward: number
         }[]
       }
+      get_empire_seats_remaining: { Args: never; Returns: number }
       get_my_quests: { Args: never; Returns: Json }
+      get_next_empire_day: { Args: never; Returns: string }
       get_referral_leaderboard: {
         Args: { _limit?: number }
         Returns: {
