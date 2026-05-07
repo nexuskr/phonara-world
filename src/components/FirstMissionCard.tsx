@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Target, ChevronRight, Sparkles } from "lucide-react";
 import { useDB } from "@/lib/store";
 import { useEffect, useState } from "react";
+import { Trans, useTranslation } from "react-i18next";
 
 const SEEN_KEY = "phonara_first_mission_seen_v1";
 
@@ -13,6 +14,7 @@ export default function FirstMissionCard() {
   const [db] = useDB();
   const user = db.user;
   const [hidden, setHidden] = useState(false);
+  const { t } = useTranslation("onboarding");
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -44,13 +46,14 @@ export default function FirstMissionCard() {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 mb-0.5">
               <Sparkles className="w-3 h-3 text-primary" />
-              <span className="text-[10px] font-imperial tracking-[0.2em] text-primary">FIRST MISSION</span>
+              <span className="text-[10px] font-imperial tracking-[0.2em] text-primary">{t("firstMissionLabel")}</span>
             </div>
             <p className="text-sm font-bold text-foreground leading-tight">
-              첫 미션 완료하면 <span className="text-gradient-imperial">+3,000원</span>
+              <Trans i18nKey="firstMissionTitle" ns="onboarding"
+                components={{ 1: <span className="text-gradient-imperial" /> }} />
             </p>
             <p className="text-[11px] text-muted-foreground mt-0.5">
-              60초 안에 끝납니다. 지금 시작하세요.
+              {t("firstMissionSub")}
             </p>
           </div>
           <ChevronRight className="w-5 h-5 text-primary shrink-0" />

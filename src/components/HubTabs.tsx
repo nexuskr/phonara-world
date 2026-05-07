@@ -1,67 +1,63 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { Target, Sparkles, Gamepad2, Crown, Layers, Users, Wallet, ArrowDownToLine, ArrowUpFromLine, Receipt, Trophy, Award, Share2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { ComponentType } from "react";
 
-type Tab = { to: string; label: string; icon: ComponentType<{ className?: string }> };
+type HubKey = "earn" | "empire" | "treasury" | "legacy";
 
-const HUBS: Record<string, { title: string; tagline: string; tabs: Tab[] }> = {
+type Tab = { to: string; tKey: string; icon: ComponentType<{ className?: string }> };
+
+const HUBS: Record<HubKey, { tabs: Tab[] }> = {
   earn: {
-    title: "EARN",
-    tagline: "돈 버는 모든 것 — 한 곳에서",
     tabs: [
-      { to: "/missions", label: "미션", icon: Target },
-      { to: "/quests", label: "퀘스트", icon: Sparkles },
-      { to: "/roulette", label: "룰렛", icon: Gamepad2 },
-      { to: "/season-pass", label: "시즌패스", icon: Award },
+      { to: "/missions",   tKey: "earn.missions",    icon: Target },
+      { to: "/quests",     tKey: "earn.quests",      icon: Sparkles },
+      { to: "/roulette",   tKey: "earn.roulette",    icon: Gamepad2 },
+      { to: "/season-pass",tKey: "earn.seasonPass",  icon: Award },
     ],
   },
   empire: {
-    title: "EMPIRE",
-    tagline: "당신의 제국, 등급으로 말하다",
     tabs: [
-      { to: "/packages", label: "패키지", icon: Crown },
-      { to: "/empire", label: "Tier", icon: Layers },
-      { to: "/empire?view=founding", label: "창립멤버", icon: Users },
+      { to: "/packages",            tKey: "empire.packages", icon: Crown },
+      { to: "/empire",              tKey: "empire.tier",     icon: Layers },
+      { to: "/empire?view=founding",tKey: "empire.founding", icon: Users },
     ],
   },
   treasury: {
-    title: "TREASURY",
-    tagline: "잔고 · 입출금 · 내역",
     tabs: [
-      { to: "/wallet", label: "지갑", icon: Wallet },
-      { to: "/wallet?tab=deposit", label: "입금", icon: ArrowDownToLine },
-      { to: "/wallet?tab=withdraw", label: "출금", icon: ArrowUpFromLine },
-      { to: "/wallet?tab=history", label: "내역", icon: Receipt },
+      { to: "/wallet",               tKey: "treasury.wallet",   icon: Wallet },
+      { to: "/wallet?tab=deposit",   tKey: "treasury.deposit",  icon: ArrowDownToLine },
+      { to: "/wallet?tab=withdraw",  tKey: "treasury.withdraw", icon: ArrowUpFromLine },
+      { to: "/wallet?tab=history",   tKey: "treasury.history",  icon: Receipt },
     ],
   },
   legacy: {
-    title: "LEGACY",
-    tagline: "당신이 쌓은 것 — 영원히 남는다",
     tabs: [
-      { to: "/legacy", label: "랭킹", icon: Trophy },
-      { to: "/achievements", label: "업적", icon: Award },
-      { to: "/legacy?tab=referral", label: "레퍼럴", icon: Share2 },
+      { to: "/legacy",               tKey: "legacy.ranking",      icon: Trophy },
+      { to: "/achievements",         tKey: "legacy.achievements", icon: Award },
+      { to: "/legacy?tab=referral",  tKey: "legacy.referral",     icon: Share2 },
     ],
   },
 };
 
-export default function HubTabs({ hub }: { hub: keyof typeof HUBS }) {
+export default function HubTabs({ hub }: { hub: HubKey }) {
   const cfg = HUBS[hub];
   const loc = useLocation();
+  const { t } = useTranslation("hubs");
   if (!cfg) return null;
 
   return (
     <div className="container pt-4 pb-2">
       <div className="flex items-baseline gap-3 mb-3">
         <h1 className="font-imperial text-2xl md:text-3xl text-gradient-imperial tracking-[0.18em]">
-          {cfg.title}
+          {t(`${hub}.title`)}
         </h1>
         <span className="text-[11px] text-muted-foreground tracking-wide hidden sm:inline">
-          {cfg.tagline}
+          {t(`${hub}.tagline`)}
         </span>
       </div>
       <div className="flex gap-1.5 overflow-x-auto no-scrollbar -mx-1 px-1">
-        {cfg.tabs.map(({ to, label, icon: Icon }) => {
+        {cfg.tabs.map(({ to, tKey, icon: Icon }) => {
           const path = to.split("?")[0];
           const active = loc.pathname === path;
           return (
@@ -75,7 +71,7 @@ export default function HubTabs({ hub }: { hub: keyof typeof HUBS }) {
               }`}
             >
               <Icon className="w-3.5 h-3.5" />
-              {label}
+              {t(tKey)}
             </NavLink>
           );
         })}

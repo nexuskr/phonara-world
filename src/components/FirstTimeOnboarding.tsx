@@ -1,43 +1,34 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Crown, Zap, Wallet, X, ChevronRight } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const KEY = "phonara_onboarded_v1";
 
-const STEPS = [
-  {
-    icon: Crown,
-    title: "환영합니다, 사령관",
-    subtitle: "Phonara 제국의 문이 열렸습니다",
-    body: "지구 반대편에서도 당신의 Empire를 세울 시간입니다.",
-    accent: "from-primary via-primary-glow to-primary",
-  },
-  {
-    icon: Zap,
-    title: "EARN — 돈 버는 곳",
-    subtitle: "미션 · 퀘스트 · 룰렛 · 시즌패스",
-    body: "하단 가운데 골드 버튼을 누르면 모든 수익 활동이 한 곳에 있습니다.",
-    accent: "from-accent via-primary to-primary-glow",
-  },
-  {
-    icon: Wallet,
-    title: "TREASURY — 출금하는 곳",
-    subtitle: "최소 10,000원부터 즉시 정산",
-    body: "잔고는 항상 화면 상단에서 빛나고 있습니다.",
-    accent: "from-secondary via-accent to-primary",
-  },
+const STEP_ICONS = [Crown, Zap, Wallet] as const;
+const STEP_ACCENTS = [
+  "from-primary via-primary-glow to-primary",
+  "from-accent via-primary to-primary-glow",
+  "from-secondary via-accent to-primary",
 ] as const;
 
 export default function FirstTimeOnboarding({ enabled }: { enabled: boolean }) {
+  const { t } = useTranslation("onboarding");
   const [step, setStep] = useState(0);
   const [open, setOpen] = useState(false);
+
+  const STEPS = [
+    { title: t("step1Title"), subtitle: t("step1Sub"), body: t("step1Body") },
+    { title: t("step2Title"), subtitle: t("step2Sub"), body: t("step2Body") },
+    { title: t("step3Title"), subtitle: t("step3Sub"), body: t("step3Body") },
+  ];
 
   useEffect(() => {
     if (!enabled) return;
     if (typeof window === "undefined") return;
     if (localStorage.getItem(KEY)) return;
-    const t = setTimeout(() => setOpen(true), 350);
-    return () => clearTimeout(t);
+    const ti = setTimeout(() => setOpen(true), 350);
+    return () => clearTimeout(ti);
   }, [enabled]);
 
   function close() {
@@ -47,7 +38,8 @@ export default function FirstTimeOnboarding({ enabled }: { enabled: boolean }) {
 
   if (!open) return null;
   const s = STEPS[step];
-  const Icon = s.icon;
+  const Icon = STEP_ICONS[step];
+  const accent = STEP_ACCENTS[step];
   const last = step === STEPS.length - 1;
 
   return (
@@ -56,20 +48,20 @@ export default function FirstTimeOnboarding({ enabled }: { enabled: boolean }) {
         <button
           onClick={close}
           className="absolute top-3 right-3 p-1.5 rounded-full hover:bg-muted/40 text-muted-foreground"
-          aria-label="건너뛰기"
+          aria-label={t("skip")}
         >
           <X className="w-4 h-4" />
         </button>
 
         <div className="flex items-center justify-center mb-5">
-          <div className={`relative w-20 h-20 rounded-3xl bg-gradient-to-br ${s.accent} flex items-center justify-center glow-imperial`}>
+          <div className={`relative w-20 h-20 rounded-3xl bg-gradient-to-br ${accent} flex items-center justify-center glow-imperial`}>
             <Icon className="w-10 h-10 text-primary-foreground" />
             <div className="absolute -inset-3 rounded-3xl bg-primary/30 blur-2xl -z-10 animate-ring-pulse" />
           </div>
         </div>
 
         <p className="text-[10px] tracking-[0.3em] text-primary text-center font-bold mb-1">
-          STEP {step + 1} / {STEPS.length}
+          {t("stepLabel", { i: step + 1, n: STEPS.length })}
         </p>
         <h2 className="font-imperial text-2xl text-gradient-imperial text-center tracking-[0.1em] mb-1">
           {s.title}
@@ -79,7 +71,6 @@ export default function FirstTimeOnboarding({ enabled }: { enabled: boolean }) {
           {s.body}
         </p>
 
-        {/* progress dots */}
         <div className="flex items-center justify-center gap-1.5 mb-6">
           {STEPS.map((_, i) => (
             <span
@@ -96,7 +87,7 @@ export default function FirstTimeOnboarding({ enabled }: { enabled: boolean }) {
             onClick={close}
             className="px-4 py-3 rounded-xl text-xs text-muted-foreground hover:text-foreground transition"
           >
-            건너뛰기
+            {t("skip")}
           </button>
           {last ? (
             <Link
@@ -104,14 +95,14 @@ export default function FirstTimeOnboarding({ enabled }: { enabled: boolean }) {
               onClick={close}
               className="flex-1 py-3 rounded-xl bg-gradient-imperial text-primary-foreground font-bold text-sm flex items-center justify-center gap-2 glow-imperial press"
             >
-              제국을 시작하다 <ChevronRight className="w-4 h-4" />
+              {t("start")} <ChevronRight className="w-4 h-4" />
             </Link>
           ) : (
             <button
               onClick={() => setStep((s) => s + 1)}
               className="flex-1 py-3 rounded-xl bg-gradient-imperial text-primary-foreground font-bold text-sm flex items-center justify-center gap-2 glow-imperial press"
             >
-              다음 <ChevronRight className="w-4 h-4" />
+              {t("next")} <ChevronRight className="w-4 h-4" />
             </button>
           )}
         </div>
