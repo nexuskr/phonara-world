@@ -213,7 +213,13 @@ function ContentFarmerCard({ tier, runs, used, loading }: { tier: string; runs: 
     if (!latest) return;
     try {
       const r = await claimRun(latest.id);
-      toast({ title: "✅ 수령 완료", description: `+${formatKRW(r.reward)}` });
+      toast({ title: "✅ 수령 완료", description: `+${formatKRW(r.reward)} · 라운지 공유됨` });
+      const u = (await supabase.auth.getUser()).data.user;
+      if (u) await shareToLounge({
+        user_id: u.id, nickname: u.user_metadata?.nickname ?? null, tier,
+        kind: "content", reward: r.reward, pnl_pct: r.pnl_pct,
+        output_text: latest.output_text, output_path: latest.output_path,
+      });
     } catch (e: any) { toast({ title: "오류", description: e.message, variant: "destructive" }); }
   };
 
