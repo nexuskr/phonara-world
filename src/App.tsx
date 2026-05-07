@@ -21,12 +21,18 @@ import CompleteProfile from "./pages/CompleteProfile.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import { useSessionGuard } from "./hooks/use-session-guard";
 import { useAuthBridge } from "./hooks/use-auth-bridge";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: { staleTime: 30_000, gcTime: 5 * 60_000, retry: 1, refetchOnWindowFocus: false },
+  },
+});
 
 function SessionWatcher() { useSessionGuard(); useAuthBridge(); return null; }
 
 const App = () => (
+  <ErrorBoundary>
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
