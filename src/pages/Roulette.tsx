@@ -158,6 +158,7 @@ export default function Roulette() {
                 <div className="text-xs text-muted-foreground">결과</div>
                 <div className="font-display font-black text-xl text-gradient-gold">{lastResult.label}</div>
                 {lastResult.amount > 0 && <div className="text-sm text-secondary font-bold">+{formatKRW(lastResult.amount)}</div>}
+                <div className="text-[10px] text-muted-foreground mt-1">✓ 서버 검증 완료 · 지갑에 즉시 반영됨</div>
               </div>
             )}
 
