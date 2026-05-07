@@ -2,26 +2,27 @@ import { useEffect, useRef, useState } from "react";
 import { useDB, formatKRW, MAIN_MILESTONE_AMOUNT, MAIN_MAX_INTERVAL_MS, MINI_MAX_INTERVAL_MS, jackpotPayoutPct, jackpotResetBase, miniJackpotResetBase, miniJackpotAmount, randomFakeNick, type Tier } from "@/lib/store";
 import { Flame, Crown, Trophy, Sparkles } from "lucide-react";
 
-// Global jackpot ticker that grows every second (shared across all sessions via localStorage).
-// Auto-explodes when milestone reached or interval expired (rare bot-claimed → fake winner shown).
+// Global jackpot ticker — runs in memory, persists to localStorage every 30s only.
+// Heavy throttling prevents app-wide re-render cascade from useDB subscribers.
+let engineStarted = false;
 export function useJackpotEngine() {
   const [, setDb] = useDB();
-  const ranRef = useRef(false);
 
   useEffect(() => {
-    if (ranRef.current) return;
-    ranRef.current = true;
+    if (engineStarted) return;
+    engineStarted = true;
+
+    let lastPersist = Date.now();
 
     const tick = () => {
       setDb(d => {
         const now = Date.now();
         const j = { ...d.jackpot };
-        // Organic growth from simulated game contributions (8% of stakes)
-        j.amount += Math.floor(3000 + Math.random() * 18000);
-        j.mini   += Math.floor(400 + Math.random() * 2200);
+        // Organic growth — scaled up since interval is now 5s instead of 1s
+        j.amount += Math.floor(15_000 + Math.random() * 90_000);
+        j.mini   += Math.floor(2_000 + Math.random() * 11_000);
         j.totalContrib += 1;
 
-        // Main explosion: hit milestone (3천만원) OR 6h cap
         const milestoneHit = j.amount >= MAIN_MILESTONE_AMOUNT;
         const timeExpired = now - j.lastMainExplode > MAIN_MAX_INTERVAL_MS;
         if (milestoneHit || timeExpired) {
@@ -29,11 +30,9 @@ export function useJackpotEngine() {
           const tiers: Tier[] = ["EMPIRE","EMPIRE","EMPIRE","GOD","VIP"];
           const wt = tiers[Math.floor(Math.random() * tiers.length)];
           j.recentWins = [{ nickname: randomFakeNick(), amount: won, tier: wt, when: now, type: "main" as const }, ...j.recentWins].slice(0, 12);
-          // Reset pool to random 1천만~1.5천만원 base
           j.amount = jackpotResetBase();
           j.lastMainExplode = now;
         }
-        // Mini explosion (every 1h or amount cap)
         if (now - j.lastMiniExplode > MINI_MAX_INTERVAL_MS || j.mini > 3_000_000) {
           const won = miniJackpotAmount();
           const tiers: Tier[] = ["NORMAL","NORMAL","VIP","GOD"];
@@ -42,11 +41,20 @@ export function useJackpotEngine() {
           j.mini = miniJackpotResetBase();
           j.lastMiniExplode = now;
         }
-        return { ...d, jackpot: j };
+
+        // Skip persistence except every 30s — saveDB triggers all useDB subscribers
+        const shouldPersist = now - lastPersist > 30_000;
+        if (shouldPersist) lastPersist = now;
+        const next = { ...d, jackpot: j };
+        if (!shouldPersist) {
+          // mutate in place to avoid storage write but still update local state
+          (next as any).__skipPersist = true;
+        }
+        return next;
       });
     };
-    const i = setInterval(tick, 1000);
-    return () => clearInterval(i);
+    const i = setInterval(tick, 5000);
+    return () => { clearInterval(i); engineStarted = false; };
   }, [setDb]);
 }
 
