@@ -6,6 +6,8 @@ import { Wallet as WalletIcon, ArrowDownToLine, ArrowUpFromLine, Clock, Coins, B
 import { toast } from "@/hooks/use-toast";
 import PinPad from "@/components/PinPad";
 import { useRequireAuth } from "@/hooks/use-require-auth";
+import { supabase } from "@/integrations/supabase/client";
+import { refreshWallet } from "@/lib/missions-rpc";
 
 type AssetTab = "bank" | "coin";
 type ActionTab = "withdraw" | "deposit" | "history";
@@ -53,7 +55,7 @@ export default function Wallet() {
     return u.withdrawPw;
   }
 
-  function submitWithdraw() {
+  async function submitWithdraw() {
     const a = Number(amount);
     if (!a || a < 10000) { toast({ title: "최소 10,000원부터 출금 가능" }); return; }
     const balance = asset === "bank" ? u.balance : u.coinBalance;
@@ -66,28 +68,46 @@ export default function Wallet() {
     if (asset === "bank" && !account) { toast({ title: "계좌번호를 입력해주세요" }); return; }
     if (asset === "coin" && !coinAddr) { toast({ title: "코인 주소를 입력해주세요" }); return; }
     if (sentCode !== authCode) { toast({ title: "인증번호 불일치" }); return; }
-    const pw = ensureWithdrawPw();
-    if (!pw) return;
-    if (pw !== withdrawPw) { toast({ title: "출금 비밀번호 불일치" }); return; }
+    if (!/^\d{6}$/.test(withdrawPw)) { toast({ title: "출금 PIN 6자리를 입력해주세요" }); return; }
 
-    const txCode = "PM-" + Math.random().toString(36).slice(2, 10).toUpperCase();
+    // Server-authoritative withdrawal: validates PIN, locks funds, creates request
+    const { data, error } = await supabase.rpc("request_withdrawal", {
+      _amount: a,
+      _method: asset === "bank" ? "bank" : "coin",
+      _bank_name: asset === "bank" ? bank : null,
+      _bank_account: asset === "bank" ? account : null,
+      _coin_address: asset === "coin" ? coinAddr : null,
+      _coin_network: asset === "coin" ? network : null,
+      _pin: withdrawPw,
+    });
+
+    if (error) {
+      const msg = error.message || "";
+      const friendly = msg.includes("pin mismatch") ? "출금 PIN이 일치하지 않습니다."
+        : msg.includes("below_min") ? "최소 출금 금액 미만입니다."
+        : msg.includes("insufficient_funds") ? "잔고가 부족합니다."
+        : msg.includes("daily_withdraw_limit") ? "일반 등급 일일 출금 3회 한도를 초과했습니다."
+        : msg;
+      toast({ title: "출금 실패", description: friendly, variant: "destructive" });
+      return;
+    }
+
+    const r = data as any;
+    setResultCode(r?.tx_code ?? null);
+
+    // Mirror to local DB for UI continuity
     setDb(d => ({
       ...d,
-      user: d.user ? {
-        ...d.user,
-        balance: asset === "bank" ? d.user.balance - a : d.user.balance,
-        coinBalance: asset === "coin" ? d.user.coinBalance - a : d.user.coinBalance,
-      } : null,
       withdraws: [{
         id: uid(), userId: u.id, nickname: u.nickname, amount: a, method: asset,
         bank: asset === "bank" ? bank : undefined, account: asset === "bank" ? account : undefined,
         coinAddress: asset === "coin" ? coinAddr : undefined, network: asset === "coin" ? network : undefined,
-        txCode, status: "pending", createdAt: Date.now(),
+        txCode: r?.tx_code ?? "", status: "pending", createdAt: Date.now(),
       }, ...d.withdraws],
     }));
-    setResultCode(txCode);
+    await refreshWallet();
     setAmount(""); setAccount(""); setCoinAddr(""); setSentCode(null); setAuthCode(""); setWithdrawPw("");
-    toast({ title: "💸 출금 신청 완료", description: "관리자 승인 후 1시간 이내 입금됩니다." });
+    toast({ title: "💸 출금 신청 완료", description: `${u.tier} 등급 처리 시간 내 정산됩니다.` });
   }
 
   function submitDeposit() {
