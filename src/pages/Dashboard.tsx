@@ -141,6 +141,22 @@ export default function Dashboard() {
             <AttendanceCard />
           </div>
 
+          {/* LUCKY ROULETTE entry */}
+          <Link to="/roulette" className="mt-4 block press">
+            <div className="glass-strong rounded-2xl p-4 neon-border relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-aurora opacity-[0.08] animate-gradient" style={{ backgroundSize: "300% 300%" }} />
+              <div className="relative flex items-center justify-between">
+                <div>
+                  <div className="font-display font-black text-base flex items-center gap-2">
+                    🎰 럭키 룰렛 <span className="text-[10px] px-2 py-0.5 rounded-full bg-gold/20 text-gold font-bold">매일 무료</span>
+                  </div>
+                  <div className="text-[11px] text-muted-foreground mt-0.5">스핀 보너스 · EMPIRE 황금 가챠</div>
+                </div>
+                <div className="text-2xl">→</div>
+              </div>
+            </div>
+          </Link>
+
           {/* MEGA JACKPOT — primary dopamine driver */}
           <div className="mt-5">
             <JackpotBanner />

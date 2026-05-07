@@ -521,6 +521,36 @@ export type Database = {
         }
         Relationships: []
       }
+      roulette_spins: {
+        Row: {
+          amount: number
+          cost: number
+          created_at: string
+          id: string
+          kind: string
+          prize_label: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          cost?: number
+          created_at?: string
+          id?: string
+          kind: string
+          prize_label: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          cost?: number
+          created_at?: string
+          id?: string
+          kind?: string
+          prize_label?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       support_messages: {
         Row: {
           created_at: string
@@ -854,6 +884,7 @@ export type Database = {
         }
         Returns: Json
       }
+      gacha_pull: { Args: never; Returns: Json }
       gen_referral_code: { Args: never; Returns: string }
       get_admin_metrics: {
         Args: { _days?: number }
@@ -889,6 +920,7 @@ export type Database = {
         }[]
       }
       get_referral_stats: { Args: never; Returns: Json }
+      get_roulette_stats: { Args: never; Returns: Json }
       get_tier_distribution: {
         Args: never
         Returns: {
@@ -932,11 +964,16 @@ export type Database = {
         Args: { _method: string; _new_pin: string }
         Returns: Json
       }
+      roulette_daily_limit: {
+        Args: { _tier: Database["public"]["Enums"]["user_tier"] }
+        Returns: number
+      }
       settle_mission: {
         Args: { _base_reward: number; _is_win: boolean; _mission_id: string }
         Returns: Json
       }
       settle_package_daily: { Args: never; Returns: Json }
+      spin_roulette: { Args: { _kind: string }; Returns: Json }
       start_ai_bot_run: {
         Args: {
           _kind: Database["public"]["Enums"]["ai_bot_kind"]
