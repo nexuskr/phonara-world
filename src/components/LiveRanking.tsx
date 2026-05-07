@@ -20,7 +20,7 @@ export default function LiveRanking() {
         next.sort((a, b) => b.v - a.v);
         return next;
       });
-    }, 1400);
+    }, 3500);
     return () => clearInterval(t);
   }, []);
 

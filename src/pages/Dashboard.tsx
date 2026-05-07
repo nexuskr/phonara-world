@@ -95,7 +95,7 @@ export default function Dashboard() {
                   <span className="text-[10px] px-2 py-0.5 rounded-full bg-gold/20 text-gold font-bold">{user.tier}</span>
                 </div>
                 <button onClick={() => { setBurst(true); setTimeout(() => setBurst(false), 1600); }}
-                  className="font-display font-black text-4xl sm:text-5xl mt-2 text-gradient-gold block hover:scale-105 transition">
+                  className="font-display font-black text-4xl sm:text-5xl mt-2 text-gradient-gold block sm:hover:scale-105 transition">
                   {formatKRW(user.balance)}
                 </button>
                 <div className="mt-2 text-xs text-muted-foreground">
@@ -151,7 +151,7 @@ export default function Dashboard() {
               { to: "/wallet", label: "충전", icon: "💎", grad: "from-secondary/20 to-secondary/5" },
               { to: "/support", label: "고객센터", icon: "💬", grad: "from-accent/20 to-accent/5" },
             ].map((a, i) => (
-              <Link key={i} to={a.to} className={`glass rounded-2xl p-3 flex flex-col items-center gap-1 bg-gradient-to-b ${a.grad} hover:scale-105 transition`}>
+              <Link key={i} to={a.to} className={`glass rounded-2xl p-3 flex flex-col items-center gap-1 bg-gradient-to-b ${a.grad} sm:hover:scale-105 transition`}>
                 <span className="text-2xl">{a.icon}</span>
                 <span className="text-[11px] font-bold">{a.label}</span>
               </Link>

@@ -13,14 +13,14 @@ export function useFluctuate(initial: number, { min = -200, max = 800, every = 1
 }
 
 export function useOnline() {
-  return useFluctuate(2847, { min: -8, max: 14, every: 1200 });
+  return useFluctuate(2847, { min: -8, max: 14, every: 4000 });
 }
 export function useTotalPayout() {
-  return useFluctuate(12_847_592_310, { min: 50_000, max: 480_000, every: 1100 });
+  return useFluctuate(12_847_592_310, { min: 50_000, max: 480_000, every: 3500 });
 }
 export function useTodayPayout() {
-  return useFluctuate(38_420_000, { min: 5_000, max: 120_000, every: 1300 });
+  return useFluctuate(38_420_000, { min: 5_000, max: 120_000, every: 4000 });
 }
 export function useMembers() {
-  return useFluctuate(284_392, { min: 0, max: 6, every: 2200 });
+  return useFluctuate(284_392, { min: 0, max: 6, every: 6000 });
 }
