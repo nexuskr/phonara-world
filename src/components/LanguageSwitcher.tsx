@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Globe, Check } from "lucide-react";
+import { track } from "@/lib/analytics";
 
 const LANGS = [
   { code: "ko", flag: "🇰🇷", name: "한국어" },
