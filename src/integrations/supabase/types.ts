@@ -759,6 +759,8 @@ export type Database = {
         | "deposit"
         | "admin_adjust"
         | "jackpot_win"
+        | "deposit_credit"
+        | "package_settle"
       user_tier: "normal" | "vip" | "god" | "empire"
       withdrawal_method: "bank" | "coin"
       withdrawal_status:
@@ -917,6 +919,8 @@ export const Constants = {
         "deposit",
         "admin_adjust",
         "jackpot_win",
+        "deposit_credit",
+        "package_settle",
       ],
       user_tier: ["normal", "vip", "god", "empire"],
       withdrawal_method: ["bank", "coin"],
