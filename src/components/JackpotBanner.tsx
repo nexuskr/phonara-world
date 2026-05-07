@@ -1,67 +1,58 @@
 import { useEffect, useRef, useState } from "react";
-import { useDB, formatKRW, MAIN_MILESTONE_AMOUNT, MAIN_MAX_INTERVAL_MS, MINI_MAX_INTERVAL_MS, jackpotPayoutPct, jackpotResetBase, miniJackpotResetBase, miniJackpotAmount, randomFakeNick, type Tier } from "@/lib/store";
+import { useDB, formatKRW, MAIN_MILESTONE_AMOUNT, MAIN_MAX_INTERVAL_MS, MINI_MAX_INTERVAL_MS, jackpotPayoutPct, jackpotResetBase, miniJackpotResetBase, miniJackpotAmount, randomFakeNick, type Tier, type JackpotState } from "@/lib/store";
 import { Flame, Crown, Trophy, Sparkles } from "lucide-react";
 
-// Global jackpot ticker — runs in memory, persists to localStorage every 30s only.
-// Heavy throttling prevents app-wide re-render cascade from useDB subscribers.
-let engineStarted = false;
-export function useJackpotEngine() {
-  const [, setDb] = useDB();
+// Live jackpot — runs in memory, syncs to DB every 30s only (avoids global rerender storm).
+function useJackpotState() {
+  const [db, setDb] = useDB();
+  const [j, setJ] = useState<JackpotState>(db.jackpot);
+  const stateRef = useRef(j);
+  stateRef.current = j;
 
   useEffect(() => {
-    if (engineStarted) return;
-    engineStarted = true;
-
     let lastPersist = Date.now();
-
     const tick = () => {
-      setDb(d => {
-        const now = Date.now();
-        const j = { ...d.jackpot };
-        // Organic growth — scaled up since interval is now 5s instead of 1s
-        j.amount += Math.floor(15_000 + Math.random() * 90_000);
-        j.mini   += Math.floor(2_000 + Math.random() * 11_000);
-        j.totalContrib += 1;
+      const now = Date.now();
+      const cur = { ...stateRef.current };
+      cur.amount += Math.floor(15_000 + Math.random() * 90_000);
+      cur.mini += Math.floor(2_000 + Math.random() * 11_000);
+      cur.totalContrib += 1;
 
-        const milestoneHit = j.amount >= MAIN_MILESTONE_AMOUNT;
-        const timeExpired = now - j.lastMainExplode > MAIN_MAX_INTERVAL_MS;
-        if (milestoneHit || timeExpired) {
-          const won = Math.floor(j.amount * jackpotPayoutPct());
-          const tiers: Tier[] = ["EMPIRE","EMPIRE","EMPIRE","GOD","VIP"];
-          const wt = tiers[Math.floor(Math.random() * tiers.length)];
-          j.recentWins = [{ nickname: randomFakeNick(), amount: won, tier: wt, when: now, type: "main" as const }, ...j.recentWins].slice(0, 12);
-          j.amount = jackpotResetBase();
-          j.lastMainExplode = now;
-        }
-        if (now - j.lastMiniExplode > MINI_MAX_INTERVAL_MS || j.mini > 3_000_000) {
-          const won = miniJackpotAmount();
-          const tiers: Tier[] = ["NORMAL","NORMAL","VIP","GOD"];
-          const wt = tiers[Math.floor(Math.random() * tiers.length)];
-          j.recentWins = [{ nickname: randomFakeNick(), amount: won, tier: wt, when: now, type: "mini" as const }, ...j.recentWins].slice(0, 12);
-          j.mini = miniJackpotResetBase();
-          j.lastMiniExplode = now;
-        }
+      if (cur.amount >= MAIN_MILESTONE_AMOUNT || now - cur.lastMainExplode > MAIN_MAX_INTERVAL_MS) {
+        const won = Math.floor(cur.amount * jackpotPayoutPct());
+        const tiers: Tier[] = ["EMPIRE", "EMPIRE", "EMPIRE", "GOD", "VIP"];
+        const wt = tiers[Math.floor(Math.random() * tiers.length)];
+        cur.recentWins = [{ nickname: randomFakeNick(), amount: won, tier: wt, when: now, type: "main" as const }, ...cur.recentWins].slice(0, 12);
+        cur.amount = jackpotResetBase();
+        cur.lastMainExplode = now;
+      }
+      if (now - cur.lastMiniExplode > MINI_MAX_INTERVAL_MS || cur.mini > 3_000_000) {
+        const won = miniJackpotAmount();
+        const tiers: Tier[] = ["NORMAL", "NORMAL", "VIP", "GOD"];
+        const wt = tiers[Math.floor(Math.random() * tiers.length)];
+        cur.recentWins = [{ nickname: randomFakeNick(), amount: won, tier: wt, when: now, type: "mini" as const }, ...cur.recentWins].slice(0, 12);
+        cur.mini = miniJackpotResetBase();
+        cur.lastMiniExplode = now;
+      }
+      setJ(cur);
 
-        // Skip persistence except every 30s — saveDB triggers all useDB subscribers
-        const shouldPersist = now - lastPersist > 30_000;
-        if (shouldPersist) lastPersist = now;
-        const next = { ...d, jackpot: j };
-        if (!shouldPersist) {
-          // mutate in place to avoid storage write but still update local state
-          (next as any).__skipPersist = true;
-        }
-        return next;
-      });
+      if (now - lastPersist > 30_000) {
+        lastPersist = now;
+        setDb(d => ({ ...d, jackpot: cur }));
+      }
     };
     const i = setInterval(tick, 5000);
-    return () => { clearInterval(i); engineStarted = false; };
+    return () => clearInterval(i);
   }, [setDb]);
+
+  return j;
 }
 
+// Backward-compat export — components that previously called useJackpotEngine still work as a no-op.
+export function useJackpotEngine() {}
+
 export default function JackpotBanner({ compact = false }: { compact?: boolean }) {
-  useJackpotEngine();
-  const [db] = useDB();
-  const j = db.jackpot;
+  const j = useJackpotState();
   const [pulse, setPulse] = useState(false);
   const prev = useRef(j.amount);
   useEffect(() => {
@@ -124,7 +115,6 @@ export default function JackpotBanner({ compact = false }: { compact?: boolean }
           미니 잭팟 <span className="text-secondary font-bold tabular-nums">{formatKRW(j.mini)}</span> · 다음 자동 폭발 <span className="text-primary font-bold">{h}h {m}m</span>
         </div>
 
-        {/* Milestone progress */}
         <div className="mt-3">
           <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
             <span>다음 마일스톤</span>
@@ -136,7 +126,6 @@ export default function JackpotBanner({ compact = false }: { compact?: boolean }
           </div>
         </div>
 
-        {/* Recent winners */}
         <div className="mt-3 grid grid-cols-1 gap-1.5">
           {j.recentWins.slice(0, 3).map((w, i) => (
             <div key={i} className="glass rounded-xl px-3 py-2 flex items-center justify-between text-[11px]">
