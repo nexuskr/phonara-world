@@ -226,7 +226,7 @@ export default function Wallet() {
             {asset === "bank" && action === "deposit" && (
               <div className="glass rounded-xl p-4 text-xs space-y-1">
                 <div className="flex justify-between"><span className="text-muted-foreground">입금 은행</span><span className="font-bold">KB국민 123-456-78901234</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">예금주</span><span className="font-bold">(주)폰미션</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground">예금주</span><span className="font-bold">(주)Phonara</span></div>
                 <p className="text-[10px] text-muted-foreground pt-2 border-t border-border/40">송금 후 발급된 거래 코드를 입금자명에 포함해주세요.</p>
               </div>
             )}

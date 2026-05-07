@@ -1,4 +1,4 @@
-export const SITE_NAME = 'PHONETOK'
+export const SITE_NAME = 'Phonara'
 export const BRAND = {
   primary: '#ff6b1f',
   primaryFg: '#0a0d1a',

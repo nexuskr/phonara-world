@@ -44,9 +44,9 @@ export default function ReferralCard() {
 
   const share = async () => {
     if (!link) return;
-    const text = `🚀 폰미션에서 같이 부업해요! 내 추천코드 ${stats?.code} 사용하면 둘 다 보너스 받아요 💰`;
+    const text = `🚀 Phonara에서 같이 Empire를 세워요! 내 추천코드 ${stats?.code} 사용하면 둘 다 보너스 받아요 💰`;
     if (navigator.share) {
-      try { await navigator.share({ title: "폰미션 초대", text, url: link }); return; } catch {}
+      try { await navigator.share({ title: "Phonara 초대", text, url: link }); return; } catch {}
     }
     await copy(`${text}\n${link}`, "초대 메시지");
   };

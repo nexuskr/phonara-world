@@ -338,7 +338,7 @@ export default function Index() {
         >
           <Sparkles className="w-5 h-5" /> 무료로 시작하기
         </Link>
-        <div className="mt-12 text-xs text-muted-foreground">© 2026 PhoneMission. All Rights Reserved.</div>
+        <div className="mt-12 text-xs text-muted-foreground">© 2026 Phonara. All Rights Reserved.</div>
       </section>
     </div>
   );

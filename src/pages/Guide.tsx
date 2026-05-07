@@ -14,7 +14,7 @@ export default function Guide() {
           <BookOpen className="w-5 h-5 text-primary" />
           <span className="text-gradient-primary">운영원칙 & 이용가이드</span>
         </h1>
-        <p className="text-xs text-muted-foreground mb-4">투명하고 지속 가능한 스마트 여가 플랫폼, 폰미션</p>
+        <p className="text-xs text-muted-foreground mb-4">투명하고 지속 가능한 스마트 여가 플랫폼, Phonara</p>
 
         <div className="grid grid-cols-4 gap-1.5 mb-5">
           {[
@@ -61,7 +61,7 @@ function Principles() {
   return (
     <div>
       <div className="glass rounded-2xl p-4 mb-4 text-xs leading-relaxed text-muted-foreground">
-        폰미션은 <b className="text-foreground">"즐겁고 지속 가능한 스마트 여가 플랫폼"</b>을 목표로 운영됩니다.
+        Phonara는 <b className="text-foreground">"즐겁고 지속 가능한 스마트 여가 플랫폼"</b>을 목표로 운영됩니다.
         유저 여러분이 안전하고, 투명하며, 오랫동안 만족스럽게 이용할 수 있도록 최선을 다합니다.
       </div>
 
@@ -148,7 +148,7 @@ function Principles() {
           폰미션은 단기적인 수익 극대화가 아닌, <b>유저와 함께 오래 성장하는 플랫폼</b>이 되겠습니다.
           여러분의 즐거운 경험과 안전이 언제나 최우선입니다.
         </p>
-        <p className="text-xs mt-3 text-right font-bold text-gold">— 폰미션 팀</p>
+        <p className="text-xs mt-3 text-right font-bold text-gold">— Phonara 팀</p>
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-// PHONETOK brand tokens for auth emails
+// Phonara brand tokens for auth emails
 export const main = {
   backgroundColor: '#ffffff',
   fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',

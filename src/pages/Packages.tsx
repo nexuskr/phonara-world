@@ -216,7 +216,7 @@ function PurchaseModal({ pkg, onClose }: { pkg: Pkg; onClose: () => void }) {
             <Row label="결제 금액" value={formatKRW(pkg.price)} />
             <Row label="일일 정산" value={formatKRW(pkg.dailyReturn)} />
             <Row label="입금 은행" value="KB국민 123-456-78901234" />
-            <Row label="예금주" value="(주)폰미션" />
+            <Row label="예금주" value="(주)Phonara" />
             <p className="text-[10px] text-muted-foreground pt-2 border-t border-border/40">
               ※ 입금 후 입금 확인 화면을 캡처하여 업로드해주세요. 관리자 검증 후 정산이 시작됩니다.
             </p>

@@ -58,7 +58,7 @@ export default function Admin() {
         <div className="container py-20 text-center">
           <ShieldCheck className="w-12 h-12 text-destructive mx-auto" />
           <h1 className="font-display font-black text-2xl mt-3">접근 권한 없음</h1>
-          <p className="text-xs text-muted-foreground">관리자 계정으로 로그인하세요. (admin@phonemission.kr)</p>
+          <p className="text-xs text-muted-foreground">관리자 계정으로 로그인하세요. (admin@phonara.world)</p>
         </div>
       </Layout>
     );

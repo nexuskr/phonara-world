@@ -7,7 +7,7 @@ import { useRequireAuth } from "@/hooks/use-require-auth";
 import { Send, MessageSquare, ChevronDown, BookOpen } from "lucide-react";
 
 const FAQ = [
-  { q: "폰미션은 정말 돈을 주나요?", a: "네, 실제로 매일 수천 명의 회원님들이 출금을 하고 계십니다." },
+  { q: "Phonara는 정말 돈을 주나요?", a: "네, 실제로 매일 수천 명의 회원님들이 출금을 하고 계십니다." },
   { q: "출금은 어떻게 하고, 최소 금액과 소요시간은?", a: "최소 출금 금액은 5,000원부터입니다. 관리자 확인 후 10분~30분 이내 입금됩니다." },
   { q: "FREE로도 충분히 벌 수 있나요?", a: "충분히 가능합니다. 더 많은 수익을 원하시면 STARTER부터 업그레이드를 추천드려요." },
   { q: "VIP 혜택?", a: "✓ 모든 미션 보상 6배\n✓ God Mode 게임\n✓ 전담 매니저\n✓ 월 출금 한도 3,000만원" },
