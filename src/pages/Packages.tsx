@@ -28,9 +28,9 @@ export default function Packages() {
       <div className="container pt-6 pb-10 animate-liquid-in">
         <div className="mb-6">
           <h1 className="font-display font-black text-2xl flex items-center gap-2">
-            <Crown className="w-5 h-5 text-gold" /> <span className="text-gradient-gold">VIP 사이버 패키지</span>
+            <Crown className="w-5 h-5 text-gold" /> <span className="text-gradient-gold">🤖 AI Money Machine</span>
           </h1>
-          <p className="text-xs text-muted-foreground mt-1">매일 자동 정산되는 프리미엄 사이버 자산 시스템</p>
+          <p className="text-xs text-muted-foreground mt-1">머신 ON → AI가 매일 알아서 벌어줌 → 수확 버튼 1번 클릭</p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-4">
