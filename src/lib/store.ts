@@ -21,7 +21,42 @@ export type User = {
   withdrawPw?: string;      // 6-digit
   isAdmin?: boolean;
   badges?: string[];
+  // Daily play tracking (auto-reset by date string YYYY-MM-DD)
+  playDate?: string;
+  playsUsed?: number;
+  // Attendance
+  lastAttendance?: string;  // YYYY-MM-DD
+  attendanceStreak?: number;
 };
+
+// Tier-based daily play limits (총 게임 플레이 가능 횟수 / 일)
+export const DAILY_PLAY_LIMITS: Record<Tier, number> = {
+  NORMAL: 10,
+  VIP: 30,
+  GOD: 80,
+  EMPIRE: 200,
+};
+
+// Level is bound to tier (패키지 업그레이드 시 자동 상승)
+export const LEVEL_BY_TIER: Record<Tier, number> = {
+  NORMAL: 1,
+  VIP: 10,
+  GOD: 30,
+  EMPIRE: 60,
+};
+
+// Realistic attendance rewards by tier (일일)
+export const ATTENDANCE_REWARDS: Record<Tier, { base: number; weeklyBonus: number }> = {
+  NORMAL: { base: 500,   weeklyBonus: 2_000 },   // 7일 연속 시 +2,000
+  VIP:    { base: 1_500, weeklyBonus: 7_000 },
+  GOD:    { base: 4_000, weeklyBonus: 20_000 },
+  EMPIRE: { base: 12_000, weeklyBonus: 80_000 },
+};
+
+export function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+}
 
 export type MissionTier = "NORMAL" | "VIP" | "GOD" | "EMPIRE";
 export type Mission = {
