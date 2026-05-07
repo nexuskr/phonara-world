@@ -78,7 +78,7 @@ export default function Roulette() {
       setPulling(false);
       const m = error.message || "";
       if (m.includes("empire_only")) toast({ title: "EMPIRE 전용", description: "가챠는 EMPIRE 등급 전용입니다." });
-      else if (m.includes("insufficient_funds")) toast({ title: "잔액 부족", description: "가챠 비용 50,000원이 필요합니다.", variant: "destructive" });
+      else if (m.includes("insufficient_funds")) toast({ title: "잔액 부족", description: "가챠 비용 5,000원이 필요합니다.", variant: "destructive" });
       else toast({ title: "오류", description: m, variant: "destructive" });
       return;
     }
@@ -186,15 +186,15 @@ export default function Roulette() {
                 <h3 className="font-display font-black text-lg flex items-center gap-2">
                   <Crown className="w-5 h-5 text-gold" /> EMPIRE 황금 가챠
                 </h3>
-                <div className="text-[10px] text-muted-foreground">1회 50,000원</div>
+                <div className="text-[10px] text-muted-foreground">1회 5,000원</div>
               </div>
               <div className="grid grid-cols-5 gap-1.5 mb-3 text-center">
                 {[
-                  { g: "N",   v: "1만",   c: "text-muted-foreground" },
-                  { g: "R",   v: "3만",   c: "text-primary" },
-                  { g: "SR",  v: "10만",  c: "text-secondary" },
-                  { g: "SSR", v: "50만",  c: "text-gold" },
-                  { g: "UR",  v: "500만", c: "text-destructive" },
+                  { g: "N",   v: "1,000원",   c: "text-muted-foreground" },
+                  { g: "R",   v: "3,000원",   c: "text-primary" },
+                  { g: "SR",  v: "10,000원",  c: "text-secondary" },
+                  { g: "SSR", v: "50,000원",  c: "text-gold" },
+                  { g: "UR",  v: "500,000원", c: "text-destructive" },
                 ].map((x) => (
                   <div key={x.g} className="glass rounded-lg py-2">
                     <div className={`font-black text-xs ${x.c}`}>{x.g}</div>
@@ -214,7 +214,7 @@ export default function Roulette() {
 
               <button onClick={pullGacha} disabled={pulling}
                 className="w-full py-3 rounded-2xl bg-gradient-gold text-gold-foreground font-display font-black text-sm glow-gold press disabled:opacity-40">
-                {pulling ? "🌀 가챠 진행 중..." : "🎁 1회 뽑기 (50,000원)"}
+                {pulling ? "🌀 가챠 진행 중..." : "🎁 1회 뽑기 (5,000원)"}
               </button>
             </div>
           </div>
