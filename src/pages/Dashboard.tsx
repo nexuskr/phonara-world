@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import Particles from "@/components/Particles";
@@ -17,7 +17,8 @@ export default function Dashboard() {
   const online = useOnline();
   const today = useTodayPayout();
 
-  if (!user) { nav("/secure-auth"); return null; }
+  useEffect(() => { if (!user) nav("/secure-auth", { replace: true }); }, [user, nav]);
+  if (!user) return null;
   const featured = DEFAULT_MISSIONS.slice(0, 5);
   // Context-aware particle intensity based on balance
   const wealth = user.balance + user.coinBalance * 1300;

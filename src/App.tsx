@@ -20,10 +20,11 @@ import ResetPassword from "./pages/ResetPassword.tsx";
 import CompleteProfile from "./pages/CompleteProfile.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import { useSessionGuard } from "./hooks/use-session-guard";
+import { useAuthBridge } from "./hooks/use-auth-bridge";
 
 const queryClient = new QueryClient();
 
-function SessionWatcher() { useSessionGuard(); return null; }
+function SessionWatcher() { useSessionGuard(); useAuthBridge(); return null; }
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
