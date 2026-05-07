@@ -132,6 +132,11 @@ export default function Dashboard() {
             </div>
           </div>
 
+          {/* DAILY ATTENDANCE — habit/streak driver */}
+          <div className="mt-4">
+            <AttendanceCard />
+          </div>
+
           {/* MEGA JACKPOT — primary dopamine driver */}
           <div className="mt-5">
             <JackpotBanner />
