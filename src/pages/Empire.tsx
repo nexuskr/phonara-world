@@ -49,7 +49,7 @@ export default function Empire() {
             <Crown className="w-6 h-6 text-gold" />
             <span className="text-gradient-gold">Empire Lounge</span>
           </h1>
-          <p className="text-xs text-muted-foreground mt-1">Founding Member 30석 한정 · 사전 공지 Empire Day 가속</p>
+          <p className="text-xs text-muted-foreground mt-1">Founding Member 30석 한정 · Empire Day(매월 1·15일) Day 4+ 보유자 +50%</p>
         </div>
 
         {loading ? null : !me ? (
@@ -77,7 +77,7 @@ export default function Empire() {
                   <Crown className="w-4 h-4" /> Founding Seat #{me.founding_seat_no}
                 </div>
                 <h2 className="font-display font-black text-xl">{me.package_name}</h2>
-                <p className="text-[11px] text-muted-foreground mt-1">평생 Founding 뱃지 · Empire Day 자동 +50%</p>
+                <p className="text-[11px] text-muted-foreground mt-1">평생 Founding 뱃지 · Day 4+ Empire Day 자동 +50%</p>
                 <div className="mt-4 grid grid-cols-2 gap-2">
                   <div className="glass rounded-xl p-3">
                     <div className="text-[10px] text-muted-foreground">누적 수확</div>
