@@ -8,12 +8,12 @@ import { Sparkles, Crown, History as HistoryIcon, Gift } from "lucide-react";
 // 8-segment wheel, must match server probabilities ordering
 const SEGMENTS = [
   { label: "꽝",        color: "hsl(var(--muted))" },
-  { label: "1,000원",    color: "hsl(var(--primary))" },
-  { label: "3,000원",    color: "hsl(var(--secondary))" },
-  { label: "5,000원",    color: "hsl(var(--primary))" },
-  { label: "10,000원",   color: "hsl(var(--secondary))" },
-  { label: "20,000원",   color: "hsl(var(--gold))" },
-  { label: "50,000원",   color: "hsl(var(--gold))" },
+  { label: "100원",     color: "hsl(var(--primary))" },
+  { label: "300원",     color: "hsl(var(--secondary))" },
+  { label: "500원",     color: "hsl(var(--primary))" },
+  { label: "1,000원",   color: "hsl(var(--secondary))" },
+  { label: "3,000원",   color: "hsl(var(--gold))" },
+  { label: "10,000원",  color: "hsl(var(--gold))" },
   { label: "🎰 잭팟",    color: "hsl(var(--destructive))" },
 ];
 const SEG_DEG = 360 / SEGMENTS.length;
