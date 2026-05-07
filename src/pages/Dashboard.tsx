@@ -17,6 +17,7 @@ import { refreshWallet } from "@/lib/missions-rpc";
 import { Flame, Zap, Trophy, ChevronRight, TrendingUp, Sparkles, Crown, Wallet, Users, Activity } from "lucide-react";
 import FirstTimeOnboarding from "@/components/FirstTimeOnboarding";
 import FirstMissionCard from "@/components/FirstMissionCard";
+import CommandHero from "@/components/CommandHero";
 
 export default function Dashboard() {
   const [db] = useDB();
@@ -43,22 +44,11 @@ export default function Dashboard() {
         <Particles density={particleDensity} />
 
         <div className="container relative pt-6 pb-10">
-          {/* Greeting */}
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <p className="text-xs text-muted-foreground">안녕하세요</p>
-              <h1 className="font-display font-bold text-xl">
-                <span className="text-gradient-primary">{user.nickname}</span>님 👋
-              </h1>
-            </div>
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full glass">
-              <Flame className="w-4 h-4 text-primary" />
-              <span className="text-xs font-bold">{user.streak}일 연속</span>
-            </div>
-          </div>
+          {/* 🏛️ Command Hero — 영웅 카드 (잔고 + 추천 미션 + 30석) */}
+          <CommandHero />
 
-          {/* Live ticker */}
-          <div className="grid grid-cols-2 gap-2 mb-4">
+          {/* Live ticker (compact, beneath hero) */}
+          <div className="grid grid-cols-2 gap-2 mt-4 mb-4">
             <div className="glass rounded-2xl p-3 flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-secondary/20 flex items-center justify-center"><Users className="w-4 h-4 text-secondary" /></div>
               <div>

@@ -32,31 +32,55 @@ export default function EmpireFoundingCounter({ compact }: { compact?: boolean }
   const claimed = 30 - remaining;
   const pct = Math.min(100, (claimed / 30) * 100);
 
+  const urgent = remaining <= 5;
+
   if (compact) {
     return (
-      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-gold">
+      <span
+        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold border transition ${
+          urgent
+            ? "border-primary/60 bg-primary/15 text-primary animate-pulse"
+            : "border-primary/30 bg-primary/5 text-primary/90"
+        }`}
+      >
         <Crown className="w-3 h-3" />
-        Founding 잔여 <span className="tabular-nums">{remaining}</span>/30석
+        <span className="tabular-nums">{remaining}</span>
+        <span className="opacity-60">/30</span>
       </span>
     );
   }
 
   return (
-    <div className="rounded-xl p-3 border border-gold/40 bg-gold/5">
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-1.5 text-xs font-bold text-gold">
-          <Crown className="w-3.5 h-3.5" /> Empire Founding Member
+    <div
+      className={`relative overflow-hidden rounded-2xl p-4 border transition ${
+        urgent
+          ? "border-primary/60 bg-primary/10 glow-imperial"
+          : "border-primary/30 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent"
+      }`}
+    >
+      {urgent && (
+        <div className="absolute inset-0 bg-primary/10 animate-pulse pointer-events-none" />
+      )}
+      <div className="relative flex items-center justify-between mb-2">
+        <div className="flex items-center gap-1.5">
+          <div className="w-7 h-7 rounded-lg bg-gradient-imperial flex items-center justify-center glow-imperial shrink-0">
+            <Crown className="w-3.5 h-3.5 text-primary-foreground" />
+          </div>
+          <div>
+            <div className="text-[10px] tracking-[0.25em] text-primary font-bold">EMPIRE FOUNDING</div>
+            <div className="text-[10px] text-muted-foreground">창립멤버 한정 좌석</div>
+          </div>
         </div>
-        <span className="font-display font-black text-sm tabular-nums">
-          <span className="text-gold">{remaining}</span>
-          <span className="text-muted-foreground text-xs">/30석</span>
-        </span>
+        <div className="text-right">
+          <span className="font-hud font-black text-2xl text-gradient-imperial tabular-nums">{remaining}</span>
+          <span className="text-muted-foreground text-xs font-bold ml-0.5">/30</span>
+        </div>
       </div>
-      <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-        <div className="h-full bg-gradient-gold transition-all duration-700" style={{ width: `${pct}%` }} />
+      <div className="relative h-1.5 bg-muted/40 rounded-full overflow-hidden">
+        <div className="h-full bg-gradient-imperial transition-all duration-700 glow-imperial" style={{ width: `${pct}%` }} />
       </div>
-      <p className="text-[9px] text-muted-foreground mt-1.5">
-        ※ DB 강제 한정 · 30석 마감 시 다음 시즌 대기
+      <p className="relative text-[10px] text-muted-foreground mt-2">
+        {urgent ? "⚠ 마감 임박 — 다음 시즌까지 대기" : "DB 강제 한정 · 마감 시 다음 시즌 대기"}
       </p>
     </div>
   );

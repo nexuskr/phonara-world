@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import LanguageSwitcher from "./LanguageSwitcher";
+import EmpireFoundingCounter from "./EmpireFoundingCounter";
 
 /**
  * Phonara Top HUD — 항상 노출되는 3축 광고판 + 언어 스위처
@@ -67,6 +68,10 @@ export default function TopHUD() {
         <span className="text-xs font-bold text-foreground/90 tabular-nums">
           {t("level", { n: user.level ?? 1 })}
         </span>
+      </Link>
+
+      <Link to="/empire" className="press">
+        <EmpireFoundingCounter compact />
       </Link>
 
       <LanguageSwitcher />

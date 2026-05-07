@@ -224,6 +224,40 @@
     50% { opacity: 1; transform: translateY(-6px) scale(1.1); }
   }
   .animate-crown { animation: crownSpark 2.4s ease-in-out infinite; }
+
+  /* === Phase 2 — Cinematic intro === */
+  @keyframes cinemaCrown {
+    0%   { opacity: 0; transform: translateY(20px) scale(0.85) rotate(-3deg); filter: blur(10px); }
+    60%  { opacity: 1; transform: translateY(-4px) scale(1.02) rotate(0.5deg); filter: blur(0); }
+    100% { opacity: 1; transform: translateY(0) scale(1) rotate(0deg); filter: blur(0); }
+  }
+  @keyframes cinemaWord {
+    0%   { opacity: 0; transform: translateY(14px); letter-spacing: 0.6em; filter: blur(8px); }
+    100% { opacity: 1; transform: translateY(0); letter-spacing: 0.18em; filter: blur(0); }
+  }
+  @keyframes cinemaLine {
+    0%   { transform: scaleX(0); opacity: 0; }
+    100% { transform: scaleX(1); opacity: 1; }
+  }
+  @keyframes cinemaCard {
+    0%   { opacity: 0; transform: translateY(28px) scale(0.985); filter: blur(8px); }
+    100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+  }
+  @keyframes crownFloat {
+    0%,100% { transform: translateY(0); }
+    50%     { transform: translateY(-6px); }
+  }
+  .animate-cinema-crown { animation: cinemaCrown 0.55s cubic-bezier(0.22,1,0.36,1) both; }
+  .animate-cinema-word  { animation: cinemaWord 0.5s cubic-bezier(0.22,1,0.36,1) both; }
+  .animate-cinema-line  { animation: cinemaLine 0.45s cubic-bezier(0.22,1,0.36,1) both; transform-origin: left center; }
+  .animate-cinema-card  { animation: cinemaCard 0.55s cubic-bezier(0.22,1,0.36,1) both; }
+  .animate-crown-float  { animation: crownFloat 3.4s ease-in-out infinite; }
+
+  @keyframes balanceCount {
+    0%   { opacity: 0; transform: translateY(8px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  .animate-balance-in { animation: balanceCount 0.7s cubic-bezier(0.22,1,0.36,1) both; }
 }
 /* Mobile zoom & touch fixes */
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; touch-action: manipulation; }

@@ -1,127 +1,125 @@
-## Phonara 다국어 시스템 (Phase 2.5) - 최종 실행 계획
+## Phase 2 — 비주얼 임팩트 (로그인 시네마틱 + Command Hero + Empire 30석 카운터)
 
-해외 유저 유입 + 한글 최적화 동시 달성. 확장 가능한 i18n 인프라를 깔되, 실용적 단계로 분할.
-
-### 핵심 결정사항 (개발자 관점 최적화)
-
-1. **언어**: Phase A는 **한국어(ko) + 영어(en)** 만. 나머지는 인프라만 준비.
-2. **라이브러리**: `react-i18next` + `i18next-browser-languagedetector` (업계 표준, 가장 안정적)
-3. **번역 파일**: JSON, namespace 분리, **번들에 포함** (lazy-load 대신 import — Vite에서 더 안정적, CDN 라운드트립 제거)
-4. **한글 폰트**: **Pretendard Variable** 추가 (현재 Fraunces/Italiana는 라틴 전용 → 한글 글자 깨짐 위험 해결)
-5. **이번 페이즈 범위**: 인프라 + LanguageSwitcher + 핵심 3개 영역(auth, nav, onboarding) 까지. 나머지 허브는 **다음 페이즈**.
+신규 유저가 처음 보는 0.6초 — 그리고 로그인 직후 화면 — 을 Phonara의 무기로 만든다.
 
 ---
 
-### Step 1. 인프라 구축
+### 핵심 결정
 
-**패키지 설치**
-- `i18next`, `react-i18next`, `i18next-browser-languagedetector`
+1. **비주얼 무기는 3D 이미지 1~2장이 전부 — 더 많이 만들면 산만해짐**
+   - Login Cinematic용: **Gold Crown + Phone (premium 모델)** — 1장이면 충분
+   - Command Hero 배경용: **Imperial Throne 룸 풍경 (standard 모델)** — 흐릿한 배경으로만 사용
+2. **시네마틱은 0.6s 안에 끝나야 함** — 더 길면 짜증 유발
+3. **실제 데이터(잔고, 미션, 부스트)와 연결** — 예쁘기만 하면 의미 없음
+4. **30석 카운터는 이미 컴포넌트 존재** (`EmpireFoundingCounter.tsx`) → 디자인 강화 + 노출 위치 확장만
 
-**파일 구조**
-```text
-src/
-  lib/
-    i18n.ts                    // init + config
-    formatters.ts              // formatKRW, formatDate (Intl 기반)
-  locales/
-    ko/
-      common.json   nav.json   auth.json   onboarding.json   topbar.json
-    en/
-      (동일 5개 파일)
-  components/
-    LanguageSwitcher.tsx       // 글로브 드롭다운
-```
+---
 
-**`i18n.ts` 핵심 설정**
-- `fallbackLng: 'ko'`
-- `supportedLngs: ['ko', 'en']`
-- detection 순서: `localStorage('phonara-lang')` → `navigator` → `ko`
-- `interpolation.escapeValue: false`
-- 모든 namespace를 정적 import (번들 포함, 초기 로드 ~15KB gzip)
+### Step 1. 3D 자산 생성 (premium 1장 + standard 1장)
 
-**`main.tsx`**
-- `import './lib/i18n'` 추가 (App 렌더 전 초기화)
+**1-A. `src/assets/login-crown-phone.png` (premium, transparent_background=true)**
+- 프롬프트: "ultra premium 3D rendered golden imperial crown floating above a sleek black smartphone, cinematic studio lighting, glowing imperial gold (#E8B923), subtle cyan and purple rim light, holographic particles, dark void background, hyperrealistic, octane render, luxury empire aesthetic, on a clean transparent background"
+- 1024×1024 PNG (alpha)
 
-### Step 2. 한글 최적화 (i18n과 별개로 즉시 효과)
+**1-B. `src/assets/command-throne-bg.jpg` (standard)**
+- 프롬프트: "atmospheric cyberpunk imperial throne room, deep black void with gold light beams, holographic data screens floating, volumetric fog, cinematic depth of field, ultra wide shot, dark luxurious empire aesthetic, blurry background plate"
+- 1920×1080 JPG (배경용, 매우 흐림)
 
-**`index.css`**
-- Pretendard Variable CDN import (`cdn.jsdelivr.net/gh/orioncactus/pretendard`)
-- `body { font-family: 'Pretendard Variable', Fraunces, ... }` (한글은 Pretendard, 라틴은 Fraunces fallback 자동)
-- 글로벌 `word-break: keep-all; overflow-wrap: break-word;` (한글 단어 중간 끊김 방지)
-- 숫자 전용 클래스 `.tabular-nums` 유지 (Orbitron)
+---
 
-**`formatters.ts`**
-- `formatKRW(n)` → `Intl.NumberFormat(currentLang, { style:'currency', currency:'KRW' })`
-- `formatNumber(n)` → 천단위 콤마
-- `formatDate(d)` → 현재 locale 따라 포맷
+### Step 2. Login Cinematic — `SecureAuth.tsx`
 
-### Step 3. LanguageSwitcher 컴포넌트
+**0.6초 오프닝 시퀀스** (한 번만 실행, 그 후 정적):
+- `0.0s`: 화면 검정 + 골드 입자 1개 점등
+- `0.15s`: Crown+Phone 이미지 페이드인 + 0.95→1.0 스케일 + 살짝 회전
+- `0.3s`: PHONARA 워드마크가 좌우에서 글자 단위로 슬라이드인 (stagger 30ms)
+- `0.45s`: 골드 라인 1개가 워드마크 밑으로 그어짐
+- `0.6s`: 카드 본체(로그인 폼) glassmorphism + neon-border가 아래에서 fade-up
 
-**디자인** (Phonara 디자인 시스템 일관성)
-- 작은 버튼: 글로브 아이콘(lucide `Globe`) + 현재 언어 코드(`KO`/`EN`)
-- 클릭 시 glassmorphism 드롭다운 (gold border, void-black bg)
-- 옵션: `🇰🇷 한국어` / `🇺🇸 English`
-- 선택 → `i18n.changeLanguage(code)` + `localStorage` + `document.documentElement.lang = code`
+**기술 스택**: Framer Motion (이미 설치됨? 확인 필요 — 없으면 CSS keyframes만 사용). 안전하게 **CSS keyframes + delay** 만 사용 — 외부 의존성 0.
 
-**배치**
-1. `TopHUD.tsx` 우측 끝 (로그인 후 항상 노출)
-2. `SecureAuth.tsx` 우상단 (로그인 전 — 해외 유저 첫인상)
+**구현**:
+- `SecureAuth.tsx` 카드 위쪽에 cinematic 컨테이너 추가
+- 첫 렌더에만 `sessionStorage` 키로 1회 재생 (재진입 시 스킵)
+- 카드 자체에는 영향 없음 (i18n 작업 보존)
 
-### Step 4. 핵심 3영역 i18n 적용
+---
 
-우선순위 순:
+### Step 3. Command Hero — `Dashboard.tsx` 상단 영웅 카드
 
-**4-1. `auth.json`** — `SecureAuth.tsx`, `Auth.tsx`, `ForgotPassword.tsx`, `ResetPassword.tsx`, `CompleteProfile.tsx`
-- 로그인/가입/PIN/비밀번호 관련 모든 텍스트
-- 신규 해외 유저가 가장 먼저 보는 화면 → 최우선
+기존 Dashboard 위쪽에 **3D 미션 영웅 카드** 1개 추가 (기존 BoostHero 위에 배치):
 
-**4-2. `nav.json` + `topbar.json`** — `Layout.tsx`, `HubTabs.tsx`, `TopHUD.tsx`
-- 5-Hub 라벨: Command/Earn/Empire/Treasury/Legacy + 한글 라벨
-- 사이드바, 하단탭, FAB 라벨
-- TopHUD의 "잔고/Balance", "활성 부스트/Active Boost" 등
+**구성** (영웅 카드 1개에 모든 게 담김):
+- **배경**: `command-throne-bg.jpg` (블러 + 골드 그라디언트 오버레이)
+- **좌측 (60%)**:
+  - 닉네임 인사 (이미 i18n 'common' 활용)
+  - 잔고를 거대 골드 숫자로 (Orbitron, text-5xl, tabular-nums)
+  - "Today +X,XXX원" 작은 라벨
+- **우측 (40%)**:
+  - 오늘의 추천 미션 1개를 **3D tilt 카드**로 (`tilt-card` 유틸 활용)
+  - "지금 시작하다" CTA → `/missions`
+- **하단**:
+  - **Empire 30석 카운터** 풀 위젯 (`EmpireFoundingCounter` 비-compact)
+  - 한 줄 (FOMO 핵심 — "X석 남음" 골드 펄스)
 
-**4-3. `onboarding.json`** — `FirstTimeOnboarding.tsx`, `FirstMissionCard.tsx`
-- 3-step 환영 멘트
-- "First Mission" 카드 카피
+**높이**: ~280px (모바일은 세로 스택, 데스크톱은 가로).
 
-**4-4. `common.json`** — 버튼/공통 라벨
-- "확인", "취소", "저장", "로딩 중..." 등 글로벌 재사용
+**구현 위치**: `Dashboard.tsx` 라인 45 직후 (greeting 위쪽에).
+- 기존 greeting/ticker는 영웅 카드 안으로 통합 (중복 제거)
 
-### Step 5. SEO 다국어
+---
 
-**`index.html`**
-- `<html lang="ko">` 동적 업데이트는 LanguageSwitcher가 처리
-- hreflang 메타 추가:
-  ```html
-  <link rel="alternate" hreflang="ko" href="https://phonara.world/" />
-  <link rel="alternate" hreflang="en" href="https://phonara.world/?lang=en" />
-  <link rel="alternate" hreflang="x-default" href="https://phonara.world/" />
-  ```
-- `?lang=en` query param 지원 (i18n detection에 추가)
+### Step 4. Empire 30석 카운터 — 글로벌 노출
+
+현재는 컴포넌트만 있고 어디 노출되는지 약함. 3곳 추가:
+
+1. **Command Hero 하단** (Step 3에 포함)
+2. **TopHUD 모바일 컴팩트** — `compact` prop 활용, 잔고 옆에 "Crown 24/30" 작은 칩
+3. **Empire 페이지 헤더** — 풀 사이즈
+
+조건: `remaining > 0` 일 때만 노출 (마감 시 자동 숨김).
+
+---
+
+### Step 5. 마이크로 인터랙션 (선택, 임팩트 큼)
+
+- **잔고 숫자 카운트업 애니메이션** (0 → 실제값, 0.8s ease-out) — 첫 진입 1회만
+- **Empire 카운터 펄스** — `remaining ≤ 5` 일 때 골드 글로우 펄스
+- **Crown 이미지 부유 애니메이션** — 로그인 화면에서 ±4px 위아래 (3s loop)
+
+---
 
 ### Step 6. 검증
 
-- 영어 모드 전체 회귀: SecureAuth → 온보딩 → Layout 네비게이션
-- 텍스트 오버플로우 체크 (영어가 한글보다 길다 — 버튼/라벨 길이 검증)
-- localStorage 영속성: 새로고침 시 언어 유지
-- 한글 워드브레이크: 긴 한글 문장이 단어 중간에 끊기지 않는지
+- 로그인 시네마틱 0.6s 안에 끝나는지 (느리면 답답)
+- 모바일에서 영웅 카드 세로 스택 정상
+- 영어 모드에서 텍스트 오버플로우 없는지
+- 잔고 카운트업이 매 진입마다 안 도는지 (1회 제한)
+- 이미지 lazy 로드 + `loading="eager"` (히어로 이미지)
 
 ---
 
-### 다음 페이즈 (이번 작업 X — 미리 안내)
+### 변경 파일 (예상)
 
-- **Phase 2.6**: 5-Hub 페이지 본문 i18n (Dashboard, Missions, Packages, Wallet, Achievements 등)
-- **Phase 2.7**: 토스트/에러 메시지 i18n (Sonner 메시지 전체 키화)
-- **Phase 2.8**: 일본어(ja), 중국어 간체(zh-CN) 추가
-- **Phase 3.x**: 이메일 템플릿 + edge function 메시지 다국어
+- 생성: `src/assets/login-crown-phone.png`, `src/assets/command-throne-bg.jpg`, `src/components/CommandHero.tsx`, `src/components/CinematicIntro.tsx`
+- 편집: `src/pages/SecureAuth.tsx`, `src/pages/Dashboard.tsx`, `src/components/TopHUD.tsx`, `src/components/EmpireFoundingCounter.tsx` (스타일 강화), `src/lib/i18n.ts` (히어로 카드 키 추가)
 
 ---
 
-### 예상 영향
+### 작업 순서 (가장 안전)
 
-- 번들 크기: +20KB gzip (i18next + locales 5개 namespace × 2 언어)
-- 초기 로드 영향: 미미 (Pretendard CDN은 unicode-range subset으로 lazy)
-- 코드 영향 파일 수: ~15개 (인프라 4 + 핵심 페이지 11)
-- 한글 가독성: 즉시 개선 (Pretendard + word-break)
+1. 이미지 2장 먼저 생성 (가장 시간 오래 걸림)
+2. `CinematicIntro.tsx` (재사용 가능한 0.6s 시퀀스) — SecureAuth에 마운트
+3. `CommandHero.tsx` — Dashboard 상단에 마운트
+4. EmpireFoundingCounter compact 버전 TopHUD에 추가
+5. 영어/한글 둘 다 회귀 테스트
 
-이 한 페이즈 안에 위 Step 1~6 모두 완료. 사용자가 즉시 글로브 아이콘으로 언어 전환 가능.
+---
+
+### 다음 페이즈 (이후 작업)
+
+- Phase 2.6: 나머지 i18n + 토스트 메시지
+- Phase 2.7: 모바일 성능 최적화 (Lighthouse)
+- Phase 3: Empire Tier 비주얼 + 게임화
+
+이 한 페이즈로 **Phonara의 첫인상이 완전히 바뀝니다**. 이미지 2장이 게임체인저.
