@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { useDB, formatKRW } from "@/lib/store";
@@ -6,6 +6,7 @@ import { ShieldCheck, Star, Trophy, Settings, Award, Lock, X, Mail, KeyRound, Bo
 import PinPad from "@/components/PinPad";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useRequireAuth } from "@/hooks/use-require-auth";
 
 type BadgeDef = {
   id: string;
@@ -20,6 +21,7 @@ type BadgeDef = {
 export default function Profile() {
   const [db, setDb] = useDB();
   const nav = useNavigate();
+  const user = useRequireAuth() ?? db.user;
   const [pwOpen, setPwOpen] = useState(false);
   const [pw, setPw] = useState("");
   const [pw2, setPw2] = useState("");
@@ -35,9 +37,8 @@ export default function Profile() {
   const [nickname, setNickname] = useState("");
   const [busy, setBusy] = useState(false);
 
-  useEffect(() => { if (!db.user) nav("/secure-auth", { replace: true }); }, [db.user, nav]);
-  if (!db.user) return null;
-  const u = db.user;
+  if (!user) return null;
+  const u = user;
   const xpToNext = u.level * 1000;
   const pct = Math.min(100, (u.xp / xpToNext) * 100);
 
