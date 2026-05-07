@@ -114,6 +114,10 @@ export default function Missions() {
       toast({ title: "잠긴 미션", description: "패키지 업그레이드 필요" });
       return;
     }
+    if (m.game && limitReached) {
+      toast({ title: "오늘의 플레이 한도 도달", description: `${userTier} 등급 일일 ${playLimit}회를 모두 사용했습니다. 패키지 업그레이드 시 즉시 추가 횟수 해제!`, variant: "destructive" });
+      return;
+    }
     if (m.game) {
       setGameOpen(m);
       return;
@@ -145,7 +149,7 @@ export default function Missions() {
     // Jackpot roll happens on EVERY play (win or lose)
     const jp = rollJackpot();
 
-    // Tier-boosted reward when winning
+    // STRICT: rewards only granted on win. Failure = 0 KRW (no balance change).
     const boost = m.boostable ? TIER_BOOST[userTier] : 1;
     const baseReward = won ? Math.floor((m.reward + bonus) * boost) : 0;
     const jpReward = jp?.amount ?? 0;
@@ -153,8 +157,9 @@ export default function Missions() {
 
     setDb((d) => {
       const newMomentum = won ? d.momentum + 1 : 0;
-      // Recovery mission triggers after 2 losses in a row → won=false twice
       const triggerRecovery = !won && d.momentum === 0;
+      const t = todayStr();
+      const prevPlays = d.user?.playDate === t ? (d.user?.playsUsed ?? 0) : 0;
       return {
         ...d,
         momentum: newMomentum,
@@ -164,9 +169,12 @@ export default function Missions() {
         user: d.user
           ? {
               ...d.user,
+              // Only credit balance/earnings on win — failure pays nothing
               balance: d.user.balance + totalReward,
               todayEarnings: d.user.todayEarnings + totalReward,
-              xp: d.user.xp + Math.floor(totalReward / 100),
+              xp: d.user.xp + (won ? Math.floor(totalReward / 100) : 0),
+              playDate: t,
+              playsUsed: prevPlays + 1,
             }
           : null,
       };
@@ -178,7 +186,7 @@ export default function Missions() {
       const momentumBadge = db.momentum >= 2 ? ` · 🔥 ${db.momentum + 1}연승!` : "";
       toast({ title: `🎉 +${formatKRW(baseReward)}${momentumBadge}`, description: m.title });
     } else {
-      toast({ title: "아쉬워요!", description: FAIL_MSGS[Math.floor(Math.random() * FAIL_MSGS.length)] });
+      toast({ title: "아쉬워요! (보상 없음)", description: FAIL_MSGS[Math.floor(Math.random() * FAIL_MSGS.length)] });
     }
     setGameOpen(null);
   }
