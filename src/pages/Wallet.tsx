@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { useDB, formatKRW, uid, gen6, WITHDRAW_LIMITS } from "@/lib/store";
 import { Wallet as WalletIcon, ArrowDownToLine, ArrowUpFromLine, Clock, Coins, Banknote, Copy, ShieldCheck } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import PinPad from "@/components/PinPad";
+import { useRequireAuth } from "@/hooks/use-require-auth";
 
 type AssetTab = "bank" | "coin";
 type ActionTab = "withdraw" | "deposit" | "history";
@@ -12,6 +13,7 @@ type ActionTab = "withdraw" | "deposit" | "history";
 export default function Wallet() {
   const [db, setDb] = useDB();
   const nav = useNavigate();
+  const user = useRequireAuth() ?? db.user;
   const [asset, setAsset] = useState<AssetTab>("bank");
   const [action, setAction] = useState<ActionTab>("withdraw");
 
@@ -29,9 +31,8 @@ export default function Wallet() {
   const [withdrawPw, setWithdrawPw] = useState("");
   const [resultCode, setResultCode] = useState<string | null>(null);
 
-  useEffect(() => { if (!db.user) nav("/secure-auth", { replace: true }); }, [db.user, nav]);
-  if (!db.user) return null;
-  const u = db.user;
+  if (!user) return null;
+  const u = user;
 
   function sendCode() {
     const c = gen6();
