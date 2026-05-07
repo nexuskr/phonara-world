@@ -4,6 +4,7 @@ import Layout from "@/components/Layout";
 import Particles from "@/components/Particles";
 import LiveRanking from "@/components/LiveRanking";
 import JackpotBanner from "@/components/JackpotBanner";
+import AttendanceCard from "@/components/AttendanceCard";
 import { useOnline, useTodayPayout } from "@/components/LiveStats";
 import { useDB, DEFAULT_MISSIONS, formatKRW } from "@/lib/store";
 import { Flame, Zap, Trophy, ChevronRight, TrendingUp, Sparkles, Crown, Wallet, Users, Activity } from "lucide-react";
