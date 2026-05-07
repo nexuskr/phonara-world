@@ -4,6 +4,7 @@ import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { toast } from "@/hooks/use-toast";
+import { useAuthReady } from "@/hooks/use-auth-ready";
 import { ShieldCheck, Mail, Lock, Sparkles, ArrowRight, User as UserIcon, Calendar, Phone } from "lucide-react";
 
 const signupSchema = z.object({
@@ -31,6 +32,7 @@ function checkAge14(birth: string) {
 
 export default function SecureAuth() {
   const nav = useNavigate();
+  const { isReady, hasSession } = useAuthReady();
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({
@@ -40,10 +42,8 @@ export default function SecureAuth() {
   const set = <K extends keyof typeof form>(k: K, v: any) => setForm(f => ({ ...f, [k]: v }));
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) nav("/dashboard");
-    });
-  }, [nav]);
+    if (isReady && hasSession) nav("/dashboard", { replace: true });
+  }, [hasSession, isReady, nav]);
 
   async function submit() {
     setBusy(true);
@@ -90,7 +90,6 @@ export default function SecureAuth() {
         const { error } = await supabase.auth.signInWithPassword({ email: form.email, password: form.password });
         if (error) throw error;
         toast({ title: "환영합니다 ✨" });
-        nav("/dashboard");
       }
     } catch (e: any) {
       const msg = e.message?.includes("Invalid login") ? "이메일 또는 비밀번호가 일치하지 않습니다."
