@@ -40,13 +40,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {/* Top bar */}
       <header className="sticky top-0 z-40 glass border-b border-border/40">
         <div className="container flex items-center justify-between h-16">
-          <Link to="/dashboard" className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-xl bg-gradient-primary glow-primary flex items-center justify-center font-display font-black text-primary-foreground">
-              폰
+          <Link to="/dashboard" className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-gradient-imperial glow-imperial flex items-center justify-center font-imperial font-black text-primary-foreground">
+              P
             </div>
-            <span className="font-display font-bold text-lg tracking-wider">
-              <span className="text-gradient-primary">PHONE</span>
-              <span className="text-foreground">MISSION</span>
+            <span className="font-imperial font-bold text-lg">
+              <span className="text-gradient-imperial tracking-[0.18em]">PHONARA</span>
             </span>
           </Link>
           <div className="flex items-center gap-2">
