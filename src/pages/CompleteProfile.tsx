@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { useAuthReady } from "@/hooks/use-auth-ready";
 import { User as UserIcon, Phone, Calendar, ShieldCheck } from "lucide-react";
 
 const schema = z.object({
@@ -13,19 +14,26 @@ const schema = z.object({
 
 export default function CompleteProfile() {
   const nav = useNavigate();
+  const { isReady, hasSession } = useAuthReady();
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({ realName: "", phone: "", birth: "", agreeTerms: false, agreeAge: false });
   const set = (k: keyof typeof form, v: any) => setForm(f => ({ ...f, [k]: v }));
 
   useEffect(() => {
+    if (!isReady) return;
+    if (!hasSession) {
+      nav("/secure-auth", { replace: true });
+      return;
+    }
+
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { nav("/secure-auth"); return; }
+      if (!user) return;
       const { data: profile } = await supabase.from("profiles").select("profile_completed,real_name,phone,birth_date").eq("id", user.id).maybeSingle();
-      if (profile?.profile_completed) { nav("/dashboard"); return; }
+      if (profile?.profile_completed) { nav("/dashboard", { replace: true }); return; }
       if (profile) setForm(f => ({ ...f, realName: profile.real_name || "", phone: profile.phone || "", birth: profile.birth_date || "" }));
     })();
-  }, [nav]);
+  }, [hasSession, isReady, nav]);
 
   async function submit() {
     const parsed = schema.safeParse(form);
