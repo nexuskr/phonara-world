@@ -6,7 +6,9 @@ import LiveRanking from "@/components/LiveRanking";
 import JackpotBanner from "@/components/JackpotBanner";
 import AttendanceCard from "@/components/AttendanceCard";
 import { ActiveBotsMini } from "@/components/AIBotCards";
-import MachineDashboardCard from "@/components/MachineDashboardCard";
+import BoostHeroCard from "@/components/BoostHeroCard";
+import SevenDayChallengeCard from "@/components/SevenDayChallengeCard";
+import EmpireDayCountdown from "@/components/EmpireDayCountdown";
 import MachineFomoTicker from "@/components/MachineFomoTicker";
 import { useOnline, useTodayPayout } from "@/components/LiveStats";
 import { useDB, DEFAULT_MISSIONS, formatKRW } from "@/lib/store";
@@ -138,9 +140,11 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* AI MONEY MACHINE — daily harvest */}
+          {/* 🔥 메인 훅: BoostHero (Day 1~3) */}
           <div className="mt-4 space-y-3">
-            <MachineDashboardCard />
+            <BoostHeroCard />
+            <SevenDayChallengeCard />
+            <div className="flex justify-center"><EmpireDayCountdown /></div>
             <MachineFomoTicker />
           </div>
 
