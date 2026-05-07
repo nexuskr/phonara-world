@@ -1,27 +1,31 @@
 import { useEffect, useState } from "react";
 import { Trophy } from "lucide-react";
 import { formatKRW } from "@/lib/store";
+import { supabase } from "@/integrations/supabase/client";
 
-const seed = [
-  { n: "사이버제왕", v: 38_420_000, c: "👑" },
-  { n: "팬텀카운슬", v: 21_800_000, c: "🌌" },
-  { n: "AI킹덤", v: 15_600_000, c: "🤖" },
-  { n: "엠파이어",  v: 9_200_000,  c: "💎" },
-  { n: "스타터러너", v: 5_400_000, c: "⚡" },
-];
+type Row = { user_id: string; nickname: string; tier: string | null; earned: number; rank: number };
+
+const TIER_EMOJI: Record<string, string> = { empire: "👑", god: "💎", vip: "⚡", normal: "🚀" };
 
 export default function LiveRanking() {
-  const [list, setList] = useState(seed);
+  const [list, setList] = useState<Row[]>([]);
+
+  async function load() {
+    const { data } = await supabase
+      .from("leaderboard_today")
+      .select("user_id, nickname, tier, earned, rank")
+      .limit(8);
+    if (data) setList(data as Row[]);
+  }
 
   useEffect(() => {
-    const t = setInterval(() => {
-      setList(prev => {
-        const next = prev.map(r => ({ ...r, v: r.v + Math.floor(Math.random() * 280_000) + 5_000 }));
-        next.sort((a, b) => b.v - a.v);
-        return next;
-      });
-    }, 3500);
-    return () => clearInterval(t);
+    void load();
+    const i = setInterval(load, 8000);
+    const ch = supabase
+      .channel("leaderboard")
+      .on("postgres_changes", { event: "*", schema: "public", table: "daily_stats" }, () => void load())
+      .subscribe();
+    return () => { clearInterval(i); supabase.removeChannel(ch); };
   }, []);
 
   return (
@@ -35,26 +39,25 @@ export default function LiveRanking() {
           <span className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse" /> LIVE
         </span>
       </div>
-      <div className="relative">
-        {list.map((r, i) => (
-          <div
-            key={r.n}
-            style={{ transform: `translateY(${i * 44}px)` }}
-            className="absolute left-0 right-0 flex items-center justify-between py-2 transition-transform duration-700 ease-out"
-          >
-            <div className="flex items-center gap-3">
-              <div className={`w-7 h-7 rounded-full flex items-center justify-center font-display font-black text-xs transition-all duration-500
-                ${i === 0 ? "bg-gradient-gold text-gold-foreground glow-gold scale-110" : i === 1 ? "bg-secondary/30 text-secondary" : i === 2 ? "bg-accent/30 text-accent" : "bg-muted"}`}>
-                {i + 1}
+      {list.length === 0 ? (
+        <div className="text-center text-xs text-muted-foreground py-8">아직 오늘 수익자가 없습니다</div>
+      ) : (
+        <div className="space-y-2">
+          {list.map((r, i) => (
+            <div key={r.user_id} className="flex items-center justify-between py-1">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center font-display font-black text-xs shrink-0
+                  ${i === 0 ? "bg-gradient-gold text-gold-foreground glow-gold scale-110" : i === 1 ? "bg-secondary/30 text-secondary" : i === 2 ? "bg-accent/30 text-accent" : "bg-muted"}`}>
+                  {i + 1}
+                </div>
+                <span className="text-xl">{TIER_EMOJI[(r.tier ?? "normal").toLowerCase()] ?? "🚀"}</span>
+                <span className="text-sm font-bold truncate">{r.nickname}</span>
               </div>
-              <span className="text-2xl">{r.c}</span>
-              <span className="text-sm font-bold">{r.n}</span>
+              <div className="text-sm font-display font-bold text-gradient-primary tabular-nums shrink-0">{formatKRW(r.earned)}</div>
             </div>
-            <div className="text-sm font-display font-bold text-gradient-primary tabular-nums">{formatKRW(r.v)}</div>
-          </div>
-        ))}
-        <div style={{ height: list.length * 44 }} />
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
