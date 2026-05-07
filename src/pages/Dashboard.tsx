@@ -15,6 +15,8 @@ import { useDB, DEFAULT_MISSIONS, formatKRW } from "@/lib/store";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { refreshWallet } from "@/lib/missions-rpc";
 import { Flame, Zap, Trophy, ChevronRight, TrendingUp, Sparkles, Crown, Wallet, Users, Activity } from "lucide-react";
+import FirstTimeOnboarding from "@/components/FirstTimeOnboarding";
+import FirstMissionCard from "@/components/FirstMissionCard";
 
 export default function Dashboard() {
   const [db] = useDB();
@@ -34,6 +36,8 @@ export default function Dashboard() {
 
   return (
     <Layout>
+      <FirstTimeOnboarding enabled={!!user} />
+      <FirstMissionCard />
       <div className="relative animate-liquid-in">
         <div className="absolute inset-0 bg-grid opacity-20 pointer-events-none" />
         <Particles density={particleDensity} />
