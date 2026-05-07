@@ -13,7 +13,8 @@ export default function Profile() {
   const [pw, setPw] = useState("");
   const [pw2, setPw2] = useState("");
 
-  if (!db.user) { nav("/secure-auth"); return null; }
+  useEffect(() => { if (!db.user) nav("/secure-auth", { replace: true }); }, [db.user, nav]);
+  if (!db.user) return null;
   const u = db.user;
   const xpToNext = u.level * 1000;
   const pct = Math.min(100, (u.xp / xpToNext) * 100);

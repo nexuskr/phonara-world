@@ -19,7 +19,8 @@ export default function Packages() {
   const [db] = useDB();
   const nav = useNavigate();
   const [selected, setSelected] = useState<Pkg | null>(null);
-  if (!db.user) { nav("/secure-auth"); return null; }
+  useEffect(() => { if (!db.user) nav("/secure-auth", { replace: true }); }, [db.user, nav]);
+  if (!db.user) return null;
 
   return (
     <Layout>

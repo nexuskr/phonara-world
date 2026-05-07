@@ -46,10 +46,8 @@ export default function Missions() {
   const [catTab, setCatTab] = useState<"전체" | "게임">("게임");
   const [jackpotWin, setJackpotWin] = useState<{ amount: number; type: "main" | "mini" } | null>(null);
 
-  if (!db.user) {
-    nav("/secure-auth");
-    return null;
-  }
+  useEffect(() => { if (!db.user) nav("/secure-auth", { replace: true }); }, [db.user, nav]);
+  if (!db.user) return null;
   const userTier = db.user.tier;
   const userTierRank = TIER_RANK[userTier];
 
