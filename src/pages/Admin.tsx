@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
-import { useDB, formatKRW, uid, PACKAGES, type Mission, type MissionTier, type Tier, TIER_RANK, LEVEL_BY_TIER } from "@/lib/store";
-import { ShieldCheck, Users, TrendingUp, ArrowDownToLine, ArrowUpFromLine, Check, X, Plus, MessageSquare, Send, Coins, Target, Crown } from "lucide-react";
+import { useDB, formatKRW, uid, type Mission, type MissionTier } from "@/lib/store";
+import { ShieldCheck, Users, TrendingUp, ArrowDownToLine, ArrowUpFromLine, X, Plus, MessageSquare, Send, Coins, Target, Crown } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useRequireAdmin } from "@/hooks/use-require-auth";
 import WithdrawRequestsAdmin from "@/components/admin/WithdrawRequestsAdmin";
@@ -167,38 +167,6 @@ function MissionAdmin() {
   );
 }
 
-function UserAdmin() {
-  const [db, setDb] = useDB();
-  function setTier(id: string, tier: Tier) {
-    setDb(d => ({
-      ...d,
-      users: d.users.map(u => u.id === id ? { ...u, tier } : u),
-      user: d.user?.id === id ? { ...d.user, tier } : d.user,
-    }));
-    toast({ title: `등급 변경: ${tier}` });
-  }
-  return (
-    <div className="space-y-2">
-      {db.users.length === 0 && <Empty />}
-      {db.users.map(u => (
-        <div key={u.id} className="glass rounded-2xl p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-sm font-bold">{u.nickname} {u.isAdmin && <span className="text-[10px] text-gold">[관리자]</span>}</div>
-              <div className="text-[10px] text-muted-foreground">{u.email} · Lv.{u.level} · {u.tier}</div>
-            </div>
-            <div className="font-display font-bold text-sm text-gradient-primary">{formatKRW(u.balance)}</div>
-          </div>
-          <div className="grid grid-cols-4 gap-1.5 mt-3">
-            {(["NORMAL", "VIP", "GOD", "EMPIRE"] as Tier[]).map(t => (
-              <button key={t} onClick={() => setTier(u.id, t)} className={`py-1.5 rounded-lg text-[10px] font-bold ${u.tier === t ? "bg-gradient-gold text-gold-foreground" : "glass"}`}>{t}</button>
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
 
 type ST = { id: string; user_id: string; nickname: string; last_message: string | null; last_message_at: string };
 type SM = { id: string; thread_id: string; user_id: string; sender: "user" | "admin"; message: string; created_at: string };
@@ -286,31 +254,14 @@ function ChatAdmin() {
 }
 
 function CoinAdmin() {
-  const [db, setDb] = useDB();
-  const [addr, setAddr] = useState(db.coin.address);
-  const [net, setNet] = useState(db.coin.network);
-  const [qr, setQr] = useState<string | undefined>(db.coin.qr);
-  function save() {
-    setDb(d => ({ ...d, coin: { network: net, address: addr, qr } }));
-    toast({ title: "코인 입금 정보 저장됨" });
-  }
   return (
-    <div className="glass-strong rounded-2xl p-4 neon-border space-y-3">
-      <h3 className="font-display font-bold text-sm flex items-center gap-2"><Coins className="w-4 h-4 text-secondary" /> 코인 입금 주소 설정</h3>
-      <select value={net} onChange={e => setNet(e.target.value as any)} className="w-full bg-input/60 border border-border rounded-xl px-3 py-2 text-sm">
-        {["TRC20", "ERC20", "BEP20"].map(b => <option key={b}>{b}</option>)}
-      </select>
-      <input value={addr} onChange={e => setAddr(e.target.value)} className="w-full bg-input/60 border border-border rounded-xl px-3 py-2 text-sm font-mono" />
-      <label className="block">
-        <div className="glass rounded-xl p-4 text-center border-2 border-dashed border-border cursor-pointer">
-          {qr ? <img src={qr} alt="qr" className="w-32 h-32 mx-auto rounded-lg" /> : <div className="text-xs">QR 이미지 업로드</div>}
-        </div>
-        <input type="file" accept="image/*" className="hidden" onChange={e => {
-          const f = e.target.files?.[0]; if (!f) return;
-          const r = new FileReader(); r.onload = () => setQr(r.result as string); r.readAsDataURL(f);
-        }} />
-      </label>
-      <button onClick={save} className="w-full py-3 rounded-xl bg-gradient-gold text-gold-foreground font-bold glow-gold">저장</button>
+    <div className="glass-strong rounded-2xl p-6 neon-border text-center">
+      <Coins className="w-8 h-8 text-secondary mx-auto" />
+      <h3 className="font-display font-bold text-sm mt-2">코인 입금 주소 관리</h3>
+      <p className="text-xs text-muted-foreground mt-2">
+        입금 주소/네트워크는 환경변수 또는 서버 설정으로 관리됩니다.<br/>
+        변경이 필요하면 운영팀에 문의해주세요.
+      </p>
     </div>
   );
 }
