@@ -211,3 +211,7 @@
   }
   .animate-crown { animation: crownSpark 2.4s ease-in-out infinite; }
 }
+/* Mobile zoom & touch fixes */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; touch-action: manipulation; }
+body { overscroll-behavior-y: none; }
+input, select, textarea { font-size: 16px; } /* prevents iOS auto-zoom on focus */
