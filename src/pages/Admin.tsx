@@ -13,7 +13,8 @@ export default function Admin() {
   const nav = useNavigate();
   const [tab, setTab] = useState<Tab>("deposits");
 
-  if (!db.user) { nav("/secure-auth"); return null; }
+  useEffect(() => { if (!db.user) nav("/secure-auth", { replace: true }); else if (!db.user.isAdmin) nav("/dashboard", { replace: true }); }, [db.user, nav]);
+  if (!db.user) return null;
   if (!db.user.isAdmin) {
     return (
       <Layout>

@@ -73,7 +73,8 @@ export default function Support() {
     }).eq("id", threadId);
   }
 
-  if (!db.user) { nav("/secure-auth"); return null; }
+  useEffect(() => { if (!db.user) nav("/secure-auth", { replace: true }); }, [db.user, nav]);
+  if (!db.user) return null;
 
   return (
     <Layout>

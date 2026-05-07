@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { useDB, formatKRW, uid, gen6, WITHDRAW_LIMITS } from "@/lib/store";
@@ -29,7 +29,8 @@ export default function Wallet() {
   const [withdrawPw, setWithdrawPw] = useState("");
   const [resultCode, setResultCode] = useState<string | null>(null);
 
-  if (!db.user) { nav("/secure-auth"); return null; }
+  useEffect(() => { if (!db.user) nav("/secure-auth", { replace: true }); }, [db.user, nav]);
+  if (!db.user) return null;
   const u = db.user;
 
   function sendCode() {
