@@ -58,7 +58,7 @@ export default function SecureAuth() {
           toast({ title: "가입 불가", description: "만 14세 이상부터 가입 가능합니다.", variant: "destructive" });
           return;
         }
-        const redirectUrl = `${window.location.origin}/dashboard`;
+        const redirectUrl = `${window.location.origin}/packages?welcome=1`;
         const { data, error } = await supabase.auth.signUp({
           email: form.email, password: form.password,
           options: {
