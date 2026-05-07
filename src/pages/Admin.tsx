@@ -167,6 +167,7 @@ export default function Admin() {
         )}
 
         {tab === "server_wd" && <WithdrawRequestsAdmin />}
+        {tab === "packages" && <PackagePurchasesAdmin />}
         {tab === "missions" && <MissionAdmin />}
         {tab === "users" && <UserAdmin />}
         {tab === "chats" && <ChatAdmin />}
