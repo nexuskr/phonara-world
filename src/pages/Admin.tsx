@@ -71,6 +71,7 @@ export default function Admin() {
 
   const tabs: { id: Tab; label: string; icon: any }[] = [
     { id: "dashboard", label: "대시보드", icon: BarChart3 },
+    { id: "analytics", label: "고급 분석", icon: TrendingUp },
     { id: "server_dep", label: "충전 신청", icon: ArrowUpFromLine },
     { id: "server_wd", label: "출금 신청", icon: ArrowDownToLine },
     { id: "packages", label: "패키지", icon: Crown },
