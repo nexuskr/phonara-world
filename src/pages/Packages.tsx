@@ -39,7 +39,7 @@ export default function Packages() {
         </div>
 
         <div className="grid md:grid-cols-2 gap-4">
-          {PACKAGES.map(p => {
+          {[...PACKAGES].sort((a, b) => (a.tier === "FREE" ? 1 : b.tier === "FREE" ? -1 : 0)).map(p => {
             const t = tierStyles[p.tier];
             const isEmpire = p.tier === "EMPIRE" || p.tier === "PHANTOM";
             return (
@@ -144,7 +144,15 @@ export default function Packages() {
             );
           })}
         </div>
-      </div>
+        </div>
+
+        {/* v5.1 법적 푸터 — 사전 공지 확정 스케줄 */}
+        <div className="mt-8 glass rounded-2xl p-4 text-[10px] leading-relaxed text-muted-foreground">
+          <p className="font-bold text-foreground mb-1">📋 사전 공지 확정 적립 스케줄</p>
+          <p>
+            모든 패키지는 30일 한정·사전 공지된 확정 적립률로 운영됩니다. 첫 3일 보너스 구간(Easy +30% / Easy 150 +20% / Empire +50%)은 결제 승인 시점부터 자동 적용되며, Empire Day(매월 1·15일) +50%는 Empire 보유자 중 Day 4 이후 머신에 한해 자동 적용됩니다. 청약철회는 전자상거래법에 따라 결제일로부터 7일 이내 가능하며 일일 정산을 1회라도 진행한 경우 제한됩니다. 자세한 내용은 고객센터 FAQ를 참조하세요.
+          </p>
+        </div>
 
       {selected && <PurchaseModal pkg={selected} onClose={() => setSelected(null)} />}
     </Layout>

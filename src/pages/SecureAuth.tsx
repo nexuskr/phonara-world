@@ -58,7 +58,7 @@ export default function SecureAuth() {
           toast({ title: "가입 불가", description: "만 14세 이상부터 가입 가능합니다.", variant: "destructive" });
           return;
         }
-        const redirectUrl = `${window.location.origin}/dashboard`;
+        const redirectUrl = `${window.location.origin}/packages?welcome=1`;
         const { data, error } = await supabase.auth.signUp({
           email: form.email, password: form.password,
           options: {
@@ -97,9 +97,17 @@ export default function SecureAuth() {
           toast({ title: "입력 확인", description: parsed.error.errors[0].message, variant: "destructive" });
           return;
         }
-        const { error } = await supabase.auth.signInWithPassword({ email: form.email, password: form.password });
+        const { data: signedIn, error } = await supabase.auth.signInWithPassword({ email: form.email, password: form.password });
         if (error) throw error;
-        toast({ title: "환영합니다 ✨" });
+        // v5.1: 가입 24h 이내 첫 로그인 → /packages 자동 진입 (첫 0.5초 노출 사수)
+        let firstEntry = false;
+        if (signedIn?.user?.created_at) {
+          const ageMs = Date.now() - new Date(signedIn.user.created_at).getTime();
+          firstEntry = ageMs < 24 * 60 * 60 * 1000;
+        }
+        toast({ title: firstEntry ? "🔥 첫 3일 보너스 구간 진입" : "환영합니다 ✨" });
+        nav(firstEntry ? "/packages?welcome=1" : "/dashboard", { replace: true });
+        return;
       }
     } catch (e: any) {
       const msg = e.message?.includes("Invalid login") ? "이메일 또는 비밀번호가 일치하지 않습니다."
