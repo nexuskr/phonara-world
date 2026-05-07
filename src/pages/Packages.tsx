@@ -83,8 +83,8 @@ export default function Packages() {
                     ) : (
                       <>
                         <div className="mt-5 grid grid-cols-3 gap-2">
-                          <Stat label="투자금" value={formatKRW(p.price)} />
-                          <Stat label="일일 정산" value={formatKRW(p.dailyReturn)} highlight />
+                          <Stat label="충전금" value={formatKRW(p.price)} />
+                          <Stat label="매일 수확" value={formatKRW(p.dailyReturn)} highlight />
                           <Stat label="기간" value={`${p.duration}일`} />
                         </div>
 
