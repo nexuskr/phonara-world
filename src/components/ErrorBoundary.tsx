@@ -1,4 +1,5 @@
 import React from "react";
+import { logClientError } from "@/lib/error-logger";
 
 interface State { hasError: boolean; error?: Error; }
 
@@ -11,6 +12,10 @@ export class ErrorBoundary extends React.Component<{ children: React.ReactNode }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
     console.error("[ErrorBoundary]", error, info);
+    void logClientError(error.message, {
+      stack: error.stack,
+      context: { type: "react.error_boundary", component_stack: info.componentStack },
+    });
   }
 
   reset = () => {

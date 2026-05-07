@@ -53,6 +53,36 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_audit_log: {
+        Row: {
+          action: string
+          admin_id: string
+          created_at: string
+          id: string
+          metadata: Json
+          target_id: string | null
+          target_type: string | null
+        }
+        Insert: {
+          action: string
+          admin_id: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Update: {
+          action?: string
+          admin_id?: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Relationships: []
+      }
       ai_bot_runs: {
         Row: {
           claimed_at: string | null
@@ -287,6 +317,42 @@ export type Database = {
           claimed_by?: string | null
           purchase_id?: string | null
           seat_no?: number
+        }
+        Relationships: []
+      }
+      error_logs: {
+        Row: {
+          context: Json
+          created_at: string
+          id: string
+          level: string
+          message: string
+          stack: string | null
+          url: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          context?: Json
+          created_at?: string
+          id?: string
+          level?: string
+          message: string
+          stack?: string | null
+          url?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          context?: Json
+          created_at?: string
+          id?: string
+          level?: string
+          message?: string
+          stack?: string | null
+          url?: string | null
+          user_agent?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -1303,8 +1369,36 @@ export type Database = {
         }[]
       }
       get_empire_seats_remaining: { Args: never; Returns: number }
+      get_error_stats: {
+        Args: { _hours?: number }
+        Returns: {
+          bucket: string
+          cnt: number
+          level: string
+        }[]
+      }
       get_my_quests: { Args: never; Returns: Json }
       get_next_empire_day: { Args: never; Returns: string }
+      get_recent_errors: {
+        Args: { _limit?: number }
+        Returns: {
+          context: Json
+          created_at: string
+          id: string
+          level: string
+          message: string
+          stack: string | null
+          url: string | null
+          user_agent: string | null
+          user_id: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "error_logs"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       get_referral_leaderboard: {
         Args: { _limit?: number }
         Returns: {
@@ -1344,6 +1438,17 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      log_client_error: {
+        Args: {
+          _context?: Json
+          _level?: string
+          _message: string
+          _stack?: string
+          _url?: string
+          _user_agent?: string
+        }
+        Returns: string
       }
       purchase_season_pass: { Args: never; Returns: Json }
       request_withdrawal: {

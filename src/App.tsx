@@ -8,6 +8,9 @@ import { useSessionGuard } from "./hooks/use-session-guard";
 import { useAuthBridge } from "./hooks/use-auth-bridge";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { RouteFallback } from "./components/RouteFallback";
+import { installGlobalErrorLogging } from "./lib/error-logger";
+
+installGlobalErrorLogging();
 
 const Index = lazy(() => import("./pages/Index.tsx"));
 const Auth = lazy(() => import("./pages/Auth.tsx"));
