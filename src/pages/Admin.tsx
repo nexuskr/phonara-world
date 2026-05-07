@@ -7,8 +7,9 @@ import { ShieldCheck, Users, TrendingUp, ArrowDownToLine, ArrowUpFromLine, Check
 import { toast } from "@/hooks/use-toast";
 import { useRequireAdmin } from "@/hooks/use-require-auth";
 import WithdrawRequestsAdmin from "@/components/admin/WithdrawRequestsAdmin";
+import PackagePurchasesAdmin from "@/components/admin/PackagePurchasesAdmin";
 
-type Tab = "deposits" | "withdraws" | "server_wd" | "users" | "missions" | "chats" | "coin";
+type Tab = "deposits" | "withdraws" | "server_wd" | "packages" | "users" | "missions" | "chats" | "coin";
 
 export default function Admin() {
   const [db, setDb] = useDB();
@@ -80,6 +81,7 @@ export default function Admin() {
     { id: "deposits", label: "충전", icon: ArrowUpFromLine },
     { id: "withdraws", label: "출금(로컬)", icon: ArrowDownToLine },
     { id: "server_wd", label: "출금(서버)", icon: ArrowDownToLine },
+    { id: "packages", label: "패키지", icon: Crown },
     { id: "missions", label: "미션", icon: Target },
     { id: "users", label: "회원", icon: Users },
     { id: "chats", label: "채팅", icon: MessageSquare },
@@ -165,6 +167,7 @@ export default function Admin() {
         )}
 
         {tab === "server_wd" && <WithdrawRequestsAdmin />}
+        {tab === "packages" && <PackagePurchasesAdmin />}
         {tab === "missions" && <MissionAdmin />}
         {tab === "users" && <UserAdmin />}
         {tab === "chats" && <ChatAdmin />}

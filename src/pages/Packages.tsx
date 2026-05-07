@@ -144,19 +144,38 @@ function PurchaseModal({ pkg, onClose }: { pkg: Pkg; onClose: () => void }) {
   const [, setDb] = useDB();
   const [db] = useDB();
   const [screenshot, setScreenshot] = useState<string>();
+  const [busy, setBusy] = useState(false);
 
-  function submit() {
-    if (!db.user) return;
-    setDb(d => ({
-      ...d,
-      deposits: [{
-        id: uid(), userId: d.user!.id, nickname: d.user!.nickname,
-        packageId: pkg.id, packageName: pkg.name, amount: pkg.price,
-        method: "bank", screenshot, status: "pending", createdAt: Date.now(),
-      }, ...d.deposits],
-    }));
-    onClose();
-    toast({ title: "🎉 신청 완료!", description: "관리자 승인 후 즉시 적립이 시작됩니다." });
+  async function submit() {
+    if (!db.user || busy) return;
+    setBusy(true);
+    try {
+      const { submitPackagePurchase } = await import("@/lib/packages-rpc");
+      await submitPackagePurchase({
+        packageId: pkg.id,
+        packageName: pkg.name,
+        amount: pkg.price,
+        dailyReturn: pkg.dailyReturn,
+        durationDays: pkg.duration,
+        totalReturn: pkg.totalReturn,
+        receiptUrl: screenshot ?? null,
+      });
+      // 로컬 캐시도 업데이트 (UI 즉시반영)
+      setDb(d => ({
+        ...d,
+        deposits: [{
+          id: uid(), userId: d.user!.id, nickname: d.user!.nickname,
+          packageId: pkg.id, packageName: pkg.name, amount: pkg.price,
+          method: "bank", screenshot, status: "pending", createdAt: Date.now(),
+        }, ...d.deposits],
+      }));
+      onClose();
+      toast({ title: "🎉 신청 완료!", description: "관리자 승인 후 일일 정산이 시작됩니다." });
+    } catch (e: any) {
+      toast({ title: "신청 실패", description: e.message ?? "잠시 후 다시 시도해주세요.", variant: "destructive" });
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -170,10 +189,11 @@ function PurchaseModal({ pkg, onClose }: { pkg: Pkg; onClose: () => void }) {
 
           <div className="mt-5 glass rounded-2xl p-4 space-y-2">
             <Row label="결제 금액" value={formatKRW(pkg.price)} />
+            <Row label="일일 정산" value={formatKRW(pkg.dailyReturn)} />
             <Row label="입금 은행" value="KB국민 123-456-78901234" />
             <Row label="예금주" value="(주)폰미션" />
             <p className="text-[10px] text-muted-foreground pt-2 border-t border-border/40">
-              ※ 입금 후 입금 확인 화면을 캡처하여 업로드해주세요. 실시간 관리자 검증 후 즉시 정산이 시작됩니다.
+              ※ 입금 후 입금 확인 화면을 캡처하여 업로드해주세요. 관리자 검증 후 정산이 시작됩니다.
             </p>
           </div>
 
@@ -195,9 +215,9 @@ function PurchaseModal({ pkg, onClose }: { pkg: Pkg; onClose: () => void }) {
             }} />
           </label>
 
-          <button onClick={submit}
-            className="mt-5 w-full py-4 rounded-xl bg-gradient-primary text-primary-foreground font-display font-bold glow-primary hover:scale-[1.02] transition">
-            결제 신청 제출
+          <button onClick={submit} disabled={busy}
+            className="mt-5 w-full py-4 rounded-xl bg-gradient-primary text-primary-foreground font-display font-bold glow-primary hover:scale-[1.02] transition disabled:opacity-50">
+            {busy ? "신청 중..." : "결제 신청 제출"}
           </button>
         </div>
       </div>

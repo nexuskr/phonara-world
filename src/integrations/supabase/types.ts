@@ -113,6 +113,72 @@ export type Database = {
         }
         Relationships: []
       }
+      package_purchases: {
+        Row: {
+          admin_id: string | null
+          amount: number
+          approved_at: string | null
+          completed_at: string | null
+          created_at: string
+          daily_return: number
+          duration_days: number
+          id: string
+          next_settle_at: string | null
+          package_id: string
+          package_name: string
+          receipt_url: string | null
+          rejected_reason: string | null
+          settled_count: number
+          status: Database["public"]["Enums"]["package_status"]
+          total_return: number
+          total_settled: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_id?: string | null
+          amount: number
+          approved_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+          daily_return: number
+          duration_days: number
+          id?: string
+          next_settle_at?: string | null
+          package_id: string
+          package_name: string
+          receipt_url?: string | null
+          rejected_reason?: string | null
+          settled_count?: number
+          status?: Database["public"]["Enums"]["package_status"]
+          total_return: number
+          total_settled?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_id?: string | null
+          amount?: number
+          approved_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+          daily_return?: number
+          duration_days?: number
+          id?: string
+          next_settle_at?: string | null
+          package_id?: string
+          package_name?: string
+          receipt_url?: string | null
+          rejected_reason?: string | null
+          settled_count?: number
+          status?: Database["public"]["Enums"]["package_status"]
+          total_return?: number
+          total_settled?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           age_confirmed: boolean
@@ -474,6 +540,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_resolve_package: {
+        Args: { _action: string; _purchase_id: string; _reason: string }
+        Returns: Json
+      }
       admin_resolve_withdrawal: {
         Args: { _action: string; _reason: string; _request_id: string }
         Returns: Json
@@ -517,6 +587,19 @@ export type Database = {
         Args: { _base_reward: number; _is_win: boolean; _mission_id: string }
         Returns: Json
       }
+      settle_package_daily: { Args: never; Returns: Json }
+      submit_package_purchase: {
+        Args: {
+          _amount: number
+          _daily_return: number
+          _duration_days: number
+          _package_id: string
+          _package_name: string
+          _receipt_url: string
+          _total_return: number
+        }
+        Returns: Json
+      }
       tier_boost: {
         Args: { t: Database["public"]["Enums"]["user_tier"] }
         Returns: number
@@ -536,6 +619,13 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      package_status:
+        | "pending"
+        | "approved"
+        | "rejected"
+        | "active"
+        | "completed"
+        | "cancelled"
       tx_direction: "credit" | "debit"
       tx_kind:
         | "mission_win"
@@ -684,6 +774,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      package_status: [
+        "pending",
+        "approved",
+        "rejected",
+        "active",
+        "completed",
+        "cancelled",
+      ],
       tx_direction: ["credit", "debit"],
       tx_kind: [
         "mission_win",
