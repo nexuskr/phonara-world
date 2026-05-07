@@ -24,9 +24,11 @@ import { track } from "@/lib/analytics";
 
 export default function Index() {
   const nav = useNavigate();
-  const { t } = useTranslation("landing");
+  const { t, i18n } = useTranslation("landing");
   const { isReady, hasSession } = useAuthReady();
   useEffect(() => { if (isReady && hasSession) nav("/dashboard", { replace: true }); }, [isReady, hasSession, nav]);
+  useEffect(() => { track("landing_view", { lang: i18n.language }); }, [i18n.language]);
+  const onCta = (location: string) => track("cta_click", { location, lang: i18n.language });
   const online = useOnline();
   const total = useTotalPayout();
   const today = useTodayPayout();
