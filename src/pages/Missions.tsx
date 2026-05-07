@@ -19,6 +19,7 @@ import {
 import { CheckCircle2, Sparkles, Lock, Crown, Upload, Gamepad2, X, Zap, Flame, Trophy, Heart } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { settleMission } from "@/lib/missions-rpc";
+import { supabase } from "@/integrations/supabase/client";
 
 const tierFilters: { key: Tier; label: string; color: string }[] = [
   { key: "NORMAL", label: "일반", color: "text-secondary" },
