@@ -1,0 +1,20 @@
+{
+  "name": "폰미션 — 폰 하나로 시작하는 사이버 수익",
+  "short_name": "폰미션",
+  "description": "2026 한국 No.1 사이버 수익 플랫폼. 매일 폰이 돈을 버는 AI 미션, VIP 패키지, 즉시 정산.",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a0814",
+  "theme_color": "#0a0814",
+  "lang": "ko",
+  "icons": [
+    {
+      "src": "/placeholder.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

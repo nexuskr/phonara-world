@@ -1,9 +1,12 @@
 import { useDB, ATTENDANCE_REWARDS, formatKRW, todayStr } from "@/lib/store";
 import { CalendarCheck, Sparkles } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 
 export default function AttendanceCard() {
   const [db, setDb] = useDB();
+  const [busy, setBusy] = useState(false);
   if (!db.user) return null;
 
   const today = todayStr();
@@ -14,33 +17,39 @@ export default function AttendanceCard() {
   const isWeekly = ((streak + 1) % 7) === 0;
   const todayReward = rewards.base + (isWeekly ? rewards.weeklyBonus : 0);
 
-  function claim() {
-    if (claimed) return;
-    setDb((d) => {
-      if (!d.user) return d;
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      const yStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth()+1).padStart(2,"0")}-${String(yesterday.getDate()).padStart(2,"0")}`;
-      const continued = d.user.lastAttendance === yStr;
-      const newStreak = continued ? (d.user.attendanceStreak ?? 0) + 1 : 1;
-      const r = ATTENDANCE_REWARDS[d.user.tier];
-      const weekly = (newStreak % 7) === 0;
-      const reward = r.base + (weekly ? r.weeklyBonus : 0);
-      return {
-        ...d,
-        user: {
-          ...d.user,
-          balance: d.user.balance + reward,
-          todayEarnings: d.user.todayEarnings + reward,
-          lastAttendance: today,
-          attendanceStreak: newStreak,
-        },
-      };
-    });
-    toast({
-      title: `🗓️ 출석 완료 +${formatKRW(todayReward)}`,
-      description: isWeekly ? `7일 연속! 보너스 +${formatKRW(rewards.weeklyBonus)} 포함` : `${streak + 1}일 연속 출석`,
-    });
+  async function claim() {
+    if (claimed || busy) return;
+    setBusy(true);
+    try {
+      // Server-authoritative attendance claim
+      const { data, error } = await supabase.rpc("claim_daily_attendance", { user_id: u.id });
+      if (error) throw error;
+      const row = Array.isArray(data) ? data[0] : data;
+      const serverReward = Number(row?.reward ?? todayReward);
+      const newStreakSrv = Number(row?.new_streak ?? (streak + 1));
+
+      setDb((d) => {
+        if (!d.user) return d;
+        return {
+          ...d,
+          user: {
+            ...d.user,
+            balance: d.user.balance + serverReward,
+            todayEarnings: d.user.todayEarnings + serverReward,
+            lastAttendance: today,
+            attendanceStreak: newStreakSrv,
+          },
+        };
+      });
+      toast({
+        title: `🗓️ 출석 완료 +${formatKRW(serverReward)}`,
+        description: isWeekly ? `7일 연속! 보너스 포함` : `${newStreakSrv}일 연속 출석`,
+      });
+    } catch (e: any) {
+      toast({ title: "출석 실패", description: e.message ?? "다시 시도해주세요", variant: "destructive" });
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -63,11 +72,11 @@ export default function AttendanceCard() {
         </div>
         <button
           onClick={claim}
-          disabled={claimed}
+          disabled={claimed || busy}
           className="press shrink-0 px-4 py-2 rounded-xl bg-gradient-primary text-primary-foreground text-xs font-bold glow-primary disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
         >
           <Sparkles className="w-3.5 h-3.5" />
-          {claimed ? "완료" : "출석"}
+          {claimed ? "완료" : busy ? "..." : "출석"}
         </button>
       </div>
     </div>

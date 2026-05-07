@@ -6,8 +6,9 @@ import { useDB, formatKRW, uid, PACKAGES, type Mission, type MissionTier, type T
 import { ShieldCheck, Users, TrendingUp, ArrowDownToLine, ArrowUpFromLine, Check, X, Plus, MessageSquare, Send, Coins, Target, Crown } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useRequireAdmin } from "@/hooks/use-require-auth";
+import WithdrawRequestsAdmin from "@/components/admin/WithdrawRequestsAdmin";
 
-type Tab = "deposits" | "withdraws" | "users" | "missions" | "chats" | "coin";
+type Tab = "deposits" | "withdraws" | "server_wd" | "users" | "missions" | "chats" | "coin";
 
 export default function Admin() {
   const [db, setDb] = useDB();
@@ -77,7 +78,8 @@ export default function Admin() {
 
   const tabs: { id: Tab; label: string; icon: any }[] = [
     { id: "deposits", label: "충전", icon: ArrowUpFromLine },
-    { id: "withdraws", label: "출금", icon: ArrowDownToLine },
+    { id: "withdraws", label: "출금(로컬)", icon: ArrowDownToLine },
+    { id: "server_wd", label: "출금(서버)", icon: ArrowDownToLine },
     { id: "missions", label: "미션", icon: Target },
     { id: "users", label: "회원", icon: Users },
     { id: "chats", label: "채팅", icon: MessageSquare },
@@ -162,6 +164,7 @@ export default function Admin() {
           </div>
         )}
 
+        {tab === "server_wd" && <WithdrawRequestsAdmin />}
         {tab === "missions" && <MissionAdmin />}
         {tab === "users" && <UserAdmin />}
         {tab === "chats" && <ChatAdmin />}
