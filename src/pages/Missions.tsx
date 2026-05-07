@@ -222,6 +222,11 @@ export default function Missions() {
           <JackpotBanner />
         </div>
 
+        {/* AI AUTO BOTS */}
+        <div className="mb-6">
+          <AIBotCards />
+        </div>
+
         {/* Momentum + Recovery */}
         {(db.momentum > 0 || db.recoveryMission) && (
           <div className="grid grid-cols-2 gap-2 mb-4">
