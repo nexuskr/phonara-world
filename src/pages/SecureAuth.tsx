@@ -8,6 +8,7 @@ import { toast } from "@/hooks/use-toast";
 import { useAuthReady } from "@/hooks/use-auth-ready";
 import { ShieldCheck, Mail, Lock, Sparkles, ArrowRight, User as UserIcon, Calendar, Phone } from "lucide-react";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import CinematicIntro from "@/components/CinematicIntro";
 
 function checkAge14(birth: string) {
   if (!birth) return false;
@@ -142,13 +143,17 @@ export default function SecureAuth() {
         <LanguageSwitcher variant="auth" />
       </div>
 
-      <div className="relative w-full max-w-md glass-strong neon-border rounded-3xl p-7 animate-liquid-in">
-        <div className="flex items-center gap-2 mb-1">
-          <ShieldCheck className="w-5 h-5 text-secondary" />
-          <span className="text-[11px] tracking-[0.3em] text-muted-foreground font-bold">{t("secureV3")}</span>
+      <div
+        className="relative w-full max-w-md glass-strong neon-border rounded-3xl p-7 animate-cinema-card"
+        style={{ animationDelay: "0.55s" }}
+      >
+        <CinematicIntro />
+
+        <div className="flex items-center justify-center gap-2 mb-1">
+          <ShieldCheck className="w-4 h-4 text-secondary" />
+          <span className="text-[10px] tracking-[0.3em] text-muted-foreground font-bold">{t("secureV3")}</span>
         </div>
-        <h1 className="font-imperial font-black text-4xl text-gradient-imperial tracking-[0.18em]">{t("brand")}</h1>
-        <p className="text-xs text-muted-foreground mt-1">{mode === "login" ? t("taglineLogin") : t("taglineSignup")}</p>
+        <p className="text-xs text-center text-muted-foreground mt-1">{mode === "login" ? t("taglineLogin") : t("taglineSignup")}</p>
 
         <div className="grid grid-cols-2 gap-2 mt-5 mb-4">
           {(["login","signup"] as const).map(m => (
