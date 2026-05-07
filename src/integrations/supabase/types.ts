@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      chat_messages: {
+        Row: {
+          created_at: string | null
+          id: string
+          message: string | null
+          nickname: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message?: string | null
+          nickname?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message?: string | null
+          nickname?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       daily_stats: {
         Row: {
           best_streak: number
@@ -92,6 +116,7 @@ export type Database = {
       profiles: {
         Row: {
           age_confirmed: boolean
+          attendance_streak: number | null
           auth_provider: string | null
           bank_account: string | null
           bank_name: string | null
@@ -99,7 +124,10 @@ export type Database = {
           coin_address: string | null
           coin_network: string | null
           created_at: string
+          daily_mission_count: number | null
           id: string
+          last_attendance: string | null
+          last_reset_date: string | null
           nickname: string
           phone: string | null
           profile_completed: boolean
@@ -111,6 +139,7 @@ export type Database = {
         }
         Insert: {
           age_confirmed?: boolean
+          attendance_streak?: number | null
           auth_provider?: string | null
           bank_account?: string | null
           bank_name?: string | null
@@ -118,7 +147,10 @@ export type Database = {
           coin_address?: string | null
           coin_network?: string | null
           created_at?: string
+          daily_mission_count?: number | null
           id: string
+          last_attendance?: string | null
+          last_reset_date?: string | null
           nickname: string
           phone?: string | null
           profile_completed?: boolean
@@ -130,6 +162,7 @@ export type Database = {
         }
         Update: {
           age_confirmed?: boolean
+          attendance_streak?: number | null
           auth_provider?: string | null
           bank_account?: string | null
           bank_name?: string | null
@@ -137,7 +170,10 @@ export type Database = {
           coin_address?: string | null
           coin_network?: string | null
           created_at?: string
+          daily_mission_count?: number | null
           id?: string
+          last_attendance?: string | null
+          last_reset_date?: string | null
           nickname?: string
           phone?: string | null
           profile_completed?: boolean
@@ -179,6 +215,24 @@ export type Database = {
           pool_total?: number
           share_pct?: number
           user_id?: string
+        }
+        Relationships: []
+      }
+      tier_limits: {
+        Row: {
+          daily_max_missions: number
+          daily_max_reward: number
+          tier: string
+        }
+        Insert: {
+          daily_max_missions: number
+          daily_max_reward: number
+          tier: string
+        }
+        Update: {
+          daily_max_missions?: number
+          daily_max_reward?: number
+          tier?: string
         }
         Relationships: []
       }
@@ -356,6 +410,13 @@ export type Database = {
         Args: { _action: string; _reason: string; _request_id: string }
         Returns: Json
       }
+      claim_daily_attendance: {
+        Args: { user_id: string }
+        Returns: {
+          new_streak: number
+          reward: number
+        }[]
+      }
       distribute_profit_share: {
         Args: {
           _period_end: string
@@ -383,6 +444,7 @@ export type Database = {
         }
         Returns: Json
       }
+      reset_daily_mission_count: { Args: never; Returns: undefined }
       settle_mission: {
         Args: { _base_reward: number; _is_win: boolean; _mission_id: string }
         Returns: Json
