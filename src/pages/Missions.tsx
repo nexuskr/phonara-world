@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import JackpotBanner from "@/components/JackpotBanner";
+import { useRequireAuth } from "@/hooks/use-require-auth";
 import {
   useDB,
   DEFAULT_MISSIONS,
@@ -39,6 +40,7 @@ const FAIL_MSGS = [
 export default function Missions() {
   const [db, setDb] = useDB();
   const nav = useNavigate();
+  const user = useRequireAuth() ?? db.user;
   const [tierTab, setTierTab] = useState<Tier>("NORMAL");
   const [completing, setCompleting] = useState<string | null>(null);
   const [ugcOpen, setUgcOpen] = useState<Mission | null>(null);
@@ -46,14 +48,13 @@ export default function Missions() {
   const [catTab, setCatTab] = useState<"전체" | "게임">("게임");
   const [jackpotWin, setJackpotWin] = useState<{ amount: number; type: "main" | "mini" } | null>(null);
 
-  useEffect(() => { if (!db.user) nav("/secure-auth", { replace: true }); }, [db.user, nav]);
-  if (!db.user) return null;
-  const userTier = db.user.tier;
+  if (!user) return null;
+  const userTier = user.tier;
   const userTierRank = TIER_RANK[userTier];
 
   // Daily play limit (auto-reset by date)
   const today = todayStr();
-  const playsUsed = db.user.playDate === today ? (db.user.playsUsed ?? 0) : 0;
+  const playsUsed = user.playDate === today ? (user.playsUsed ?? 0) : 0;
   const playLimit = DAILY_PLAY_LIMITS[userTier];
   const playsLeft = Math.max(0, playLimit - playsUsed);
   const limitReached = playsLeft <= 0;
