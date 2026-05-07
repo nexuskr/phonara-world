@@ -1,6 +1,6 @@
 import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -65,6 +65,15 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
+
+              {/* Phonara Empire 5축 IA — 정식 라우트 */}
+              <Route path="/command" element={<Dashboard />} />
+              <Route path="/earn" element={<Navigate to="/missions" replace />} />
+              <Route path="/empire" element={<Empire />} />
+              <Route path="/treasury" element={<Navigate to="/wallet" replace />} />
+              <Route path="/legacy" element={<Navigate to="/achievements" replace />} />
+
+              {/* 기존 라우트 — 그대로 작동 (HubTabs 통해 통합 UX) */}
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/missions" element={<Missions />} />
               <Route path="/roulette" element={<Roulette />} />
@@ -82,7 +91,6 @@ const App = () => (
               <Route path="/achievements" element={<Achievements />} />
               <Route path="/season-pass" element={<SeasonPass />} />
               <Route path="/quests" element={<Quests />} />
-              <Route path="/empire" element={<Empire />} />
               <Route path="/unsubscribe" element={<Unsubscribe />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
