@@ -4,6 +4,7 @@ import Layout from "@/components/Layout";
 import { useDB, formatKRW } from "@/lib/store";
 import { ShieldCheck, Star, Trophy, Settings, Award, Lock, X, Mail, KeyRound, BookOpen, LogOut, Crown, Flame, Wallet as WalletIcon, Sparkles, Target, Users, Zap } from "lucide-react";
 import PinPad from "@/components/PinPad";
+import PinResetDialog from "@/components/PinResetDialog";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useRequireAuth } from "@/hooks/use-require-auth";
@@ -28,6 +29,7 @@ export default function Profile() {
 
   // Settings modals
   const [accountOpen, setAccountOpen] = useState(false);
+  const [pinResetOpen, setPinResetOpen] = useState(false);
   const [emailOpen, setEmailOpen] = useState(false);
   const [passOpen, setPassOpen] = useState(false);
   const [newEmail, setNewEmail] = useState("");
@@ -195,6 +197,7 @@ export default function Profile() {
           <Row icon={Mail} label="이메일 변경" sub={u.email} onClick={() => setEmailOpen(true)} />
           <Row icon={KeyRound} label="비밀번호 변경" sub="로그인 비밀번호" onClick={() => setPassOpen(true)} />
           <Row icon={Lock} label={`출금 PIN ${u.withdrawPw ? "변경" : "설정"}`} sub={u.withdrawPw ? "6자리 PIN 등록됨" : "출금 시 필요한 6자리 PIN"} onClick={() => setPwOpen(true)} statusGood={!!u.withdrawPw} />
+          <Row icon={KeyRound} label="출금 PIN 재설정" sub="비밀번호 재인증 후 새 PIN 설정 (24시간 내 3회)" onClick={() => setPinResetOpen(true)} />
 
           <SectionTitle>안내</SectionTitle>
           <Link to="/guide" className="block">
@@ -213,6 +216,8 @@ export default function Profile() {
           </button>
         </div>
       </div>
+
+      {pinResetOpen && <PinResetDialog email={u.email} onClose={() => setPinResetOpen(false)} />}
 
       {/* PIN modal */}
       {pwOpen && (

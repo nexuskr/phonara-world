@@ -3,21 +3,22 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { useDB, formatKRW, uid, type Mission, type MissionTier } from "@/lib/store";
-import { ShieldCheck, Users, TrendingUp, ArrowDownToLine, ArrowUpFromLine, X, Plus, MessageSquare, Send, Coins, Target, Crown } from "lucide-react";
+import { ShieldCheck, Users, TrendingUp, ArrowDownToLine, ArrowUpFromLine, X, Plus, MessageSquare, Send, Coins, Target, Crown, BarChart3 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useRequireAdmin } from "@/hooks/use-require-auth";
 import WithdrawRequestsAdmin from "@/components/admin/WithdrawRequestsAdmin";
 import PackagePurchasesAdmin from "@/components/admin/PackagePurchasesAdmin";
 import ServerUserAdmin from "@/components/admin/ServerUserAdmin";
 import DepositRequestsAdmin from "@/components/admin/DepositRequestsAdmin";
+import AdminDashboardCharts from "@/components/admin/AdminDashboardCharts";
 
-type Tab = "server_dep" | "server_wd" | "packages" | "users" | "missions" | "chats" | "coin";
+type Tab = "dashboard" | "server_dep" | "server_wd" | "packages" | "users" | "missions" | "chats" | "coin";
 
 export default function Admin() {
   const [db, setDb] = useDB();
   const nav = useNavigate();
   const user = useRequireAdmin() ?? db.user;
-  const [tab, setTab] = useState<Tab>("server_dep");
+  const [tab, setTab] = useState<Tab>("dashboard");
   const [kpi, setKpi] = useState({ users: 0, deposits: 0, pendingDep: 0, pendingWd: 0 });
 
   useEffect(() => {
@@ -68,6 +69,7 @@ export default function Admin() {
 
 
   const tabs: { id: Tab; label: string; icon: any }[] = [
+    { id: "dashboard", label: "대시보드", icon: BarChart3 },
     { id: "server_dep", label: "충전 신청", icon: ArrowUpFromLine },
     { id: "server_wd", label: "출금 신청", icon: ArrowDownToLine },
     { id: "packages", label: "패키지", icon: Crown },
@@ -101,6 +103,7 @@ export default function Admin() {
           ))}
         </div>
 
+        {tab === "dashboard" && <AdminDashboardCharts />}
         {tab === "server_wd" && <WithdrawRequestsAdmin />}
         {tab === "server_dep" && <DepositRequestsAdmin />}
         {tab === "packages" && <PackagePurchasesAdmin />}

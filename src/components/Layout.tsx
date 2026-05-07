@@ -13,6 +13,8 @@ import { useDB } from "@/lib/store";
 import React from "react";
 import { supabase } from "@/integrations/supabase/client";
 import FloatingChat from "./FloatingChat";
+import { useAdminNotifications } from "@/hooks/use-admin-notifications";
+import { useUserNotifications } from "@/hooks/use-user-notifications";
 
 const items = [
   { to: "/dashboard", icon: Home, label: "홈" },
@@ -28,6 +30,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const nav = useNavigate();
   const loc = useLocation();
   const user = db.user;
+
+  useUserNotifications(user?.id);
+  useAdminNotifications(!!user?.isAdmin);
 
   // FloatingChat moved to its own file (uses support/realtime safely)
   return (
