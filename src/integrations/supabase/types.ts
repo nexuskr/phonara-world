@@ -260,6 +260,33 @@ export type Database = {
         }
         Relationships: []
       }
+      pin_reset_audit: {
+        Row: {
+          created_at: string
+          id: string
+          ip_address: string | null
+          method: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          method: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          method?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           age_confirmed: boolean
@@ -692,6 +719,10 @@ export type Database = {
         Returns: Json
       }
       reset_daily_mission_count: { Args: never; Returns: undefined }
+      reset_withdraw_pin: {
+        Args: { _method: string; _new_pin: string }
+        Returns: Json
+      }
       settle_mission: {
         Args: { _base_reward: number; _is_win: boolean; _mission_id: string }
         Returns: Json
