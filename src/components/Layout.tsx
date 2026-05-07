@@ -55,7 +55,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             )}
             {user ? (
               <button
-                onClick={() => {
+                onClick={async () => {
+                  await supabase.auth.signOut();
                   setDb((d) => ({ ...d, user: null }));
                   nav("/");
                 }}
