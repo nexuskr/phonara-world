@@ -106,6 +106,7 @@ export default function Admin() {
         </div>
 
         {tab === "dashboard" && <AdminDashboardCharts />}
+        {tab === "analytics" && <AdvancedAnalytics />}
         {tab === "server_wd" && <WithdrawRequestsAdmin />}
         {tab === "server_dep" && <DepositRequestsAdmin />}
         {tab === "packages" && <PackagePurchasesAdmin />}
