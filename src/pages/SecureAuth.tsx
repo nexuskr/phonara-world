@@ -78,6 +78,16 @@ export default function SecureAuth() {
             terms_agreed_at: new Date().toISOString(), age_confirmed: true,
             profile_completed: true, auth_provider: "email",
           }).eq("id", data.user.id);
+
+          // Phase 21: capture referral code from URL or localStorage
+          const refCode = new URLSearchParams(window.location.search).get("ref")
+            ?? localStorage.getItem("pm_ref_code");
+          if (refCode && refCode.length === 8) {
+            try {
+              await supabase.rpc("apply_referral_code", { _code: refCode.toUpperCase() });
+              localStorage.removeItem("pm_ref_code");
+            } catch { /* silent — already_applied or invalid */ }
+          }
         }
         toast({ title: "🎉 가입 완료", description: "이메일 인증 메일을 확인해주세요." });
         setMode("login");

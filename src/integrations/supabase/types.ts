@@ -369,6 +369,8 @@ export type Database = {
           phone: string | null
           profile_completed: boolean
           real_name: string | null
+          referral_code: string | null
+          referred_by: string | null
           terms_agreed_at: string | null
           tier: Database["public"]["Enums"]["user_tier"]
           updated_at: string
@@ -392,6 +394,8 @@ export type Database = {
           phone?: string | null
           profile_completed?: boolean
           real_name?: string | null
+          referral_code?: string | null
+          referred_by?: string | null
           terms_agreed_at?: string | null
           tier?: Database["public"]["Enums"]["user_tier"]
           updated_at?: string
@@ -415,6 +419,8 @@ export type Database = {
           phone?: string | null
           profile_completed?: boolean
           real_name?: string | null
+          referral_code?: string | null
+          referred_by?: string | null
           terms_agreed_at?: string | null
           tier?: Database["public"]["Enums"]["user_tier"]
           updated_at?: string
@@ -452,6 +458,66 @@ export type Database = {
           pool_total?: number
           share_pct?: number
           user_id?: string
+        }
+        Relationships: []
+      }
+      referral_earnings: {
+        Row: {
+          base_amount: number
+          commission: number
+          created_at: string
+          id: string
+          invitee_id: string
+          inviter_id: string
+          source: string
+        }
+        Insert: {
+          base_amount: number
+          commission: number
+          created_at?: string
+          id?: string
+          invitee_id: string
+          inviter_id: string
+          source: string
+        }
+        Update: {
+          base_amount?: number
+          commission?: number
+          created_at?: string
+          id?: string
+          invitee_id?: string
+          inviter_id?: string
+          source?: string
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          code_used: string
+          created_at: string
+          id: string
+          invitee_id: string
+          inviter_id: string
+          signup_bonus_paid: boolean
+          total_commission: number
+        }
+        Insert: {
+          code_used: string
+          created_at?: string
+          id?: string
+          invitee_id: string
+          inviter_id: string
+          signup_bonus_paid?: boolean
+          total_commission?: number
+        }
+        Update: {
+          code_used?: string
+          created_at?: string
+          id?: string
+          invitee_id?: string
+          inviter_id?: string
+          signup_bonus_paid?: boolean
+          total_commission?: number
         }
         Relationships: []
       }
@@ -722,6 +788,10 @@ export type Database = {
       }
     }
     Functions: {
+      _credit_referral_commission: {
+        Args: { _base: number; _invitee: string; _source: string }
+        Returns: undefined
+      }
       _cron_settle_package_daily: { Args: never; Returns: Json }
       admin_adjust_balance: {
         Args: { _delta: number; _reason: string; _target: string }
@@ -757,6 +827,7 @@ export type Database = {
         }
         Returns: number
       }
+      apply_referral_code: { Args: { _code: string }; Returns: Json }
       bump_jackpot: { Args: { _amount: number }; Returns: Json }
       claim_ai_bot_run: { Args: { _run_id: string }; Returns: Json }
       claim_daily_attendance: {
@@ -783,6 +854,7 @@ export type Database = {
         }
         Returns: Json
       }
+      gen_referral_code: { Args: never; Returns: string }
       get_admin_metrics: {
         Args: { _days?: number }
         Returns: {
@@ -794,6 +866,7 @@ export type Database = {
           withdrawals_total: number
         }[]
       }
+      get_referral_stats: { Args: never; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

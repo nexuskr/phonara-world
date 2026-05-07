@@ -19,6 +19,8 @@ type BadgeDef = {
   progress?: number; // 0-100
 };
 
+import ReferralCard from "@/components/ReferralCard";
+
 export default function Profile() {
   const [db, setDb] = useDB();
   const nav = useNavigate();
@@ -160,6 +162,11 @@ export default function Profile() {
             <Card icon={Star} label="오늘" v={formatKRW(u.todayEarnings)} />
             <Card icon={Flame} label="연속" v={`${u.streak}일`} />
           </div>
+        </div>
+
+        {/* ===== Phase 21: Referral System ===== */}
+        <div className="mt-5">
+          <ReferralCard />
         </div>
 
         {/* ===== Upgraded Badges ===== */}

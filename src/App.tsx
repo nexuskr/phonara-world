@@ -29,7 +29,18 @@ const queryClient = new QueryClient({
   },
 });
 
-function SessionWatcher() { useSessionGuard(); useAuthBridge(); return null; }
+function SessionWatcher() {
+  useSessionGuard();
+  useAuthBridge();
+  // Phase 21: capture ?ref=CODE on any page so it survives until signup
+  if (typeof window !== "undefined") {
+    const code = new URLSearchParams(window.location.search).get("ref");
+    if (code && /^[A-Z0-9]{8}$/i.test(code)) {
+      localStorage.setItem("pm_ref_code", code.toUpperCase());
+    }
+  }
+  return null;
+}
 
 const App = () => (
   <ErrorBoundary>
