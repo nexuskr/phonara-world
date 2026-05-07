@@ -332,7 +332,9 @@ export type Database = {
           created_at: string
           daily_return: number
           duration_days: number
+          harvest_streak: number
           id: string
+          last_harvest_date: string | null
           next_settle_at: string | null
           package_id: string
           package_name: string
@@ -353,7 +355,9 @@ export type Database = {
           created_at?: string
           daily_return: number
           duration_days: number
+          harvest_streak?: number
           id?: string
+          last_harvest_date?: string | null
           next_settle_at?: string | null
           package_id: string
           package_name: string
@@ -374,7 +378,9 @@ export type Database = {
           created_at?: string
           daily_return?: number
           duration_days?: number
+          harvest_streak?: number
           id?: string
+          last_harvest_date?: string | null
           next_settle_at?: string | null
           package_id?: string
           package_name?: string
@@ -1268,6 +1274,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      harvest_machine: { Args: { _purchase_id: string }; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
