@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { useDB, PACKAGES, formatKRW, uid, type Pkg } from "@/lib/store";
 import { Crown, Check, Upload, Sparkles, X } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { useRequireAuth } from "@/hooks/use-require-auth";
 
 const tierStyles: Record<Pkg["tier"], { ring: string; bg: string; label: string }> = {
   FREE:    { ring: "from-muted to-muted",                bg: "from-muted/30",      label: "FREE" },
@@ -18,9 +19,9 @@ const tierStyles: Record<Pkg["tier"], { ring: string; bg: string; label: string 
 export default function Packages() {
   const [db] = useDB();
   const nav = useNavigate();
+  const user = useRequireAuth() ?? db.user;
   const [selected, setSelected] = useState<Pkg | null>(null);
-  useEffect(() => { if (!db.user) nav("/secure-auth", { replace: true }); }, [db.user, nav]);
-  if (!db.user) return null;
+  if (!user) return null;
 
   return (
     <Layout>
