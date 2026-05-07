@@ -61,6 +61,7 @@ export default function Index() {
             </Link>
             <Link
               to="/secure-auth?signup=1"
+              onClick={() => onCta("nav")}
               className="px-4 sm:px-5 py-2 rounded-full text-xs sm:text-sm font-bold bg-gradient-imperial text-primary-foreground glow-imperial hover:scale-105 transition"
             >
               {t("navEnter")}
