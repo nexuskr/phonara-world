@@ -47,11 +47,18 @@ export default function Missions() {
   const [jackpotWin, setJackpotWin] = useState<{ amount: number; type: "main" | "mini" } | null>(null);
 
   if (!db.user) {
-    nav("/auth");
+    nav("/secure-auth");
     return null;
   }
   const userTier = db.user.tier;
   const userTierRank = TIER_RANK[userTier];
+
+  // Daily play limit (auto-reset by date)
+  const today = todayStr();
+  const playsUsed = db.user.playDate === today ? (db.user.playsUsed ?? 0) : 0;
+  const playLimit = DAILY_PLAY_LIMITS[userTier];
+  const playsLeft = Math.max(0, playLimit - playsUsed);
+  const limitReached = playsLeft <= 0;
 
   const missions = [...DEFAULT_MISSIONS, ...db.customMissions];
   const list = missions.filter((m) => m.tier === tierTab && (catTab === "전체" || m.category === catTab));
