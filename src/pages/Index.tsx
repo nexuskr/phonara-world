@@ -123,6 +123,7 @@ export default function Index() {
         <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-up" style={{ animationDelay: "0.3s" }}>
           <Link
             to="/secure-auth?signup=1"
+            onClick={() => onCta("hero")}
             className="group relative px-8 py-4 rounded-2xl font-display font-bold text-base sm:text-lg bg-gradient-imperial text-primary-foreground glow-imperial animate-pulse-glow hover:scale-105 transition flex items-center gap-2"
           >
             <Crown className="w-5 h-5" />
