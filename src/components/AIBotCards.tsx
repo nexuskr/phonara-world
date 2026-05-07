@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useDB, formatKRW } from "@/lib/store";
 import { toast } from "@/hooks/use-toast";
@@ -8,7 +9,7 @@ import {
 } from "lucide-react";
 
 type Kind = "content" | "trading" | "image";
-type Status = "running" | "ready" | "claimed" | "failed" | "expired";
+type Status = "running" | "ready" | "claimed" | "failed";
 type Run = {
   id: string;
   user_id: string;
@@ -599,7 +600,7 @@ export function ActiveBotsMini() {
   if (total === 0) return null;
 
   return (
-    <a href="/missions" className="block glass-strong rounded-2xl p-3 neon-border hover:scale-[1.01] transition">
+    <Link to="/missions" className="block glass-strong rounded-2xl p-3 neon-border hover:scale-[1.01] transition">
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center glow-primary">
           <Bot className="w-5 h-5 text-primary-foreground" />
@@ -612,6 +613,6 @@ export function ActiveBotsMini() {
         </div>
         <RefreshCw className="w-4 h-4 text-muted-foreground" />
       </div>
-    </a>
+    </Link>
   );
 }
