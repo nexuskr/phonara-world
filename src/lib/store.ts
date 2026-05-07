@@ -272,43 +272,43 @@ export const PACKAGES: Pkg[] = [
 ];
 
 export const DEFAULT_MISSIONS: Mission[] = [
-  { id: "m1",  title: "쿠팡 앱 설치 후 30초 실행", desc: "신규 앱 다운로드 후 메인 진입", reward: 1_500,    category: "광고",   difficulty: "EASY",   tier: "NORMAL", duration: "30초" },
-  { id: "m2",  title: "AI 챗봇 응답 평가 5건",   desc: "AI 응답 품질 평가",         reward: 4_500,    category: "AI",     difficulty: "NORMAL", tier: "NORMAL", duration: "5분" },
-  { id: "m3",  title: "유튜브 영상 시청 + 좋아요", desc: "지정 영상 60초 시청",        reward: 800,      category: "광고",   difficulty: "EASY",   tier: "NORMAL", duration: "1분" },
-  { id: "m4",  title: "10분 마켓 리서치 설문",   desc: "라이프스타일 설문",          reward: 7_200,    category: "설문",   difficulty: "NORMAL", tier: "NORMAL", duration: "10분" },
-  { id: "m7",  title: "친구 1명 초대하기",       desc: "추천코드로 친구 가입",        reward: 5_000,    category: "추천",   difficulty: "NORMAL", tier: "NORMAL", duration: "즉시" },
-  // ─── NORMAL GAMES (9) — easy entry, jackpot contributors ───
-  { id: "g1",  title: "사이버 탭 챌린지",        desc: "10초간 빠르게 탭",            reward: 1_200,    category: "게임",   difficulty: "EASY",   tier: "NORMAL", duration: "10초", game: "tap",      boostable: true },
-  { id: "g2",  title: "럭키 박스 오픈",          desc: "1일 1회 무료 박스",            reward: 2_500,    category: "게임",   difficulty: "EASY",   tier: "NORMAL", duration: "5초",  game: "lucky",    boostable: true },
-  { id: "g3",  title: "메모리 매칭",            desc: "카드 6쌍 매칭",                reward: 3_500,    category: "게임",   difficulty: "NORMAL", tier: "NORMAL", duration: "1분",  game: "memory",   boostable: true },
-  { id: "g6",  title: "리액션 스피드",          desc: "녹색 신호에 즉시 탭",          reward: 2_000,    category: "게임",   difficulty: "EASY",   tier: "NORMAL", duration: "20초", game: "reaction", boostable: true },
-  { id: "g7",  title: "스크래치 카드",          desc: "코팅을 긁어 보상 확인",         reward: 1_800,    category: "게임",   difficulty: "EASY",   tier: "NORMAL", duration: "5초",  game: "scratch",  boostable: true },
-  { id: "g8",  title: "주사위 더블",            desc: "2개 주사위 합 7 이상",         reward: 2_400,    category: "게임",   difficulty: "EASY",   tier: "NORMAL", duration: "5초",  game: "dice",     boostable: true },
-  { id: "g9",  title: "네온 슬롯",              desc: "3릴 슬롯 매칭",                reward: 3_200,    category: "게임",   difficulty: "NORMAL", tier: "NORMAL", duration: "10초", game: "slot",     boostable: true },
-  { id: "g10", title: "하이로우",               desc: "다음 카드 더 큼/작음",          reward: 2_800,    category: "게임",   difficulty: "NORMAL", tier: "NORMAL", duration: "15초", game: "highlow",  boostable: true },
-  { id: "g11", title: "한정 럭키 (오늘만)",      desc: "오늘 단 100회만 플레이 가능",   reward: 4_500,    category: "게임",   difficulty: "NORMAL", tier: "NORMAL", duration: "5초",  game: "lucky",    boostable: true, fomoLimit: 100 },
+  { id: "m1",  title: "쿠팡 앱 설치 후 30초 실행", desc: "신규 앱 다운로드 후 메인 진입", reward: 150,    category: "광고",   difficulty: "EASY",   tier: "NORMAL", duration: "30초" },
+  { id: "m2",  title: "AI 챗봇 응답 평가 5건",   desc: "AI 응답 품질 평가",         reward: 450,    category: "AI",     difficulty: "NORMAL", tier: "NORMAL", duration: "5분" },
+  { id: "m3",  title: "유튜브 영상 시청 + 좋아요", desc: "지정 영상 60초 시청",        reward: 80,     category: "광고",   difficulty: "EASY",   tier: "NORMAL", duration: "1분" },
+  { id: "m4",  title: "10분 마켓 리서치 설문",   desc: "라이프스타일 설문",          reward: 720,    category: "설문",   difficulty: "NORMAL", tier: "NORMAL", duration: "10분" },
+  { id: "m7",  title: "친구 1명 초대하기",       desc: "추천코드로 친구 가입",        reward: 500,    category: "추천",   difficulty: "NORMAL", tier: "NORMAL", duration: "즉시" },
+  // ─── NORMAL GAMES ───
+  { id: "g1",  title: "사이버 탭 챌린지",        desc: "10초간 빠르게 탭",            reward: 120,    category: "게임",   difficulty: "EASY",   tier: "NORMAL", duration: "10초", game: "tap",      boostable: true },
+  { id: "g2",  title: "럭키 박스 오픈",          desc: "1일 1회 무료 박스",            reward: 250,    category: "게임",   difficulty: "EASY",   tier: "NORMAL", duration: "5초",  game: "lucky",    boostable: true },
+  { id: "g3",  title: "메모리 매칭",            desc: "카드 6쌍 매칭",                reward: 350,    category: "게임",   difficulty: "NORMAL", tier: "NORMAL", duration: "1분",  game: "memory",   boostable: true },
+  { id: "g6",  title: "리액션 스피드",          desc: "녹색 신호에 즉시 탭",          reward: 200,    category: "게임",   difficulty: "EASY",   tier: "NORMAL", duration: "20초", game: "reaction", boostable: true },
+  { id: "g7",  title: "스크래치 카드",          desc: "코팅을 긁어 보상 확인",         reward: 180,    category: "게임",   difficulty: "EASY",   tier: "NORMAL", duration: "5초",  game: "scratch",  boostable: true },
+  { id: "g8",  title: "주사위 더블",            desc: "2개 주사위 합 7 이상",         reward: 240,    category: "게임",   difficulty: "EASY",   tier: "NORMAL", duration: "5초",  game: "dice",     boostable: true },
+  { id: "g9",  title: "네온 슬롯",              desc: "3릴 슬롯 매칭",                reward: 320,    category: "게임",   difficulty: "NORMAL", tier: "NORMAL", duration: "10초", game: "slot",     boostable: true },
+  { id: "g10", title: "하이로우",               desc: "다음 카드 더 큼/작음",          reward: 280,    category: "게임",   difficulty: "NORMAL", tier: "NORMAL", duration: "15초", game: "highlow",  boostable: true },
+  { id: "g11", title: "한정 럭키 (오늘만)",      desc: "오늘 단 100회만 플레이 가능",   reward: 450,    category: "게임",   difficulty: "NORMAL", tier: "NORMAL", duration: "5초",  game: "lucky",    boostable: true, fomoLimit: 100 },
 
-  // ─── VIP MISSIONS + GAMES (7) — easier difficulty, bigger rewards ───
-  { id: "m5",  title: "프리미엄 카페 리뷰 작성",  desc: "300자 + 사진 1장",            reward: 12_000,   category: "리뷰",   difficulty: "HARD",   tier: "VIP",    duration: "20분", ugc: true },
-  { id: "m6",  title: "VIP 데이터 라벨링 100건", desc: "고급 이미지 라벨링",            reward: 35_000,   category: "데이터", difficulty: "VIP",    tier: "VIP",    duration: "45분" },
-  { id: "m8",  title: "AI 음성 데이터 녹음",     desc: "한국어 30문장 녹음",            reward: 18_000,   category: "AI",     difficulty: "HARD",   tier: "VIP",    duration: "25분", ugc: true },
-  { id: "g4",  title: "VIP 럭키 휠",            desc: "최대 50,000원 당첨",           reward: 8_000,    category: "게임",   difficulty: "VIP",    tier: "VIP",    duration: "5초",  game: "lucky",    boostable: true },
-  { id: "g12", title: "VIP 골드 슬롯",          desc: "황금 릴 잭팟 기여 2배",         reward: 15_000,   category: "게임",   difficulty: "NORMAL", tier: "VIP",    duration: "10초", game: "slot",     boostable: true },
-  { id: "g13", title: "VIP 스크래치 골드",      desc: "프리미엄 스크래치",             reward: 10_000,   category: "게임",   difficulty: "EASY",   tier: "VIP",    duration: "5초",  game: "scratch",  boostable: true },
-  { id: "g14", title: "VIP 리액션 마스터",      desc: "리액션 시 보상 1.5배",          reward: 12_000,   category: "게임",   difficulty: "EASY",   tier: "VIP",    duration: "15초", game: "reaction", boostable: true },
+  // ─── VIP ───
+  { id: "m5",  title: "프리미엄 카페 리뷰 작성",  desc: "300자 + 사진 1장",            reward: 1_200,  category: "리뷰",   difficulty: "HARD",   tier: "VIP",    duration: "20분", ugc: true },
+  { id: "m6",  title: "VIP 데이터 라벨링 100건", desc: "고급 이미지 라벨링",            reward: 3_500,  category: "데이터", difficulty: "VIP",    tier: "VIP",    duration: "45분" },
+  { id: "m8",  title: "AI 음성 데이터 녹음",     desc: "한국어 30문장 녹음",            reward: 1_800,  category: "AI",     difficulty: "HARD",   tier: "VIP",    duration: "25분", ugc: true },
+  { id: "g4",  title: "VIP 럭키 휠",            desc: "최대 5,000원 당첨",            reward: 800,    category: "게임",   difficulty: "VIP",    tier: "VIP",    duration: "5초",  game: "lucky",    boostable: true },
+  { id: "g12", title: "VIP 골드 슬롯",          desc: "황금 릴 잭팟 기여 2배",         reward: 1_500,  category: "게임",   difficulty: "NORMAL", tier: "VIP",    duration: "10초", game: "slot",     boostable: true },
+  { id: "g13", title: "VIP 스크래치 골드",      desc: "프리미엄 스크래치",             reward: 1_000,  category: "게임",   difficulty: "EASY",   tier: "VIP",    duration: "5초",  game: "scratch",  boostable: true },
+  { id: "g14", title: "VIP 리액션 마스터",      desc: "리액션 시 보상 1.5배",          reward: 1_200,  category: "게임",   difficulty: "EASY",   tier: "VIP",    duration: "15초", game: "reaction", boostable: true },
 
-  // ─── GOD MODE (5) — extreme rewards, very easy ───
-  { id: "m9",  title: "GOD 데이터 큐레이션",     desc: "고가치 데이터셋",               reward: 120_000,  category: "데이터", difficulty: "VIP",    tier: "GOD",    duration: "60분" },
-  { id: "m10", title: "GOD AI RLHF 평가",       desc: "AI 모델 평가",                  reward: 250_000,  category: "AI",     difficulty: "VIP",    tier: "GOD",    duration: "90분" },
-  { id: "g5",  title: "GOD 럭키 휠",            desc: "최대 500,000원 당첨",          reward: 50_000,   category: "게임",   difficulty: "VIP",    tier: "GOD",    duration: "5초",  game: "lucky",    boostable: true },
-  { id: "g15", title: "GOD 다이아 슬롯",        desc: "잭팟 기여 5배",                reward: 80_000,   category: "게임",   difficulty: "NORMAL", tier: "GOD",    duration: "10초", game: "slot",     boostable: true },
-  { id: "g16", title: "GOD 하이로우 챔프",      desc: "9라운드 연승 가능",             reward: 65_000,   category: "게임",   difficulty: "NORMAL", tier: "GOD",    duration: "30초", game: "highlow",  boostable: true },
+  // ─── GOD MODE ───
+  { id: "m9",  title: "GOD 데이터 큐레이션",     desc: "고가치 데이터셋",               reward: 12_000, category: "데이터", difficulty: "VIP",    tier: "GOD",    duration: "60분" },
+  { id: "m10", title: "GOD AI RLHF 평가",       desc: "AI 모델 평가",                  reward: 25_000, category: "AI",     difficulty: "VIP",    tier: "GOD",    duration: "90분" },
+  { id: "g5",  title: "GOD 럭키 휠",            desc: "최대 50,000원 당첨",           reward: 5_000,  category: "게임",   difficulty: "VIP",    tier: "GOD",    duration: "5초",  game: "lucky",    boostable: true },
+  { id: "g15", title: "GOD 다이아 슬롯",        desc: "잭팟 기여 5배",                 reward: 8_000,  category: "게임",   difficulty: "NORMAL", tier: "GOD",    duration: "10초", game: "slot",     boostable: true },
+  { id: "g16", title: "GOD 하이로우 챔프",      desc: "9라운드 연승 가능",             reward: 6_500,  category: "게임",   difficulty: "NORMAL", tier: "GOD",    duration: "30초", game: "highlow",  boostable: true },
 
-  // ─── EMPIRE (4) — godlike rewards, jackpot odds insane ───
-  { id: "m11", title: "EMPIRE 콘텐츠 캠페인",    desc: "단독 UGC 영상",                 reward: 850_000,  category: "UGC",    difficulty: "VIP",    tier: "EMPIRE", duration: "1일",  ugc: true },
-  { id: "m12", title: "EMPIRE 자산 신호 검토",   desc: "팬텀 카운슬 보고서",             reward: 1_500_000, category: "데이터", difficulty: "VIP",   tier: "EMPIRE", duration: "당일" },
-  { id: "g17", title: "EMPIRE 다이아 휠",       desc: "최대 1,000만원 + 메가 잭팟",     reward: 500_000,  category: "게임",   difficulty: "VIP",    tier: "EMPIRE", duration: "5초",  game: "lucky",    boostable: true },
-  { id: "g18", title: "EMPIRE 잭팟 슬롯",       desc: "잭팟 기여 10배 · 다중 당첨",     reward: 800_000,  category: "게임",   difficulty: "VIP",    tier: "EMPIRE", duration: "10초", game: "slot",     boostable: true },
+  // ─── EMPIRE ───
+  { id: "m11", title: "EMPIRE 콘텐츠 캠페인",    desc: "단독 UGC 영상",                 reward: 85_000, category: "UGC",    difficulty: "VIP",    tier: "EMPIRE", duration: "1일",  ugc: true },
+  { id: "m12", title: "EMPIRE 자산 신호 검토",   desc: "팬텀 카운슬 보고서",             reward: 150_000,category: "데이터", difficulty: "VIP",   tier: "EMPIRE", duration: "당일" },
+  { id: "g17", title: "EMPIRE 다이아 휠",       desc: "최대 100만원 + 메가 잭팟",       reward: 50_000, category: "게임",   difficulty: "VIP",    tier: "EMPIRE", duration: "5초",  game: "lucky",    boostable: true },
+  { id: "g18", title: "EMPIRE 잭팟 슬롯",       desc: "잭팟 기여 10배 · 다중 당첨",     reward: 80_000, category: "게임",   difficulty: "VIP",    tier: "EMPIRE", duration: "10초", game: "slot",     boostable: true },
 ];
 
 export function uid() { return Math.random().toString(36).slice(2) + Date.now().toString(36); }
