@@ -146,6 +146,11 @@ export default function Dashboard() {
             <JackpotBanner />
           </div>
 
+          {/* AI Auto Bots summary */}
+          <div className="mt-5">
+            <ActiveBotsMini />
+          </div>
+
           {/* Quick actions */}
           <div className="grid grid-cols-4 gap-2 mt-5">
             {[
