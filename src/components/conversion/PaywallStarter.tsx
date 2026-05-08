@@ -27,6 +27,7 @@ export default function PaywallStarter({
   onClose: () => void;
   onSubmit?: () => Promise<void> | void;
 }) {
+  const { t } = useTranslation("convert");
   const [db] = useDB();
   const [busy, setBusy] = useState(false);
   const original = Math.round(pkg.price * 1.4); // anchor (40% 더 비쌌다고 표시)
