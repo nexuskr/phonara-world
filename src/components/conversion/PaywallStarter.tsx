@@ -50,7 +50,11 @@ export default function PaywallStarter({
       <ExitIntentModal onAccept={pay} />
       <div className="w-full max-w-md glass-strong rounded-3xl p-6 neon-border relative overflow-hidden animate-fade-up">
         <button
-          onClick={onClose}
+          onClick={() => {
+            try { window.dispatchEvent(new Event("phonara:exit-intent")); } catch {}
+            // 다음 tick에 닫기 — exit modal이 z-index 위에서 먼저 뜸
+            setTimeout(onClose, 0);
+          }}
           className="absolute top-4 right-4 w-8 h-8 rounded-full bg-muted/40 flex items-center justify-center"
           aria-label="닫기"
         >
