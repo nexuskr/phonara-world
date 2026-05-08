@@ -274,6 +274,8 @@ export default function Wallet() {
           </div>
         )}
 
+        {action === "withdraw" && <WithdrawQueueStatus />}
+
         {action !== "history" && (
           <div className="glass-strong rounded-2xl p-5 sm:p-6 space-y-5 border border-primary/20">
             <Field label={t("amount")}>
