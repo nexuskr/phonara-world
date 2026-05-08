@@ -50,6 +50,10 @@ export default function Wallet() {
   // coin
   const [coinAddr, setCoinAddr] = useState("");
   const [network, setNetwork] = useState<"TRC20" | "ERC20" | "BEP20">("TRC20");
+  // P1: deposit channel + voucher
+  const [depositChannel, setDepositChannel] = useState<DepositChannel>("bank");
+  const [voucherBrand, setVoucherBrand] = useState<VoucherBrand>("culture");
+  const [voucherPin, setVoucherPin] = useState("");
   // verification
   const [sentCode, setSentCode] = useState<string | null>(null);
   const [authCode, setAuthCode] = useState("");
