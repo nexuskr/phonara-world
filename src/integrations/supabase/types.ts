@@ -656,6 +656,33 @@ export type Database = {
         }
         Relationships: []
       }
+      handbook_progress: {
+        Row: {
+          bonus_paid: boolean
+          bonus_paid_at: string | null
+          created_at: string
+          steps_completed: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bonus_paid?: boolean
+          bonus_paid_at?: string | null
+          created_at?: string
+          steps_completed?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bonus_paid?: boolean
+          bonus_paid_at?: string | null
+          created_at?: string
+          steps_completed?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       idempotency_keys: {
         Row: {
           created_at: string
@@ -2115,6 +2142,7 @@ export type Database = {
           reward: number
         }[]
       }
+      claim_handbook_bonus: { Args: never; Returns: Json }
       claim_quest: { Args: { _quest_key: string }; Returns: Json }
       claim_season_reward: {
         Args: { _level: number; _track: string }
@@ -2319,6 +2347,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      mark_handbook_step: { Args: { _step: string }; Returns: Json }
       move_to_dlq: {
         Args: {
           dlq_name: string

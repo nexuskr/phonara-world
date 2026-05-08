@@ -1,15 +1,25 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
-import { ShieldCheck, Crown, Sparkles, Lock, Wallet as WalletIcon, BookOpen, Trophy, Zap, Coins, ArrowLeftRight, Star, CheckCircle2 } from "lucide-react";
+import { ShieldCheck, Crown, Sparkles, Lock, Wallet as WalletIcon, BookOpen, Trophy, Zap, Coins, ArrowLeftRight, Star, CheckCircle2, GraduationCap, Gift, ArrowRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { supabase } from "@/integrations/supabase/client";
+import { useDB } from "@/lib/store";
+import { toast } from "@/hooks/use-toast";
+import EarningsSimulator from "@/components/guide/EarningsSimulator";
 
-type Tab = "principles" | "tier" | "jackpot" | "wallet";
+type Tab = "starter" | "principles" | "tier" | "jackpot" | "wallet";
+type StepKey = "step1" | "step2" | "step3" | "step4" | "step5" | "step6";
+const STEP_KEYS: StepKey[] = ["step1", "step2", "step3", "step4", "step5", "step6"];
 
 export default function Guide() {
   const { t } = useTranslation("guide");
-  const [tab, setTab] = useState<Tab>("principles");
+  const [db] = useDB();
+  const isLoggedIn = !!db.user?.id;
+  const [tab, setTab] = useState<Tab>(isLoggedIn ? "principles" : "starter");
 
   const tabs = [
+    { id: "starter" as const, l: t("tabStarter"), i: GraduationCap },
     { id: "principles" as const, l: t("tabPrinciples"), i: ShieldCheck },
     { id: "tier" as const, l: t("tabTier"), i: Crown },
     { id: "jackpot" as const, l: t("tabJackpot"), i: Trophy },
@@ -25,7 +35,7 @@ export default function Guide() {
         </h1>
         <p className="text-xs text-muted-foreground mb-4 break-keep">{t("subtitle")}</p>
 
-        <div className="grid grid-cols-4 gap-1.5 mb-5">
+        <div className="grid grid-cols-5 gap-1.5 mb-5">
           {tabs.map((tt) => {
             const Icon = tt.i;
             return (
@@ -37,12 +47,204 @@ export default function Guide() {
           })}
         </div>
 
+        {tab === "starter" && <StarterGuide t={t} />}
         {tab === "principles" && <Principles t={t} />}
         {tab === "tier" && <TierGuide t={t} />}
         {tab === "jackpot" && <JackpotGuide t={t} />}
         {tab === "wallet" && <WalletGuide t={t} />}
       </div>
     </Layout>
+  );
+}
+
+function StarterGuide({ t }: any) {
+  const [db] = useDB();
+  const isLoggedIn = !!db.user?.id;
+  const [steps, setSteps] = useState<Record<string, boolean>>({});
+  const [bonusPaid, setBonusPaid] = useState(false);
+  const [claiming, setClaiming] = useState(false);
+
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    let alive = true;
+    (async () => {
+      const { data } = await supabase
+        .from("handbook_progress")
+        .select("steps_completed, bonus_paid")
+        .eq("user_id", db.user!.id)
+        .maybeSingle();
+      if (!alive) return;
+      setSteps((data?.steps_completed as Record<string, boolean>) ?? {});
+      setBonusPaid(!!data?.bonus_paid);
+    })();
+    return () => { alive = false; };
+  }, [isLoggedIn, db.user?.id]);
+
+  const completedCount = STEP_KEYS.filter((k) => steps[k]).length;
+  const allDone = completedCount === STEP_KEYS.length;
+
+  async function markStep(k: StepKey) {
+    if (!isLoggedIn) {
+      toast({ title: t("starter.loginRequired") });
+      return;
+    }
+    setSteps((p) => ({ ...p, [k]: true }));
+    const { error } = await supabase.rpc("mark_handbook_step", { _step: k });
+    if (error) {
+      // revert
+      setSteps((p) => ({ ...p, [k]: false }));
+      toast({ title: error.message, variant: "destructive" });
+    }
+  }
+
+  async function claim() {
+    if (!isLoggedIn || bonusPaid || !allDone || claiming) return;
+    setClaiming(true);
+    try {
+      const { data, error } = await supabase.rpc("claim_handbook_bonus");
+      if (error) throw error;
+      const r = data as { ok: boolean; amount?: number; error?: string };
+      if (r.ok) {
+        setBonusPaid(true);
+        toast({ title: t("starter.bonusPaidTitle"), description: t("starter.bonusPaidDesc") });
+      } else {
+        toast({ title: r.error ?? "error", variant: "destructive" });
+      }
+    } catch (e: any) {
+      toast({ title: e.message ?? "error", variant: "destructive" });
+    } finally {
+      setClaiming(false);
+    }
+  }
+
+  const stepDefs: { k: StepKey; titleKey: string; descKey: string; ctaKey: string; href: string }[] = [
+    { k: "step1", titleKey: "starter.step1Title", descKey: "starter.step1Desc", ctaKey: "starter.step1Cta", href: "/auth" },
+    { k: "step2", titleKey: "starter.step2Title", descKey: "starter.step2Desc", ctaKey: "starter.step2Cta", href: "/dashboard" },
+    { k: "step3", titleKey: "starter.step3Title", descKey: "starter.step3Desc", ctaKey: "starter.step3Cta", href: "/missions" },
+    { k: "step4", titleKey: "starter.step4Title", descKey: "starter.step4Desc", ctaKey: "starter.step4Cta", href: "/packages" },
+    { k: "step5", titleKey: "starter.step5Title", descKey: "starter.step5Desc", ctaKey: "starter.step5Cta", href: "/wallet" },
+    { k: "step6", titleKey: "starter.step6Title", descKey: "starter.step6Desc", ctaKey: "starter.step6Cta", href: "/profile" },
+  ];
+
+  return (
+    <div>
+      {/* Hero */}
+      <div className="glass-strong rounded-3xl p-5 mb-4 neon-border relative overflow-hidden">
+        <div className="absolute -top-20 -right-20 w-40 h-40 rounded-full bg-gradient-imperial blur-3xl opacity-40 pointer-events-none" />
+        <div className="relative">
+          <div className="text-[10px] tracking-[0.3em] text-secondary font-black flex items-center gap-1.5">
+            <GraduationCap className="w-3 h-3 text-gold" /> {t("starter.heroTag")}
+          </div>
+          <h2 className="font-imperial text-2xl text-gradient-imperial mt-1 whitespace-pre-line break-keep">
+            {t("starter.heroTitle")}
+          </h2>
+          <p className="text-xs text-muted-foreground mt-2 break-keep">{t("starter.heroDesc")}</p>
+
+          <div className="mt-4">
+            <div className="flex items-center justify-between text-[10px] mb-1">
+              <span className="text-muted-foreground">{t("starter.progress")}</span>
+              <span className="font-display font-black tabular-nums">{completedCount}/6</span>
+            </div>
+            <div className="h-2 rounded-full bg-muted/40 overflow-hidden">
+              <div
+                className="h-full bg-gradient-gold transition-all duration-500"
+                style={{ width: `${(completedCount / 6) * 100}%` }}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Earnings simulator */}
+      <EarningsSimulator />
+
+      {/* 6 steps */}
+      <div className="space-y-2.5">
+        {stepDefs.map((s, i) => {
+          const done = !!steps[s.k];
+          return (
+            <div
+              key={s.k}
+              className={`glass-strong rounded-2xl p-4 relative overflow-hidden transition ${done ? "border border-secondary/40" : ""}`}
+            >
+              <div className="flex items-start gap-3">
+                <div
+                  className={`shrink-0 w-9 h-9 rounded-xl flex items-center justify-center font-display font-black ${
+                    done ? "bg-secondary/20 text-secondary" : "bg-gradient-primary text-primary-foreground"
+                  }`}
+                >
+                  {done ? <CheckCircle2 className="w-5 h-5" /> : i + 1}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-display font-black text-sm break-keep">{t(s.titleKey)}</h3>
+                  <p className="text-[11px] text-muted-foreground mt-1 break-keep">{t(s.descKey)}</p>
+
+                  <div className="flex items-center gap-2 mt-3">
+                    <Link
+                      to={s.href}
+                      onClick={() => markStep(s.k)}
+                      className="press flex-1 min-h-[44px] px-3 rounded-xl bg-gradient-primary text-primary-foreground text-xs font-bold flex items-center justify-center gap-1.5 glow-primary"
+                    >
+                      {t(s.ctaKey)} <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                    <button
+                      onClick={() => markStep(s.k)}
+                      disabled={done}
+                      className={`min-h-[44px] px-3 rounded-xl text-[11px] font-bold transition ${
+                        done
+                          ? "bg-secondary/20 text-secondary cursor-default"
+                          : "glass text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {done ? t("starter.markedDone") : t("starter.markDone")}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Bonus claim */}
+      <div
+        className={`glass-strong rounded-3xl p-5 mt-4 relative overflow-hidden ${
+          allDone && !bonusPaid ? "neon-border" : ""
+        }`}
+      >
+        <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full bg-gradient-gold blur-3xl opacity-40 pointer-events-none" />
+        <div className="relative">
+          <div className="flex items-center gap-2">
+            <Gift className="w-5 h-5 text-gold" />
+            <h3 className="font-imperial font-black text-base text-gradient-gold break-keep">
+              {t("starter.bonusCardTitle")}
+            </h3>
+          </div>
+          <p className="text-[11px] text-muted-foreground mt-1 break-keep">{t("starter.bonusCardDesc")}</p>
+
+          <button
+            onClick={claim}
+            disabled={!allDone || bonusPaid || claiming}
+            className={`press mt-4 w-full min-h-[56px] rounded-xl font-display font-black flex items-center justify-center gap-2 transition ${
+              bonusPaid
+                ? "bg-secondary/20 text-secondary"
+                : allDone
+                ? "bg-gradient-gold text-gold-foreground glow-gold"
+                : "glass text-muted-foreground"
+            }`}
+          >
+            <Sparkles className="w-4 h-4" />
+            {bonusPaid
+              ? t("starter.bonusAlreadyPaid")
+              : claiming
+              ? t("starter.bonusClaiming")
+              : allDone
+              ? t("starter.bonusClaim")
+              : t("starter.bonusIncomplete")}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
