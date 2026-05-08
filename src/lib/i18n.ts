@@ -483,7 +483,7 @@ const resources = {
       done: "✅ 수신 거부 완료",
       doneSub: "앞으로 알림 이메일을 보내드리지 않습니다.",
       validSub: "아래 버튼을 누르면 PHONARA의 알림 이메일 수신이 중단됩니다.",
-      cta: "수신 거부 확정",
+      cta: "수신 거부 완료",
       processing: "처리 중...",
     },
     status: {
