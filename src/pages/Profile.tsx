@@ -22,6 +22,7 @@ type BadgeDef = {
 };
 
 import ReferralCard from "@/components/ReferralCard";
+import CoinMasterLounge from "@/components/CoinMasterLounge";
 
 export default function Profile() {
   const { t } = useTranslation("profile");
@@ -169,6 +170,7 @@ export default function Profile() {
         {/* ===== Phase 21: Referral System ===== */}
         <div className="mt-5">
           <ReferralCard />
+          <CoinMasterLounge />
         </div>
 
         {/* ===== Upgraded Badges ===== */}

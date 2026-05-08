@@ -19,9 +19,10 @@ import SecurityAuditAdmin from "@/components/admin/SecurityAuditAdmin";
 import ObservabilityCockpit from "@/components/admin/ObservabilityCockpit";
 import PermissionsAudit from "@/components/admin/PermissionsAudit";
 import FunnelAnalytics from "@/components/admin/FunnelAnalytics";
+import AMLAdmin from "@/components/admin/AMLAdmin";
 import { Activity, Lock } from "lucide-react";
 
-type Tab = "dashboard" | "funnel" | "analytics" | "errors" | "security" | "ops" | "perms" | "server_dep" | "server_wd" | "packages" | "users" | "missions" | "chats" | "coin";
+type Tab = "dashboard" | "funnel" | "analytics" | "errors" | "security" | "ops" | "perms" | "aml" | "server_dep" | "server_wd" | "packages" | "users" | "missions" | "chats" | "coin";
 
 export default function Admin() {
   const [db, setDb] = useDB();
@@ -86,6 +87,7 @@ export default function Admin() {
     { id: "security", label: t("tabSecurity"), icon: ShieldCheck },
     { id: "ops", label: t("tabOps"), icon: Activity },
     { id: "perms", label: t("tabPerms"), icon: Lock },
+    { id: "aml", label: "AML 결재", icon: ShieldCheck },
     { id: "server_dep", label: t("tabDeposits"), icon: ArrowUpFromLine },
     { id: "server_wd", label: t("tabWithdrawals"), icon: ArrowDownToLine },
     { id: "packages", label: t("tabPackages"), icon: Crown },
@@ -126,6 +128,7 @@ export default function Admin() {
         {tab === "security" && <SecurityAuditAdmin />}
         {tab === "ops" && <ObservabilityCockpit />}
         {tab === "perms" && <PermissionsAudit />}
+        {tab === "aml" && <AMLAdmin />}
         {tab === "server_wd" && <WithdrawRequestsAdmin />}
         {tab === "server_dep" && <DepositRequestsAdmin />}
         {tab === "packages" && <PackagePurchasesAdmin />}
