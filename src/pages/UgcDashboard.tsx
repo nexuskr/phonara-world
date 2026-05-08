@@ -308,6 +308,8 @@ export default function UgcDashboard() {
           </button>
         </section>
 
+        <CampaignManager />
+
         {/* Recent table */}
         <section>
           <h2 className="font-bold text-sm mb-2">{t("table.title")}</h2>
