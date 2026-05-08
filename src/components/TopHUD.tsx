@@ -6,6 +6,8 @@ import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import LanguageSwitcher from "./LanguageSwitcher";
 import EmpireFoundingCounter from "./EmpireFoundingCounter";
+import TierBadge from "./status/TierBadge";
+import { isFlagOn } from "@/lib/conversion-flags";
 
 /**
  * Phonara Top HUD — 항상 노출되는 3축 광고판 + 언어 스위처
