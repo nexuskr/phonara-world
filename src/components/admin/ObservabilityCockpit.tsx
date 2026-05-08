@@ -27,6 +27,7 @@ export default function ObservabilityCockpit() {
           </button>
         ))}
       </div>
+      {sub === "activity" && <RecentActivity />}
       {sub === "slow" && <SlowRequests />}
       {sub === "spanq" && <SpanQuality />}
       {sub === "webhook" && <Webhooks />}
