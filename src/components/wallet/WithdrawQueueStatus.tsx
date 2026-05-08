@@ -254,3 +254,32 @@ export default function WithdrawQueueStatus() {
     </div>
   );
 }
+
+function ConnBadge({ state, onRetry, t }: { state: ConnState; onRetry: () => void; t: (k: string) => string }) {
+  if (state === "live") {
+    return (
+      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-secondary/15 text-secondary">
+        <Wifi className="w-2.5 h-2.5" /> LIVE
+      </span>
+    );
+  }
+  if (state === "polling") {
+    return (
+      <button onClick={onRetry} className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-yellow-500/15 text-yellow-300">
+        <RefreshCw className="w-2.5 h-2.5" /> POLLING
+      </button>
+    );
+  }
+  if (state === "offline") {
+    return (
+      <button onClick={onRetry} className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-destructive/15 text-destructive">
+        <WifiOff className="w-2.5 h-2.5" /> OFFLINE
+      </button>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-muted text-muted-foreground">
+      <RefreshCw className="w-2.5 h-2.5 animate-spin" /> ...
+    </span>
+  );
+}
