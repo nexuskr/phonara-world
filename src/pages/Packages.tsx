@@ -190,6 +190,7 @@ export default function Packages() {
           }}
         />
       )}
+      <Disclaimer />
     </Layout>
   );
 }
