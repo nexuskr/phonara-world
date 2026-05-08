@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
 import { Clock, CheckCircle2, XCircle, Loader2, ArrowUpRight, Filter, X, Banknote, Coins, Shield } from "lucide-react";
 
-type Status = "pending" | "processing" | "approved" | "completed" | "rejected" | "canceled";
+type Status = "pending" | "processing" | "approved" | "completed" | "rejected" | "cancelled";
 type Method = "bank" | "coin";
 
 type WR = {
