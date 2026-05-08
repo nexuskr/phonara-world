@@ -201,6 +201,38 @@ export default function Trust() {
           <Tile icon={Clock} label="마지막 정산 실행" value={loading ? "—" : (m?.last_cron_at ? new Date(m.last_cron_at).toLocaleString("ko-KR") : "—")} ok={!!m?.last_cron_at} small />
         </section>
 
+        {error && (
+          <div className="mt-6 glass-strong rounded-2xl p-4 border border-destructive/40 text-destructive text-xs flex items-center justify-between">
+            <span>⚠ {error}</span>
+            <button onClick={load} className="px-3 py-1.5 rounded-lg bg-destructive/20 font-bold">재시도</button>
+          </div>
+        )}
+
+        <section className="mt-6 glass-strong rounded-3xl p-6 border border-gold/20">
+          <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+            <div className="flex items-center gap-2 font-display font-black text-base">
+              <FileCheck2 className="w-5 h-5 text-gold" /> 정책 단언 자동검증
+            </div>
+            {assertStatus && (
+              <span className={`text-[10px] px-2 py-1 rounded-full border font-bold ${
+                (assertStatus.last_failed ?? 0) === 0 ? "text-secondary bg-secondary/15 border-secondary/40" : "text-destructive bg-destructive/15 border-destructive/40"
+              }`}>
+                {(assertStatus.last_failed ?? 0) === 0 ? `ALL PASS · ${assertStatus.last_passed ?? 0}건` : `${assertStatus.last_failed} FAIL`}
+              </span>
+            )}
+          </div>
+          <div className="grid grid-cols-2 gap-3 text-xs">
+            <div className="glass rounded-xl p-3">
+              <div className="text-[10px] text-muted-foreground">마지막 실행</div>
+              <div className="font-bold mt-1">{assertStatus?.last_run_at ? new Date(assertStatus.last_run_at).toLocaleString("ko-KR") : "—"}</div>
+            </div>
+            <div className="glass rounded-xl p-3">
+              <div className="text-[10px] text-muted-foreground">다음 실행 예정</div>
+              <div className="font-bold mt-1">{assertStatus?.next_run_at ? new Date(assertStatus.next_run_at).toLocaleString("ko-KR") : "—"}</div>
+            </div>
+          </div>
+        </section>
+
         {/* Synthetic uptime canary */}
         <section className="mt-6 glass-strong rounded-3xl p-6 border border-secondary/20">
           <div className="flex items-center justify-between mb-3">
@@ -213,6 +245,64 @@ export default function Trust() {
             <Tile icon={Clock} label="p95 지연 (24h)" value={loading ? "—" : `${u?.p95_latency_ms_24h ?? 0}ms`} ok={(u?.p95_latency_ms_24h ?? 0) <= 1500} />
             <Tile icon={Clock} label="마지막 핑" value={loading ? "—" : (u?.last_ping_at ? new Date(u.last_ping_at).toLocaleTimeString("ko-KR") : "—")} ok={!!u?.last_ok} small />
           </div>
+        </section>
+
+        <section className="mt-6 glass-strong rounded-3xl p-6 border border-primary/20">
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+            <div className="flex items-center gap-2 font-display font-black text-base">
+              <History className="w-5 h-5 text-primary" /> 신뢰 지표 히스토리
+            </div>
+            <div className="flex gap-1">
+              {[7, 30].map((d) => (
+                <button key={d} onClick={() => setHistoryDays(d as 7 | 30)}
+                  className={`px-3 py-1 rounded-lg text-[10px] font-bold ${historyDays === d ? "bg-gradient-imperial text-primary-foreground" : "glass text-muted-foreground"}`}>
+                  {d}일
+                </button>
+              ))}
+            </div>
+          </div>
+          {loading ? (
+            <div className="h-48 flex items-center justify-center text-xs text-muted-foreground animate-pulse">불러오는 중…</div>
+          ) : history.length === 0 ? (
+            <div className="h-48 flex items-center justify-center text-xs text-muted-foreground">아직 누적된 스냅샷이 없습니다. (매일 04:05 UTC 기록)</div>
+          ) : (
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="glass rounded-2xl p-3">
+                <div className="text-[11px] text-muted-foreground mb-2 font-bold">누적 정산 지급액 (₩)</div>
+                <ResponsiveContainer width="100%" height={180}>
+                  <AreaChart data={history}>
+                    <defs>
+                      <linearGradient id="gPaid" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.6} />
+                        <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
+                    <XAxis dataKey="taken_at" tick={{ fontSize: 9 }} tickFormatter={(t) => new Date(t).toLocaleDateString("ko-KR", { month: "numeric", day: "numeric" })} />
+                    <YAxis tick={{ fontSize: 9 }} tickFormatter={(v) => `${(v / 1_000_000).toFixed(0)}M`} />
+                    <RTooltip contentStyle={{ background: "hsl(var(--background))", border: "1px solid hsl(var(--border))", fontSize: 11 }}
+                      formatter={(v: any) => fmtKRW(Number(v))} labelFormatter={(t) => new Date(t).toLocaleDateString("ko-KR")} />
+                    <Area type="monotone" dataKey="total_paid" stroke="hsl(var(--primary))" fill="url(#gPaid)" strokeWidth={2} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="glass rounded-2xl p-3">
+                <div className="text-[11px] text-muted-foreground mb-2 font-bold">가동률·감사 PASS (%)</div>
+                <ResponsiveContainer width="100%" height={180}>
+                  <LineChart data={history}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
+                    <XAxis dataKey="taken_at" tick={{ fontSize: 9 }} tickFormatter={(t) => new Date(t).toLocaleDateString("ko-KR", { month: "numeric", day: "numeric" })} />
+                    <YAxis tick={{ fontSize: 9 }} domain={[90, 100]} />
+                    <RTooltip contentStyle={{ background: "hsl(var(--background))", border: "1px solid hsl(var(--border))", fontSize: 11 }}
+                      formatter={(v: any) => `${Number(v).toFixed(2)}%`} labelFormatter={(t) => new Date(t).toLocaleDateString("ko-KR")} />
+                    <Line type="monotone" dataKey="cron_uptime_7d" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} name="가동률" />
+                    <Line type="monotone" dataKey="audit_pass_30d" stroke="hsl(var(--secondary))" strokeWidth={2} dot={false} name="감사 PASS" />
+                    <Line type="monotone" dataKey="policy_pass_7d" stroke="hsl(var(--gold))" strokeWidth={2} dot={false} name="정책 단언" />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
         </section>
 
         {/* 90-day heatmap + Chaos */}
