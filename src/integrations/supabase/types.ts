@@ -1934,6 +1934,27 @@ export type Database = {
         }
         Relationships: []
       }
+      ugc_redirect_clicks: {
+        Row: {
+          anon_id: string
+          hit_count: number
+          last_at: string
+          slug: string
+        }
+        Insert: {
+          anon_id: string
+          hit_count?: number
+          last_at?: string
+          slug: string
+        }
+        Update: {
+          anon_id?: string
+          hit_count?: number
+          last_at?: string
+          slug?: string
+        }
+        Relationships: []
+      }
       ugc_traffic_events: {
         Row: {
           campaign_slug: string | null
@@ -3127,7 +3148,10 @@ export type Database = {
         Args: { t: Database["public"]["Enums"]["user_tier"] }
         Returns: number
       }
-      track_campaign_click: { Args: { _slug: string }; Returns: string }
+      track_campaign_click: {
+        Args: { _anon_id?: string; _slug: string }
+        Returns: string
+      }
       trust_record_snapshot: { Args: never; Returns: string }
       unfreeze_expired: { Args: never; Returns: Json }
       unlock_achievement: { Args: { _key: string }; Returns: Json }
