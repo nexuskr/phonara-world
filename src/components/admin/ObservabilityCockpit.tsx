@@ -71,7 +71,9 @@ function Webhooks() {
   const [subs, setSubs] = useState<any[]>([]);
   const [delivs, setDelivs] = useState<any[]>([]);
   const [url, setUrl] = useState("");
-  const [event, setEvent] = useState("anomaly.critical");
+  const [events, setEvents] = useState<string[]>(["anomaly", "freeze"]);
+
+  const EVENT_OPTIONS = ["anomaly", "slo_breach", "freeze", "chaos_failed"];
 
   async function load() {
     const [s, d] = await Promise.all([
@@ -85,11 +87,13 @@ function Webhooks() {
 
   async function add() {
     if (!url.startsWith("https://")) { toast({ title: "https URL이 필요합니다" }); return; }
-    const secret = crypto.getRandomValues(new Uint8Array(24));
-    const secretHex = Array.from(secret).map((b) => b.toString(16).padStart(2, "0")).join("");
-    const { error } = await supabase.from("webhook_subscriptions" as any).insert({ url, event, secret: secretHex, active: true } as any);
+    if (events.length === 0) { toast({ title: "이벤트 1개 이상 선택" }); return; }
+    const buf = crypto.getRandomValues(new Uint8Array(24));
+    const secretHex = Array.from(buf).map((b) => b.toString(16).padStart(2, "0")).join("");
+    const { data: { user } } = await supabase.auth.getUser();
+    const { error } = await supabase.from("webhook_subscriptions" as any).insert({ url, events, secret: secretHex, active: true, created_by: user?.id } as any);
     if (error) { toast({ title: "등록 실패", description: error.message }); return; }
-    toast({ title: "등록 완료", description: `시크릿: ${secretHex.slice(0, 12)}…` });
+    toast({ title: "등록 완료", description: `시크릿(서버 외에는 다시 표시 안 됨): ${secretHex}` });
     setUrl("");
     load();
   }
@@ -104,20 +108,27 @@ function Webhooks() {
         <h3 className="font-display font-bold text-sm">Webhook 구독 등록</h3>
         <input placeholder="https://example.com/hook" value={url} onChange={(e) => setUrl(e.target.value)}
           className="w-full bg-input/60 border border-border rounded-xl px-3 py-2 text-sm" />
-        <select value={event} onChange={(e) => setEvent(e.target.value)}
-          className="w-full bg-input/60 border border-border rounded-xl px-3 py-2 text-sm">
-          <option value="anomaly.critical">anomaly.critical</option>
-          <option value="freeze.created">freeze.created</option>
-          <option value="chaos.failed">chaos.failed</option>
-        </select>
-        <button onClick={add} className="w-full py-2 rounded-xl bg-gradient-primary text-primary-foreground text-xs font-bold">등록</button>
+        <div className="flex flex-wrap gap-1.5">
+          {EVENT_OPTIONS.map((ev) => {
+            const on = events.includes(ev);
+            return (
+              <button key={ev} type="button"
+                onClick={() => setEvents((p) => on ? p.filter((x) => x !== ev) : [...p, ev])}
+                className={`px-2.5 py-1 rounded-lg text-[10px] font-bold ${on ? "bg-gradient-primary text-primary-foreground" : "glass text-muted-foreground"}`}>
+                {ev}
+              </button>
+            );
+          })}
+        </div>
+        <button onClick={add} className="w-full py-2 rounded-xl bg-gradient-primary text-primary-foreground text-xs font-bold">등록 (HMAC-SHA256 시크릿 자동 생성)</button>
       </div>
       <div className="glass rounded-2xl p-3">
         <div className="text-[11px] font-bold mb-2">활성 구독 {subs.length}개</div>
         {subs.map((s) => (
           <div key={s.id} className="flex items-center justify-between text-[11px] py-1.5 border-b border-border/40 last:border-0">
             <div className="truncate flex-1">
-              <span className="text-gold">[{s.event}]</span> {s.url}
+              <span className="text-gold">[{(s.events || []).join(",")}]</span> {s.url}
+              {s.last_status && <span className="ml-2 text-muted-foreground">last={s.last_status}</span>}
             </div>
             <button onClick={() => toggle(s.id, s.active)}
               className={`px-2 py-0.5 rounded text-[10px] ${s.active ? "bg-secondary/20 text-secondary" : "bg-muted/40"}`}>
@@ -132,7 +143,9 @@ function Webhooks() {
         {delivs.map((d) => (
           <div key={d.id} className="text-[10px] flex justify-between py-1 border-b border-border/30 last:border-0">
             <span className="truncate flex-1">{d.event}</span>
-            <span className={d.success ? "text-secondary" : "text-destructive"}>{d.status_code || "ERR"}</span>
+            <span className={d.http_status && d.http_status < 400 ? "text-secondary" : "text-destructive"}>
+              {d.http_status || (d.error ? "ERR" : "—")}
+            </span>
             <span className="text-muted-foreground ml-2">{new Date(d.created_at).toLocaleString("ko-KR")}</span>
           </div>
         ))}
