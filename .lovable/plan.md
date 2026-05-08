@@ -1,129 +1,133 @@
-# Phonara vFinal+ — 1000점 마스터 실행 플랜
 
-## 확정 사항 (Final Lock)
-- Referral: 90일 한정 + 고정 보상 (inviter 30,000C / invitee 10,000C)
-- Empire Founding Seats: 100석 사전 시드
-- Command Hub: HubTabs 5번째 탭 (Dashboard 단일 화면)
-- Disclaimer: 주요 페이지 하단 고정
-- 금지어 전수 제거: 확정 / 보장 / 평생 / 최대 N% / 수익 분배 / lifetime / guaranteed / profit share
+# Phonara Viral Pack v3.3 — PR1 최종 LOCK
+
+v3.2 → v3.3 변경: UX 문구 5%만 잠금. 구조는 동결.
 
 ---
 
-## Phase 1 — P0 Critical (법·자금 정합성)
+## 0. v3.3 LOCK 수정 (2개)
 
-### 1.1 Referral v2
-**마이그레이션**
-- `referrals` ADD `window_expires_at timestamptz`, `policy_version smallint default 2`
-- 신규 referral 생성 시 `window_expires_at = created_at + interval '90 days'`
-- `_credit_referral_first_deposit(_invitee, _amount)` 재작성:
-  - `now() <= window_expires_at` 검증 (만료 시 silent pass)
-  - 고정 지급: inviter 30,000C / invitee 10,000C (입금액 무관)
-  - `idempotency_keys` scope=`ref_first_deposit_v2:<invitee>`
-  - `referral_earnings.source='first_deposit_fixed_v2'`
-  - `referrals.first_deposit_bonus_paid=true`
+### LOCK-1. RRM OFF 시 사용자 문구 (구조 외재화)
 
-**UI**: ReferralPanel/InviteCard → "친구 첫 입금 후 **90일 한정** 고정 보상 (인바이터 30,000C / 친구 10,000C)" + 남은 일수 카운트다운
+**문구 원칙**: "정책 때문에 막힘" 해석 차단 → "원래 구조적으로 포함되지 않음"
 
-### 1.2 i18n 금지어 + <Disclaimer>
-- `src/i18n.ts` 전수 치환:
-  - 확정/보장 → 예정/변동 가능
-  - 평생/lifetime → 장기/지속
-  - 최대 N% → N% 시뮬레이션
-  - 수익 분배/profit share → 보상 시뮬레이션
-  - guaranteed → 목표
-- `<Disclaimer>` 공용 컴포넌트 신설 → Packages, EarningsSimulator, Paywall, Withdraw, BoostHero, CommandHero 하단 고정
-- `scripts/check-forbidden-phrases.mjs` + CI 게이트(빌드 차단)
+| 위치 | ❌ 폐기 | ✅ 채택 |
+|------|--------|---------|
+| `FinancialEventStatus` (RRM OFF) | "현재 정책에서는 M2 단계가 인센티브 대상이 아닙니다" | **"M2 단계는 현재 인센티브 프로그램에 포함되지 않습니다"** |
+| 보조 표현 | — | "M2 단계는 인센티브 대상이 아닌 이벤트입니다" |
+| 어드민 toggle 영향 안내 | "사용자에게 보류로 표시됨" | "사용자에게는 프로그램 비포함 이벤트로 표시됨" |
 
-### 1.3 Sovereign 우선 출금 큐
-- `withdrawal_requests` ADD `priority smallint default 100`, `tier_at_request user_tier`
-- INDEX `(status, priority, created_at)`
-- `request_withdrawal` RPC: tier별 priority (`sovereign=10, vip=50, normal=100`) + tier_at_request 캡처
-- Admin Withdraw 큐: `ORDER BY priority ASC, created_at ASC` + 우선순위 배지
+**공통 금지어** (사용자 표면 전체): 정책 때문에 / 막힘 / 보류 / 잠금 / 차단 / 미지급 / 지연 / 큐 / 대기 / 예약
 
-### 1.4 Founding Seat 자동 할당 + 100석 시드
-- 시드: `INSERT INTO empire_founding_seats (seat_no) SELECT generate_series(1,100) ON CONFLICT DO NOTHING`
-- 신규 RPC `claim_founding_seat(_purchase_id uuid)` SECURITY DEFINER, `set search_path=public`
-  - `FOR UPDATE SKIP LOCKED`로 미할당 seat 잠금 후 할당
-  - `package_purchases.founding_seat_no`, `is_empire_founding_member=true`
-  - 만석 시 graceful pass + `notifications` 알림
-- `admin_resolve_package` EMPIRE 분기에서 호출
-- `function_permissions_baseline` 등록
-- `policy_assertions`: 동시 클레임 무결성 케이스 추가
+i18n 등록 + `scripts/check-forbidden-phrases.mjs`에 위 단어 추가.
 
-### 1.5 cron-settle-packages 권한 강화
-- `settle_package_daily` 가드:
-  ```
-  auth.uid() IS NULL
-  OR has_role(auth.uid(),'admin')
-  OR coalesce(current_setting('request.jwt.claims', true)::jsonb->>'role','') = 'service_role'
-  ```
-- `cron_settle_audit_log.caller='cron'` 기록, 실패 시 `anomaly_events` 적재
+### LOCK-2. Activity Index 라벨 → "내 활동"
+
+**Index/Score 어휘 전면 제거** (점수·평가·성과 해석 차단).
+
+| 항목 | ❌ 폐기 | ✅ 채택 |
+|------|--------|---------|
+| 사용자 라벨 | "내 활동 지수 / Activity Index" | **"내 활동 (7일)"** 또는 **"최근 추천 활동"** |
+| 컴포넌트명 (코드) | `ActivityIndexCard` | `RecentReferralActivityCard` |
+| Edge function | `recompute-activity-index` | `recompute-recent-activity` |
+| DB 컬럼/메트릭 키 | `activity_index` | `recent_activity_count_7d` |
+
+표시는 단순 정수 (예: "최근 7일 활동 3건"). 진행률 바·등급·티어 결합 절대 금지.
 
 ---
 
-## Phase 2 — P1 Major (일관성·견고성)
+## 1. 최종 스키마 (v3.3, 변경분만)
 
-### 2.1 Command Hub 통합
-- `HubTabs.tsx`에 `command` 탭 추가 (5번째) → Dashboard 단일 화면 매핑
-- 활성 표시·breadcrumb 일관화
+```text
+viral_settings
+├─ revenue_recognition_enabled  bool default true
+├─ rrm_no_retroactive_payout    bool default true   [DB 잠금]
+├─ rrm_disabled_reason          text
+├─ rrm_last_toggled_at/by
 
-### 2.2 <ActiveFlowCard> 단일화
-- 신규 추상 컴포넌트 (상태머신: idle/running/cooldown/boost)
-- CommandHero, BoostHeroCard, SixtySecondFlow에서 재사용
+viral_attribution_chain
+├─ depth  smallint  CHECK (depth = 1)
+├─ status text  ('clicked'|'signed_up'|'activated'|'paying'|'churned')
+└─ window_expires_at  timestamptz (created_at + 90d)
 
-### 2.3 Idempotency 강화
-- `harvest_machine` (user_id, harvest_date) UNIQUE 보강
-- `_credit_referral_first_deposit`, `claim_handbook_bonus` scope 일관화
+viral_mission_catalog
+├─ milestone_bonuses           jsonb
+└─ lifetime_cap_per_invitee    bigint default 30000
 
-### 2.4 잔여 카피 약화
-- "최대 6시간 자동 폭발 보장" → "최대 6시간 부스트 예정 (변동 가능)"
-- 마케팅 톤 전반 약화
+viral_mission_submissions
+├─ entitlement_status          text  ('not_eligible'|'eligible'|'paid')
+├─ milestones_paid             jsonb
+└─ total_bonus_paid            bigint default 0
 
----
+viral_proof_dedupe              [proof_hash UNIQUE]
+admin_attribution_internal      [admin-only CAC/LTV/Quality]
+```
 
-## Phase 3 — P2 Minor (UX/SEO/Mobile)
+## 2. Edge Functions
 
-### 3.1 WITHDRAW_LIMITS 단일 소스
-- 클라이언트 mock 제거 → `withdraw_limits_get()` RPC만 사용
+```
+attribute-click             공개, anon_id + depth=1 chain 생성
+settle-milestone-bonus      M1·M4 항상; M2·M3 RRM=ON일 때만 entitlement
+                            RRM=OFF 시 entitlement_status='not_eligible'로 기록만 (채무 X)
+recompute-recent-activity   cron 1h, 사용자 노출 "최근 7일 활동" 카운트
+recompute-economics         cron 1h, admin-only CAC/LTV/Quality
+verify-viral-proof          플랫폼별 증빙
+generate-viral-copy         Lovable AI Gateway + 금지문구 필터
+toggle-rrm                  admin-only + audit log
+```
 
-### 3.2 SEO/메타
-- 핵심 라우트 H1 1개 + meta description <160 + canonical
-- JSON-LD: Organization / Product(Packages) / FAQ
-- `/` Index 자동 리다이렉트 SEO-safe
+## 3. 사용자 UX (`/viral`)
 
-### 3.3 391px 모바일 최적화
-- CommandHero/BoostHeroCard collapsible + sticky CTA
-- Wallet 카드 간격, Withdraw ETA 배지
+```
+IncentiveSummary           누적 인센티브, 가입 인원
+RecentReferralActivityCard "최근 7일 활동 N건"  (정수만, 등급·진행률 X)
+─ 행동 기반 인센티브 ─
+BehaviorMilestones         M1 (가입 활성화) · M4 (30일 유지)
+─ 금융 이벤트 상태 ─
+FinancialEventStatus       M2 / M3 — 상태 표시만, 금액 X
+                           RRM ON:  "이 이벤트는 인센티브 프로그램에 포함됩니다"
+                           RRM OFF: "M2 단계는 현재 인센티브 프로그램에 포함되지 않습니다"
+PlatformGrid · MissionDeck · ProofUploader · ViralComposer
+IncentiveDisclosure        1단계 한정 고지 (항시)
+```
 
-### 3.4 Console 경고 정리
-- 잔여 경고 제거, Lighthouse 90+
+## 4. 어드민 UX (`/admin/viral`)
 
----
+- `RRMToggle` (사유 필수, audit log)
+- `EconomicsBoard` — CAC/LTV/Quality/funnel
+- `AttributionInspector`
+- `MLMShield` — depth>1 시도 로그
+- `NoEntitlementLedger` — RRM OFF 동안 발생한 M2·M3 회계 기록 (지급 큐 아님, 소급 지급 버튼 없음)
 
-## Phase 4 — 검증 (1000점 달성)
+## 5. PR 순서 (5개, 변경 없음)
 
-1. `supabase--linter` 0 error
-2. `policy_assertions` 전 항목 PASS → `policy_assertion_runs` 그린
-3. `chaos_runs` 신규 시나리오:
-   - founding seat 동시 클레임
-   - withdraw priority 정렬 무결성
-   - referral 90일 윈도우 경계
-   - cron service_role 가드
-4. CI 게이트(`db-permissions.yml`): RLS/권한 drift + 금지어 grep + 마이그 dry-run
-5. 수동 E2E: Starter 6스텝 → Package 구매 → Settle → Referral 첫입금(90일 경계) → Withdraw(우선순위) → Founding Seat → Cron
+1. **PR1 — Compliance Foundation**
+   `viral_settings`(RRM 잠금), `viral_attribution_chain`(depth CHECK + 트리거),
+   `viral_proof_dedupe`, RLS, `IncentiveDisclosure`, 금지어 사전 확장
+2. **PR2 — Milestone Engine + RRM**
+   catalog/submissions(`entitlement_status`), `attribute-click`,
+   `settle-milestone-bonus`(소급 지급 금지), `toggle-rrm`, 40개 시드
+3. **PR3 — Verification + AI**
+   `verify-viral-proof`, `generate-viral-copy`(금지문구 필터)
+4. **PR4 — User Surface**
+   `IncentiveSummary` · `RecentReferralActivityCard` · `BehaviorMilestones` ·
+   `FinancialEventStatus` · `PlatformGrid` · `MissionDeck` · `ProofUploader` ·
+   `ViralComposer`, `recompute-recent-activity` cron
+5. **PR5 — Admin Economics + MLM Shield**
+   `RRMToggle` · `EconomicsBoard` · `AttributionInspector` · `MLMShield` ·
+   `NoEntitlementLedger`, `recompute-economics` cron
 
----
+## 6. 잠금 원칙 (4개)
 
-## 진행 순서
-1. i18n 금지어 정리 + Referral v2 (독립, 가장 먼저)
-2. Withdraw priority + Founding Seat RPC + 100석 시드
-3. cron settle 권한 강화
-4. Command Hub + ActiveFlowCard 리팩토링
-5. P2 UX/SEO/모바일
-6. 최종 검증·CI 게이트
+1. **권리 미생성**: RRM OFF 시 entitlement *애초에 미생성*. 채무/보류/큐 어휘 금지.
+2. **소급 금지**: `rrm_no_retroactive_payout=true` DB 잠금. 어드민 토글 불가.
+3. **활동 카운트 한정**: 최근 7일 활동은 *정수 카운트*일 뿐. 점수/등급/경제 계산 결합 금지.
+4. **이벤트 분리**: 금융 이벤트(M2·M3) UI는 상태 표시만. 보상 어휘·금액·진행률 노출 금지.
 
-## 산출물
-- 마이그레이션 5개 (referral v2, withdraw priority, founding seat RPC+seed, settle guard, idempotency indexes)
-- 신규 컴포넌트: `<ActiveFlowCard>`, `<Disclaimer>`, Command Hub 탭
-- `src/i18n.ts` 전수 정리 + `scripts/check-forbidden-phrases.mjs` + CI 게이트
-- 감사 보고서 v2
+## 7. 본질 정의 (최종 LOCK)
+
+> "조건 미충족 상태를 명시적으로 기록하는, 행동 기반 예산 고정 인센티브 엔진"
+
+**상태**: ✅ 기술 안정 / ✅ 데이터 안정 / ✅ UX 분리 / ✅ 규제 표현 잠금 — PR1 진입 가능.
+
+PR1부터 시작할까요?

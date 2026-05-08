@@ -2162,6 +2162,102 @@ export type Database = {
         }
         Relationships: []
       }
+      viral_attribution_chain: {
+        Row: {
+          anon_id: string
+          blocked_reason: string | null
+          created_at: string
+          depth: number
+          id: string
+          invitee_id: string | null
+          inviter_id: string
+          milestones_reached: Json
+          status: string
+          updated_at: string
+          window_expires_at: string
+        }
+        Insert: {
+          anon_id: string
+          blocked_reason?: string | null
+          created_at?: string
+          depth?: number
+          id?: string
+          invitee_id?: string | null
+          inviter_id: string
+          milestones_reached?: Json
+          status?: string
+          updated_at?: string
+          window_expires_at?: string
+        }
+        Update: {
+          anon_id?: string
+          blocked_reason?: string | null
+          created_at?: string
+          depth?: number
+          id?: string
+          invitee_id?: string | null
+          inviter_id?: string
+          milestones_reached?: Json
+          status?: string
+          updated_at?: string
+          window_expires_at?: string
+        }
+        Relationships: []
+      }
+      viral_proof_dedupe: {
+        Row: {
+          created_at: string
+          platform: string
+          proof_hash: string
+          proof_url: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          platform: string
+          proof_hash: string
+          proof_url: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          platform?: string
+          proof_hash?: string
+          proof_url?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      viral_settings: {
+        Row: {
+          id: number
+          revenue_recognition_enabled: boolean
+          rrm_disabled_reason: string | null
+          rrm_last_toggled_at: string | null
+          rrm_last_toggled_by: string | null
+          rrm_no_retroactive_payout: boolean
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          revenue_recognition_enabled?: boolean
+          rrm_disabled_reason?: string | null
+          rrm_last_toggled_at?: string | null
+          rrm_last_toggled_by?: string | null
+          rrm_no_retroactive_payout?: boolean
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          revenue_recognition_enabled?: boolean
+          rrm_disabled_reason?: string | null
+          rrm_last_toggled_at?: string | null
+          rrm_last_toggled_by?: string | null
+          rrm_no_retroactive_payout?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       wallet_balances: {
         Row: {
           available_balance: number
