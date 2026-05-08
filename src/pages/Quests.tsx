@@ -56,6 +56,15 @@ export default function Quests() {
         <Section title={t("weekly")} icon={<Clock size={18} />} quests={weekly} onClaim={claim} loading={loading} t={t} />
         <AIMissionCard />
         <WeeklyPassSection />
+        <a href="/season-pass" className="block rounded-2xl border border-amber-400/30 bg-gradient-to-br from-amber-500/10 to-rose-500/10 p-4 hover:border-amber-400/60 transition">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-xs font-bold uppercase tracking-widest text-amber-400">월간 시즌패스</div>
+              <div className="text-sm font-bold mt-0.5">레벨별 코인·뱃지·출금 우선 트랙 보기 →</div>
+            </div>
+            <span className="text-2xl">🏆</span>
+          </div>
+        </a>
         <ReferralLeaderboard />
       </div>
     </Layout>
