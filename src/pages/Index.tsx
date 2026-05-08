@@ -173,7 +173,7 @@ export default function Index() {
           </span>
           <span className="px-3 py-1.5 rounded-full glass border border-primary/20 text-[11px] text-muted-foreground inline-flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-destructive animate-pulse" />
-            오늘 신규 가입 <span className="font-black text-foreground tabular-nums">1,284</span>명
+            오늘 신규 가입 <span key={todaySignups} className="font-black text-foreground tabular-nums animate-fade-up">{todaySignups.toLocaleString()}</span>명
           </span>
           <span className="px-3 py-1.5 rounded-full glass border border-primary/20 text-[11px] text-muted-foreground inline-flex items-center gap-1.5">
             <Zap className="w-3 h-3 text-secondary" /> 60초 안에 첫 적립
