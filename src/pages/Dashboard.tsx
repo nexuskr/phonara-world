@@ -29,6 +29,7 @@ import { useTranslation } from "react-i18next";
 export default function Dashboard() {
   const [db] = useDB();
   const { t } = useTranslation("dashboard");
+  const { t: tn } = useTranslation("nav");
   const user = useRequireAuth() ?? db.user;
   const [burst, setBurst] = useState(false);
   const online = useOnline();
@@ -65,14 +66,14 @@ export default function Dashboard() {
             <div className="glass rounded-2xl p-3 flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-secondary/20 flex items-center justify-center"><Users className="w-4 h-4 text-secondary" /></div>
               <div>
-                <div className="text-[10px] text-muted-foreground flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse" /> 현재 접속자</div>
-                <div className="font-display font-black text-sm tabular-nums">{online.toLocaleString()}명</div>
+                <div className="text-[10px] text-muted-foreground flex items-center gap-1 break-keep"><span className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse" /> {t("online")}</div>
+                <div className="font-display font-black text-sm tabular-nums">{t("onlineUnit", { n: online.toLocaleString() })}</div>
               </div>
             </div>
             <div className="glass rounded-2xl p-3 flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center"><Activity className="w-4 h-4 text-primary" /></div>
               <div>
-                <div className="text-[10px] text-muted-foreground flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" /> 오늘 정산액</div>
+                <div className="text-[10px] text-muted-foreground flex items-center gap-1 break-keep"><span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" /> {t("todaySettled")}</div>
                 <div className="font-display font-black text-sm tabular-nums text-money-strong">{formatKRW(today)}</div>
               </div>
             </div>
@@ -120,21 +121,21 @@ export default function Dashboard() {
                 <div className="mt-2 text-xs text-muted-foreground">
                   {t("coinBalance")} <span className="text-money font-black tabular-nums">{user.coinBalance.toLocaleString()} USDT</span>
                 </div>
-                <div className="mt-1 flex items-center gap-2 text-xs text-secondary">
-                  <TrendingUp className="w-3.5 h-3.5" /> 오늘 +{formatKRW(user.todayEarnings)} 적립됨
+                <div className="mt-1 flex items-center gap-2 text-xs text-secondary tabular-nums break-keep">
+                  <TrendingUp className="w-3.5 h-3.5" /> {t("todayEarned", { val: formatKRW(user.todayEarnings) })}
                 </div>
               </div>
 
               <div className="relative grid grid-cols-3 gap-2 mt-6">
-                <Stat icon={Flame} label="연속" value={`${user.streak}일`} color="text-primary" />
-                <Stat icon={Zap} label="레벨" value={`Lv.${user.level}`} color="text-secondary" />
-                <Stat icon={Trophy} label="XP" value={`${user.xp}`} color="text-gold" />
+                <Stat icon={Flame} label={t("streak")} value={t("streakUnit", { n: user.streak })} color="text-primary" />
+                <Stat icon={Zap} label={t("level")} value={`Lv.${user.level}`} color="text-secondary" />
+                <Stat icon={Trophy} label={t("xp")} value={`${user.xp}`} color="text-gold" />
               </div>
 
               <div className="relative mt-3">
                 <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
-                  <span>다음 등급까지</span>
-                  <span>{user.xp}/{user.level * 1000} XP</span>
+                  <span className="break-keep">{t("nextTier")}</span>
+                  <span className="tabular-nums">{user.xp}/{user.level * 1000} XP</span>
                 </div>
                 <div className="h-2 bg-muted rounded-full overflow-hidden">
                   <div className="h-full bg-gradient-primary glow-primary" style={{ width: `${Math.min(100, (user.xp / (user.level * 1000)) * 100)}%` }} />
@@ -175,10 +176,10 @@ export default function Dashboard() {
               <div className="absolute inset-0 bg-gradient-aurora opacity-[0.08] animate-gradient" style={{ backgroundSize: "300% 300%" }} />
               <div className="relative flex items-center justify-between">
                 <div>
-                  <div className="font-display font-black text-base flex items-center gap-2">
-                    🎰 럭키 룰렛 <span className="text-[10px] px-2 py-0.5 rounded-full bg-gold/20 text-gold font-bold">매일 무료</span>
+                  <div className="font-display font-black text-base flex items-center gap-2 break-keep">
+                    {t("rouletteTitle")} <span className="text-[10px] px-2 py-0.5 rounded-full bg-gold/20 text-gold font-bold whitespace-nowrap">{t("rouletteFree")}</span>
                   </div>
-                  <div className="text-[11px] text-muted-foreground mt-0.5">스핀 보너스 · EMPIRE 황금 가챠</div>
+                  <div className="text-[11px] text-muted-foreground mt-0.5 break-keep">{t("rouletteSub")}</div>
                 </div>
                 <div className="text-2xl">→</div>
               </div>
@@ -187,18 +188,18 @@ export default function Dashboard() {
 
           {/* GAMIFICATION ENTRY — Phase 26 */}
           <div className="grid grid-cols-3 gap-2 mt-4">
-            <Link to="/quests" className="press glass-strong rounded-2xl p-3 border border-amber-500/20 flex flex-col items-center gap-1">
+            <Link to="/quests" className="press glass-strong rounded-2xl p-3 min-h-[56px] border border-amber-500/20 flex flex-col items-center gap-1">
               <span className="text-2xl">⚡</span>
-              <span className="text-[11px] font-bold">퀘스트</span>
+              <span className="text-[11px] font-bold break-keep">{t("quests")}</span>
             </Link>
-            <Link to="/season-pass" className="press glass-strong rounded-2xl p-3 border border-fuchsia-500/20 flex flex-col items-center gap-1 relative overflow-hidden">
+            <Link to="/season-pass" className="press glass-strong rounded-2xl p-3 min-h-[56px] border border-fuchsia-500/20 flex flex-col items-center gap-1 relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-fuchsia-500/10 to-violet-600/10" />
               <span className="text-2xl relative">✨</span>
-              <span className="text-[11px] font-bold relative">시즌 패스</span>
+              <span className="text-[11px] font-bold relative break-keep">{t("seasonPass")}</span>
             </Link>
-            <Link to="/achievements" className="press glass-strong rounded-2xl p-3 border border-primary/20 flex flex-col items-center gap-1">
+            <Link to="/achievements" className="press glass-strong rounded-2xl p-3 min-h-[56px] border border-primary/20 flex flex-col items-center gap-1">
               <span className="text-2xl">🏆</span>
-              <span className="text-[11px] font-bold">업적</span>
+              <span className="text-[11px] font-bold break-keep">{t("achievements")}</span>
             </Link>
           </div>
 
@@ -218,7 +219,7 @@ export default function Dashboard() {
               { to: "/missions", label: t("missions"), icon: "🎯", grad: "from-primary/20 to-primary/5" },
               { to: "/packages", label: t("packages"), icon: "👑", grad: "from-gold/20 to-gold/5" },
               { to: "/wallet", label: t("deposit"), icon: "💎", grad: "from-secondary/20 to-secondary/5" },
-              { to: "/support", label: t("nav:support", "고객센터"), icon: "💬", grad: "from-accent/20 to-accent/5" },
+              { to: "/support", label: t("support"), icon: "💬", grad: "from-accent/20 to-accent/5" },
             ].map((a, i) => (
               <Link key={i} to={a.to} className={`glass rounded-2xl p-3 flex flex-col items-center gap-1 bg-gradient-to-b ${a.grad} sm:hover:scale-105 transition`}>
                 <span className="text-2xl">{a.icon}</span>
@@ -233,7 +234,7 @@ export default function Dashboard() {
               <h2 className="font-display font-bold text-lg flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-primary" /> {t("todayPick")}
               </h2>
-              <Link to="/missions" className="text-xs text-muted-foreground hover:text-foreground flex items-center">전체 <ChevronRight className="w-3 h-3" /></Link>
+              <Link to="/missions" className="text-xs text-muted-foreground hover:text-foreground flex items-center break-keep">{t("viewAll")} <ChevronRight className="w-3 h-3" /></Link>
             </div>
             <div className="flex gap-3 overflow-x-auto pb-3 -mx-5 px-5 snap-x snap-mandatory">
               {featured.map(m => (
