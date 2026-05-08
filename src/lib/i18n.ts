@@ -2336,6 +2336,9 @@ const resources = {
       },
     },
     referralPage: {
+      hero: {
+        badge: "REFERRAL ENGINE",
+        title: "Invite friends, grow your empire faster",
         subtitle: "Each invite = ₩5,000 instant + ₩5,000 for them. +₩25,000 on their first package, +₩2,000/activity within 90 days.",
         summary: "{{count}} emperors invited so far · ₩{{total}} total",
       },
