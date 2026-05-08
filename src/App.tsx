@@ -97,6 +97,7 @@ const App = () => (
               <Route path="/quests" element={<Quests />} />
               <Route path="/unsubscribe" element={<Unsubscribe />} />
               <Route path="/trust" element={<Trust />} />
+              <Route path="/status" element={<Status />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
