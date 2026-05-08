@@ -4,6 +4,7 @@ import { formatKRW } from "@/lib/store";
 import { track } from "@/lib/analytics";
 import { track as trackTelemetry } from "@/lib/telemetry";
 import { isFlagOn } from "@/lib/conversion-flags";
+import { useTranslation } from "react-i18next";
 
 const KEY = "phonara_exit_intent_v1";
 
