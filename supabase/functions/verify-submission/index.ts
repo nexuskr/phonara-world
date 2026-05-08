@@ -172,13 +172,98 @@ async function recordEvent(
   }
 }
 
-// Bounded AI call — placeholder. Replace with real model call when wiring up.
-// Must NEVER receive reward/value/credit/ltv/revenue context.
+// Bounded AI call — Lovable AI Gateway (Gemini Flash, observation-only).
+// MUST NEVER receive reward / value / credit / ltv / revenue context.
+// Output is structured via tool-calling and rejected by drift guard if schema breaks.
+const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+const AI_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const AI_MODEL = "google/gemini-2.5-flash-lite";
+
 async function callBoundedAI(
-  _submission_id: string,
+  submission_id: string,
 ): Promise<BoundedAIResponse> {
+  if (!LOVABLE_API_KEY) {
+    // No key configured → behave as benign observation
+    return { risk_score: 0, reasons: ["normal"] };
+  }
+
+  const tool = {
+    type: "function",
+    function: {
+      name: "report_observation",
+      description:
+        "Report a bounded fraud-risk observation for a submission. Strictly observational; never affects payouts.",
+      parameters: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          risk_score: {
+            type: "integer",
+            minimum: 0,
+            maximum: 100,
+            description: "Risk score 0-100",
+          },
+          reasons: {
+            type: "array",
+            items: {
+              type: "string",
+              enum: [
+                "pattern_match",
+                "timing_anomaly",
+                "device_collision",
+                "velocity_spike",
+                "chain_anomaly",
+                "proof_quality_low",
+                "normal",
+              ],
+            },
+          },
+        },
+        required: ["risk_score", "reasons"],
+      },
+    },
+  };
+
+  const resp = await fetch(AI_GATEWAY_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${LOVABLE_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: AI_MODEL,
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are a fraud-pattern OBSERVER. You NEVER decide outcomes, NEVER reference rewards, credits, money, revenue, LTV. Output ONLY via the report_observation tool. If unsure, return risk_score=0 with reasons=['normal'].",
+        },
+        {
+          role: "user",
+          content:
+            `Observe submission ${submission_id}. Return a bounded risk observation. ` +
+            `Do not invent context. Use only allowed reason codes.`,
+        },
+      ],
+      tools: [tool],
+      tool_choice: { type: "function", function: { name: "report_observation" } },
+      temperature: 0,
+    }),
+  });
+
+  if (!resp.ok) {
+    const text = await resp.text();
+    throw new Error(`ai_gateway_${resp.status}: ${text.slice(0, 200)}`);
+  }
+
+  const data = await resp.json();
+  const call = data?.choices?.[0]?.message?.tool_calls?.[0];
+  const argsRaw = call?.function?.arguments;
+  if (!argsRaw) throw new Error("ai_no_tool_call");
+
+  const parsed = JSON.parse(argsRaw);
   return {
-    risk_score: Math.floor(Math.random() * 50),
-    reasons: ["normal"],
+    risk_score: parsed.risk_score,
+    reasons: parsed.reasons,
   };
 }
