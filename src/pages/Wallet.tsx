@@ -19,6 +19,7 @@ import WithdrawReceiptUpload from "@/components/wallet/WithdrawReceiptUpload";
 import WithdrawETABadge from "@/components/wallet/WithdrawETABadge";
 import NotificationPreferencesPanel from "@/components/wallet/NotificationPreferencesPanel";
 import { z } from "zod";
+import Disclaimer from "@/components/Disclaimer";
 
 type AssetTab = "bank" | "coin";
 type ActionTab = "withdraw" | "deposit" | "history";
