@@ -2668,13 +2668,13 @@ i18n
 const META = {
   ko: {
     title: "Phonara — 왕좌는 클릭 한 번으로 시작된다",
-    description: "PHONARA Empire — 임페리얼 골드 정산 플랫폼. 창립 멤버 30석 한정, 평생 골드 등급으로 폰 하나로 글로벌 수익을 시작하세요.",
+    description: "PHONARA Empire — 임페리얼 골드 정산 플랫폼. 창립 멤버 100석 한정, 장기 골드 등급으로 폰 하나로 글로벌 수익을 시작하세요.",
     manifest: "/manifest.ko.webmanifest",
     appleTitle: "Phonara",
   },
   en: {
     title: "Phonara — Your throne begins with one click",
-    description: "PHONARA Empire — Imperial gold settlement platform. Founders only, lifetime gold tier — your phone as a global earnings engine.",
+    description: "PHONARA Empire — Imperial gold settlement platform. Founders only, long-term gold tier — your phone as a global earnings engine.",
     manifest: "/manifest.en.webmanifest",
     appleTitle: "Phonara",
   },
