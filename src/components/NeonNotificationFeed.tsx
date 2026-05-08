@@ -44,6 +44,11 @@ export default function NeonNotificationFeed() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user || !mounted) return;
 
+      // Ask for browser push permission once (silent if denied)
+      if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "default") {
+        try { Notification.requestPermission(); } catch {}
+      }
+
       // Mark recent ones as seen so we don't replay history on every mount
       const { data: recent } = await supabase
         .from("notifications")
