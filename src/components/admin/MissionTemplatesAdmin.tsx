@@ -55,7 +55,7 @@ export default function MissionTemplatesAdmin() {
     setLoading(true);
     const [tpl, pen] = await Promise.all([
       supabase.from("mission_templates").select("*").order("category").order("key"),
-      supabase.from("ai_generated_missions").select("id,user_id,title,description,reward_credit,ai_reasoning,status,created_at")
+      supabase.from("ai_generated_missions").select("id,user_id,template_key,title,description,reward_credit,ai_reasoning,status,created_at")
         .eq("status", "pending").order("created_at", { ascending: false }).limit(50),
     ]);
     setTemplates((tpl.data ?? []) as Template[]);
