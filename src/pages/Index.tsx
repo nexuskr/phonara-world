@@ -135,6 +135,20 @@ export default function Index() {
           </Link>
         </div>
 
+        {/* 즉시 가치 + 사회적 증거 */}
+        <div className="mt-5 flex flex-wrap items-center justify-center gap-2 animate-fade-up" style={{ animationDelay: "0.32s" }}>
+          <span className="px-3 py-1.5 rounded-full glass border border-primary/30 text-[11px] font-bold text-primary inline-flex items-center gap-1.5">
+            <Sparkles className="w-3 h-3" /> 가입 즉시 ₩5,000 지급
+          </span>
+          <span className="px-3 py-1.5 rounded-full glass border border-primary/20 text-[11px] text-muted-foreground inline-flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-destructive animate-pulse" />
+            오늘 신규 가입 <span className="font-black text-foreground tabular-nums">1,284</span>명
+          </span>
+          <span className="px-3 py-1.5 rounded-full glass border border-primary/20 text-[11px] text-muted-foreground inline-flex items-center gap-1.5">
+            <Zap className="w-3 h-3 text-secondary" /> 60초 안에 첫 적립
+          </span>
+        </div>
+
         <div className="mt-4 inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass border border-primary/20 text-[11px] text-primary/90 animate-fade-up" style={{ animationDelay: "0.35s" }}>
           <Heart className="w-3.5 h-3.5 fill-primary text-primary" /> {t("freeBadge")}
         </div>
