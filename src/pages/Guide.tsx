@@ -7,6 +7,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useDB } from "@/lib/store";
 import { toast } from "@/hooks/use-toast";
 import EarningsSimulator from "@/components/guide/EarningsSimulator";
+import TrustCounter from "@/components/guide/TrustCounter";
+import AMLGate from "@/components/wallet/AMLGate";
+import { AML_TIERS, currentTierByVerificationLevel } from "@/lib/aml-tiers";
 
 type Tab = "starter" | "principles" | "tier" | "jackpot" | "wallet";
 type StepKey = "step1" | "step2" | "step3" | "step4" | "step5" | "step6";
@@ -152,6 +155,8 @@ function StarterGuide({ t }: any) {
               />
             </div>
           </div>
+
+          <TrustCounter />
         </div>
       </div>
 
