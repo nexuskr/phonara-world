@@ -102,7 +102,14 @@ export default function ReferralCard() {
               {t("headerTitle")}
               <Sparkles className="w-3.5 h-3.5 text-gold animate-pulse" />
             </h3>
-            <p className="text-[10px] text-muted-foreground break-keep">{t("headerSub1")}<span className="text-gold font-bold">{t("headerSubBold")}</span></p>
+          <p className="text-[10px] text-muted-foreground break-keep">{t("headerSub1")}<span className="text-gold font-bold">{t("headerSubBold")}</span></p>
+          {daysLeft !== null && (
+            <p className="text-[10px] mt-0.5 break-keep">
+              <span className={daysLeft > 0 ? "text-gold font-bold" : "text-muted-foreground"}>
+                {daysLeft > 0 ? t("windowDays", { days: daysLeft }) : t("windowExpired")}
+              </span>
+            </p>
+          )}
           </div>
         </div>
 
