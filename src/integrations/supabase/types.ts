@@ -182,6 +182,54 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_generated_missions: {
+        Row: {
+          ai_reasoning: string | null
+          approved_by_admin: string | null
+          claimed_at: string | null
+          created_at: string
+          description: string
+          expires_at: string
+          id: string
+          reward_credit: number
+          reward_xp: number
+          status: string
+          template_key: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          ai_reasoning?: string | null
+          approved_by_admin?: string | null
+          claimed_at?: string | null
+          created_at?: string
+          description: string
+          expires_at?: string
+          id?: string
+          reward_credit?: number
+          reward_xp?: number
+          status?: string
+          template_key: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          ai_reasoning?: string | null
+          approved_by_admin?: string | null
+          claimed_at?: string | null
+          created_at?: string
+          description?: string
+          expires_at?: string
+          id?: string
+          reward_credit?: number
+          reward_xp?: number
+          status?: string
+          template_key?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       aml_risk_scores: {
         Row: {
           factors: Json
@@ -853,6 +901,90 @@ export type Database = {
           multiplier?: number
           streak?: number
           tier?: Database["public"]["Enums"]["user_tier"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      mission_templates: {
+        Row: {
+          active: boolean
+          ai_prompt_seed: string | null
+          auto_approve: boolean
+          category: string
+          created_at: string
+          description: string | null
+          difficulty: string
+          duration_minutes: number
+          id: string
+          key: string
+          reward_credit: number
+          reward_xp: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          ai_prompt_seed?: string | null
+          auto_approve?: boolean
+          category?: string
+          created_at?: string
+          description?: string | null
+          difficulty?: string
+          duration_minutes?: number
+          id?: string
+          key: string
+          reward_credit?: number
+          reward_xp?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          ai_prompt_seed?: string | null
+          auto_approve?: boolean
+          category?: string
+          created_at?: string
+          description?: string | null
+          difficulty?: string
+          duration_minutes?: number
+          id?: string
+          key?: string
+          reward_credit?: number
+          reward_xp?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          kind: string
+          payload: Json
+          read_at: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          kind: string
+          payload?: Json
+          read_at?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          payload?: Json
+          read_at?: string | null
+          title?: string
           user_id?: string
         }
         Relationships: []
@@ -1961,6 +2093,90 @@ export type Database = {
         }
         Relationships: []
       }
+      weekly_pass_progress: {
+        Row: {
+          claimed_levels: Json
+          id: string
+          iso_week: string
+          level: number
+          updated_at: string
+          user_id: string
+          xp: number
+        }
+        Insert: {
+          claimed_levels?: Json
+          id?: string
+          iso_week: string
+          level?: number
+          updated_at?: string
+          user_id: string
+          xp?: number
+        }
+        Update: {
+          claimed_levels?: Json
+          id?: string
+          iso_week?: string
+          level?: number
+          updated_at?: string
+          user_id?: string
+          xp?: number
+        }
+        Relationships: []
+      }
+      weekly_pass_rewards: {
+        Row: {
+          description: string
+          id: string
+          level: number
+          reward_badge: string | null
+          reward_credit: number
+          withdraw_priority: boolean
+        }
+        Insert: {
+          description?: string
+          id?: string
+          level: number
+          reward_badge?: string | null
+          reward_credit?: number
+          withdraw_priority?: boolean
+        }
+        Update: {
+          description?: string
+          id?: string
+          level?: number
+          reward_badge?: string | null
+          reward_credit?: number
+          withdraw_priority?: boolean
+        }
+        Relationships: []
+      }
+      weekly_payout_log: {
+        Row: {
+          amount: number
+          id: string
+          iso_week: string
+          paid_at: string
+          rank: number
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          id?: string
+          iso_week: string
+          paid_at?: string
+          rank: number
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          id?: string
+          iso_week?: string
+          paid_at?: string
+          rank?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       withdrawal_requests: {
         Row: {
           admin_id: string | null
@@ -2192,6 +2408,10 @@ export type Database = {
         Args: { _freeze_id: string; _note?: string }
         Returns: undefined
       }
+      admin_resolve_ai_mission: {
+        Args: { _action: string; _id: string }
+        Returns: Json
+      }
       admin_resolve_aml: {
         Args: { _action: string; _id: string; _reason?: string }
         Returns: Json
@@ -2212,6 +2432,22 @@ export type Database = {
         Args: {
           _target: string
           _tier: Database["public"]["Enums"]["user_tier"]
+        }
+        Returns: Json
+      }
+      admin_upsert_mission_template: {
+        Args: {
+          _active: boolean
+          _ai_prompt_seed?: string
+          _auto_approve: boolean
+          _category: string
+          _description: string
+          _difficulty: string
+          _duration_minutes: number
+          _key: string
+          _reward_credit: number
+          _reward_xp: number
+          _title: string
         }
         Returns: Json
       }
@@ -2246,6 +2482,7 @@ export type Database = {
       check_permission_drift: { Args: never; Returns: Json }
       check_rls_integrity: { Args: never; Returns: Json }
       claim_ai_bot_run: { Args: { _run_id: string }; Returns: Json }
+      claim_ai_mission: { Args: { _mission_id: string }; Returns: Json }
       claim_daily_attendance: {
         Args: { user_id: string }
         Returns: {
@@ -2259,6 +2496,7 @@ export type Database = {
         Args: { _level: number; _track: string }
         Returns: Json
       }
+      claim_weekly_pass_reward: { Args: { _level: number }; Returns: Json }
       current_season_id: { Args: never; Returns: string }
       delete_email: {
         Args: { message_id: number; queue_name: string }
@@ -2276,6 +2514,18 @@ export type Database = {
           _pool_total: number
         }
         Returns: Json
+      }
+      enqueue_ai_mission: {
+        Args: {
+          _ai_reasoning?: string
+          _description: string
+          _reward_credit: number
+          _reward_xp: number
+          _template_key: string
+          _title: string
+          _user_id: string
+        }
+        Returns: string
       }
       enqueue_email: {
         Args: { payload: Json; queue_name: string }
@@ -2427,6 +2677,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_weekly_pass_overview: { Args: never; Returns: Json }
       get_weekly_referral_leaderboard: {
         Args: { _limit?: number }
         Returns: {
@@ -2495,6 +2746,17 @@ export type Database = {
           source: string
         }[]
       }
+      notify_user: {
+        Args: {
+          _body?: string
+          _kind: string
+          _payload?: Json
+          _title: string
+          _user_id: string
+        }
+        Returns: string
+      }
+      pay_weekly_leaderboard: { Args: never; Returns: Json }
       policy_assertions_status: { Args: never; Returns: Json }
       public_trust_history: {
         Args: { _days?: number }
