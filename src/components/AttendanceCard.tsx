@@ -1,8 +1,10 @@
 import { useDB, ATTENDANCE_REWARDS, formatKRW, todayStr } from "@/lib/store";
-import { CalendarCheck, Sparkles } from "lucide-react";
+import { CalendarCheck, Sparkles, Flame, AlertTriangle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { emitEarned } from "@/components/onboarding/EarnedToast";
+import { isFlagOn } from "@/lib/conversion-flags";
 
 export default function AttendanceCard() {
   const [db, setDb] = useDB();
