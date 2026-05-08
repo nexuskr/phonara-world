@@ -100,6 +100,7 @@ export default function Admin() {
     { id: "users", label: t("tabUsers"), icon: Users },
     { id: "chats", label: t("tabChats"), icon: MessageSquare },
     { id: "coin", label: t("tabCoin"), icon: Coins },
+    { id: "ugc", label: "UGC 성과", icon: BarChart3 },
   ];
 
   return (
