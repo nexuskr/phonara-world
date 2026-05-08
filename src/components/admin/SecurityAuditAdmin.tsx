@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ShieldCheck, ShieldAlert, RefreshCw, Activity, AlertTriangle, CheckCircle2, Filter, Eye } from "lucide-react";
+import { ShieldCheck, ShieldAlert, RefreshCw, Activity, AlertTriangle, CheckCircle2, Filter, Eye, Wrench, Gauge } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
