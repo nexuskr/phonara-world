@@ -2,27 +2,17 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
-import { Sparkles, Copy, Wand2, AlertTriangle, Loader2 } from "lucide-react";
+import { Sparkles, Wand2, AlertTriangle, Loader2, Save } from "lucide-react";
+import DMVariantCard from "@/components/guide/DMVariantCard";
+import { summaryRisk, auditDM, PLATFORMS, type Channel } from "@/lib/dmAudit";
 
-type Channel = "tiktok" | "instagram" | "threads" | "naver" | "youtube" | "kakao";
 type Tone = "friendly" | "formal" | "playful" | "hype";
 
-const CHANNELS: { id: Channel; emoji: string }[] = [
-  { id: "tiktok", emoji: "🎵" },
-  { id: "instagram", emoji: "📸" },
-  { id: "threads", emoji: "🧵" },
-  { id: "naver", emoji: "🟢" },
-  { id: "youtube", emoji: "▶️" },
-  { id: "kakao", emoji: "💬" },
-];
-
+const CHANNELS: Channel[] = ["tiktok", "instagram", "threads", "naver", "youtube", "kakao"];
 const TONES: Tone[] = ["friendly", "formal", "playful", "hype"];
 
-const SAFE_DAILY = 60;     // 20 × 3계정
-const WARN_DAILY = 100;
-const HARD_DAILY = 300;
-
-const todayKey = () => `dm_sent_${new Date().toISOString().slice(0, 10)}`;
+const todayISO = () => new Date().toISOString().slice(0, 10);
+const todayKey = () => `dm_sent_${todayISO()}`;
 
 export default function DMComposer({ referralLink }: { referralLink?: string }) {
   const { t } = useTranslation("dmComposer");
@@ -31,20 +21,66 @@ export default function DMComposer({ referralLink }: { referralLink?: string }) 
   const [persona, setPersona] = useState("20~30대 직장인 부업 관심층");
   const [tone, setTone] = useState<Tone>("friendly");
   const [count, setCount] = useState(5);
+  const [dailySafeLine, setDailySafeLine] = useState(60);
   const [variants, setVariants] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [sentToday, setSentToday] = useState(0);
+  const [userId, setUserId] = useState<string | null>(null);
 
+  // Load user + prefs
   useEffect(() => {
+    void (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      setUserId(user.id);
+      const { data: prefs } = await supabase
+        .from("dm_composer_prefs")
+        .select("channel,keywords,persona,tone,count,daily_safe_line")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (prefs) {
+        if (CHANNELS.includes(prefs.channel as Channel)) setChannel(prefs.channel as Channel);
+        if (prefs.keywords) setKeywords(prefs.keywords);
+        if (prefs.persona) setPersona(prefs.persona);
+        if (TONES.includes(prefs.tone as Tone)) setTone(prefs.tone as Tone);
+        if (prefs.count) setCount(prefs.count);
+        if (prefs.daily_safe_line) setDailySafeLine(prefs.daily_safe_line);
+      }
+    })();
     const v = Number(localStorage.getItem(todayKey()) || "0");
     setSentToday(Number.isFinite(v) ? v : 0);
   }, []);
 
   const dangerLevel = useMemo<"safe" | "warn" | "danger">(() => {
-    if (sentToday >= WARN_DAILY) return "danger";
-    if (sentToday >= SAFE_DAILY) return "warn";
+    const warn = dailySafeLine;
+    const hard = Math.max(warn * 1.5, warn + 40);
+    if (sentToday >= hard) return "danger";
+    if (sentToday >= warn) return "warn";
     return "safe";
-  }, [sentToday]);
+  }, [sentToday, dailySafeLine]);
+
+  const auditSummary = useMemo(() => {
+    if (!variants.length) return null;
+    return summaryRisk(variants.map(v => auditDM(v, channel)));
+  }, [variants, channel]);
+
+  const savePrefs = async () => {
+    if (!userId) return;
+    setSaving(true);
+    const { error } = await supabase
+      .from("dm_composer_prefs")
+      .upsert({
+        user_id: userId, channel, keywords, persona, tone, count,
+        daily_safe_line: dailySafeLine, updated_at: new Date().toISOString(),
+      }, { onConflict: "user_id" });
+    setSaving(false);
+    if (error) {
+      toast({ title: "설정 저장 실패", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "✓ 설정 저장됨", description: "다음 접속 시 자동 적용" });
+    }
+  };
 
   const generate = async () => {
     setLoading(true);
@@ -54,8 +90,11 @@ export default function DMComposer({ referralLink }: { referralLink?: string }) 
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      setVariants(Array.isArray(data?.variants) ? data.variants : []);
-      toast({ title: t("toast.generatedTitle"), description: t("toast.generatedDesc", { n: data?.variants?.length ?? 0 }) });
+      const list = Array.isArray(data?.variants) ? data.variants : [];
+      setVariants(list);
+      // auto-save prefs on first successful generate
+      if (userId) void savePrefs();
+      toast({ title: t("toast.generatedTitle"), description: t("toast.generatedDesc", { n: list.length }) });
     } catch (e: any) {
       const msg = e?.message ?? "error";
       const desc =
@@ -68,15 +107,20 @@ export default function DMComposer({ referralLink }: { referralLink?: string }) 
     }
   };
 
-  const copyVariant = async (txt: string) => {
-    try {
-      await navigator.clipboard.writeText(txt);
-      const next = Math.min(HARD_DAILY, sentToday + 1);
-      setSentToday(next);
-      localStorage.setItem(todayKey(), String(next));
-      toast({ title: t("toast.copiedTitle"), description: t("toast.copiedDesc", { n: next }) });
-    } catch {
-      toast({ title: t("toast.copyFailed"), variant: "destructive" });
+  const handleVariantCopied = async () => {
+    const next = sentToday + 1;
+    setSentToday(next);
+    localStorage.setItem(todayKey(), String(next));
+    // Auto-log to ugc_traffic_events (dm_sent +1)
+    if (userId) {
+      void supabase.from("ugc_traffic_events").insert({
+        user_id: userId,
+        channel,
+        clicks: 0, signups: 0, conversions: 0,
+        dm_sent: 1, dm_responded: 0,
+        event_date: todayISO(),
+        note: `auto: dm-composer copy (${persona})`,
+      } as any);
     }
   };
 
@@ -97,21 +141,25 @@ export default function DMComposer({ referralLink }: { referralLink?: string }) 
         <div>
           <div className="text-[11px] font-bold text-muted-foreground mb-1.5">{t("fields.channel")}</div>
           <div className="grid grid-cols-3 gap-2">
-            {CHANNELS.map((c) => (
-              <button
-                key={c.id}
-                onClick={() => setChannel(c.id)}
-                className={`min-h-[40px] rounded-lg text-xs font-bold border transition-colors ${
-                  channel === c.id
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-card border-border text-foreground/80"
-                }`}
-              >
-                <span className="mr-1">{c.emoji}</span>
-                {t(`channels.${c.id}`)}
-              </button>
-            ))}
+            {CHANNELS.map((c) => {
+              const spec = PLATFORMS[c];
+              return (
+                <button
+                  key={c}
+                  onClick={() => setChannel(c)}
+                  className={`min-h-[40px] rounded-lg text-xs font-bold border transition-colors ${
+                    channel === c ? "bg-primary text-primary-foreground border-primary"
+                                  : "bg-card border-border text-foreground/80"
+                  }`}
+                >
+                  <span className="mr-1">{spec.emoji}</span>{spec.label}
+                </button>
+              );
+            })}
           </div>
+          <p className="text-[10px] text-muted-foreground mt-1.5">
+            ⓘ {PLATFORMS[channel].hint} · 권장 {PLATFORMS[channel].ideal[0]}~{PLATFORMS[channel].ideal[1]}자
+          </p>
         </div>
 
         {/* Keywords */}
@@ -121,7 +169,6 @@ export default function DMComposer({ referralLink }: { referralLink?: string }) 
             value={keywords}
             onChange={(e) => setKeywords(e.target.value)}
             className="w-full mt-1 rounded-lg bg-background border border-border px-3 py-2 text-sm"
-            placeholder="부업, AI, 재테크"
           />
         </div>
 
@@ -132,12 +179,11 @@ export default function DMComposer({ referralLink }: { referralLink?: string }) 
             value={persona}
             onChange={(e) => setPersona(e.target.value)}
             className="w-full mt-1 rounded-lg bg-background border border-border px-3 py-2 text-sm"
-            placeholder="20~30대 직장인 부업 관심층"
           />
         </div>
 
-        {/* Tone & count */}
-        <div className="grid grid-cols-2 gap-2">
+        {/* Tone & count & daily safe-line */}
+        <div className="grid grid-cols-3 gap-2">
           <div>
             <label className="text-[11px] font-bold text-muted-foreground">{t("fields.tone")}</label>
             <select
@@ -145,9 +191,7 @@ export default function DMComposer({ referralLink }: { referralLink?: string }) 
               onChange={(e) => setTone(e.target.value as Tone)}
               className="w-full mt-1 rounded-lg bg-background border border-border px-2 py-2 text-sm"
             >
-              {TONES.map((tn) => (
-                <option key={tn} value={tn}>{t(`tones.${tn}`)}</option>
-              ))}
+              {TONES.map((tn) => <option key={tn} value={tn}>{t(`tones.${tn}`)}</option>)}
             </select>
           </div>
           <div>
@@ -157,21 +201,39 @@ export default function DMComposer({ referralLink }: { referralLink?: string }) 
               onChange={(e) => setCount(Number(e.target.value))}
               className="w-full mt-1 rounded-lg bg-background border border-border px-2 py-2 text-sm"
             >
-              {[3, 5, 7, 10].map((n) => (
-                <option key={n} value={n}>{n}</option>
-              ))}
+              {[3, 5, 7, 10].map((n) => <option key={n} value={n}>{n}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="text-[11px] font-bold text-muted-foreground">일일 안전선</label>
+            <select
+              value={dailySafeLine}
+              onChange={(e) => setDailySafeLine(Number(e.target.value))}
+              className="w-full mt-1 rounded-lg bg-background border border-border px-2 py-2 text-sm tabular-nums"
+            >
+              {[30, 60, 90, 120, 150].map((n) => <option key={n} value={n}>{n}/일</option>)}
             </select>
           </div>
         </div>
 
-        <button
-          onClick={generate}
-          disabled={loading}
-          className="min-h-[44px] w-full rounded-xl bg-gradient-primary text-primary-foreground font-black text-sm flex items-center justify-center gap-2 disabled:opacity-50"
-        >
-          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-          {loading ? t("generating") : t("generate")}
-        </button>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={generate}
+            disabled={loading}
+            className="min-h-[44px] rounded-xl bg-gradient-primary text-primary-foreground font-black text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+          >
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+            {loading ? t("generating") : t("generate")}
+          </button>
+          <button
+            onClick={savePrefs}
+            disabled={saving || !userId}
+            className="min-h-[44px] rounded-xl border border-primary/40 text-primary text-sm font-bold flex items-center justify-center gap-2 hover:bg-primary/10 disabled:opacity-50"
+          >
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            설정 저장
+          </button>
+        </div>
       </div>
 
       {/* Daily safe-line counter */}
@@ -182,36 +244,35 @@ export default function DMComposer({ referralLink }: { referralLink?: string }) 
       }`}>
         <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
         <div className="flex-1 break-keep">
-          <div className="font-bold">
-            {t("safeline.title", { n: sentToday })}
-          </div>
+          <div className="font-bold">오늘 발송: {sentToday} / 안전선 {dailySafeLine}</div>
           <div className="opacity-80 mt-0.5">
-            {dangerLevel === "danger" ? t("safeline.danger") :
-             dangerLevel === "warn" ? t("safeline.warn") :
-             t("safeline.safe", { safe: SAFE_DAILY })}
+            {dangerLevel === "danger" ? "⚠ 안전선을 크게 초과 — 차단/신고 위험" :
+             dangerLevel === "warn" ? "⚠ 안전선 도달 — 잠시 멈추세요" :
+             `✓ 안전 — 일일 안전선 ${dailySafeLine}개 권장`}
           </div>
         </div>
-        <button onClick={resetCounter} className="text-[10px] underline opacity-70 hover:opacity-100">
-          {t("safeline.reset")}
-        </button>
+        <button onClick={resetCounter} className="text-[10px] underline opacity-70 hover:opacity-100">초기화</button>
       </div>
 
-      {/* Variants */}
+      {/* Variants with audit */}
       {variants.length > 0 && (
         <div className="mt-4 space-y-2">
-          {variants.map((v, i) => (
-            <div key={i} className="glass rounded-2xl p-3 border border-border">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-bold text-primary">#{i + 1}</span>
-                <button
-                  onClick={() => copyVariant(v)}
-                  className="text-[11px] font-bold flex items-center gap-1 px-2 py-1 rounded-md bg-primary/15 text-primary hover:bg-primary/25"
-                >
-                  <Copy className="w-3 h-3" /> {t("copy")}
-                </button>
-              </div>
-              <p className="text-xs text-foreground/90 whitespace-pre-line break-keep leading-relaxed">{v}</p>
+          {auditSummary && (
+            <div className="rounded-xl p-3 border border-border bg-card flex items-center justify-between text-xs">
+              <span className="font-bold">검수 요약</span>
+              <span className="tabular-nums">
+                <span className="text-emerald-500">안전 {auditSummary.total - auditSummary.warn - auditSummary.danger}</span>
+                {" · "}
+                <span className="text-yellow-500">주의 {auditSummary.warn}</span>
+                {" · "}
+                <span className="text-destructive">위험 {auditSummary.danger}</span>
+                {" · 최대 위험도 "}
+                <span className="font-black">{auditSummary.max}</span>
+              </span>
             </div>
+          )}
+          {variants.map((v, i) => (
+            <DMVariantCard key={i} text={v} channel={channel} index={i} onCopy={handleVariantCopied} />
           ))}
         </div>
       )}
