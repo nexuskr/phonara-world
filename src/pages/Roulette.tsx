@@ -50,6 +50,10 @@ export default function Roulette() {
 
   async function spin(kind: "standard" | "golden") {
     if (spinning || !user) return;
+    if ((stats?.remaining ?? 0) <= 0) {
+      toast({ title: t("todayDone"), description: t("tomorrow") });
+      return;
+    }
     setSpinning(true); setLastResult(null);
     const { data, error } = await supabase.rpc("spin_roulette" as any, { _kind: kind });
     if (error) {
