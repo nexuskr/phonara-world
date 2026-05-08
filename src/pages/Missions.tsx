@@ -146,6 +146,7 @@ export default function Missions() {
           : null,
       }));
       setCompleting(null);
+      emitEarned(m.reward);
       toast({ title: `🎉 +${formatKRW(m.reward)} 적립`, description: `${m.title} 완료!` });
     }, 1200);
   }
