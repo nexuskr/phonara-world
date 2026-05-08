@@ -51,7 +51,7 @@ export default function TopHUD() {
         aria-label={t("balance")}
       >
         <Wallet className="w-3.5 h-3.5 text-primary" />
-        <span className="font-hud text-sm text-gradient-imperial font-bold tabular-nums">
+        <span className="font-hud text-sm text-money font-bold tabular-nums">
           {formatKRW(user.balance ?? 0)}
         </span>
       </Link>
@@ -101,7 +101,7 @@ export function TopHUDCompact() {
         <TierBadge tier={(user.tier as any) ?? "NORMAL"} size="xs" withCrown={false} />
       )}
       <Wallet className="w-3 h-3 text-primary" />
-      <span className="font-hud text-xs text-gradient-imperial font-bold tabular-nums">
+      <span className="font-hud text-xs text-money font-bold tabular-nums">
         {formatKRW(user.balance ?? 0)}
       </span>
     </Link>
