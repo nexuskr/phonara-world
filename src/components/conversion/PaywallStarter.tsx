@@ -88,6 +88,15 @@ export default function PaywallStarter({
             </div>
           )}
 
+          {isFlagOn("liveSocialProof") && (
+            <div className="mt-3 flex items-center gap-2 text-[11px] glass rounded-xl px-3 py-2">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-secondary animate-pulse" />
+              <span className="text-muted-foreground">
+                <span className="font-black text-secondary">방금</span> 서울 K**님이 같은 패키지를 결제했습니다 · 오늘 <span className="font-black text-foreground tabular-nums">1,284</span>명 진입
+              </span>
+            </div>
+          )}
+
           <div className="mt-4 glass rounded-xl p-3 flex items-center justify-between text-xs">
             <span className="text-muted-foreground">30일 총 예상</span>
             <span className="font-display font-black text-base text-gradient-gold">
