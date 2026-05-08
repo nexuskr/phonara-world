@@ -11,6 +11,7 @@ import { useRequireAuth } from "@/hooks/use-require-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { refreshWallet } from "@/lib/missions-rpc";
 import ServerTxList from "@/components/wallet/ServerTxList";
+import WithdrawalHistoryList from "@/components/wallet/WithdrawalHistoryList";
 import WithdrawIntentInterceptor from "@/components/conversion/WithdrawIntentInterceptor";
 import AMLGate from "@/components/wallet/AMLGate";
 import WithdrawQueueStatus from "@/components/wallet/WithdrawQueueStatus";
