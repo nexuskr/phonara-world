@@ -52,6 +52,34 @@ export default function Trust() {
     canon.href = `${window.location.origin}/trust`;
   }, []);
 
+  // JSON-LD structured data — updates when metrics arrive
+  useEffect(() => {
+    const id = "phonara-trust-jsonld";
+    document.getElementById(id)?.remove();
+    if (!m) return;
+    const ld = {
+      "@context": "https://schema.org",
+      "@type": "Dataset",
+      name: "Phonara Trust Metrics",
+      description: "Public operational trust metrics for Phonara: settlement uptime, audit pass rate, anomaly count.",
+      url: `${window.location.origin}/trust`,
+      creator: { "@type": "Organization", name: "Phonara" },
+      dateModified: m.generated_at,
+      variableMeasured: [
+        { "@type": "PropertyValue", name: "cron_uptime_7d", value: m.cron_uptime_7d, unitText: "PERCENT" },
+        { "@type": "PropertyValue", name: "audit_pass_30d", value: m.audit_pass_30d, unitText: "PERCENT" },
+        { "@type": "PropertyValue", name: "policy_pass_7d", value: m.policy_pass_7d, unitText: "PERCENT" },
+        { "@type": "PropertyValue", name: "unack_anomalies", value: m.unack_anomalies },
+      ],
+    };
+    const script = document.createElement("script");
+    script.id = id;
+    script.type = "application/ld+json";
+    script.textContent = JSON.stringify(ld);
+    document.head.appendChild(script);
+    return () => { document.getElementById(id)?.remove(); };
+  }, [m]);
+
   const allGreen = m && m.cron_uptime_7d >= 99 && m.audit_pass_30d >= 99 && m.policy_pass_7d >= 99 && m.unack_anomalies === 0;
 
   return (
@@ -127,6 +155,23 @@ export default function Trust() {
           {m?.generated_at && (
             <div className="mt-4 text-[10px]">데이터 생성: {new Date(m.generated_at).toLocaleString("ko-KR")}</div>
           )}
+          <div className="mt-4 flex flex-wrap items-center gap-2 text-[10px]">
+            <span className="text-muted-foreground">공개 상태 API:</span>
+            <a
+              href={`https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1/public-status`}
+              target="_blank" rel="noopener noreferrer"
+              className="px-2 py-1 rounded-full glass border border-primary/30 text-primary hover:border-primary/60 transition"
+            >
+              GET /public-status
+            </a>
+            <a
+              href={`https://img.shields.io/endpoint?url=https%3A%2F%2F${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co%2Ffunctions%2Fv1%2Fpublic-status%3Fformat%3Dshield`}
+              target="_blank" rel="noopener noreferrer"
+              className="px-2 py-1 rounded-full glass border border-secondary/30 text-secondary hover:border-secondary/60 transition"
+            >
+              Shields.io 배지
+            </a>
+          </div>
         </section>
       </main>
     </div>
