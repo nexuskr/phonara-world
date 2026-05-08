@@ -3,9 +3,9 @@ import Layout from "@/components/Layout";
 import HubTabs from "@/components/HubTabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useDB, formatKRW } from "@/lib/store";
-import { toast } from "@/hooks/use-toast";
 import { Trophy, Lock, Crown } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 type Ach = {
   key: string; name: string; description: string; category: string;
@@ -24,6 +24,7 @@ const TIER_COLORS: Record<string, string> = {
 
 export default function Achievements() {
   const [db] = useDB();
+  const { t } = useTranslation("achievements");
   const [catalog, setCatalog] = useState<Ach[]>([]);
   const [mine, setMine] = useState<Set<string>>(new Set());
   const [tab, setTab] = useState<string>("all");
@@ -51,28 +52,28 @@ export default function Achievements() {
         <header className="rounded-3xl bg-gradient-to-br from-primary/15 via-background to-background border border-primary/20 p-6">
           <div className="flex items-center gap-3">
             <Trophy className="text-primary" />
-            <h1 className="text-2xl font-black tracking-tight">업적</h1>
+            <h1 className="font-imperial text-2xl font-black tracking-tight break-keep">{t("title")}</h1>
           </div>
-          <p className="text-sm text-muted-foreground mt-1">달성한 업적을 모아 자랑하세요</p>
+          <p className="text-sm text-muted-foreground mt-1 break-keep">{t("subtitle")}</p>
           <div className="grid grid-cols-3 gap-3 mt-5">
-            <Stat label="해금" value={`${unlockedCount} / ${catalog.length}`} />
-            <Stat label="누적 AP" value={`${totalAp}`} />
-            <Stat label="달성률" value={catalog.length ? `${Math.round((unlockedCount / catalog.length) * 100)}%` : "0%"} />
+            <Stat label={t("unlocked")} value={`${unlockedCount} / ${catalog.length}`} />
+            <Stat label={t("ap")} value={`${totalAp}`} />
+            <Stat label={t("rate")} value={catalog.length ? `${Math.round((unlockedCount / catalog.length) * 100)}%` : "0%"} />
           </div>
         </header>
 
         <Link
           to="/hall-of-fame"
-          className="press flex items-center justify-between rounded-2xl p-4 bg-gradient-to-r from-gold/20 via-primary/10 to-accent/15 border border-gold/30 hover:border-gold/60 transition"
+          className="press flex items-center justify-between rounded-2xl p-4 min-h-[56px] bg-gradient-to-r from-gold/20 via-primary/10 to-accent/15 border border-gold/30 hover:border-gold/60 transition"
         >
           <div className="flex items-center gap-3">
             <Crown className="w-5 h-5 text-gold" />
             <div>
-              <div className="font-display font-black text-sm text-gradient-gold">명예의 전당</div>
-              <div className="text-[11px] text-muted-foreground">EMPIRE 톱 수익자 실시간 랭킹</div>
+              <div className="font-imperial font-black text-sm text-gradient-gold break-keep">{t("hofTitle")}</div>
+              <div className="text-[11px] text-muted-foreground break-keep">{t("hofSub")}</div>
             </div>
           </div>
-          <span className="text-[10px] font-bold text-gold tracking-widest">VIEW →</span>
+          <span className="text-[10px] font-bold text-gold tracking-widest">{t("view")}</span>
         </Link>
 
         <div className="flex gap-2 overflow-x-auto pb-1">
