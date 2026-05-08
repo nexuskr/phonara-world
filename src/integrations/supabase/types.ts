@@ -2151,6 +2151,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      ingest_span_quality_alert: {
+        Args: { _metrics: Json; _reason: string }
+        Returns: string
+      }
       is_account_frozen: { Args: { _user_id: string }; Returns: boolean }
       latest_chaos_run: { Args: never; Returns: Json }
       log_client_error: {
