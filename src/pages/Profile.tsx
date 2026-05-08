@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import Layout from "@/components/Layout";
 import { useDB, formatKRW } from "@/lib/store";
-import { ShieldCheck, Star, Trophy, Settings, Award, Lock, X, Mail, KeyRound, BookOpen, LogOut, Crown, Flame, Wallet as WalletIcon, Sparkles, Target, Users, Zap } from "lucide-react";
+import { ShieldCheck, Star, Trophy, Settings, Award, Lock, X, Mail, KeyRound, BookOpen, LogOut, Crown, Flame } from "lucide-react";
 import PinPad from "@/components/PinPad";
 import PinResetDialog from "@/components/PinResetDialog";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useRequireAuth } from "@/hooks/use-require-auth";
+import { LuxButton, LuxInput } from "@/components/ui/lux";
 
 type BadgeDef = {
   id: string;
@@ -22,6 +24,7 @@ type BadgeDef = {
 import ReferralCard from "@/components/ReferralCard";
 
 export default function Profile() {
+  const { t } = useTranslation("profile");
   const [db, setDb] = useDB();
   const nav = useNavigate();
   const user = useRequireAuth() ?? db.user;
@@ -75,51 +78,50 @@ export default function Profile() {
   };
 
   function savePw() {
-    if (!/^\d{6}$/.test(pw) || pw !== pw2) { toast({ title: "6자리 숫자 일치 필요" }); return; }
+    if (!/^\d{6}$/.test(pw) || pw !== pw2) { toast({ title: t("pinErrMatch") }); return; }
     setDb(d => ({ ...d, user: d.user ? { ...d.user, withdrawPw: pw } : null }));
     setPw(""); setPw2(""); setPwOpen(false);
-    toast({ title: "✅ 출금 비밀번호 저장됨" });
+    toast({ title: t("pinSaved") });
   }
 
   async function saveNickname() {
     const v = nickname.trim();
-    if (v.length < 2 || v.length > 20) { toast({ title: "닉네임 2~20자", variant: "destructive" }); return; }
+    if (v.length < 2 || v.length > 20) { toast({ title: t("accNickErr"), variant: "destructive" }); return; }
     setBusy(true);
     try {
       const { error } = await supabase.from("profiles").update({ nickname: v }).eq("id", u.id);
       if (error) throw error;
       setDb(d => ({ ...d, user: d.user ? { ...d.user, nickname: v } : null }));
-      toast({ title: "닉네임 변경 완료" });
+      toast({ title: t("accNickDone") });
       setAccountOpen(false);
-    } catch (e: any) { toast({ title: "오류", description: e.message, variant: "destructive" }); }
+    } catch (e: any) { toast({ title: t("genericError"), description: e.message, variant: "destructive" }); }
     finally { setBusy(false); }
   }
 
   async function changeEmail() {
-    if (!/^.+@.+\..+/.test(newEmail)) { toast({ title: "이메일 형식 확인", variant: "destructive" }); return; }
+    if (!/^.+@.+\..+/.test(newEmail)) { toast({ title: t("emailErrFmt"), variant: "destructive" }); return; }
     setBusy(true);
     try {
       const { error } = await supabase.auth.updateUser({ email: newEmail });
       if (error) throw error;
-      toast({ title: "확인 메일을 발송했습니다", description: "새 이메일에서 인증해주세요." });
+      toast({ title: t("emailSent"), description: t("emailSentDesc") });
       setEmailOpen(false); setNewEmail("");
-    } catch (e: any) { toast({ title: "오류", description: e.message, variant: "destructive" }); }
+    } catch (e: any) { toast({ title: t("genericError"), description: e.message, variant: "destructive" }); }
     finally { setBusy(false); }
   }
 
   async function changePass() {
-    if (newPass.length < 8) { toast({ title: "비밀번호 8자 이상", variant: "destructive" }); return; }
-    if (newPass !== newPass2) { toast({ title: "새 비밀번호 불일치", variant: "destructive" }); return; }
+    if (newPass.length < 8) { toast({ title: t("passErrShort"), variant: "destructive" }); return; }
+    if (newPass !== newPass2) { toast({ title: t("passErrMismatch"), variant: "destructive" }); return; }
     setBusy(true);
     try {
-      // Re-auth with current password for safety
       const { error: e1 } = await supabase.auth.signInWithPassword({ email: u.email, password: curPass });
-      if (e1) throw new Error("현재 비밀번호가 일치하지 않습니다");
+      if (e1) throw new Error(t("passErrCurrent"));
       const { error: e2 } = await supabase.auth.updateUser({ password: newPass });
       if (e2) throw e2;
-      toast({ title: "비밀번호 변경 완료" });
+      toast({ title: t("passDone") });
       setPassOpen(false); setCurPass(""); setNewPass(""); setNewPass2("");
-    } catch (e: any) { toast({ title: "오류", description: e.message, variant: "destructive" }); }
+    } catch (e: any) { toast({ title: t("genericError"), description: e.message, variant: "destructive" }); }
     finally { setBusy(false); }
   }
 
@@ -137,17 +139,17 @@ export default function Profile() {
           <div className="absolute -top-20 -right-20 w-44 h-44 rounded-full bg-gradient-primary blur-3xl opacity-40" />
           <div className="relative flex items-center gap-4">
             <div className="relative">
-              <div className="w-20 h-20 rounded-2xl bg-gradient-cyber flex items-center justify-center font-display font-black text-3xl text-foreground glow-primary">
+              <div className="w-20 h-20 rounded-2xl bg-gradient-cyber flex items-center justify-center font-imperial font-black text-3xl text-foreground glow-primary">
                 {u.nickname[0]?.toUpperCase()}
               </div>
-              <div className="absolute -bottom-2 -right-2 px-2 py-0.5 rounded-full bg-gold text-gold-foreground text-[10px] font-black">Lv.{u.level}</div>
+              <div className="absolute -bottom-2 -right-2 px-2 py-0.5 rounded-full bg-gold text-gold-foreground text-[10px] font-black tabular-nums">Lv.{u.level}</div>
             </div>
             <div className="flex-1 min-w-0">
-              <h2 className="font-display font-black text-xl truncate">{u.nickname}</h2>
+              <h2 className="font-imperial font-black text-xl sm:text-2xl truncate tracking-[0.02em]">{u.nickname}</h2>
               <p className="text-xs text-muted-foreground truncate">{u.email}</p>
-              <div className="text-[10px] text-gold font-bold mt-0.5 flex items-center gap-1"><Crown className="w-3 h-3" /> {u.tier} 등급</div>
+              <div className="text-[10px] text-gold font-bold mt-0.5 flex items-center gap-1"><Crown className="w-3 h-3 shrink-0" /> {t("tier", { t: u.tier })}</div>
               <div className="mt-2">
-                <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
+                <div className="flex justify-between text-[10px] text-muted-foreground mb-1 tabular-nums">
                   <span>XP {u.xp.toLocaleString()}</span><span>{xpToNext.toLocaleString()}</span>
                 </div>
                 <div className="h-1.5 bg-muted rounded-full overflow-hidden">
@@ -158,9 +160,9 @@ export default function Profile() {
           </div>
 
           <div className="relative grid grid-cols-3 gap-2 mt-5">
-            <Card icon={Trophy} label="잔고" v={formatKRW(u.balance)} />
-            <Card icon={Star} label="오늘" v={formatKRW(u.todayEarnings)} />
-            <Card icon={Flame} label="연속" v={`${u.streak}일`} />
+            <Card icon={Trophy} label={t("cardBalance")} v={formatKRW(u.balance)} money />
+            <Card icon={Star} label={t("cardToday")} v={formatKRW(u.todayEarnings)} money />
+            <Card icon={Flame} label={t("cardStreak")} v={t("streakDays", { n: u.streak })} />
           </div>
         </div>
 
@@ -171,9 +173,9 @@ export default function Profile() {
 
         {/* ===== Upgraded Badges ===== */}
         <div className="mt-5 glass-strong rounded-2xl p-4 neon-border">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-display font-bold text-sm flex items-center gap-2"><Award className="w-4 h-4 text-gold" /> 업적 배지</h3>
-            <span className="text-[10px] text-muted-foreground">{earnedCount}/{badges.length} 획득</span>
+          <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
+            <h3 className="font-imperial font-bold text-sm flex items-center gap-2 tracking-[0.04em]"><Award className="w-4 h-4 text-gold" /> {t("badgesTitle")}</h3>
+            <span className="text-[10px] text-muted-foreground tabular-nums">{t("badgesGot", { a: earnedCount, b: badges.length })}</span>
           </div>
           <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
             {badges.map(b => (
@@ -198,27 +200,27 @@ export default function Profile() {
 
         {/* ===== Settings ===== */}
         <div className="mt-5 space-y-2">
-          <SectionTitle>계정 설정</SectionTitle>
+          <SectionTitle>{t("sectionAccount")}</SectionTitle>
 
-          <Row icon={Settings} label="계정 설정" sub="닉네임 · 프로필 정보" onClick={() => { setNickname(u.nickname); setAccountOpen(true); }} />
-          <Row icon={Mail} label="이메일 변경" sub={u.email} onClick={() => setEmailOpen(true)} />
-          <Row icon={KeyRound} label="비밀번호 변경" sub="로그인 비밀번호" onClick={() => setPassOpen(true)} />
-          <Row icon={Lock} label={`출금 PIN ${u.withdrawPw ? "변경" : "설정"}`} sub={u.withdrawPw ? "6자리 PIN 등록됨" : "출금 시 필요한 6자리 PIN"} onClick={() => setPwOpen(true)} statusGood={!!u.withdrawPw} />
-          <Row icon={KeyRound} label="출금 PIN 재설정" sub="비밀번호 재인증 후 새 PIN 설정 (24시간 내 3회)" onClick={() => setPinResetOpen(true)} />
+          <Row icon={Settings} label={t("rowAccount")} sub={t("rowAccountSub")} onClick={() => { setNickname(u.nickname); setAccountOpen(true); }} />
+          <Row icon={Mail} label={t("rowEmail")} sub={u.email} onClick={() => setEmailOpen(true)} />
+          <Row icon={KeyRound} label={t("rowPass")} sub={t("rowPassSub")} onClick={() => setPassOpen(true)} />
+          <Row icon={Lock} label={u.withdrawPw ? t("rowPinChange") : t("rowPinSet")} sub={u.withdrawPw ? t("rowPinSubActive") : t("rowPinSubInactive")} onClick={() => setPwOpen(true)} statusGood={!!u.withdrawPw} statusActive={t("statusActive")} statusInactive={t("statusInactive")} />
+          <Row icon={KeyRound} label={t("rowPinReset")} sub={t("rowPinResetSub")} onClick={() => setPinResetOpen(true)} />
 
-          <SectionTitle>안내</SectionTitle>
+          <SectionTitle>{t("sectionGuide")}</SectionTitle>
           <Link to="/guide" className="block">
-            <Row icon={BookOpen} label="운영원칙 & 이용가이드" sub="등급 · 잭팟 · 충전/환전" />
+            <Row icon={BookOpen} label={t("rowGuide")} sub={t("rowGuideSub")} />
           </Link>
           <Link to="/support" className="block">
-            <Row icon={ShieldCheck} label="고객센터" sub="1:1 실시간 상담" />
+            <Row icon={ShieldCheck} label={t("rowSupport")} sub={t("rowSupportSub")} />
           </Link>
 
-          <button onClick={logout} className="w-full mt-3 glass rounded-2xl p-4 flex items-center gap-3 hover:bg-destructive/10 transition text-left">
+          <button onClick={logout} className="w-full mt-3 glass rounded-2xl p-4 flex items-center gap-3 hover:bg-destructive/10 transition text-left min-h-[64px]">
             <div className="w-10 h-10 rounded-xl bg-destructive/15 flex items-center justify-center"><LogOut className="w-4 h-4 text-destructive" /></div>
-            <div className="flex-1">
-              <div className="text-sm font-bold text-destructive">로그아웃</div>
-              <div className="text-[10px] text-muted-foreground">현재 기기에서 로그아웃합니다</div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-bold text-destructive break-keep">{t("rowLogout")}</div>
+              <div className="text-[10px] text-muted-foreground break-keep">{t("rowLogoutSub")}</div>
             </div>
           </button>
         </div>
@@ -228,98 +230,87 @@ export default function Profile() {
 
       {/* PIN modal */}
       {pwOpen && (
-        <Modal title="출금 비밀번호 설정" onClose={() => setPwOpen(false)} icon={<Lock className="w-4 h-4 text-primary" />}>
-          <p className="text-[11px] text-muted-foreground -mt-2">출금 시 입력하는 6자리 PIN</p>
-          <PinPad value={pw} onChange={setPw} label="새 PIN 6자리" />
-          <PinPad value={pw2} onChange={setPw2} label="PIN 재입력" />
-          <PrimaryButton onClick={savePw}>저장</PrimaryButton>
+        <Modal title={t("pinTitle")} onClose={() => setPwOpen(false)} icon={<Lock className="w-4 h-4 text-primary" />}>
+          <p className="text-[11px] text-muted-foreground -mt-2 break-keep">{t("pinSub")}</p>
+          <PinPad value={pw} onChange={setPw} label={t("pinNew")} />
+          <PinPad value={pw2} onChange={setPw2} label={t("pinConfirm")} />
+          <LuxButton onClick={savePw} block size="lg" className="mt-2">{t("pinSave")}</LuxButton>
         </Modal>
       )}
 
-      {/* Account (nickname) modal */}
       {accountOpen && (
-        <Modal title="계정 설정" onClose={() => setAccountOpen(false)} icon={<Settings className="w-4 h-4 text-primary" />}>
-          <Label>닉네임 (2~20자)</Label>
-          <input value={nickname} onChange={e => setNickname(e.target.value)} maxLength={20} className="w-full px-4 py-3 rounded-xl glass border border-border focus:border-primary text-sm" />
-          <PrimaryButton onClick={saveNickname} disabled={busy}>{busy ? "저장 중..." : "저장"}</PrimaryButton>
+        <Modal title={t("accTitle")} onClose={() => setAccountOpen(false)} icon={<Settings className="w-4 h-4 text-primary" />}>
+          <Label>{t("accNicknameLabel")}</Label>
+          <LuxInput value={nickname} onChange={e => setNickname(e.target.value)} maxLength={20} />
+          <LuxButton onClick={saveNickname} disabled={busy} block size="lg" className="mt-2">{busy ? t("accSaving") : t("accSave")}</LuxButton>
         </Modal>
       )}
 
-      {/* Email change modal */}
       {emailOpen && (
-        <Modal title="이메일 변경" onClose={() => setEmailOpen(false)} icon={<Mail className="w-4 h-4 text-primary" />}>
-          <p className="text-[11px] text-muted-foreground -mt-2">새 이메일로 인증 링크가 발송됩니다.</p>
-          <Label>현재 이메일</Label>
-          <div className="px-4 py-3 rounded-xl glass border border-border text-sm text-muted-foreground">{u.email}</div>
-          <Label>새 이메일</Label>
-          <input type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)} placeholder="new@example.com" className="w-full px-4 py-3 rounded-xl glass border border-border focus:border-primary text-sm" />
-          <PrimaryButton onClick={changeEmail} disabled={busy}>{busy ? "처리 중..." : "변경 요청"}</PrimaryButton>
+        <Modal title={t("emailTitle")} onClose={() => setEmailOpen(false)} icon={<Mail className="w-4 h-4 text-primary" />}>
+          <p className="text-[11px] text-muted-foreground -mt-2 break-keep">{t("emailSub")}</p>
+          <Label>{t("emailCurrent")}</Label>
+          <div className="px-4 py-3 rounded-2xl glass border border-border text-sm text-muted-foreground min-h-[48px] flex items-center">{u.email}</div>
+          <Label>{t("emailNew")}</Label>
+          <LuxInput type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)} placeholder="new@example.com" />
+          <LuxButton onClick={changeEmail} disabled={busy} block size="lg" className="mt-2">{busy ? t("emailProcessing") : t("emailRequest")}</LuxButton>
         </Modal>
       )}
 
-      {/* Password change modal */}
       {passOpen && (
-        <Modal title="비밀번호 변경" onClose={() => setPassOpen(false)} icon={<KeyRound className="w-4 h-4 text-primary" />}>
-          <Label>현재 비밀번호</Label>
-          <input type="password" value={curPass} onChange={e => setCurPass(e.target.value)} className="w-full px-4 py-3 rounded-xl glass border border-border focus:border-primary text-sm" />
-          <Label>새 비밀번호 (8자 이상)</Label>
-          <input type="password" value={newPass} onChange={e => setNewPass(e.target.value)} className="w-full px-4 py-3 rounded-xl glass border border-border focus:border-primary text-sm" />
-          <Label>새 비밀번호 확인</Label>
-          <input type="password" value={newPass2} onChange={e => setNewPass2(e.target.value)} className="w-full px-4 py-3 rounded-xl glass border border-border focus:border-primary text-sm" />
-          <PrimaryButton onClick={changePass} disabled={busy}>{busy ? "처리 중..." : "변경"}</PrimaryButton>
+        <Modal title={t("passTitle")} onClose={() => setPassOpen(false)} icon={<KeyRound className="w-4 h-4 text-primary" />}>
+          <Label>{t("passCur")}</Label>
+          <LuxInput type="password" value={curPass} onChange={e => setCurPass(e.target.value)} />
+          <Label>{t("passNew")}</Label>
+          <LuxInput type="password" value={newPass} onChange={e => setNewPass(e.target.value)} />
+          <Label>{t("passNewConfirm")}</Label>
+          <LuxInput type="password" value={newPass2} onChange={e => setNewPass2(e.target.value)} />
+          <LuxButton onClick={changePass} disabled={busy} block size="lg" className="mt-2">{busy ? t("passProcessing") : t("passSubmit")}</LuxButton>
         </Modal>
       )}
     </Layout>
   );
 }
 
-function Card({ icon: Icon, label, v }: any) {
+function Card({ icon: Icon, label, v, money }: any) {
   return (
     <div className="glass rounded-xl p-3 text-center">
       <Icon className="w-4 h-4 mx-auto text-primary" />
-      <div className="text-[10px] text-muted-foreground mt-1">{label}</div>
-      <div className="font-display font-bold text-xs">{v}</div>
+      <div className="text-[10px] text-muted-foreground mt-1 break-keep">{label}</div>
+      <div className={`font-imperial font-bold text-xs tabular-nums ${money ? "text-money-strong" : ""}`}>{v}</div>
     </div>
   );
 }
 
-function Row({ icon: Icon, label, sub, onClick, statusGood }: any) {
+function Row({ icon: Icon, label, sub, onClick, statusGood, statusActive, statusInactive }: any) {
   return (
-    <button onClick={onClick} className="w-full glass rounded-2xl p-4 flex items-center gap-3 hover:bg-muted/30 transition text-left">
-      <div className="w-10 h-10 rounded-xl bg-gradient-primary/20 flex items-center justify-center"><Icon className="w-4 h-4 text-primary" /></div>
+    <button onClick={onClick} className="w-full glass rounded-2xl p-4 flex items-center gap-3 hover:bg-muted/30 transition text-left min-h-[64px]">
+      <div className="w-10 h-10 rounded-xl bg-gradient-primary/20 flex items-center justify-center shrink-0"><Icon className="w-4 h-4 text-primary" /></div>
       <div className="flex-1 min-w-0">
-        <div className="text-sm font-bold">{label}</div>
+        <div className="text-sm font-bold break-keep">{label}</div>
         <div className="text-[10px] text-muted-foreground truncate">{sub}</div>
       </div>
       {statusGood !== undefined && (
-        <span className={`text-[10px] font-bold ${statusGood ? "text-secondary" : "text-gold"}`}>{statusGood ? "활성" : "미설정"}</span>
+        <span className={`text-[10px] font-bold ${statusGood ? "text-secondary" : "text-gold"}`}>{statusGood ? (statusActive ?? "") : (statusInactive ?? "")}</span>
       )}
     </button>
   );
 }
 
 function SectionTitle({ children }: any) {
-  return <div className="text-[10px] tracking-widest text-muted-foreground font-bold mt-4 mb-1 px-1">{children}</div>;
+  return <div className="text-[10px] tracking-widest text-muted-foreground font-bold mt-4 mb-1 px-1 uppercase">{children}</div>;
 }
 
 function Label({ children }: any) {
   return <div className="text-[11px] text-muted-foreground font-bold mt-2 px-1">{children}</div>;
 }
 
-function PrimaryButton({ children, onClick, disabled }: any) {
-  return (
-    <button onClick={onClick} disabled={disabled} className="w-full mt-2 py-3 rounded-xl bg-gradient-primary text-primary-foreground font-bold glow-primary disabled:opacity-50">
-      {children}
-    </button>
-  );
-}
-
 function Modal({ title, onClose, icon, children }: any) {
   return (
     <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-md flex items-end sm:items-center justify-center p-4">
-      <div className="w-full max-w-md glass-strong rounded-3xl p-6 neon-border relative animate-fade-up space-y-3">
-        <button onClick={onClose} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-muted/40 flex items-center justify-center"><X className="w-4 h-4" /></button>
-        <h2 className="font-display font-black text-lg flex items-center gap-2">{icon} {title}</h2>
+      <div className="w-full max-w-md glass-strong rounded-3xl p-5 sm:p-6 neon-border relative animate-fade-up space-y-3">
+        <button onClick={onClose} aria-label="Close" className="absolute top-4 right-4 w-10 h-10 rounded-full bg-muted/40 flex items-center justify-center"><X className="w-4 h-4" /></button>
+        <h2 className="font-imperial font-black text-lg sm:text-xl flex items-center gap-2 tracking-[0.04em]">{icon} {title}</h2>
         {children}
       </div>
     </div>

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Trans, useTranslation } from "react-i18next";
 import Layout from "@/components/Layout";
 import HubTabs from "@/components/HubTabs";
 import { useDB, PACKAGES, formatKRW, type Pkg } from "@/lib/store";
@@ -13,6 +14,7 @@ import EmpireDayCountdown from "@/components/EmpireDayCountdown";
 import PaywallStarter from "@/components/conversion/PaywallStarter";
 import { isFlagOn } from "@/lib/conversion-flags";
 import { track } from "@/lib/analytics";
+import { LuxButton } from "@/components/ui/lux";
 
 const tierStyles: Record<Pkg["tier"], { ring: string; bg: string; label: string }> = {
   FREE:    { ring: "from-muted to-muted",                bg: "from-muted/30",      label: "FREE" },
@@ -25,6 +27,7 @@ const tierStyles: Record<Pkg["tier"], { ring: string; bg: string; label: string 
 };
 
 export default function Packages() {
+  const { t } = useTranslation("packages");
   const [db] = useDB();
   const nav = useNavigate();
   const user = useRequireAuth() ?? db.user;
@@ -46,27 +49,33 @@ export default function Packages() {
       <HubTabs hub="empire" />
       <div className="container pt-6 pb-10 animate-liquid-in">
         <div className="mb-6">
-          <h1 className="font-display font-black text-2xl flex items-center gap-2">
-            <Crown className="w-5 h-5 text-gold" /> <span className="text-gradient-gold">🔥 첫 3일 보너스 구간</span>
+          <h1 className="font-imperial font-black text-2xl sm:text-3xl flex items-center gap-2 tracking-[0.04em] break-keep">
+            <Crown className="w-5 h-5 text-gold shrink-0" /> <span className="text-gradient-gold">{t("headline")}</span>
           </h1>
-          <p className="text-xs text-muted-foreground mt-1">지금 시작 시 첫 3일간 보너스 구간 진입 · 사전 공지 확정 적립 스케줄</p>
+          <p className="text-xs text-muted-foreground mt-1 break-keep">{t("sub")}</p>
           <div className="mt-2"><ActiveBoostCounter /></div>
-          <div className="mt-3 flex items-center gap-2 text-[11px] glass rounded-xl px-3 py-2 border border-destructive/30">
+          <div className="mt-3 flex items-center gap-2 text-[11px] glass rounded-2xl px-3 py-2.5 border border-destructive/30 min-h-[44px] flex-wrap">
             <span className="inline-block w-1.5 h-1.5 rounded-full bg-destructive animate-pulse" />
-            <span className="font-bold text-destructive">실시간</span>
-            <span className="text-muted-foreground">최근 24h 신규 결제 <span className="font-black text-foreground tabular-nums">1,284</span>건 · 첫 3일 보너스 잔여 카운트다운 진행 중</span>
+            <span className="font-bold text-destructive">{t("liveTag")}</span>
+            <span className="text-muted-foreground break-keep">
+              <Trans
+                i18nKey="packages:liveText"
+                values={{ n: "1,284" }}
+                components={{ 1: <span className="font-black text-money-strong tabular-nums" /> }}
+              />
+            </span>
           </div>
         </div>
 
         <div className="grid md:grid-cols-2 gap-4">
           {[...PACKAGES].sort((a, b) => (a.tier === "FREE" ? 1 : b.tier === "FREE" ? -1 : 0)).map(p => {
-            const t = tierStyles[p.tier];
+            const ts = tierStyles[p.tier];
             const isEmpire = p.tier === "EMPIRE" || p.tier === "PHANTOM";
             return (
               <div key={p.id} className="relative lift group">
-                <div className={`absolute -inset-0.5 rounded-3xl bg-gradient-to-br ${t.ring} opacity-60 blur-md group-hover:opacity-100 transition duration-700`} />
-                <div className="relative glass-strong rounded-3xl p-6 overflow-hidden sheen">
-                  <div className={`absolute -top-20 -right-20 w-44 h-44 rounded-full bg-gradient-to-br ${t.bg} to-transparent blur-3xl opacity-70`} />
+                <div className={`absolute -inset-0.5 rounded-3xl bg-gradient-to-br ${ts.ring} opacity-60 blur-md group-hover:opacity-100 transition duration-700`} />
+                <div className="relative glass-strong rounded-3xl p-5 sm:p-6 overflow-hidden sheen">
+                  <div className={`absolute -top-20 -right-20 w-44 h-44 rounded-full bg-gradient-to-br ${ts.bg} to-transparent blur-3xl opacity-70`} />
                   {isEmpire && (
                     <div className="absolute inset-0 pointer-events-none overflow-hidden">
                       {Array.from({ length: 6 }).map((_, i) => (
@@ -76,18 +85,18 @@ export default function Packages() {
                     </div>
                   )}
                   <div className="relative">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] tracking-widest font-display font-black px-2 py-1 rounded-full glass">
-                        {p.badge ?? t.label}
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <span className="text-[10px] tracking-widest font-imperial font-black px-2 py-1 rounded-full glass">
+                        {p.badge ?? ts.label}
                       </span>
-                      {p.tier === "PHANTOM" && <span className="text-xs font-bold text-gold animate-pulse">초대 전용</span>}
+                      {p.tier === "PHANTOM" && <span className="text-xs font-bold text-gold animate-pulse">{t("inviteOnly")}</span>}
                     </div>
-                    <h3 className="font-display font-black text-2xl mt-3">{p.name}</h3>
-                    <p className="text-xs text-muted-foreground mt-1">{p.tagline}</p>
+                    <h3 className="font-imperial font-black text-2xl sm:text-3xl mt-3 tracking-[0.02em]">{p.name}</h3>
+                    <p className="text-xs text-muted-foreground mt-1 break-keep">{p.tagline}</p>
 
                     {p.fomo && (
-                      <div className="mt-3 flex items-center gap-1.5 text-[11px] text-gold">
-                        <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" /> {p.fomo}
+                      <div className="mt-3 flex items-center gap-1.5 text-[11px] text-gold break-keep">
+                        <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse shrink-0" /> {p.fomo}
                       </div>
                     )}
 
@@ -95,37 +104,34 @@ export default function Packages() {
                       <>
                         <ul className="mt-5 space-y-1.5">
                           {p.perks.map(perk => (
-                            <li key={perk} className="flex items-center gap-2 text-xs">
+                            <li key={perk} className="flex items-center gap-2 text-xs break-keep">
                               <Check className="w-3.5 h-3.5 text-secondary shrink-0" /> {perk}
                             </li>
                           ))}
                         </ul>
-                        <button onClick={() => nav("/missions")}
-                          className="mt-5 w-full py-3 rounded-xl glass border border-border font-bold text-sm hover:scale-[1.02] transition flex items-center justify-center gap-2">
-                          무료로 미션 시작하기
-                        </button>
+                        <LuxButton onClick={() => nav("/missions")} variant="ghost" block size="lg" className="mt-5">
+                          {t("freeCta")}
+                        </LuxButton>
                       </>
                     ) : (
                       <>
                         <div className="mt-5 grid grid-cols-3 gap-2">
-                          <Stat label="충전금" value={formatKRW(p.price)} />
-                          <Stat label="매일 수확" value={formatKRW(p.dailyReturn)} highlight />
-                          <Stat label="기간" value={`${p.duration}일`} />
+                          <Stat label={t("statCharge")} value={formatKRW(p.price)} />
+                          <Stat label={t("statDaily")} value={formatKRW(p.dailyReturn)} highlight />
+                          <Stat label={t("statDuration")} value={t("durationDays", { n: p.duration })} />
                         </div>
 
-                        <div className="mt-3 glass rounded-xl p-3 flex items-center justify-between">
-                          <span className="text-[11px] text-muted-foreground">30일 총 예상 (정상 구간)</span>
-                          <span className="font-display font-black text-lg text-gradient-gold">{formatKRW(p.totalReturn)}</span>
+                        <div className="mt-3 glass rounded-2xl p-3 flex items-center justify-between gap-2 flex-wrap">
+                          <span className="text-[11px] text-muted-foreground break-keep">{t("total30d")}</span>
+                          <span className="font-imperial font-black text-lg text-money-strong tabular-nums">{formatKRW(p.totalReturn)}</span>
                         </div>
 
-                        {/* 🔥 Day 1~3 부스트 미리보기 (메인 훅) */}
                         <PackageBoostPreview
                           dailyReturn={p.dailyReturn}
                           multiplier={p.boostMultiplier ?? 1.0}
                           isEmpire={p.tier === "EMPIRE"}
                         />
 
-                        {/* Empire 전용: Founding 좌석 + Empire Day */}
                         {p.tier === "EMPIRE" && (
                           <div className="mt-3 space-y-2">
                             <EmpireFoundingCounter />
@@ -135,7 +141,7 @@ export default function Packages() {
 
                         <ul className="mt-4 space-y-1.5">
                           {p.perks.map(perk => (
-                            <li key={perk} className="flex items-center gap-2 text-xs">
+                            <li key={perk} className="flex items-center gap-2 text-xs break-keep">
                               <Check className="w-3.5 h-3.5 text-secondary shrink-0" /> {perk}
                             </li>
                           ))}
@@ -144,7 +150,7 @@ export default function Packages() {
                         {p.seatsLeft !== undefined && p.tier !== "EMPIRE" && (
                           <div className="mt-3">
                             <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
-                              <span>잔여 좌석</span><span className="text-gold font-bold">{p.seatsLeft}석</span>
+                              <span>{t("seatsLeft")}</span><span className="text-gold font-bold tabular-nums">{t("seatsUnit", { n: p.seatsLeft })}</span>
                             </div>
                             <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                               <div className="h-full bg-gradient-gold" style={{ width: `${Math.min(100, (p.seatsLeft / 100) * 100)}%` }} />
@@ -152,10 +158,9 @@ export default function Packages() {
                           </div>
                         )}
 
-                        <button onClick={() => handleCTA(p)}
-                          className="press sheen mt-5 w-full py-3 rounded-xl bg-gradient-primary text-primary-foreground font-bold text-sm glow-primary flex items-center justify-center gap-2">
-                          <Sparkles className="w-4 h-4" /> 가입하기
-                        </button>
+                        <LuxButton onClick={() => handleCTA(p)} block size="lg" className="mt-5 sheen">
+                          <Sparkles className="w-4 h-4" /> {t("cta")}
+                        </LuxButton>
                       </>
                     )}
                   </div>
@@ -164,15 +169,12 @@ export default function Packages() {
             );
           })}
         </div>
-        </div>
 
-        {/* v5.1 법적 푸터 — 사전 공지 확정 스케줄 */}
-        <div className="mt-8 glass rounded-2xl p-4 text-[10px] leading-relaxed text-muted-foreground">
-          <p className="font-bold text-foreground mb-1">📋 사전 공지 확정 적립 스케줄</p>
-          <p>
-            모든 패키지는 30일 한정·사전 공지된 확정 적립률로 운영됩니다. 첫 3일 보너스 구간(Easy +30% / Easy 150 +20% / Empire +50%)은 결제 승인 시점부터 자동 적용되며, Empire Day(매월 1·15일) +50%는 Empire 보유자 중 Day 4 이후 머신에 한해 자동 적용됩니다. 청약철회는 전자상거래법에 따라 결제일로부터 7일 이내 가능하며 일일 정산을 1회라도 진행한 경우 제한됩니다. 자세한 내용은 고객센터 FAQ를 참조하세요.
-          </p>
+        <div className="mt-8 glass rounded-2xl p-4 text-[10px] leading-relaxed text-muted-foreground break-keep">
+          <p className="font-bold text-foreground mb-1">{t("footerTitle")}</p>
+          <p>{t("footerBody")}</p>
         </div>
+      </div>
 
       {selected && <PurchaseModal pkg={selected} onClose={() => setSelected(null)} />}
       {paywall && (
@@ -193,15 +195,17 @@ export default function Packages() {
 function Stat({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (
     <div className="glass rounded-xl p-2.5 text-center">
-      <div className="text-[9px] text-muted-foreground tracking-wide">{label}</div>
-      <div className={`font-display font-bold text-xs mt-0.5 ${highlight ? "text-gradient-primary" : ""}`}>{value}</div>
+      <div className="text-[9px] text-muted-foreground tracking-wide break-keep">{label}</div>
+      <div className={`font-imperial font-bold text-xs mt-0.5 tabular-nums ${highlight ? "text-money-strong" : ""}`}>{value}</div>
     </div>
   );
 }
 
 function PurchaseModal({ pkg, onClose }: { pkg: Pkg; onClose: () => void }) {
+  const { t } = useTranslation("packages");
   const user = useRequireAuth();
   const [, setDb] = useDB();
+  void setDb;
   const [screenshot, setScreenshot] = useState<string>();
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
@@ -226,9 +230,9 @@ function PurchaseModal({ pkg, onClose }: { pkg: Pkg; onClose: () => void }) {
         receiptUrl,
       });
       onClose();
-      toast({ title: "🎉 신청 완료!", description: "관리자 승인 후 일일 정산이 시작됩니다." });
+      toast({ title: t("doneTitle"), description: t("doneDesc") });
     } catch (e: any) {
-      toast({ title: "신청 실패", description: e.message ?? "잠시 후 다시 시도해주세요.", variant: "destructive" });
+      toast({ title: t("failTitle"), description: e.message ?? t("failDesc"), variant: "destructive" });
     } finally {
       setBusy(false);
     }
@@ -236,32 +240,32 @@ function PurchaseModal({ pkg, onClose }: { pkg: Pkg; onClose: () => void }) {
 
   return (
     <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-md flex items-end sm:items-center justify-center p-4">
-      <div className="w-full max-w-md glass-strong rounded-3xl p-6 neon-border relative overflow-hidden animate-fade-up">
-        <button onClick={onClose} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-muted/40 flex items-center justify-center"><X className="w-4 h-4" /></button>
+      <div className="w-full max-w-md glass-strong rounded-3xl p-5 sm:p-6 neon-border relative overflow-hidden animate-fade-up">
+        <button onClick={onClose} aria-label="Close" className="absolute top-4 right-4 w-10 h-10 rounded-full bg-muted/40 flex items-center justify-center min-h-[40px] min-w-[40px]"><X className="w-4 h-4" /></button>
         <div className="absolute -top-20 -right-20 w-40 h-40 rounded-full bg-gradient-primary blur-3xl opacity-50" />
         <div className="relative">
-          <h2 className="font-display font-black text-xl">{pkg.name}</h2>
-          <p className="text-xs text-muted-foreground">{pkg.tagline}</p>
+          <h2 className="font-imperial font-black text-xl sm:text-2xl tracking-[0.02em]">{pkg.name}</h2>
+          <p className="text-xs text-muted-foreground break-keep">{pkg.tagline}</p>
 
           <div className="mt-5 glass rounded-2xl p-4 space-y-2">
-            <Row label="결제 금액" value={formatKRW(pkg.price)} />
-            <Row label="일일 정산" value={formatKRW(pkg.dailyReturn)} />
-            <Row label="입금 은행" value="KB국민 123-456-78901234" />
-            <Row label="예금주" value="(주)Phonara" />
-            <p className="text-[10px] text-muted-foreground pt-2 border-t border-border/40">
-              ※ 입금 후 입금 확인 화면을 캡처하여 업로드해주세요. 관리자 검증 후 정산이 시작됩니다.
+            <Row label={t("modalAmount")} value={formatKRW(pkg.price)} money />
+            <Row label={t("modalDaily")} value={formatKRW(pkg.dailyReturn)} money />
+            <Row label={t("modalBank")} value={t("modalBankValue")} />
+            <Row label={t("modalOwner")} value={t("modalOwnerValue")} />
+            <p className="text-[10px] text-muted-foreground pt-2 border-t border-border/40 break-keep">
+              {t("modalMemo")}
             </p>
           </div>
 
           <label className="mt-4 block">
-            <div className="glass rounded-2xl p-4 border-2 border-dashed border-border hover:border-primary transition cursor-pointer text-center">
+            <div className="glass rounded-2xl p-4 border-2 border-dashed border-border hover:border-primary transition cursor-pointer text-center min-h-[120px] flex flex-col items-center justify-center">
               {screenshot ? (
                 <img src={screenshot} alt="screenshot" className="max-h-32 mx-auto rounded-lg" />
               ) : (
                 <>
                   <Upload className="w-6 h-6 mx-auto text-muted-foreground" />
-                  <div className="text-xs mt-2 font-bold">입금 확인 스크린샷 업로드</div>
-                  <div className="text-[10px] text-muted-foreground">PNG, JPG 가능</div>
+                  <div className="text-xs mt-2 font-bold break-keep">{t("uploadCta")}</div>
+                  <div className="text-[10px] text-muted-foreground">{t("uploadHint")}</div>
                 </>
               )}
             </div>
@@ -272,21 +276,20 @@ function PurchaseModal({ pkg, onClose }: { pkg: Pkg; onClose: () => void }) {
             }} />
           </label>
 
-          <button onClick={submit} disabled={busy}
-            className="mt-5 w-full py-4 rounded-xl bg-gradient-primary text-primary-foreground font-display font-bold glow-primary hover:scale-[1.02] transition disabled:opacity-50">
-            {busy ? "신청 중..." : "결제 신청 제출"}
-          </button>
+          <LuxButton onClick={submit} disabled={busy} block size="lg" className="mt-5">
+            {busy ? t("submitting") : t("submit")}
+          </LuxButton>
         </div>
       </div>
     </div>
   );
 }
 
-function Row({ label, value }: { label: string; value: string }) {
+function Row({ label, value, money }: { label: string; value: string; money?: boolean }) {
   return (
-    <div className="flex items-center justify-between text-xs">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="font-bold">{value}</span>
+    <div className="flex items-center justify-between text-xs gap-2">
+      <span className="text-muted-foreground break-keep">{label}</span>
+      <span className={`font-bold ${money ? "text-money-strong tabular-nums" : ""}`}>{value}</span>
     </div>
   );
 }
