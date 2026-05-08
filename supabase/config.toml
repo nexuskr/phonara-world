@@ -13,3 +13,5 @@ project_id = "ketlqzfaplppmupaiwft"
     verify_jwt = true
   [functions.send-transactional-email]
     verify_jwt = true
+  [functions.catalog-cache]
+    verify_jwt = false
