@@ -28,7 +28,9 @@ type OkFilter = "all" | "ok" | "fail";
 export default function SecurityAuditAdmin() {
   const [audits, setAudits] = useState<AuditRow[]>([]);
   const [settles, setSettles] = useState<SettleRow[]>([]);
+  const [slo, setSlo] = useState<any>(null);
   const [running, setRunning] = useState(false);
+  const [recovering, setRecovering] = useState(false);
   const [loading, setLoading] = useState(true);
   const [detail, setDetail] = useState<AuditRow | null>(null);
 
@@ -40,13 +42,28 @@ export default function SecurityAuditAdmin() {
 
   async function load() {
     setLoading(true);
-    const [a, s] = await Promise.all([
+    const [a, s, sl] = await Promise.all([
       supabase.from("security_audit_log").select("*").order("created_at", { ascending: false }).limit(200),
       supabase.from("cron_settle_audit_log").select("*").order("created_at", { ascending: false }).limit(50),
+      supabase.rpc("settlement_slo"),
     ]);
     setAudits((a.data ?? []) as AuditRow[]);
     setSettles((s.data ?? []) as SettleRow[]);
+    setSlo(sl.data ?? null);
     setLoading(false);
+  }
+
+  async function recoverNow() {
+    setRecovering(true);
+    try {
+      const { data, error } = await supabase.rpc("recover_stuck_settlements");
+      if (error) throw error;
+      const r = data as any;
+      toast({ title: r?.ok ? "복구 실행" : "복구 실패", description: `stuck ${r?.stuck ?? 0} · recovered ${r?.recovered ?? 0}` });
+      await load();
+    } catch (e: any) {
+      toast({ title: "복구 실행 실패", description: e.message });
+    } finally { setRecovering(false); }
   }
 
   useEffect(() => { void load(); }, []);
