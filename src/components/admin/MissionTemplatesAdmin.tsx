@@ -21,6 +21,7 @@ interface Template {
 interface PendingMission {
   id: string;
   user_id: string;
+  template_key: string;
   title: string;
   description: string;
   reward_credit: number;
