@@ -316,5 +316,14 @@ export const DEFAULT_MISSIONS: Mission[] = [
 ];
 
 export function uid() { return Math.random().toString(36).slice(2) + Date.now().toString(36); }
-export function formatKRW(n: number) { return n.toLocaleString("ko-KR") + "원"; }
+// 원화 포맷 — 천 단위 콤마, 소수점 반올림(0자리), NBSP 미사용. 사이트 전 영역 단일 진입점.
+const _krwFmt = new Intl.NumberFormat("ko-KR", { maximumFractionDigits: 0, minimumFractionDigits: 0 });
+export function formatKRW(n: number | null | undefined) {
+  const v = typeof n === "number" && isFinite(n) ? Math.round(n) : 0;
+  return _krwFmt.format(v) + "원";
+}
+export function formatNum(n: number | null | undefined, digits = 0) {
+  const v = typeof n === "number" && isFinite(n) ? n : 0;
+  return new Intl.NumberFormat("ko-KR", { maximumFractionDigits: digits, minimumFractionDigits: digits }).format(v);
+}
 export function gen6() { return Math.floor(100000 + Math.random() * 900000).toString(); }

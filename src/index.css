@@ -20,7 +20,7 @@
     --secondary: 188 100% 60%;
     --secondary-foreground: 240 28% 3%;
     --muted: 240 22% 11%;
-    --muted-foreground: 42 12% 65%;
+    --muted-foreground: 42 14% 72%;
     /* Cyber Purple (15% — accent only) */
     --accent: 258 90% 67%;
     --accent-foreground: 240 28% 3%;
@@ -57,7 +57,9 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-family: 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, 'Apple SD Gothic Neo', sans-serif;
-    font-feature-settings: "ss01", "ss02", "cv11", "tnum";
+    /* 사이트 전역: 숫자는 항상 tabular + lining (한글에는 영향 없음) */
+    font-feature-settings: "ss01", "ss02", "cv11", "tnum", "lnum";
+    font-variant-numeric: tabular-nums lining-nums;
     letter-spacing: -0.005em;
     background: var(--gradient-bg);
     background-attachment: fixed;
@@ -74,25 +76,42 @@
   }
   .font-display { font-family: 'Cormorant Garamond', 'Fraunces', 'Pretendard Variable', serif; letter-spacing: -0.005em; font-optical-sizing: auto; }
   .font-imperial { font-family: 'Italiana', 'Cormorant Garamond', 'Pretendard Variable', serif; letter-spacing: 0.16em; }
-  /* HUD / Numbers — Pretendard with tabular numerals (1순위 추천) */
-  .font-hud { font-family: 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif; letter-spacing: 0.005em; font-variant-numeric: tabular-nums; font-feature-settings: "tnum", "ss01", "ss02"; font-weight: 600; }
-  .tabular-nums { font-family: 'Pretendard Variable', 'Pretendard', -apple-system, system-ui, sans-serif; font-feature-settings: "tnum"; font-variant-numeric: tabular-nums; }
+  /* HUD / Numbers — Pretendard SemiBold + tnum + lnum (1순위 추천 조합) */
+  .font-hud {
+    font-family: 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    font-weight: 600;
+    font-feature-settings: "tnum", "lnum", "ss01", "ss02";
+    font-variant-numeric: tabular-nums lining-nums;
+    letter-spacing: -0.015em;
+  }
+  .tabular-nums {
+    font-family: 'Pretendard Variable', 'Pretendard', -apple-system, system-ui, sans-serif;
+    font-feature-settings: "tnum", "lnum";
+    font-variant-numeric: tabular-nums lining-nums;
+    letter-spacing: -0.012em;
+  }
   .text-gradient-imperial {
     background: var(--gradient-imperial);
     -webkit-background-clip: text; background-clip: text; color: transparent;
   }
-  /* High-legibility gold for numerical displays (balances, KPI). Solid bright gold + soft glow. */
+  /* High-legibility gold for numerical displays (balances, KPI). Pretendard SemiBold + tnum + lnum + tight tracking. */
   .text-money {
-    color: hsl(48 100% 72%);
+    font-family: 'Pretendard Variable', 'Pretendard', -apple-system, system-ui, sans-serif;
+    font-weight: 600;
+    color: hsl(48 100% 76%);
     text-shadow: 0 0 18px hsl(44 95% 65% / 0.45), 0 1px 0 hsl(240 30% 3% / 0.6);
-    font-variant-numeric: tabular-nums;
-    letter-spacing: 0.01em;
+    font-feature-settings: "tnum", "lnum";
+    font-variant-numeric: tabular-nums lining-nums;
+    letter-spacing: -0.025em;
   }
   .text-money-strong {
-    color: hsl(48 100% 78%);
+    font-family: 'Pretendard Variable', 'Pretendard', -apple-system, system-ui, sans-serif;
+    font-weight: 700;
+    color: hsl(48 100% 82%);
     text-shadow: 0 0 22px hsl(44 95% 65% / 0.6), 0 0 60px hsl(44 80% 53% / 0.35), 0 1px 0 hsl(240 30% 3% / 0.7);
-    font-variant-numeric: tabular-nums;
-    letter-spacing: 0.01em;
+    font-feature-settings: "tnum", "lnum";
+    font-variant-numeric: tabular-nums lining-nums;
+    letter-spacing: -0.035em;
   }
   .glow-imperial { box-shadow: var(--glow-gold); }
   /* Animated grid background */
