@@ -956,6 +956,30 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_preferences: {
+        Row: {
+          channel: string
+          enabled: boolean
+          event: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          channel: string
+          enabled?: boolean
+          event: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          channel?: string
+          enabled?: boolean
+          event?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           body: string | null
@@ -2263,6 +2287,7 @@ export type Database = {
           id: string
           method: Database["public"]["Enums"]["withdrawal_method"]
           process_by: string
+          receipt_url: string | null
           rejected_reason: string | null
           status: Database["public"]["Enums"]["withdrawal_status"]
           tier_at_request: Database["public"]["Enums"]["user_tier"]
@@ -2282,6 +2307,7 @@ export type Database = {
           id?: string
           method: Database["public"]["Enums"]["withdrawal_method"]
           process_by: string
+          receipt_url?: string | null
           rejected_reason?: string | null
           status?: Database["public"]["Enums"]["withdrawal_status"]
           tier_at_request: Database["public"]["Enums"]["user_tier"]
@@ -2301,6 +2327,7 @@ export type Database = {
           id?: string
           method?: Database["public"]["Enums"]["withdrawal_method"]
           process_by?: string
+          receipt_url?: string | null
           rejected_reason?: string | null
           status?: Database["public"]["Enums"]["withdrawal_status"]
           tier_at_request?: Database["public"]["Enums"]["user_tier"]

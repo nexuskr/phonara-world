@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { Clock, Crown, CheckCircle2, XCircle, Zap, ArrowRight } from "lucide-react";
+import { Clock, Crown, CheckCircle2, XCircle, Zap, ArrowRight, RefreshCw, Wifi, WifiOff } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 type Status = "pending" | "processing" | "approved" | "completed" | "rejected" | "canceled";
@@ -21,17 +21,24 @@ const PRIORITY_TIERS = new Set(["vip", "god", "empire"]);
 
 const STATUS_ORDER: Status[] = ["pending", "processing", "approved", "completed"];
 
+type ConnState = "connecting" | "live" | "polling" | "offline";
+
 export default function WithdrawQueueStatus() {
   const { t } = useTranslation("withdrawQueue");
   const [latest, setLatest] = useState<Latest | null>(null);
   const [position, setPosition] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [conn, setConn] = useState<ConnState>("connecting");
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const reconnectAttempts = useRef(0);
+  const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const refresh = async () => {
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) { setLoading(false); return; }
 
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("withdrawal_requests")
       .select("id, amount, status, tier_at_request, created_at, rejected_reason, tx_code, method")
       .eq("user_id", u.user.id)
@@ -40,12 +47,16 @@ export default function WithdrawQueueStatus() {
       .limit(1)
       .maybeSingle();
 
+    if (error) {
+      setConn("offline");
+      setLoading(false);
+      return;
+    }
+
     if (data) {
       setLatest(data as Latest);
       const tier = (data as Latest).tier_at_request;
       const isPriority = PRIORITY_TIERS.has(tier);
-      // Queue position: count pending requests created earlier
-      // Priority users count only ahead-of-them priority requests; others count all ahead
       let q = supabase
         .from("withdrawal_requests")
         .select("id", { count: "exact", head: true })
@@ -61,38 +72,84 @@ export default function WithdrawQueueStatus() {
     setLoading(false);
   };
 
+  const startPolling = () => {
+    if (pollRef.current) return;
+    setConn("polling");
+    pollRef.current = setInterval(() => { void refresh(); }, 15_000);
+  };
+  const stopPolling = () => {
+    if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
+  };
+
+  const subscribe = async () => {
+    const { data: u } = await supabase.auth.getUser();
+    if (!u.user) return;
+    if (channelRef.current) {
+      try { await supabase.removeChannel(channelRef.current); } catch {}
+      channelRef.current = null;
+    }
+    setConn("connecting");
+    const ch = supabase
+      .channel(`wr-${u.user.id}-${Date.now()}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "withdrawal_requests", filter: `user_id=eq.${u.user.id}` },
+        (payload) => {
+          const newRow: any = payload.new;
+          const oldRow: any = payload.old;
+          if (newRow && oldRow && newRow.status !== oldRow.status) {
+            const titleKey = newRow.status === "completed" ? "toastCompleted"
+              : newRow.status === "rejected" ? "toastRejected"
+              : newRow.status === "approved" ? "toastApproved"
+              : newRow.status === "processing" ? "toastProcessing"
+              : "toastUpdate";
+            toast({
+              title: t(titleKey),
+              description: t("toastDesc", { amount: Number(newRow.amount).toLocaleString() }),
+              variant: newRow.status === "rejected" ? "destructive" : undefined,
+            });
+          }
+          void refresh();
+        }
+      )
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          setConn("live");
+          stopPolling();
+          reconnectAttempts.current = 0;
+        } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+          // Backoff reconnect: 2s, 4s, 8s, 16s, max 30s
+          startPolling();
+          const delay = Math.min(30_000, 2_000 * Math.pow(2, reconnectAttempts.current));
+          reconnectAttempts.current += 1;
+          if (reconnectTimer.current) clearTimeout(reconnectTimer.current);
+          reconnectTimer.current = setTimeout(() => { void subscribe(); }, delay);
+        }
+      });
+    channelRef.current = ch;
+  };
+
   useEffect(() => {
     void refresh();
-    let channel: ReturnType<typeof supabase.channel> | null = null;
-    (async () => {
-      const { data: u } = await supabase.auth.getUser();
-      if (!u.user) return;
-      channel = supabase
-        .channel(`wr-${u.user.id}`)
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "withdrawal_requests", filter: `user_id=eq.${u.user.id}` },
-          (payload) => {
-            const newRow: any = payload.new;
-            const oldRow: any = payload.old;
-            if (newRow && oldRow && newRow.status !== oldRow.status) {
-              const titleKey = newRow.status === "completed" ? "toastCompleted"
-                : newRow.status === "rejected" ? "toastRejected"
-                : newRow.status === "approved" ? "toastApproved"
-                : newRow.status === "processing" ? "toastProcessing"
-                : "toastUpdate";
-              toast({
-                title: t(titleKey),
-                description: t("toastDesc", { amount: Number(newRow.amount).toLocaleString() }),
-                variant: newRow.status === "rejected" ? "destructive" : undefined,
-              });
-            }
-            void refresh();
-          }
-        )
-        .subscribe();
-    })();
-    return () => { if (channel) supabase.removeChannel(channel); };
+    void subscribe();
+
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        void refresh();
+        if (conn !== "live") void subscribe();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("online", onVisible);
+
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("online", onVisible);
+      stopPolling();
+      if (reconnectTimer.current) clearTimeout(reconnectTimer.current);
+      if (channelRef.current) supabase.removeChannel(channelRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [t]);
 
   if (loading) return <div className="glass rounded-2xl p-4 h-24 animate-pulse mb-5" />;
@@ -117,6 +174,7 @@ export default function WithdrawQueueStatus() {
         <div className="flex items-center gap-2">
           <Clock className="w-4 h-4 text-primary" />
           <span className="text-xs font-bold tracking-wider uppercase">{t("title")}</span>
+          <ConnBadge state={conn} onRetry={() => { void refresh(); void subscribe(); }} t={t} />
         </div>
         {isPriority && (
           <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-gradient-gold/20 border border-gold/40">
@@ -194,5 +252,34 @@ export default function WithdrawQueueStatus() {
         {t("zeroFeeNote")}
       </p>
     </div>
+  );
+}
+
+function ConnBadge({ state, onRetry, t }: { state: ConnState; onRetry: () => void; t: (k: string) => string }) {
+  if (state === "live") {
+    return (
+      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-secondary/15 text-secondary">
+        <Wifi className="w-2.5 h-2.5" /> LIVE
+      </span>
+    );
+  }
+  if (state === "polling") {
+    return (
+      <button onClick={onRetry} className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-yellow-500/15 text-yellow-300">
+        <RefreshCw className="w-2.5 h-2.5" /> POLLING
+      </button>
+    );
+  }
+  if (state === "offline") {
+    return (
+      <button onClick={onRetry} className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-destructive/15 text-destructive">
+        <WifiOff className="w-2.5 h-2.5" /> OFFLINE
+      </button>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-muted text-muted-foreground">
+      <RefreshCw className="w-2.5 h-2.5 animate-spin" /> ...
+    </span>
   );
 }
