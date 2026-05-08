@@ -36,8 +36,14 @@ export default function ObservabilityCockpit() {
 
 function SpanQuality() {
   const [m, setM] = useState(getSpanMetrics());
+  const [persisted, setPersisted] = useState<number>(0);
+  const [alert, setAlert] = useState(getLastAlert());
   useEffect(() => {
-    const id = setInterval(() => setM(getSpanMetrics()), 1000);
+    const id = setInterval(async () => {
+      setM(getSpanMetrics());
+      setAlert(getLastAlert());
+      setPersisted(await getPersistedQueueSize());
+    }, 1000);
     return () => clearInterval(id);
   }, []);
   const total = m.flushed_ok + m.flushed_fail + m.dropped;
@@ -52,8 +58,10 @@ function SpanQuality() {
     ["손실(드롭)", m.dropped, m.dropped > 0 ? "text-destructive" : ""],
     ["성공률", `${successRate.toFixed(2)}%`, successRate >= 99 ? "text-secondary" : "text-gold"],
     ["손실률", `${lossRate.toFixed(2)}%`, lossRate <= 1 ? "text-secondary" : "text-destructive"],
-    ["큐", `${m.queue_size}${m.in_flight ? " ⏳" : ""}`],
+    ["메모리 큐", `${m.queue_size}${m.in_flight ? " ⏳" : ""}`],
+    ["로컬 저장(IDB/LS)", persisted, persisted > 50 ? "text-gold" : ""],
     ["마지막 flush", m.last_flush_at ? new Date(m.last_flush_at).toLocaleTimeString("ko-KR") : "—"],
+    ["마지막 임계 알림", alert.at ? `${new Date(alert.at).toLocaleTimeString("ko-KR")} · ${alert.reason ?? "—"}` : "—", alert.at ? "text-gold" : ""],
   ];
   return (
     <div className="glass-strong rounded-2xl p-4 neon-border space-y-3">
@@ -65,7 +73,7 @@ function SpanQuality() {
         {cells.map(([label, value, tone]) => (
           <div key={label} className="glass rounded-xl p-2.5">
             <div className="text-[10px] text-muted-foreground">{label}</div>
-            <div className={`font-bold tabular-nums mt-1 ${tone ?? ""}`}>{value}</div>
+            <div className={`font-bold tabular-nums mt-1 text-xs ${tone ?? ""}`}>{value}</div>
           </div>
         ))}
       </div>
