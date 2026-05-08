@@ -80,6 +80,7 @@ export default function Admin() {
     { id: "errors", label: "에러 로그", icon: ShieldAlert },
     { id: "security", label: "보안 감사", icon: ShieldCheck },
     { id: "ops", label: "관제 콕핏", icon: Activity },
+    { id: "perms", label: "권한 감사", icon: Lock },
     { id: "server_dep", label: "충전 신청", icon: ArrowUpFromLine },
     { id: "server_wd", label: "출금 신청", icon: ArrowDownToLine },
     { id: "packages", label: "패키지", icon: Crown },
