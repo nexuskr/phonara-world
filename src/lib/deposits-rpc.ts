@@ -15,13 +15,18 @@ export async function uploadReceipt(file: File): Promise<string> {
   return data?.signedUrl ?? path;
 }
 
+export type DepositMethod = "bank" | "coin" | "voucher";
+export type VoucherBrand = "culture" | "happy" | "cultureland";
+
 export async function submitDeposit(args: {
   amount: number;
-  method: "bank" | "coin";
+  method: DepositMethod;
   packageId?: string | null;
   packageName?: string | null;
   receiptUrl?: string | null;
   memo?: string | null;
+  voucherBrand?: VoucherBrand | null;
+  voucherPin?: string | null;
 }) {
   const { data, error } = await supabase.rpc("submit_deposit", {
     _amount: args.amount,
@@ -30,9 +35,28 @@ export async function submitDeposit(args: {
     _package_name: args.packageName ?? null,
     _receipt_url: args.receiptUrl ?? null,
     _memo: args.memo ?? null,
-  });
+    _voucher_brand: args.voucherBrand ?? null,
+    _voucher_pin: args.voucherPin ?? null,
+  } as any);
   if (error) throw error;
-  return data as { ok: boolean; id: string };
+  return data as { ok: boolean; id: string; bonus_amount: number; bonus_pct: number };
+}
+
+export async function amlRequiredLevel(userId: string, amount: number) {
+  const { data, error } = await supabase.rpc("aml_required_level", {
+    _user_id: userId,
+    _amount: amount,
+  } as any);
+  if (error) throw error;
+  return data as {
+    required_level: 1 | 2 | 3;
+    projected_total: number;
+    risk_score: number;
+    level1_ok: boolean;
+    level2_ok: boolean;
+    level3_ok: boolean;
+    gate_passed: boolean;
+  };
 }
 
 export async function adminResolveDeposit(id: string, action: "approve" | "reject", reason?: string) {
