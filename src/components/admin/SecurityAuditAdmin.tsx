@@ -116,7 +116,7 @@ export default function SecurityAuditAdmin() {
   async function ackAnomaly(id: string) {
     const note = window.prompt("처리 메모 (선택)") ?? null;
     try {
-      const { error } = await (supabase as any).rpc("acknowledge_anomaly", { _id: id, _note: note });
+      const { error } = await supabase.rpc("acknowledge_anomaly", { _id: id, _note: note });
       if (error) throw error;
       toast({ title: "확인 처리 완료" });
       await load();
