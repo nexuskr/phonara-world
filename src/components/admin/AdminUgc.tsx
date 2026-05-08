@@ -199,7 +199,7 @@ export default function AdminUgc() {
             <div key={c.channel} className="flex items-center gap-2 text-xs">
               <span className="w-16 font-bold uppercase text-primary">{c.channel}</span>
               <span className="flex-1 tabular-nums text-muted-foreground">
-                👀 {c.clicks} · 💳 {c.conversions} · 📨 {c.dm_sent}
+                👀 {c.clicks} · ✍ {c.signups} · 💳 {c.conversions} · 📨 {c.dm_sent}
               </span>
               <span className="tabular-nums font-bold">
                 CVR {c.clicks ? ((c.conversions / c.clicks) * 100).toFixed(1) : "0.0"}%
@@ -212,7 +212,7 @@ export default function AdminUgc() {
 
       {/* Top users */}
       <section className="glass rounded-2xl p-3 border border-border">
-        <h3 className="font-bold text-sm mb-2">Top 유저 (전환 기준)</h3>
+        <h3 className="font-bold text-sm mb-2">Top 유저 (전환 → 가입 → 클릭 순)</h3>
         <div className="space-y-1">
           {byUser.map((u, i) => (
             <div key={u.user_id} className="flex items-center gap-2 text-xs">
@@ -227,6 +227,7 @@ export default function AdminUgc() {
               <span className="tabular-nums">👀 {u.clicks}</span>
               <span className="tabular-nums">✍ {u.signups}</span>
               <span className="tabular-nums text-money-strong font-bold">💳 {u.conversions}</span>
+              <span className="tabular-nums text-accent w-12 text-right">{u.cvr}%</span>
             </div>
           ))}
           {!byUser.length && !loading && <div className="text-xs text-muted-foreground">데이터 없음</div>}
