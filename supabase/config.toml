@@ -21,3 +21,7 @@ project_id = "ketlqzfaplppmupaiwft"
     verify_jwt = true
   [functions.chaos-probe]
     verify_jwt = false
+  [functions.attribute-click]
+    verify_jwt = false
+  [functions.toggle-rrm]
+    verify_jwt = true
