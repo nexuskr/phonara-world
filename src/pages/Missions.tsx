@@ -142,7 +142,7 @@ export default function Missions() {
       }));
       setCompleting(null);
       emitEarned(m.reward);
-      toast({ title: `🎉 +${formatKRW(m.reward)} 적립`, description: `${m.title} 완료!` });
+      toast({ title: t("earnedToast", { val: formatKRW(m.reward) }), description: t("earnedDesc", { title: m.title }) });
     }, 1200);
   }
 
