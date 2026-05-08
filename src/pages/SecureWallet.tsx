@@ -18,7 +18,18 @@ import WithdrawIntentInterceptor from "@/components/conversion/WithdrawIntentInt
 type ActionTab = "play" | "withdraw" | "history";
 
 export default function SecureWallet() {
-  const { t } = useTranslation("secureWallet");
+  const { t, i18n } = useTranslation("secureWallet");
+  const lng = (i18n.language || "ko").startsWith("en") ? "en" : "ko";
+  const dtLocale = lng === "en" ? "en-US" : "ko-KR";
+  const BANKS_SW = [
+    { v: "KB", ko: "KB국민", en: "KB Kookmin" },
+    { v: "Shinhan", ko: "신한", en: "Shinhan" },
+    { v: "Woori", ko: "우리", en: "Woori" },
+    { v: "Hana", ko: "하나", en: "Hana" },
+    { v: "Nonghyup", ko: "농협", en: "Nonghyup" },
+    { v: "Kakao Bank", ko: "카카오뱅크", en: "Kakao Bank" },
+    { v: "Toss Bank", ko: "토스뱅크", en: "Toss Bank" },
+  ];
   const { session, loading } = useSession();
   const nav = useNavigate();
   const userId = session?.user?.id;
@@ -116,7 +127,7 @@ export default function SecureWallet() {
               <ShieldCheck className="w-3 h-3" /> SECURE WALLET v3
             </div>
             <h1 className="font-display font-black text-2xl text-gradient-primary mt-1">
-              {profile?.nickname ?? "회원"}
+              {profile?.nickname ?? t("memberFallback")}
             </h1>
           </div>
           <div className="flex items-center gap-2">
@@ -148,7 +159,7 @@ export default function SecureWallet() {
             {/* Daily cap */}
             <div className="mt-5 pt-4 border-t border-border/40">
               <div className="flex justify-between text-[10px] mb-1.5">
-                <span className="text-muted-foreground font-bold flex items-center gap-1"><TrendingUp className="w-3 h-3" /> 오늘 적립 / 한도</span>
+                <span className="text-muted-foreground font-bold flex items-center gap-1 break-keep"><TrendingUp className="w-3 h-3" /> {t("todayCap")}</span>
                 <span className="font-bold tabular-nums">{fmtKRW(wallet?.today_earned ?? 0)} / {fmtKRW(cfg.daily_cap)}</span>
               </div>
               <div className="h-2 rounded-full bg-muted/40 overflow-hidden">
@@ -176,14 +187,14 @@ export default function SecureWallet() {
         {/* Tabs */}
         <div className="flex gap-2 mt-5">
           {[
-            { id: "play", label: "미션", icon: Zap },
-            { id: "withdraw", label: "출금", icon: ArrowDownToLine },
-            { id: "history", label: "내역", icon: Clock },
-          ].map((t: any) => (
-            <button key={t.id} onClick={() => setTab(t.id)}
-              className={`flex-1 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition ${
-                tab===t.id ? "bg-gradient-primary text-primary-foreground glow-primary" : "glass text-muted-foreground"}`}>
-              <t.icon className="w-3.5 h-3.5" /> {t.label}
+            { id: "play", label: t("tabPlay"), icon: Zap },
+            { id: "withdraw", label: t("tabWithdraw"), icon: ArrowDownToLine },
+            { id: "history", label: t("tabHistory"), icon: Clock },
+          ].map((tb: any) => (
+            <button key={tb.id} onClick={() => setTab(tb.id)}
+              className={`flex-1 min-h-[44px] py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition press break-keep ${
+                tab===tb.id ? "bg-gradient-primary text-primary-foreground glow-primary" : "glass text-muted-foreground"}`}>
+              <tb.icon className="w-3.5 h-3.5" /> {tb.label}
             </button>
           ))}
         </div>
@@ -192,13 +203,13 @@ export default function SecureWallet() {
         {tab === "play" && (
           <div className="mt-4 glass-strong rounded-3xl p-6 text-center neon-border">
             <div className="text-[10px] tracking-[0.3em] text-muted-foreground font-bold">MISSION ENGINE</div>
-            <div className="font-display font-black text-xl mt-1">랜덤 정산 미션</div>
-            <p className="text-xs text-muted-foreground mt-1">Win rate {(cfg.win[0]*100).toFixed(0)}~{(cfg.win[1]*100).toFixed(0)}% · Boost ×{tier === "normal" ? "1.0" : tier === "vip" ? "1.35" : tier === "god" ? "1.8" : "2.5"}</p>
+            <div className="font-display font-black text-xl mt-1 break-keep">{t("missionTitle")}</div>
+            <p className="text-xs text-muted-foreground mt-1 tabular-nums">Win rate {(cfg.win[0]*100).toFixed(0)}~{(cfg.win[1]*100).toFixed(0)}% · Boost ×{tier === "normal" ? "1.0" : tier === "vip" ? "1.35" : tier === "god" ? "1.8" : "2.5"}</p>
             <button onClick={play} disabled={busy}
-              className="mt-5 w-full py-4 rounded-2xl bg-gradient-primary text-primary-foreground font-display font-black text-lg glow-primary hover:scale-[1.02] active:scale-95 transition disabled:opacity-50">
-              {busy ? "정산 중..." : "🎯 미션 실행"}
+              className="mt-5 w-full min-h-[56px] py-4 rounded-2xl bg-gradient-primary text-primary-foreground font-display font-black text-lg glow-primary hover:scale-[1.02] active:scale-95 transition disabled:opacity-50 press">
+              {busy ? t("settling") : t("runMission")}
             </button>
-            <p className="text-[10px] text-muted-foreground mt-3">DB 트랜잭션으로 원자적 정산 · 일일 한도 자동 적용</p>
+            <p className="text-[10px] text-muted-foreground mt-3 break-keep">{t("missionFooter")}</p>
           </div>
         )}
 
@@ -206,48 +217,48 @@ export default function SecureWallet() {
         {tab === "withdraw" && (
           <div className="mt-4 glass-strong rounded-3xl p-5 space-y-4 neon-border">
             <div className="grid grid-cols-2 gap-2">
-              <button onClick={()=>setMethod("bank")} className={`p-3 rounded-xl text-left ${method==="bank"?"bg-gradient-primary text-primary-foreground glow-primary":"glass"}`}>
-                <Banknote className="w-4 h-4" /><div className="text-xs font-bold mt-1">은행 출금</div>
+              <button onClick={()=>setMethod("bank")} className={`min-h-[56px] p-3 rounded-xl text-left press ${method==="bank"?"bg-gradient-primary text-primary-foreground glow-primary":"glass"}`}>
+                <Banknote className="w-4 h-4" /><div className="text-xs font-bold mt-1 break-keep">{t("bankWithdraw")}</div>
               </button>
-              <button onClick={()=>setMethod("coin")} className={`p-3 rounded-xl text-left ${method==="coin"?"bg-gradient-cyber text-black":"glass"}`}>
-                <Coins className="w-4 h-4" /><div className="text-xs font-bold mt-1">코인 출금</div>
+              <button onClick={()=>setMethod("coin")} className={`min-h-[56px] p-3 rounded-xl text-left press ${method==="coin"?"bg-gradient-cyber text-black":"glass"}`}>
+                <Coins className="w-4 h-4" /><div className="text-xs font-bold mt-1 break-keep">{t("coinWithdraw")}</div>
               </button>
             </div>
 
-            <Field label={`금액 (최소 ${fmtKRW(cfg.withdraw_min)})`}>
+            <Field label={t("amountLabel", { min: fmtKRW(cfg.withdraw_min) })}>
               <input type="number" value={amount} onChange={e=>setAmount(e.target.value)} placeholder={String(cfg.withdraw_min)}
-                className="w-full bg-input/60 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary" />
+                className="w-full min-h-[48px] bg-input/60 border border-border rounded-xl px-4 py-3 text-sm tabular-nums focus:outline-none focus:border-primary" />
             </Field>
             <div className="grid grid-cols-3 gap-2">
               {[cfg.withdraw_min, cfg.withdraw_min*5, cfg.withdraw_min*10].map(v=>(
-                <button key={v} onClick={()=>setAmount(String(v))} className="py-2 rounded-xl glass text-xs font-bold hover:bg-primary/10">+{v.toLocaleString()}</button>
+                <button key={v} onClick={()=>setAmount(String(v))} className="min-h-[44px] py-2 rounded-xl glass text-xs font-bold tabular-nums hover:bg-primary/10 press">+{v.toLocaleString()}</button>
               ))}
             </div>
 
             {method === "bank" ? (
               <>
-                <Field label="은행"><select value={bankName} onChange={e=>setBankName(e.target.value)} className="w-full bg-input/60 border border-border rounded-xl px-4 py-3 text-sm">
-                  {["KB국민","신한","우리","하나","농협","카카오뱅크","토스뱅크"].map(b=><option key={b}>{b}</option>)}
+                <Field label={t("bank")}><select value={bankName} onChange={e=>setBankName(e.target.value)} className="w-full min-h-[48px] bg-input/60 border border-border rounded-xl px-4 py-3 text-sm">
+                  {BANKS_SW.map(b=><option key={b.v} value={b.v}>{b[lng]}</option>)}
                 </select></Field>
-                <Field label="계좌번호"><input value={bankAccount} onChange={e=>setBankAccount(e.target.value)} placeholder="'-' 없이"
-                  className="w-full bg-input/60 border border-border rounded-xl px-4 py-3 text-sm" /></Field>
+                <Field label={t("account")}><input value={bankAccount} onChange={e=>setBankAccount(e.target.value)} placeholder={t("accountPh")}
+                  className="w-full min-h-[48px] bg-input/60 border border-border rounded-xl px-4 py-3 text-sm tabular-nums" /></Field>
               </>
             ) : (
               <>
-                <Field label="네트워크"><select value={coinNetwork} onChange={e=>setCoinNetwork(e.target.value as any)} className="w-full bg-input/60 border border-border rounded-xl px-4 py-3 text-sm">
+                <Field label={t("network")}><select value={coinNetwork} onChange={e=>setCoinNetwork(e.target.value as any)} className="w-full min-h-[48px] bg-input/60 border border-border rounded-xl px-4 py-3 text-sm">
                   {["TRC20","ERC20","BEP20"].map(b=><option key={b}>{b}</option>)}
                 </select></Field>
-                <Field label="수신 주소"><input value={coinAddress} onChange={e=>setCoinAddress(e.target.value)} placeholder="USDT 주소"
-                  className="w-full bg-input/60 border border-border rounded-xl px-4 py-3 text-sm font-mono" /></Field>
+                <Field label={t("coinAddrLabel")}><input value={coinAddress} onChange={e=>setCoinAddress(e.target.value)} placeholder={t("coinAddrPh")}
+                  className="w-full min-h-[48px] bg-input/60 border border-border rounded-xl px-4 py-3 text-sm font-mono" /></Field>
               </>
             )}
 
             <div className="glass rounded-xl p-4 border border-border/40">
               <div className="flex items-center gap-2 mb-3">
                 <ShieldCheck className="w-4 h-4 text-secondary" />
-                <span className="text-xs font-display font-bold">출금 비밀번호 6자리</span>
+                <span className="text-xs font-display font-bold break-keep">{t("pinTitle")}</span>
               </div>
-              <PinPad value={pin} onChange={setPin} label={profile?.withdraw_pin_hash ? "" : "(첫 입력 시 자동 등록)"} />
+              <PinPad value={pin} onChange={setPin} label={profile?.withdraw_pin_hash ? "" : t("pinFirst")} />
             </div>
 
             <WithdrawIntentInterceptor amount={Number(amount) || 0}>
@@ -255,13 +266,13 @@ export default function SecureWallet() {
                 <button
                   onClick={(e) => { handle(e); if (!e.defaultPrevented) void submitWithdraw(); }}
                   disabled={busy}
-                  className="w-full py-3.5 rounded-xl bg-gradient-primary text-primary-foreground font-bold glow-primary hover:scale-[1.02] transition disabled:opacity-50">
-                  {busy ? "처리 중..." : "출금 신청"}
+                  className="w-full min-h-[56px] py-3.5 rounded-xl bg-gradient-primary text-primary-foreground font-bold glow-primary hover:scale-[1.02] transition disabled:opacity-50 press">
+                  {busy ? t("processing") : t("submitWithdraw")}
                 </button>
               )}
             </WithdrawIntentInterceptor>
-            <p className="text-[10px] text-muted-foreground text-center">
-              {tier === "normal" && "1일 최대 3회 · "}처리 시간: {cfg.process_h < 1 ? `${cfg.process_h*60}분` : `${cfg.process_h}시간`} 이내
+            <p className="text-[10px] text-muted-foreground text-center break-keep">
+              {tier === "normal" && t("capLine")}{t("processIn", { val: cfg.process_h < 1 ? t("minutes", { n: cfg.process_h*60 }) : t("hours", { n: cfg.process_h }) })}
             </p>
           </div>
         )}
@@ -269,8 +280,8 @@ export default function SecureWallet() {
         {/* HISTORY */}
         {tab === "history" && (
           <div className="mt-4 space-y-2">
-            <div className="text-[10px] tracking-[0.3em] text-muted-foreground font-bold mb-2">출금 요청</div>
-            {wds.length === 0 && <div className="glass rounded-2xl p-6 text-center text-xs text-muted-foreground">출금 내역 없음</div>}
+            <div className="text-[10px] tracking-[0.3em] text-muted-foreground font-bold mb-2">{t("withdrawReq")}</div>
+            {wds.length === 0 && <div className="glass rounded-2xl p-6 text-center text-xs text-muted-foreground">{t("withdrawEmpty")}</div>}
             {wds.map(w => (
               <div key={w.id} className="glass rounded-2xl p-4 flex items-center justify-between">
                 <div>
