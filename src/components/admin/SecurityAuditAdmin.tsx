@@ -140,6 +140,49 @@ export default function SecurityAuditAdmin() {
 
   useEffect(() => { void load(); }, []);
 
+  // Realtime subscription: surface new anomaly events instantly
+  useEffect(() => {
+    const channel = supabase
+      .channel("anomaly_events_admin")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "anomaly_events" },
+        (payload) => {
+          const row = payload.new as AnomalyEvent;
+          setAnomalies((prev) => {
+            if (prev.find((p) => p.id === row.id)) return prev;
+            return [row, ...prev].slice(0, 100);
+          });
+          const isHigh = row.severity === "high" || row.severity === "critical";
+          toast({
+            title: isHigh ? "🚨 심각 이상치 탐지" : "⚠ 이상치 탐지",
+            description: `${row.rule}${row.user_id ? ` · ${String(row.user_id).slice(0, 8)}…` : ""}`,
+          });
+          // Audible cue for high severity (best-effort, ignored if blocked)
+          if (isHigh) {
+            try {
+              const Ctx = (window as any).AudioContext || (window as any).webkitAudioContext;
+              if (Ctx) {
+                const ctx = new Ctx();
+                const o = ctx.createOscillator();
+                const g = ctx.createGain();
+                o.type = "sine";
+                o.frequency.value = 880;
+                g.gain.value = 0.05;
+                o.connect(g).connect(ctx.destination);
+                o.start();
+                o.stop(ctx.currentTime + 0.2);
+                setTimeout(() => ctx.close(), 400);
+              }
+            } catch {}
+          }
+        },
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
+
   async function runNow() {
     setRunning(true);
     try {
@@ -286,6 +329,9 @@ export default function SecurityAuditAdmin() {
           <div className="flex items-center gap-2">
             <Radar className="w-4 h-4 text-gold" />
             <h3 className="font-display font-black text-sm">실시간 이상치 탐지</h3>
+            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-secondary/15 text-secondary border border-secondary/30 font-bold flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse" /> LIVE
+            </span>
             {(() => {
               const unack = anomalies.filter(a => !a.acknowledged).length;
               return (
