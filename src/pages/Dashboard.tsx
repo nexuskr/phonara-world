@@ -71,7 +71,7 @@ export default function Dashboard() {
               <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center"><Activity className="w-4 h-4 text-primary" /></div>
               <div>
                 <div className="text-[10px] text-muted-foreground flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" /> 오늘 정산액</div>
-                <div className="font-display font-black text-sm tabular-nums text-gradient-gold">{formatKRW(today)}</div>
+                <div className="font-display font-black text-sm tabular-nums text-money-strong">{formatKRW(today)}</div>
               </div>
             </div>
           </div>

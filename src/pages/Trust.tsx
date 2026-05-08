@@ -408,7 +408,7 @@ function Hero({ icon: Icon, label, value, sub, loading }: any) {
       {loading ? (
         <div className="h-9 w-40 mt-1 rounded bg-muted/30 animate-pulse" />
       ) : (
-        <div className="font-display font-black text-3xl mt-1 text-gradient-imperial tabular-nums">{value}</div>
+        <div className="font-display font-black text-3xl mt-1 text-money-strong tabular-nums">{value}</div>
       )}
       {loading ? (
         <div className="h-3 w-32 mt-2 rounded bg-muted/20 animate-pulse" />

@@ -123,7 +123,7 @@ export default function SixtySecondFlow({ enabled }: { enabled: boolean }) {
 
         <div className="relative glass rounded-2xl p-4 mb-4 text-center">
           <div className="text-[10px] text-muted-foreground tracking-widest mb-1">{s.body}</div>
-          <div className="font-display font-black text-2xl text-gradient-gold tabular-nums">
+          <div className="font-display font-black text-2xl text-money-strong tabular-nums">
             {s.highlight}
           </div>
         </div>

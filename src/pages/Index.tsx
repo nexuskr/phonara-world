@@ -133,7 +133,7 @@ export default function Index() {
               <div className="text-[10px] text-primary tracking-[0.3em] font-bold flex items-center justify-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" /> {t("liveLabel")}
               </div>
-              <div className="font-display font-black text-4xl sm:text-5xl mt-2 text-gradient-imperial tabular-nums">
+              <div className="font-display font-black text-4xl sm:text-5xl mt-2 text-money-strong tabular-nums">
                 ₩ {total.toLocaleString()}
               </div>
               <div className="mt-3 flex items-center justify-center gap-2 text-xs text-primary/90">
@@ -204,7 +204,7 @@ export default function Index() {
       <section className="relative z-10 container -mt-4">
         <div className="rounded-3xl p-6 sm:p-8 border border-primary/30 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent text-center relative overflow-hidden glow-imperial">
           <div className="font-display font-black text-2xl sm:text-4xl">
-            <span className="text-gradient-imperial tabular-nums">{members.toLocaleString()}</span>
+            <span className="text-money-strong tabular-nums">{members.toLocaleString()}</span>
             <span className="ml-2">{t("megaSuffix")}</span>
           </div>
           <p className="text-xs sm:text-sm text-muted-foreground mt-2">{t("megaSub")}</p>
@@ -296,7 +296,7 @@ export default function Index() {
               { v: "4.9/5", k: t("statsScore") },
             ].map((s, i) => (
               <div key={i}>
-                <div className="font-display font-black text-2xl sm:text-4xl text-gradient-imperial tabular-nums">{s.v}</div>
+                <div className="font-display font-black text-2xl sm:text-4xl text-money-strong tabular-nums">{s.v}</div>
                 <div className="text-xs text-muted-foreground mt-1">{s.k}</div>
               </div>
             ))}

@@ -134,7 +134,7 @@ export default function SecureWallet() {
           <div className="absolute inset-0 bg-gradient-aurora opacity-10 animate-gradient" style={{ backgroundSize: "300% 300%" }} />
           <div className="relative">
             <div className="text-[10px] tracking-[0.3em] text-muted-foreground font-bold">AVAILABLE BALANCE</div>
-            <div key={pulse} className="font-display font-black text-5xl text-gradient-gold tabular-nums mt-2 animate-liquid-in">
+            <div key={pulse} className="font-display font-black text-5xl text-money-strong tabular-nums mt-2 animate-liquid-in">
               {fmtKRW(wallet?.available_balance ?? 0)}
             </div>
             <div className="grid grid-cols-3 gap-3 mt-5 pt-4 border-t border-border/40">

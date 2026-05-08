@@ -487,7 +487,7 @@ function JackpotWinOverlay({ win, onClose }: { win: { amount: number; type: "mai
             </>
           )}
         </div>
-        <div className="mt-3 font-display font-black text-4xl text-gradient-gold tabular-nums">
+        <div className="mt-3 font-display font-black text-4xl text-money-strong tabular-nums">
           +{formatKRW(win.amount)}
         </div>
         <div className="mt-2 text-xs text-muted-foreground">잔고에 즉시 적립되었습니다</div>

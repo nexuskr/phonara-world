@@ -12,7 +12,7 @@ export default function ReciprocityBonus({ amount = 3_000 }: { amount?: number }
         <div className="text-[10px] text-muted-foreground tracking-widest font-bold">
           결제 시 즉시 입금
         </div>
-        <div className="font-display font-black text-base text-gradient-cyber tabular-nums">
+        <div className="font-display font-black text-base text-money-strong tabular-nums">
           +{formatKRW(amount)} 보너스
         </div>
       </div>

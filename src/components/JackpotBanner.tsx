@@ -96,7 +96,7 @@ export default function JackpotBanner({ compact = false }: { compact?: boolean }
             <div className="text-[9px] tracking-widest text-gold font-black flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse" /> MEGA JACKPOT · LIVE
             </div>
-            <div className="font-display font-black text-base sm:text-lg text-gradient-gold tabular-nums truncate">{formatKRW(j.amount)}</div>
+            <div className="font-display font-black text-base sm:text-lg text-money-strong tabular-nums truncate">{formatKRW(j.amount)}</div>
           </div>
         </div>
       </div>
@@ -124,7 +124,7 @@ export default function JackpotBanner({ compact = false }: { compact?: boolean }
         </div>
 
         <div className="mt-2 flex items-end gap-2">
-          <div className="font-display font-black text-3xl sm:text-5xl text-gradient-gold tabular-nums leading-none">
+          <div className="font-display font-black text-3xl sm:text-5xl text-money-strong tabular-nums leading-none">
             {formatKRW(j.amount)}
           </div>
         </div>
@@ -151,7 +151,7 @@ export default function JackpotBanner({ compact = false }: { compact?: boolean }
                 <span className="font-bold">{w.nickname}</span>
                 <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold ${w.tier === "EMPIRE" ? "bg-gold/20 text-gold" : w.tier === "GOD" ? "bg-accent/20 text-accent" : w.tier === "VIP" ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"}`}>{w.tier}</span>
               </div>
-              <div className="font-display font-black text-gradient-gold tabular-nums">+{formatKRW(w.amount)}</div>
+              <div className="font-display font-black text-money-strong tabular-nums">+{formatKRW(w.amount)}</div>
             </div>
           ))}
         </div>

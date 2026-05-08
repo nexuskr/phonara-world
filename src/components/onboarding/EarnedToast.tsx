@@ -32,7 +32,7 @@ export default function EarnedToast() {
           <span className="text-2xl animate-money-burst">💰</span>
           <div>
             <div className="text-[10px] tracking-widest text-secondary font-black">REWARD</div>
-            <div className="font-display font-black text-lg text-gradient-gold tabular-nums">
+            <div className="font-display font-black text-lg text-money-strong tabular-nums">
               +{formatKRW(it.amount)}
             </div>
           </div>

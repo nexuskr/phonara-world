@@ -28,7 +28,7 @@ export default function PackageBoostPreview({
         {[1, 2, 3].map((d) => (
           <div key={d} className="flex items-center justify-between text-xs">
             <span className="text-muted-foreground">Day {d}</span>
-            <span className="font-display font-black tabular-nums text-gradient-gold">{formatKRW(boosted)}</span>
+            <span className="font-display font-black tabular-nums text-money-strong">{formatKRW(boosted)}</span>
           </div>
         ))}
         <div className="flex items-center justify-between text-[10px] pt-1.5 border-t border-border/40 text-muted-foreground">
