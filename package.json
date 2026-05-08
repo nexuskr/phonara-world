@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "pr3:check": "node scripts/check-pr3-isolation.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
