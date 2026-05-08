@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.claim_founding_seat(uuid) FROM PUBLIC, anon, authenticated;
