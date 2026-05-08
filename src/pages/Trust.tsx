@@ -370,27 +370,37 @@ export default function Trust() {
   );
 }
 
-function Hero({ icon: Icon, label, value, sub }: any) {
+function Hero({ icon: Icon, label, value, sub, loading }: any) {
   return (
     <div className="glass-strong rounded-3xl p-6 border border-primary/30 relative overflow-hidden">
       <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full blur-3xl opacity-40 bg-primary" />
       <Icon className="w-6 h-6 text-primary" />
       <div className="text-[10px] text-muted-foreground tracking-widest mt-3 font-bold">{label}</div>
-      <div className="font-display font-black text-3xl mt-1 text-gradient-imperial tabular-nums">{value}</div>
-      {sub && <div className="text-xs text-muted-foreground mt-2">{sub}</div>}
+      {loading ? (
+        <div className="h-9 w-40 mt-1 rounded bg-muted/30 animate-pulse" />
+      ) : (
+        <div className="font-display font-black text-3xl mt-1 text-gradient-imperial tabular-nums">{value}</div>
+      )}
+      {loading ? (
+        <div className="h-3 w-32 mt-2 rounded bg-muted/20 animate-pulse" />
+      ) : sub ? <div className="text-xs text-muted-foreground mt-2">{sub}</div> : null}
     </div>
   );
 }
 
-function Tile({ icon: Icon, label, value, ok, small }: any) {
+function Tile({ icon: Icon, label, value, ok, small, loading }: any) {
   return (
     <div className="glass rounded-2xl p-4 border border-border">
       <div className="flex items-center gap-2">
         <Icon className={`w-4 h-4 ${ok ? "text-secondary" : "text-gold"}`} />
-        <span className={`w-1.5 h-1.5 rounded-full ${ok ? "bg-secondary" : "bg-gold"} animate-pulse`} />
+        <span className={`w-1.5 h-1.5 rounded-full ${loading ? "bg-muted" : ok ? "bg-secondary" : "bg-gold"} animate-pulse`} />
       </div>
       <div className="text-[10px] text-muted-foreground mt-2">{label}</div>
-      <div className={`font-bold mt-1 tabular-nums ${small ? "text-xs" : "text-lg"} ${ok ? "" : "text-gold"}`}>{value}</div>
+      {loading ? (
+        <div className={`mt-1 rounded bg-muted/30 animate-pulse ${small ? "h-3 w-20" : "h-5 w-16"}`} />
+      ) : (
+        <div className={`font-bold mt-1 tabular-nums ${small ? "text-xs" : "text-lg"} ${ok ? "" : "text-gold"}`}>{value}</div>
+      )}
     </div>
   );
 }
