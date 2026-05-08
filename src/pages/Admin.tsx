@@ -140,11 +140,12 @@ export default function Admin() {
 
 function MissionAdmin() {
   const [db, setDb] = useDB();
+  const { t } = useTranslation("admin");
   const [form, setForm] = useState<Partial<Mission>>({ title: "", desc: "", reward: 1000, category: "광고", difficulty: "EASY", tier: "NORMAL", duration: "5분" });
   function add() {
-    if (!form.title || !form.desc) { toast({ title: "제목/설명 필수" }); return; }
+    if (!form.title || !form.desc) { toast({ title: t("requireFields") }); return; }
     setDb(d => ({ ...d, customMissions: [{ id: uid(), ...form } as Mission, ...d.customMissions] }));
-    toast({ title: "미션 추가됨" });
+    toast({ title: t("missionAdded") });
     setForm({ title: "", desc: "", reward: 1000, category: "광고", difficulty: "EASY", tier: "NORMAL", duration: "5분" });
   }
   function bulk() {
@@ -153,38 +154,38 @@ function MissionAdmin() {
       { title: "GOD 모드 영상 검토", desc: "AI 영상 품질 평가", reward: 95000, category: "AI" as const, difficulty: "HARD" as const, tier: "GOD" as MissionTier, duration: "60분" },
     ];
     setDb(d => ({ ...d, customMissions: [...sample.map(s => ({ id: uid(), ...s })), ...d.customMissions] }));
-    toast({ title: "샘플 일괄 등록 완료" });
+    toast({ title: t("bulkAdded") });
   }
   return (
     <div className="space-y-3">
       <div className="glass-strong rounded-2xl p-4 neon-border space-y-2">
-        <h3 className="font-display font-bold text-sm flex items-center gap-2"><Plus className="w-4 h-4 text-primary" /> 미션 생성</h3>
-        <input placeholder="제목" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} className="w-full bg-input/60 border border-border rounded-xl px-3 py-2 text-sm" />
-        <textarea placeholder="설명" value={form.desc} onChange={e => setForm(f => ({ ...f, desc: e.target.value }))} className="w-full bg-input/60 border border-border rounded-xl px-3 py-2 text-sm" />
+        <h3 className="font-imperial font-bold text-sm flex items-center gap-2 break-keep"><Plus className="w-4 h-4 text-primary" /> {t("missionCreate")}</h3>
+        <LuxInput placeholder={t("title_ph")} value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} />
+        <textarea placeholder={t("desc_ph")} value={form.desc} onChange={e => setForm(f => ({ ...f, desc: e.target.value }))} className="w-full bg-input/70 border border-border/70 rounded-2xl px-4 py-3 text-sm min-h-[88px] focus:outline-none focus:border-primary" />
         <div className="grid grid-cols-2 gap-2">
-          <input type="number" placeholder="보상" value={form.reward} onChange={e => setForm(f => ({ ...f, reward: Number(e.target.value) }))} className="bg-input/60 border border-border rounded-xl px-3 py-2 text-sm" />
-          <input placeholder="소요시간" value={form.duration} onChange={e => setForm(f => ({ ...f, duration: e.target.value }))} className="bg-input/60 border border-border rounded-xl px-3 py-2 text-sm" />
-          <select value={form.tier} onChange={e => setForm(f => ({ ...f, tier: e.target.value as MissionTier }))} className="bg-input/60 border border-border rounded-xl px-3 py-2 text-sm">
-            {["NORMAL", "VIP", "GOD", "EMPIRE"].map(t => <option key={t}>{t}</option>)}
+          <LuxInput type="number" placeholder={t("reward_ph")} value={form.reward} onChange={e => setForm(f => ({ ...f, reward: Number(e.target.value) }))} />
+          <LuxInput placeholder={t("duration_ph")} value={form.duration} onChange={e => setForm(f => ({ ...f, duration: e.target.value }))} />
+          <select value={form.tier} onChange={e => setForm(f => ({ ...f, tier: e.target.value as MissionTier }))} className="bg-input/70 border border-border/70 rounded-2xl px-3 min-h-[48px] text-sm">
+            {["NORMAL", "VIP", "GOD", "EMPIRE"].map(tt => <option key={tt}>{tt}</option>)}
           </select>
-          <select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value as any }))} className="bg-input/60 border border-border rounded-xl px-3 py-2 text-sm">
-            {["광고", "설문", "리뷰", "추천", "데이터", "AI", "UGC"].map(t => <option key={t}>{t}</option>)}
+          <select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value as any }))} className="bg-input/70 border border-border/70 rounded-2xl px-3 min-h-[48px] text-sm">
+            {["광고", "설문", "리뷰", "추천", "데이터", "AI", "UGC"].map(tt => <option key={tt}>{tt}</option>)}
           </select>
         </div>
         <div className="flex gap-2">
-          <button onClick={add} className="flex-1 py-2.5 rounded-xl bg-gradient-primary text-primary-foreground font-bold text-xs">추가</button>
-          <button onClick={bulk} className="px-4 py-2.5 rounded-xl glass text-xs font-bold">샘플 일괄</button>
+          <LuxButton variant="primary" size="md" block onClick={add}>{t("add")}</LuxButton>
+          <LuxButton variant="ghost" size="md" onClick={bulk}>{t("bulk")}</LuxButton>
         </div>
       </div>
       <div className="space-y-2">
         {db.customMissions.map(m => (
           <div key={m.id} className="glass rounded-2xl p-3 flex items-center justify-between">
-            <div>
-              <div className="text-sm font-bold">{m.title} <span className="text-[10px] text-gold">[{m.tier}]</span></div>
-              <div className="text-[10px] text-muted-foreground">{m.category} · {formatKRW(m.reward)}</div>
+            <div className="min-w-0">
+              <div className="text-sm font-bold break-keep">{m.title} <span className="text-[10px] text-gold tabular-nums">[{m.tier}]</span></div>
+              <div className="text-[10px] text-muted-foreground tabular-nums">{m.category} · {formatKRW(m.reward)}</div>
             </div>
             <button onClick={() => setDb(d => ({ ...d, customMissions: d.customMissions.filter(x => x.id !== m.id) }))}
-              className="text-destructive text-xs">삭제</button>
+              className="text-destructive text-xs min-h-[44px] px-3">{t("delete")}</button>
           </div>
         ))}
       </div>
@@ -197,6 +198,9 @@ type ST = { id: string; user_id: string; nickname: string; last_message: string 
 type SM = { id: string; thread_id: string; user_id: string; sender: "user" | "admin"; message: string; created_at: string };
 
 function ChatAdmin() {
+  const { t } = useTranslation("admin");
+  const { i18n } = useTranslation();
+  const dtLocale = (i18n.language || "ko").startsWith("en") ? "en-US" : "ko-KR";
   const [threads, setThreads] = useState<ST[]>([]);
   const [active, setActive] = useState<ST | null>(null);
   const [msgs, setMsgs] = useState<SM[]>([]);
