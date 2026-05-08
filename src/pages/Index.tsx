@@ -273,7 +273,10 @@ export default function Index() {
           <Crown className="w-5 h-5" /> {t("finalCta")}
         </Link>
         <div className="mt-12 text-xs text-muted-foreground flex items-center justify-center gap-3">
-          <Link to="/trust" className="hover:text-primary inline-flex items-center gap-1">
+          <Link to="/trust"
+            onMouseEnter={() => import("@/lib/trustPrefetch").then(m => m.prefetchTrust(30))}
+            onFocus={() => import("@/lib/trustPrefetch").then(m => m.prefetchTrust(30))}
+            className="hover:text-primary inline-flex items-center gap-1">
             <ShieldCheck className="w-3 h-3" /> Trust 지표
           </Link>
           <span>·</span>
