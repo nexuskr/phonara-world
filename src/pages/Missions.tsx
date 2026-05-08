@@ -25,23 +25,15 @@ import { emitEarned } from "@/components/onboarding/EarnedToast";
 import { supabase } from "@/integrations/supabase/client";
 import AIBotCards from "@/components/AIBotCards";
 
-const tierFilters: { key: Tier; label: string; color: string }[] = [
-  { key: "NORMAL", label: "일반", color: "text-secondary" },
-  { key: "VIP", label: "VIP", color: "text-primary" },
-  { key: "GOD", label: "GOD", color: "text-accent" },
-  { key: "EMPIRE", label: "EMPIRE", color: "text-gold" },
+const tierFilters: { key: Tier; tk: string; color: string }[] = [
+  { key: "NORMAL", tk: "tierNormal", color: "text-secondary" },
+  { key: "VIP", tk: "tierVIP", color: "text-primary" },
+  { key: "GOD", tk: "tierGOD", color: "text-accent" },
+  { key: "EMPIRE", tk: "tierEMPIRE", color: "text-gold" },
 ];
 
 // Tier reward multiplier (reverse difficulty: higher tier = more boost)
 const TIER_BOOST: Record<Tier, number> = { NORMAL: 1, VIP: 1.5, GOD: 2.5, EMPIRE: 4 };
-
-// Smart failure motivation messages
-const FAIL_MSGS = [
-  "거의 다 왔어요! 다음 판은 분명 잡힙니다 🔥",
-  "방금 잭팟이 0.7% 더 가까워졌어요 ⚡",
-  "Empire 유저 평균 12회만에 잭팟 🎯",
-  "프로들도 처음엔 다 실패해요. 계속 가요!",
-];
 
 export default function Missions() {
   const { t } = useTranslation("missions");
