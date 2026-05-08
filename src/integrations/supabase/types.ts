@@ -1357,6 +1357,48 @@ export type Database = {
       }
     }
     Views: {
+      chat_messages_public: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          kind: string | null
+          message: string | null
+          nickname: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string | null
+          kind?: string | null
+          message?: string | null
+          nickname?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string | null
+          kind?: string | null
+          message?: string | null
+          nickname?: string | null
+        }
+        Relationships: []
+      }
+      empire_founding_seats_public: {
+        Row: {
+          claimed_at: string | null
+          is_claimed: boolean | null
+          seat_no: number | null
+        }
+        Insert: {
+          claimed_at?: string | null
+          is_claimed?: never
+          seat_no?: number | null
+        }
+        Update: {
+          claimed_at?: string | null
+          is_claimed?: never
+          seat_no?: number | null
+        }
+        Relationships: []
+      }
       leaderboard_today: {
         Row: {
           best_streak: number | null
