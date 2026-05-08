@@ -18,6 +18,7 @@ import WithdrawIntentInterceptor from "@/components/conversion/WithdrawIntentInt
 type ActionTab = "play" | "withdraw" | "history";
 
 export default function SecureWallet() {
+  const { t } = useTranslation("secureWallet");
   const { session, loading } = useSession();
   const nav = useNavigate();
   const userId = session?.user?.id;
@@ -32,7 +33,7 @@ export default function SecureWallet() {
   // withdraw form
   const [amount, setAmount] = useState("");
   const [method, setMethod] = useState<"bank" | "coin">("bank");
-  const [bankName, setBankName] = useState("KB국민");
+  const [bankName, setBankName] = useState(t("defaultBank"));
   const [bankAccount, setBankAccount] = useState("");
   const [coinAddress, setCoinAddress] = useState("");
   const [coinNetwork, setCoinNetwork] = useState<"TRC20" | "ERC20" | "BEP20">("TRC20");
