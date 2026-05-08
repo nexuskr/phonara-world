@@ -18,6 +18,12 @@ import { Flame, Zap, Trophy, ChevronRight, TrendingUp, Sparkles, Crown, Wallet, 
 import FirstTimeOnboarding from "@/components/FirstTimeOnboarding";
 import FirstMissionCard from "@/components/FirstMissionCard";
 import CommandHero from "@/components/CommandHero";
+import SixtySecondFlow from "@/components/onboarding/SixtySecondFlow";
+import EarnedToast from "@/components/onboarding/EarnedToast";
+import EmpireSignature from "@/components/status/EmpireSignature";
+import LivePurchaseTicker from "@/components/conversion/LivePurchaseTicker";
+import TierComparisonCard from "@/components/status/TierComparisonCard";
+import { useWinback } from "@/hooks/use-winback";
 
 export default function Dashboard() {
   const [db] = useDB();
@@ -27,6 +33,7 @@ export default function Dashboard() {
   const today = useTodayPayout();
 
   useEffect(() => { void refreshWallet(); }, []);
+  useWinback();
 
   if (!user) return null;
   const featured = DEFAULT_MISSIONS.slice(0, 5);
@@ -37,6 +44,10 @@ export default function Dashboard() {
 
   return (
     <Layout>
+      <SixtySecondFlow enabled={!!user} />
+      <EarnedToast />
+      <EmpireSignature />
+      <LivePurchaseTicker />
       <FirstTimeOnboarding enabled={!!user} />
       <FirstMissionCard />
       <div className="relative animate-liquid-in">
@@ -149,6 +160,11 @@ export default function Dashboard() {
           {/* DAILY ATTENDANCE — habit/streak driver */}
           <div className="mt-4">
             <AttendanceCard />
+          </div>
+
+          {/* TIER COMPARISON — 한국 유저 우월감 엔진 */}
+          <div className="mt-4">
+            <TierComparisonCard />
           </div>
 
           {/* LUCKY ROULETTE entry */}
