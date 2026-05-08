@@ -62,22 +62,22 @@ export default function SecureWallet() {
         setLastWin({ amount: r.final_reward, streak: r.streak, mult: Number(r.multiplier) });
         toast({ title: `🎯 +${fmtKRW(r.final_reward)}`, description: `Streak ${r.streak}× · Mult ${r.multiplier.toFixed(2)}` });
       } else if (r.is_win && r.final_reward === 0) {
-        toast({ title: "📊 일일 한도 도달", description: `오늘 한도 ${fmtKRW(cfg.daily_cap)}을 모두 사용했습니다.` });
+        toast({ title: t("capReached"), description: t("capReachedDesc", { cap: fmtKRW(cfg.daily_cap) }) });
       } else {
-        toast({ title: "❌ 아쉽네요", description: "스트릭이 초기화되었습니다." });
+        toast({ title: t("missed"), description: t("missedDesc") });
       }
     } catch (e: any) {
-      toast({ title: "정산 오류", description: humanizeError(e), variant: "destructive" });
+      toast({ title: t("settleError"), description: humanizeError(e), variant: "destructive" });
     } finally { setBusy(false); }
   }
 
   async function submitWithdraw() {
     if (!userId || busy) return;
     const a = Number(amount);
-    if (!a || a < cfg.withdraw_min) { toast({ title: `${tier.toUpperCase()} 등급 최소 출금: ${fmtKRW(cfg.withdraw_min)}` }); return; }
-    if (pin.length !== 6) { toast({ title: "출금 비밀번호 6자리를 입력하세요" }); return; }
-    if (method === "bank" && !bankAccount) { toast({ title: "계좌번호를 입력해주세요" }); return; }
-    if (method === "coin" && !coinAddress) { toast({ title: "코인 주소를 입력해주세요" }); return; }
+    if (!a || a < cfg.withdraw_min) { toast({ title: t("minWithdraw", { tier: tier.toUpperCase(), min: fmtKRW(cfg.withdraw_min) }) }); return; }
+    if (pin.length !== 6) { toast({ title: t("pinRequired") }); return; }
+    if (method === "bank" && !bankAccount) { toast({ title: t("bankRequired") }); return; }
+    if (method === "coin" && !coinAddress) { toast({ title: t("coinRequired") }); return; }
     setBusy(true);
     try {
       const r = await requestWithdrawal({
@@ -87,19 +87,19 @@ export default function SecureWallet() {
         coinAddress: method === "coin" ? coinAddress : undefined,
         coinNetwork: method === "coin" ? coinNetwork : undefined,
       });
-      toast({ title: "💸 출금 신청 완료", description: `거래코드: ${r.tx_code}` });
+      toast({ title: t("withdrawDone"), description: t("withdrawDoneDesc", { code: r.tx_code }) });
       setAmount(""); setPin(""); setBankAccount(""); setCoinAddress("");
       reload();
       fetchWithdrawals(userId).then(setWds);
     } catch (e: any) {
-      toast({ title: "출금 실패", description: humanizeError(e), variant: "destructive" });
+      toast({ title: t("withdrawFail"), description: humanizeError(e), variant: "destructive" });
     } finally { setBusy(false); }
   }
 
   async function logout() { await supabase.auth.signOut(); nav("/secure-auth"); }
 
   if (loading || !session) {
-    return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Loading...</div>;
+    return <div className="min-h-screen flex items-center justify-center text-muted-foreground">{t("loading")}</div>;
   }
 
   return (
