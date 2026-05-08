@@ -1050,7 +1050,7 @@ i18n
     resources,
     fallbackLng: "ko",
     supportedLngs: ["ko", "en"],
-    ns: ["common", "nav", "topbar", "hubs", "auth", "onboarding", "landing", "wallet", "dashboard", "missions", "admin", "support", "secureWallet", "offline", "forgot", "reset", "completeProfile", "unsubscribe", "status", "packages", "profile", "lang"],
+    ns: ["common", "nav", "topbar", "hubs", "auth", "onboarding", "landing", "wallet", "dashboard", "missions", "admin", "support", "secureWallet", "offline", "forgot", "reset", "completeProfile", "unsubscribe", "status", "packages", "profile", "trust", "settlements", "lang"],
     defaultNS: "common",
     interpolation: { escapeValue: false },
     detection: {
