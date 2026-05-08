@@ -1,8 +1,10 @@
 import { useDB, ATTENDANCE_REWARDS, formatKRW, todayStr } from "@/lib/store";
-import { CalendarCheck, Sparkles } from "lucide-react";
+import { CalendarCheck, Sparkles, Flame, AlertTriangle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { emitEarned } from "@/components/onboarding/EarnedToast";
+import { isFlagOn } from "@/lib/conversion-flags";
 
 export default function AttendanceCard() {
   const [db, setDb] = useDB();
@@ -41,6 +43,7 @@ export default function AttendanceCard() {
           },
         };
       });
+      emitEarned(serverReward);
       toast({
         title: `🗓️ 출석 완료 +${formatKRW(serverReward)}`,
         description: isWeekly ? `7일 연속! 보너스 포함` : `${newStreakSrv}일 연속 출석`,
@@ -51,6 +54,18 @@ export default function AttendanceCard() {
       setBusy(false);
     }
   }
+
+  // streak loss aversion countdown
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000 * 30);
+    return () => clearInterval(t);
+  }, []);
+  const midnight = new Date(); midnight.setHours(24, 0, 0, 0);
+  const msLeft = midnight.getTime() - now;
+  const hLeft = Math.max(0, Math.floor(msLeft / 3_600_000));
+  const mLeft = Math.max(0, Math.floor((msLeft % 3_600_000) / 60_000));
+  const atRisk = isFlagOn("streakLossAversion") && !claimed && streak >= 2;
 
   return (
     <div className="glass-strong rounded-2xl p-4 neon-border relative overflow-hidden">
@@ -79,6 +94,16 @@ export default function AttendanceCard() {
           {claimed ? "완료" : busy ? "..." : "출석"}
         </button>
       </div>
+      {atRisk && (
+        <div className="relative mt-3 flex items-center gap-2 rounded-xl bg-destructive/10 border border-destructive/30 px-3 py-2">
+          <Flame className="w-4 h-4 text-destructive shrink-0" />
+          <div className="text-[11px] leading-tight">
+            <span className="font-black text-destructive">🔥 {streak}일 연속 스트릭 소실 위험</span>
+            <span className="text-muted-foreground"> · 오늘 자정까지 {hLeft}시간 {mLeft}분 남음</span>
+          </div>
+          <AlertTriangle className="w-3.5 h-3.5 text-destructive ml-auto animate-pulse shrink-0" />
+        </div>
+      )}
     </div>
   );
 }
