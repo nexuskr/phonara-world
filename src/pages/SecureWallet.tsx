@@ -153,7 +153,7 @@ export default function SecureWallet() {
             <div className="grid grid-cols-3 gap-3 mt-5 pt-4 border-t border-border/40">
               <Stat label="Total" value={fmtKRW(wallet?.total_balance ?? 0)} />
               <Stat label="Locked" value={fmtKRW(wallet?.locked_balance ?? 0)} icon={<Clock className="w-3 h-3" />} />
-              <Stat label="Profit Share" value={fmtKRW(wallet?.profit_share_balance ?? 0)} icon={<Crown className="w-3 h-3" />} />
+              <Stat label="Reward Pool" value={fmtKRW(wallet?.profit_share_balance ?? 0)} icon={<Crown className="w-3 h-3" />} />
             </div>
 
             {/* Daily cap */}
