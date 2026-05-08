@@ -188,9 +188,46 @@ export default function UgcDashboard() {
                 rangeKey === r.key ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border text-foreground/80"
               }`}
             >
-              {t(`filter.${r.key}`)}
-            </button>
-          ))}
+        {/* Range filter + CSV export */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex gap-2">
+            {RANGES.map((r) => (
+              <button
+                key={r.key}
+                onClick={() => setRangeKey(r.key)}
+                className={`min-h-[36px] px-3 rounded-lg text-xs font-bold border ${
+                  rangeKey === r.key ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border text-foreground/80"
+                }`}
+              >
+                {t(`filter.${r.key}`)}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={() => {
+              if (!filtered.length) {
+                toast({ title: "내보낼 데이터가 없어요" });
+                return;
+              }
+              const csv = toCSV(filtered, [
+                { key: "event_date", label: "Date" },
+                { key: "channel", label: "Channel" },
+                { key: "campaign_slug" as any, label: "Campaign" },
+                { key: "clicks", label: "Clicks" },
+                { key: "signups", label: "Signups" },
+                { key: "conversions", label: "Conversions" },
+                { key: "dm_sent", label: "DM Sent" },
+                { key: "dm_responded", label: "DM Responded" },
+                { key: "note", label: "Note" },
+              ]);
+              const fname = `ugc-${rangeKey}-${todayKR()}.csv`;
+              downloadCSV(fname, csv);
+              toast({ title: "✓ CSV 저장됨", description: `${filtered.length}건 · ${fname}` });
+            }}
+            className="ml-auto min-h-[36px] px-3 rounded-lg text-xs font-bold border border-primary/40 text-primary flex items-center gap-1.5 hover:bg-primary/10"
+          >
+            <Download className="w-3.5 h-3.5" /> CSV 내보내기 ({filtered.length})
+          </button>
         </div>
 
         {/* KPI */}
