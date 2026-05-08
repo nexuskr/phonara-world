@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Activity, Webhook, Snowflake, FlaskConical, RefreshCw, Gauge } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { getSpanMetrics } from "@/lib/spans";
+import { getSpanMetrics, getLastAlert, getPersistedQueueSize } from "@/lib/spans";
 
 type Sub = "slow" | "spanq" | "webhook" | "freeze" | "chaos";
 
