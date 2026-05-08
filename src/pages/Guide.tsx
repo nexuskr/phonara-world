@@ -58,7 +58,7 @@ export default function Guide() {
           {tabs.map((tt) => {
             const Icon = tt.i;
             return (
-              <button key={tt.id} onClick={() => setTab(tt.id)}
+              <button key={tt.id} onClick={() => onTab(tt.id)}
                 className={`flex flex-col items-center gap-1 min-h-[56px] py-3 rounded-xl text-[10px] font-bold tracking-[0.06em] break-keep transition ${tab === tt.id ? "bg-gradient-primary text-primary-foreground glow-primary" : "glass text-muted-foreground"}`}>
                 <Icon className="w-4 h-4" /> {tt.l}
               </button>
