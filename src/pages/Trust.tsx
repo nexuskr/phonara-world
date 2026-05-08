@@ -265,47 +265,21 @@ export default function Trust() {
               ))}
             </div>
           </div>
-          {loading ? (
-            <div className="h-48 flex items-center justify-center text-xs text-muted-foreground animate-pulse">불러오는 중…</div>
+          {loading && history.length === 0 ? (
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="glass rounded-2xl p-3">
+                <div className="h-3 w-32 rounded bg-muted/40 mb-3 animate-pulse" />
+                <div className="h-[180px] rounded-lg bg-muted/20 animate-pulse" />
+              </div>
+              <div className="glass rounded-2xl p-3">
+                <div className="h-3 w-32 rounded bg-muted/40 mb-3 animate-pulse" />
+                <div className="h-[180px] rounded-lg bg-muted/20 animate-pulse" />
+              </div>
+            </div>
           ) : history.length === 0 ? (
             <div className="h-48 flex items-center justify-center text-xs text-muted-foreground">아직 누적된 스냅샷이 없습니다. (매일 04:05 UTC 기록)</div>
           ) : (
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="glass rounded-2xl p-3">
-                <div className="text-[11px] text-muted-foreground mb-2 font-bold">누적 정산 지급액 (₩)</div>
-                <ResponsiveContainer width="100%" height={180}>
-                  <AreaChart data={history}>
-                    <defs>
-                      <linearGradient id="gPaid" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.6} />
-                        <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
-                    <XAxis dataKey="taken_at" tick={{ fontSize: 9 }} tickFormatter={(t) => new Date(t).toLocaleDateString("ko-KR", { month: "numeric", day: "numeric" })} />
-                    <YAxis tick={{ fontSize: 9 }} tickFormatter={(v) => `${(v / 1_000_000).toFixed(0)}M`} />
-                    <RTooltip contentStyle={{ background: "hsl(var(--background))", border: "1px solid hsl(var(--border))", fontSize: 11 }}
-                      formatter={(v: any) => fmtKRW(Number(v))} labelFormatter={(t) => new Date(t).toLocaleDateString("ko-KR")} />
-                    <Area type="monotone" dataKey="total_paid" stroke="hsl(var(--primary))" fill="url(#gPaid)" strokeWidth={2} />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="glass rounded-2xl p-3">
-                <div className="text-[11px] text-muted-foreground mb-2 font-bold">가동률·감사 PASS (%)</div>
-                <ResponsiveContainer width="100%" height={180}>
-                  <LineChart data={history}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
-                    <XAxis dataKey="taken_at" tick={{ fontSize: 9 }} tickFormatter={(t) => new Date(t).toLocaleDateString("ko-KR", { month: "numeric", day: "numeric" })} />
-                    <YAxis tick={{ fontSize: 9 }} domain={[90, 100]} />
-                    <RTooltip contentStyle={{ background: "hsl(var(--background))", border: "1px solid hsl(var(--border))", fontSize: 11 }}
-                      formatter={(v: any) => `${Number(v).toFixed(2)}%`} labelFormatter={(t) => new Date(t).toLocaleDateString("ko-KR")} />
-                    <Line type="monotone" dataKey="cron_uptime_7d" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} name="가동률" />
-                    <Line type="monotone" dataKey="audit_pass_30d" stroke="hsl(var(--secondary))" strokeWidth={2} dot={false} name="감사 PASS" />
-                    <Line type="monotone" dataKey="policy_pass_7d" stroke="hsl(var(--gold))" strokeWidth={2} dot={false} name="정책 단언" />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
+            <TrustHistoryCharts history={history} days={historyDays} />
           )}
         </section>
 
