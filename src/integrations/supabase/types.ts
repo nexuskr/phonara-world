@@ -3127,6 +3127,7 @@ export type Database = {
         Args: { t: Database["public"]["Enums"]["user_tier"] }
         Returns: number
       }
+      track_campaign_click: { Args: { _slug: string }; Returns: string }
       trust_record_snapshot: { Args: never; Returns: string }
       unfreeze_expired: { Args: never; Returns: Json }
       unlock_achievement: { Args: { _key: string }; Returns: Json }
