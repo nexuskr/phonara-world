@@ -1459,8 +1459,10 @@ export type Database = {
           id: string
           invitee_id: string
           inviter_id: string
+          policy_version: number
           signup_bonus_paid: boolean
           total_commission: number
+          window_expires_at: string | null
         }
         Insert: {
           code_used: string
@@ -1469,8 +1471,10 @@ export type Database = {
           id?: string
           invitee_id: string
           inviter_id: string
+          policy_version?: number
           signup_bonus_paid?: boolean
           total_commission?: number
+          window_expires_at?: string | null
         }
         Update: {
           code_used?: string
@@ -1479,8 +1483,10 @@ export type Database = {
           id?: string
           invitee_id?: string
           inviter_id?: string
+          policy_version?: number
           signup_bonus_paid?: boolean
           total_commission?: number
+          window_expires_at?: string | null
         }
         Relationships: []
       }
@@ -2388,6 +2394,7 @@ export type Database = {
           created_at: string
           id: string
           method: Database["public"]["Enums"]["withdrawal_method"]
+          priority: number
           process_by: string
           receipt_url: string | null
           rejected_reason: string | null
@@ -2408,6 +2415,7 @@ export type Database = {
           created_at?: string
           id?: string
           method: Database["public"]["Enums"]["withdrawal_method"]
+          priority?: number
           process_by: string
           receipt_url?: string | null
           rejected_reason?: string | null
@@ -2428,6 +2436,7 @@ export type Database = {
           created_at?: string
           id?: string
           method?: Database["public"]["Enums"]["withdrawal_method"]
+          priority?: number
           process_by?: string
           receipt_url?: string | null
           rejected_reason?: string | null
@@ -2691,6 +2700,7 @@ export type Database = {
           reward: number
         }[]
       }
+      claim_founding_seat: { Args: { _purchase_id: string }; Returns: Json }
       claim_handbook_bonus: { Args: never; Returns: Json }
       claim_quest: { Args: { _quest_key: string }; Returns: Json }
       claim_season_reward: {
