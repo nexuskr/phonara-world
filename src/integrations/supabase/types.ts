@@ -2524,6 +2524,8 @@ export type Database = {
         Returns: Json
       }
       claim_weekly_pass_reward: { Args: { _level: number }; Returns: Json }
+      cron_run_finalize_weekly_pass: { Args: never; Returns: Json }
+      cron_run_pay_weekly_leaderboard: { Args: never; Returns: Json }
       current_season_id: { Args: never; Returns: string }
       delete_email: {
         Args: { message_id: number; queue_name: string }
@@ -2785,6 +2787,7 @@ export type Database = {
         Returns: string
       }
       pay_weekly_leaderboard: { Args: never; Returns: Json }
+      pay_weekly_leaderboard_dry_run: { Args: never; Returns: Json }
       policy_assertions_status: { Args: never; Returns: Json }
       public_trust_history: {
         Args: { _days?: number }
@@ -2973,6 +2976,10 @@ export type Database = {
       trust_record_snapshot: { Args: never; Returns: string }
       unfreeze_expired: { Args: never; Returns: Json }
       unlock_achievement: { Args: { _key: string }; Returns: Json }
+      verify_weekly_pass_finalize: {
+        Args: { _iso_week?: string }
+        Returns: Json
+      }
       xp_for_level: { Args: { _level: number }; Returns: number }
     }
     Enums: {
