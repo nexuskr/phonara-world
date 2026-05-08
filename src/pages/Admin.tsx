@@ -13,8 +13,9 @@ import DepositRequestsAdmin from "@/components/admin/DepositRequestsAdmin";
 import AdminDashboardCharts from "@/components/admin/AdminDashboardCharts";
 import AdvancedAnalytics from "@/components/admin/AdvancedAnalytics";
 import ErrorMonitorAdmin from "@/components/admin/ErrorMonitorAdmin";
+import SecurityAuditAdmin from "@/components/admin/SecurityAuditAdmin";
 
-type Tab = "dashboard" | "analytics" | "errors" | "server_dep" | "server_wd" | "packages" | "users" | "missions" | "chats" | "coin";
+type Tab = "dashboard" | "analytics" | "errors" | "security" | "server_dep" | "server_wd" | "packages" | "users" | "missions" | "chats" | "coin";
 
 export default function Admin() {
   const [db, setDb] = useDB();
@@ -58,7 +59,7 @@ export default function Admin() {
         <div className="container py-20 text-center">
           <ShieldCheck className="w-12 h-12 text-destructive mx-auto" />
           <h1 className="font-display font-black text-2xl mt-3">접근 권한 없음</h1>
-          <p className="text-xs text-muted-foreground">관리자 계정으로 로그인하세요. (admin@phonara.world)</p>
+          <p className="text-xs text-muted-foreground">관리자 계정으로 로그인하세요.</p>
         </div>
       </Layout>
     );
@@ -74,6 +75,7 @@ export default function Admin() {
     { id: "dashboard", label: "대시보드", icon: BarChart3 },
     { id: "analytics", label: "고급 분석", icon: TrendingUp },
     { id: "errors", label: "에러 로그", icon: ShieldAlert },
+    { id: "security", label: "보안 감사", icon: ShieldCheck },
     { id: "server_dep", label: "충전 신청", icon: ArrowUpFromLine },
     { id: "server_wd", label: "출금 신청", icon: ArrowDownToLine },
     { id: "packages", label: "패키지", icon: Crown },
@@ -110,6 +112,7 @@ export default function Admin() {
         {tab === "dashboard" && <AdminDashboardCharts />}
         {tab === "analytics" && <AdvancedAnalytics />}
         {tab === "errors" && <ErrorMonitorAdmin />}
+        {tab === "security" && <SecurityAuditAdmin />}
         {tab === "server_wd" && <WithdrawRequestsAdmin />}
         {tab === "server_dep" && <DepositRequestsAdmin />}
         {tab === "packages" && <PackagePurchasesAdmin />}
