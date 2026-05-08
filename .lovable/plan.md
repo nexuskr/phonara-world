@@ -193,3 +193,38 @@ P1 완료 후 `@security-memory`에 다음 추가:
 ---
 
 **P0 즉시 시작 승인하시면 다음 메시지에서 마이그레이션 → 코드 → 검증 순으로 진행합니다.**
+
+---
+
+## ✅ P1 완료 (이번 세션)
+
+### DB 마이그레이션
+- `deposit_method` enum에 `voucher` 값 추가
+- `deposit_requests`에 `voucher_brand`, `voucher_pin_hash`(SHA-256), `bonus_amount`, `bonus_pct` 컬럼 추가
+- `profiles`에 `total_coin_deposits`, `coin_master_unlocked`, `total_withdrawn` 컬럼 추가
+- `aml_verifications`(level 1~3, RLS 적용), `aml_risk_scores`(0~100, admin only write) 신설
+
+### RPC
+- `deposit_bonus_pct(method)`: bank=0, voucher=3, coin=8
+- `submit_deposit()`: 보너스 자동 계산 + 상품권 PIN 해시화 + 검증
+- `admin_resolve_deposit()`: 승인 시 원금+보너스 합산 입금, 코인 누적 자동 추적, 50만원 도달 시 `coin_master_unlocked` 자동 ON
+- `aml_required_level(uid, amount)`: 100만/1,000만 게이트 + 위험점수 70+ 자동 승격 반환
+
+### Frontend
+- `Wallet.tsx` 입금 탭: 채널 토글(은행 / 상품권) + 코인 +8% 표시
+- 상품권 폼: 3브랜드 셀렉트 + PIN 입력(평문 저장 X) + 보안 안내
+- 보너스 미리보기 카드: 원금+보너스 즉시 가시화
+- Coin Master 티저 카피 추가
+- `deposits-rpc.ts`: `voucherBrand`/`voucherPin` 인자, `amlRequiredLevel` export
+
+### i18n
+- KO/EN: `wallet.channelTitle/Bank/Voucher/Coin*Bonus`, `voucher*`, `bonus*`, `aml*` 23개 키 추가
+
+### 검증
+- ✅ conversion-i18n E2E 테스트 8/8 통과
+- ✅ 마이그레이션 성공 (linter 경고는 기존 SECURITY DEFINER allowlist 정책상 accepted risk)
+
+### 다음 P2 (보류 — 별도 승인 필요)
+- AML 게이트 모달 컴포넌트 `AMLGate.tsx` (휴대폰 인증/셀카 업로드)
+- 친구 초대 3단 로켓 + 주간 추천왕 리더보드
+- 뱃지 13개 추가 + Lounge 닉네임 옆 노출
