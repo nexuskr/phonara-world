@@ -15,6 +15,8 @@ import WithdrawIntentInterceptor from "@/components/conversion/WithdrawIntentInt
 
 type AssetTab = "bank" | "coin";
 type ActionTab = "withdraw" | "deposit" | "history";
+type DepositChannel = "bank" | "voucher" | "coin";
+type VoucherBrand = "culture" | "happy" | "cultureland";
 
 const BANKS = ["KB", "Shinhan", "Woori", "Hana", "Nonghyup", "Kakao Bank", "Toss Bank"] as const;
 const BANK_LABEL: Record<string, { ko: string; en: string }> = {
