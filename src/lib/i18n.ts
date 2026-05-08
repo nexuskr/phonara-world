@@ -1335,7 +1335,7 @@ const resources = {
       // Patterns
       myScore: "내 활동점수",
       scoreUnlock: "결제 시 → 즉시 100점 활성 + 출금 잠금 해제",
-      refund7: "7일 무조건 환불 보장",
+      refund7: "7일 무조건 환불 정책",
       refundLaw: "· 전자상거래법 기반",
       bonusExpire: "보너스 소멸까지",
       depositNow: "결제 시 즉시 입금",
