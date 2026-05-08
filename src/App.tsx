@@ -34,6 +34,7 @@ const SeasonPass = lazy(() => import("./pages/SeasonPass.tsx"));
 const Quests = lazy(() => import("./pages/Quests.tsx"));
 const Empire = lazy(() => import("./pages/Empire.tsx"));
 const Unsubscribe = lazy(() => import("./pages/Unsubscribe.tsx"));
+const Settlements = lazy(() => import("./pages/Settlements.tsx"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -71,6 +72,7 @@ const App = () => (
               <Route path="/earn" element={<Navigate to="/missions" replace />} />
               <Route path="/empire" element={<Empire />} />
               <Route path="/treasury" element={<Navigate to="/wallet" replace />} />
+              <Route path="/treasury/settlements" element={<Settlements />} />
               <Route path="/legacy" element={<Navigate to="/achievements" replace />} />
 
               {/* 기존 라우트 — 그대로 작동 (HubTabs 통해 통합 UX) */}

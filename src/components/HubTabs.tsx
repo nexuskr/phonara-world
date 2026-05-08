@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { Target, Sparkles, Gamepad2, Crown, Layers, Users, Wallet, ArrowDownToLine, ArrowUpFromLine, Receipt, Trophy, Award, Share2 } from "lucide-react";
+import { Target, Sparkles, Gamepad2, Crown, Layers, Users, Wallet, ArrowDownToLine, ArrowUpFromLine, Receipt, Trophy, Award, Share2, TrendingUp } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { ComponentType } from "react";
 
@@ -29,6 +29,7 @@ const HUBS: Record<HubKey, { tabs: Tab[] }> = {
       { to: "/wallet?tab=deposit",   tKey: "treasury.deposit",  icon: ArrowDownToLine },
       { to: "/wallet?tab=withdraw",  tKey: "treasury.withdraw", icon: ArrowUpFromLine },
       { to: "/wallet?tab=history",   tKey: "treasury.history",  icon: Receipt },
+      { to: "/treasury/settlements", tKey: "treasury.settlements", icon: TrendingUp },
     ],
   },
   legacy: {
