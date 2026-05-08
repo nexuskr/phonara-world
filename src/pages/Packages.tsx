@@ -10,6 +10,9 @@ import PackageBoostPreview from "@/components/PackageBoostPreview";
 import ActiveBoostCounter from "@/components/ActiveBoostCounter";
 import EmpireFoundingCounter from "@/components/EmpireFoundingCounter";
 import EmpireDayCountdown from "@/components/EmpireDayCountdown";
+import PaywallStarter from "@/components/conversion/PaywallStarter";
+import { isFlagOn } from "@/lib/conversion-flags";
+import { track } from "@/lib/analytics";
 
 const tierStyles: Record<Pkg["tier"], { ring: string; bg: string; label: string }> = {
   FREE:    { ring: "from-muted to-muted",                bg: "from-muted/30",      label: "FREE" },
@@ -26,6 +29,16 @@ export default function Packages() {
   const nav = useNavigate();
   const user = useRequireAuth() ?? db.user;
   const [selected, setSelected] = useState<Pkg | null>(null);
+  const [paywall, setPaywall] = useState<Pkg | null>(null);
+
+  function handleCTA(p: Pkg) {
+    if (isFlagOn("frictionZeroPay") && (p.tier === "STARTER" || p.tier === "VIP" || p.tier === "GOD")) {
+      track("funnel_paywall_shown", { package_id: p.id, tier: p.tier });
+      setPaywall(p);
+      return;
+    }
+    setSelected(p);
+  }
   if (!user) return null;
 
   return (
@@ -134,7 +147,7 @@ export default function Packages() {
                           </div>
                         )}
 
-                        <button onClick={() => setSelected(p)}
+                        <button onClick={() => handleCTA(p)}
                           className="press sheen mt-5 w-full py-3 rounded-xl bg-gradient-primary text-primary-foreground font-bold text-sm glow-primary flex items-center justify-center gap-2">
                           <Sparkles className="w-4 h-4" /> 가입하기
                         </button>
@@ -157,6 +170,17 @@ export default function Packages() {
         </div>
 
       {selected && <PurchaseModal pkg={selected} onClose={() => setSelected(null)} />}
+      {paywall && (
+        <PaywallStarter
+          pkg={paywall}
+          onClose={() => setPaywall(null)}
+          onSubmit={async () => {
+            const p = paywall;
+            setPaywall(null);
+            setSelected(p);
+          }}
+        />
+      )}
     </Layout>
   );
 }
