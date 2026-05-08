@@ -235,6 +235,7 @@ export default function Trust() {
             </div>
           </div>
         </section>
+        )}
 
         {/* Synthetic uptime canary */}
         <section className="mt-6 glass-strong rounded-3xl p-6 border border-secondary/20">
