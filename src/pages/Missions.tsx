@@ -203,17 +203,17 @@ export default function Missions() {
       <div className="container pt-6 pb-10 animate-liquid-in">
         <div className="mb-4 flex items-center justify-between">
           <div>
-            <h1 className="font-imperial text-2xl sm:text-3xl tracking-[0.18em] text-gradient-imperial flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-primary" /> 사이버 미션
+            <h1 className="font-imperial text-2xl sm:text-3xl tracking-[0.18em] text-gradient-imperial flex items-center gap-2 break-keep">
+              <Sparkles className="w-5 h-5 text-primary" /> {t("title")}
             </h1>
-            <p className="text-xs text-muted-foreground mt-1">모든 게임 플레이가 잭팟에 자동 적립됩니다</p>
+            <p className="text-xs text-muted-foreground mt-1 break-keep">{t("subtitle")}</p>
           </div>
           <div className={`text-right glass rounded-xl px-3 py-2 ${limitReached ? "border border-destructive/50" : ""}`}>
-            <div className="text-[9px] tracking-widest text-muted-foreground font-bold">오늘 플레이</div>
-            <div className={`text-sm font-display font-black ${limitReached ? "text-destructive" : "text-gradient-primary"}`}>
+            <div className="text-[9px] tracking-widest text-muted-foreground font-bold">{t("todayPlays")}</div>
+            <div className={`text-sm font-display font-black tabular-nums ${limitReached ? "text-destructive" : "text-gradient-primary"}`}>
               {playsUsed} / {playLimit}
             </div>
-            <div className="text-[9px] text-muted-foreground">{userTier} 등급</div>
+            <div className="text-[9px] text-muted-foreground">{userTier} {t("tierSuffix")}</div>
           </div>
         </div>
 
@@ -234,9 +234,9 @@ export default function Missions() {
               <div className="glass rounded-2xl p-3 flex items-center gap-2 neon-border">
                 <Flame className="w-5 h-5 text-primary animate-pulse" />
                 <div>
-                  <div className="text-[9px] tracking-widest text-primary font-black">MOMENTUM</div>
-                  <div className="text-sm font-display font-black">
-                    {db.momentum}연승 · 잭팟 확률 +{db.momentum * 5}%
+                  <div className="text-[9px] tracking-widest text-primary font-black">{t("momentumLabel")}</div>
+                  <div className="text-sm font-display font-black tabular-nums break-keep">
+                    {t("momentumDesc", { n: db.momentum, pct: db.momentum * 5 })}
                   </div>
                 </div>
               </div>
@@ -245,8 +245,8 @@ export default function Missions() {
               <div className="glass rounded-2xl p-3 flex items-center gap-2 neon-border">
                 <Heart className="w-5 h-5 text-accent animate-pulse" />
                 <div>
-                  <div className="text-[9px] tracking-widest text-accent font-black">RECOVERY</div>
-                  <div className="text-sm font-display font-black">+{formatKRW(db.recoveryMission.reward)} 보상</div>
+                  <div className="text-[9px] tracking-widest text-accent font-black">{t("recoveryLabel")}</div>
+                  <div className="text-sm font-display font-black tabular-nums break-keep">{t("recoveryDesc", { val: formatKRW(db.recoveryMission.reward) })}</div>
                 </div>
               </div>
             )}
@@ -255,20 +255,20 @@ export default function Missions() {
 
         {/* Tier tabs */}
         <div className="grid grid-cols-4 gap-2 mb-4">
-          {tierFilters.map((t) => {
-            const active = tierTab === t.key;
-            const locked = TIER_RANK[t.key] > userTierRank;
-            const ch = JACKPOT_CHANCE[t.key];
+          {tierFilters.map((tf) => {
+            const active = tierTab === tf.key;
+            const locked = TIER_RANK[tf.key] > userTierRank;
+            const ch = JACKPOT_CHANCE[tf.key];
             return (
               <button
-                key={t.key}
-                onClick={() => setTierTab(t.key)}
-                className={`relative py-3 rounded-2xl text-xs font-display font-black transition press ${active ? "bg-gradient-primary text-primary-foreground glow-primary" : "glass text-muted-foreground"}`}
+                key={tf.key}
+                onClick={() => setTierTab(tf.key)}
+                className={`relative min-h-[56px] py-3 rounded-2xl text-xs font-display font-black transition press ${active ? "bg-gradient-primary text-primary-foreground glow-primary" : "glass text-muted-foreground"}`}
               >
                 {locked && <Lock className="absolute top-1.5 right-1.5 w-3 h-3 text-gold" />}
-                {t.label}
-                <div className="text-[8px] opacity-70 mt-0.5 normal-case">
-                  잭팟 {((ch.main + ch.mini) * 100).toFixed(0)}%
+                {t(tf.tk)}
+                <div className="text-[8px] opacity-70 mt-0.5 normal-case tabular-nums">
+                  {t("jackpotPct", { pct: ((ch.main + ch.mini) * 100).toFixed(0) })}
                 </div>
               </button>
             );
@@ -277,13 +277,16 @@ export default function Missions() {
 
         {/* Category sub-tabs */}
         <div className="flex gap-2 mb-5">
-          {(["전체", "게임"] as const).map((c) => (
+          {([
+            { key: "all", label: t("catAll") },
+            { key: "game", label: t("catGame") },
+          ] as const).map((c) => (
             <button
-              key={c}
-              onClick={() => setCatTab(c)}
-              className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition press ${catTab === c ? "bg-gradient-cyber text-primary-foreground" : "glass text-muted-foreground"}`}
+              key={c.key}
+              onClick={() => setCatTab(c.key)}
+              className={`px-4 min-h-[44px] py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition press ${catTab === c.key ? "bg-gradient-cyber text-primary-foreground" : "glass text-muted-foreground"}`}
             >
-              {c === "게임" && <Gamepad2 className="w-3.5 h-3.5" />} {c}
+              {c.key === "game" && <Gamepad2 className="w-3.5 h-3.5" />} {c.label}
             </button>
           ))}
         </div>
@@ -296,18 +299,20 @@ export default function Missions() {
                 <Crown className="w-7 h-7 text-gold-foreground" />
               </div>
               <div className="flex-1">
-                <div className="text-[10px] tracking-widest text-gold font-black">PREMIUM LOCKED</div>
-                <div className="font-display font-bold text-sm mt-0.5">
-                  {tierFilters.find((t) => t.key === tierTab)?.label} 잭팟 확률{" "}
-                  {((JACKPOT_CHANCE[tierTab].main + JACKPOT_CHANCE[tierTab].mini) * 100).toFixed(0)}%
+                <div className="text-[10px] tracking-widest text-gold font-black">{t("premiumLocked")}</div>
+                <div className="font-display font-bold text-sm mt-0.5 break-keep">
+                  {t("premiumLine", {
+                    tier: t(tierFilters.find((tf) => tf.key === tierTab)?.tk ?? "tierNormal"),
+                    pct: ((JACKPOT_CHANCE[tierTab].main + JACKPOT_CHANCE[tierTab].mini) * 100).toFixed(0),
+                  })}
                 </div>
-                <div className="text-[10px] text-muted-foreground mt-0.5">패키지 업그레이드 시 즉시 해제</div>
+                <div className="text-[10px] text-muted-foreground mt-0.5 break-keep">{t("packageHint")}</div>
               </div>
               <button
                 onClick={() => nav("/packages")}
-                className="press px-3 py-2 rounded-xl bg-gradient-gold text-gold-foreground text-xs font-bold glow-gold"
+                className="press min-h-[44px] px-3 py-2 rounded-xl bg-gradient-gold text-gold-foreground text-xs font-bold glow-gold"
               >
-                업그레이드
+                {t("upgrade")}
               </button>
             </div>
           </div>
@@ -327,19 +332,19 @@ export default function Missions() {
                 {done && (
                   <div className="absolute inset-0 bg-secondary/10 backdrop-blur-sm flex items-center justify-center">
                     <div className="flex items-center gap-2 text-secondary font-bold">
-                      <CheckCircle2 className="w-5 h-5" /> 완료
+                      <CheckCircle2 className="w-5 h-5" /> {t("done")}
                     </div>
                   </div>
                 )}
                 {locked && (
                   <div className="absolute inset-0 bg-background/70 backdrop-blur-sm flex flex-col items-center justify-center gap-2 z-10">
                     <Lock className="w-7 h-7 text-gold" />
-                    <div className="text-xs font-bold text-gold">{m.tier} 전용</div>
+                    <div className="text-xs font-bold text-gold">{t("tierOnly", { tier: m.tier })}</div>
                     <button
                       onClick={() => nav("/packages")}
-                      className="press px-3 py-1.5 rounded-lg bg-gradient-gold text-gold-foreground text-[10px] font-bold"
+                      className="press min-h-[44px] px-3 py-1.5 rounded-lg bg-gradient-gold text-gold-foreground text-[10px] font-bold"
                     >
-                      업그레이드
+                      {t("upgrade")}
                     </button>
                   </div>
                 )}
@@ -348,12 +353,12 @@ export default function Missions() {
                     <span className="px-2 py-0.5 rounded-full bg-primary/15 text-primary font-bold">{m.category}</span>
                     <div className="flex items-center gap-1">
                       {m.fomoLimit && (
-                        <span className="px-2 py-0.5 rounded-full bg-destructive/20 text-destructive font-bold animate-pulse">
-                          🔥 잔여 {Math.max(3, m.fomoLimit - Math.floor(Math.random() * (m.fomoLimit - 5)))}
+                        <span className="px-2 py-0.5 rounded-full bg-destructive/20 text-destructive font-bold animate-pulse tabular-nums">
+                          🔥 {t("remaining", { n: Math.max(3, m.fomoLimit - Math.floor(Math.random() * (m.fomoLimit - 5))) })}
                         </span>
                       )}
                       {m.boostable && userTier !== "NORMAL" && (
-                        <span className="px-2 py-0.5 rounded-full bg-gold/20 text-gold font-bold">
+                        <span className="px-2 py-0.5 rounded-full bg-gold/20 text-gold font-bold tabular-nums">
                           ×{TIER_BOOST[userTier]}
                         </span>
                       )}
@@ -367,31 +372,31 @@ export default function Missions() {
                       </span>
                     </div>
                   </div>
-                  <h3 className="font-bold text-sm leading-snug">{m.title}</h3>
-                  <p className="text-[11px] text-muted-foreground mt-1">{m.desc}</p>
+                  <h3 className="font-bold text-sm leading-snug break-keep">{m.title}</h3>
+                  <p className="text-[11px] text-muted-foreground mt-1 break-keep">{m.desc}</p>
                   <div className="flex items-center justify-between mt-4">
                     <div>
-                      <div className="font-display font-black text-xl text-gradient-gold">
+                      <div className="font-display font-black text-xl text-money-strong tabular-nums">
                         +{formatKRW(m.boostable ? Math.floor(m.reward * TIER_BOOST[userTier]) : m.reward)}
                       </div>
-                      <div className="text-[10px] text-muted-foreground">소요 {m.duration}</div>
+                      <div className="text-[10px] text-muted-foreground">{t("duration", { val: m.duration })}</div>
                     </div>
                     <button
                       disabled={done || inProgress || locked || (!!m.game && limitReached)}
                       onClick={() => complete(m)}
-                      className="press sheen px-4 py-2 rounded-xl bg-gradient-primary text-primary-foreground text-xs font-bold glow-primary disabled:opacity-50 disabled:cursor-not-allowed transition"
+                      className="press sheen min-h-[44px] px-4 py-2 rounded-xl bg-gradient-primary text-primary-foreground text-xs font-bold glow-primary disabled:opacity-50 disabled:cursor-not-allowed transition"
                     >
                       {inProgress
-                        ? "진행 중..."
+                        ? t("btnInProgress")
                         : done
-                          ? "완료됨"
+                          ? t("btnDone")
                           : m.game && limitReached
-                            ? "한도 초과"
+                            ? t("btnCap")
                             : m.game
-                              ? "🎮 플레이"
+                              ? t("btnPlay")
                               : m.ugc
-                                ? "제출하기"
-                                : "시작하기"}
+                                ? t("btnSubmit")
+                                : t("btnStart")}
                     </button>
                   </div>
                 </div>
@@ -399,8 +404,8 @@ export default function Missions() {
             );
           })}
           {list.length === 0 && (
-            <div className="col-span-full glass rounded-2xl p-10 text-center text-sm text-muted-foreground">
-              현재 노출되는 미션이 없습니다
+            <div className="col-span-full glass rounded-2xl p-10 text-center text-sm text-muted-foreground break-keep">
+              {t("none")}
             </div>
           )}
         </div>
