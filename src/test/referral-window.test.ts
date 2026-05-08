@@ -18,17 +18,16 @@ const SERVICE_KEY =
 const enabled = Boolean(URL && SERVICE_KEY);
 const d = enabled ? describe : describe.skip;
 
-async function ensureUser(admin: ReturnType<typeof createClient>, email: string) {
-  // best-effort lookup, then create
+async function ensureUser(admin: any, email: string) {
   const { data: list } = await admin.auth.admin.listUsers({ page: 1, perPage: 200 });
-  const found = list?.users.find((u) => u.email === email);
-  if (found) return found.id;
+  const found = list?.users.find((u: any) => u.email === email);
+  if (found) return found.id as string;
   const { data, error } = await admin.auth.admin.createUser({
     email, password: "test-" + Math.random().toString(36).slice(2, 10) + "Aa1!",
     email_confirm: true,
   });
   if (error) throw error;
-  return data.user!.id;
+  return data.user!.id as string;
 }
 
 async function balance(admin: any, uid: string) {
