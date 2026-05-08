@@ -291,7 +291,7 @@ export default function Trust() {
             </div>
             <div className="flex gap-1.5">
               {[7, 30].map((d) => (
-                <LuxChip key={d} size-data={undefined} active={historyDays === d} tone="gold" onClick={() => setHistoryDays(d as 7 | 30)}>
+                <LuxChip key={d} active={historyDays === d} tone="gold" onClick={() => setHistoryDays(d as 7 | 30)}>
                   {d}{t("daysSuffix")}
                 </LuxChip>
               ))}
