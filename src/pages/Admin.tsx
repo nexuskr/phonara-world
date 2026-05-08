@@ -18,6 +18,7 @@ import ErrorMonitorAdmin from "@/components/admin/ErrorMonitorAdmin";
 import SecurityAuditAdmin from "@/components/admin/SecurityAuditAdmin";
 import ObservabilityCockpit from "@/components/admin/ObservabilityCockpit";
 import PermissionsAudit from "@/components/admin/PermissionsAudit";
+import AdminUgc from "@/components/admin/AdminUgc";
 import FunnelAnalytics from "@/components/admin/FunnelAnalytics";
 import AMLAdmin from "@/components/admin/AMLAdmin";
 import MissionTemplatesAdmin from "@/components/admin/MissionTemplatesAdmin";
