@@ -155,6 +155,23 @@ export default function Trust() {
           {m?.generated_at && (
             <div className="mt-4 text-[10px]">데이터 생성: {new Date(m.generated_at).toLocaleString("ko-KR")}</div>
           )}
+          <div className="mt-4 flex flex-wrap items-center gap-2 text-[10px]">
+            <span className="text-muted-foreground">공개 상태 API:</span>
+            <a
+              href={`https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1/public-status`}
+              target="_blank" rel="noopener noreferrer"
+              className="px-2 py-1 rounded-full glass border border-primary/30 text-primary hover:border-primary/60 transition"
+            >
+              GET /public-status
+            </a>
+            <a
+              href={`https://img.shields.io/endpoint?url=https%3A%2F%2F${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co%2Ffunctions%2Fv1%2Fpublic-status%3Fformat%3Dshield`}
+              target="_blank" rel="noopener noreferrer"
+              className="px-2 py-1 rounded-full glass border border-secondary/30 text-secondary hover:border-secondary/60 transition"
+            >
+              Shields.io 배지
+            </a>
+          </div>
         </section>
       </main>
     </div>
