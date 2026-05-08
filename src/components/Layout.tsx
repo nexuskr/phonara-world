@@ -20,6 +20,7 @@ import { useAdminNotifications } from "@/hooks/use-admin-notifications";
 import { useUserNotifications } from "@/hooks/use-user-notifications";
 import TopHUD, { TopHUDCompact } from "./TopHUD";
 import LanguageSwitcher from "./LanguageSwitcher";
+import FreezeBanner from "./FreezeBanner";
 
 /**
  * Phonara — Empire 5축 IA
@@ -68,6 +69,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen md:pl-60 pb-28 md:pb-6">
+      <FreezeBanner />
       {/* Desktop sidebar */}
       {user && (
         <aside className="hidden md:flex fixed inset-y-0 left-0 z-30 w-60 flex-col glass-strong border-r border-primary/10">

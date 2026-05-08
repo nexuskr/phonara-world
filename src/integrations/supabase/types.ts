@@ -1858,6 +1858,10 @@ export type Database = {
         Returns: Json
       }
       admin_get_user_email: { Args: { _user_id: string }; Returns: string }
+      admin_release_freeze: {
+        Args: { _freeze_id: string; _note?: string }
+        Returns: undefined
+      }
       admin_resolve_deposit: {
         Args: { _action: string; _reason: string; _request_id: string }
         Returns: Json
@@ -2071,6 +2075,17 @@ export type Database = {
         }
         Returns: number
       }
+      my_active_freeze: {
+        Args: never
+        Returns: {
+          expires_at: string
+          frozen_at: string
+          id: string
+          reason: string
+          severity: string
+          source: string
+        }[]
+      }
       public_trust_metrics: { Args: never; Returns: Json }
       public_uptime_heatmap_90d: { Args: never; Returns: Json }
       public_uptime_summary: { Args: never; Returns: Json }
@@ -2083,17 +2098,29 @@ export type Database = {
           read_ct: number
         }[]
       }
-      record_chaos_run: {
-        Args: {
-          _duration_ms: number
-          _failed: number
-          _passed: number
-          _results: Json
-          _source?: string
-          _total: number
-        }
-        Returns: string
-      }
+      record_chaos_run:
+        | {
+            Args: {
+              _duration_ms: number
+              _failed: number
+              _passed: number
+              _results: Json
+              _source: string
+              _total: number
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              _duration_ms: number
+              _failed: number
+              _passed: number
+              _results: Json
+              _source?: string
+              _total: number
+            }
+            Returns: string
+          }
       record_span: {
         Args: {
           _ended_at: string
