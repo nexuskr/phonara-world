@@ -152,41 +152,72 @@ export default function Wallet() {
   return (
     <Layout>
       <HubTabs hub="treasury" />
-      <div className="container pt-6 pb-10 animate-liquid-in">
-        <h1 className="font-display font-black text-2xl flex items-center gap-2 mb-1">
-          <WalletIcon className="w-5 h-5 text-primary" /> <span className="text-gradient-primary">사이버 지갑</span>
-        </h1>
-        <div className="text-[11px] text-muted-foreground mb-3">
-          <span className="text-gold font-bold">{u.tier}</span> 등급 출금 한도:{" "}
-          <span className="font-bold text-foreground">
-            {WITHDRAW_LIMITS[u.tier] === -1 ? "무제한 ∞" : formatKRW(WITHDRAW_LIMITS[u.tier])}
-          </span>
+      <div className="container pt-6 pb-10 animate-liquid-in max-w-3xl">
+        <div className="mb-5">
+          <h1 className="font-imperial text-3xl md:text-4xl tracking-[0.2em] text-gradient-imperial flex items-center gap-3">
+            <WalletIcon className="w-6 h-6 text-primary" />
+            황실 지갑
+          </h1>
+          <div className="mt-2 text-xs text-muted-foreground">
+            <span className="font-imperial tracking-[0.2em] text-gradient-imperial mr-1">{u.tier}</span>
+            등급 출금 한도 ·{" "}
+            <span className="font-bold text-foreground">
+              {WITHDRAW_LIMITS[u.tier] === -1 ? "무제한 ∞" : formatKRW(WITHDRAW_LIMITS[u.tier])}
+            </span>
+          </div>
         </div>
 
         {/* Asset switcher */}
-        <div className="grid grid-cols-2 gap-2 mb-4">
-          <button onClick={() => setAsset("bank")} className={`p-4 rounded-2xl text-left ${asset === "bank" ? "glass-strong neon-border" : "glass"}`}>
-            <Banknote className={`w-4 h-4 ${asset === "bank" ? "text-primary" : "text-muted-foreground"}`} />
-            <div className="text-[10px] text-muted-foreground mt-2">뱅크 잔고</div>
-            <div className="font-display font-black text-lg text-gradient-gold tabular-nums">{formatKRW(u.balance)}</div>
+        <div className="grid grid-cols-2 gap-3 mb-5">
+          <button
+            onClick={() => setAsset("bank")}
+            className={`relative p-5 rounded-2xl text-left transition press overflow-hidden ${
+              asset === "bank"
+                ? "glass-strong border border-primary/50 glow-imperial"
+                : "glass border border-border/40 hover:border-primary/30"
+            }`}
+          >
+            {asset === "bank" && <div className="absolute inset-0 bg-gradient-imperial opacity-[0.06] pointer-events-none" />}
+            <div className="flex items-center gap-2">
+              <Banknote className={`w-4 h-4 ${asset === "bank" ? "text-primary" : "text-muted-foreground"}`} />
+              <span className="text-[10px] tracking-[0.2em] font-bold text-muted-foreground">원화 잔고</span>
+            </div>
+            <div className="mt-3 font-imperial text-2xl text-gradient-imperial tabular-nums">{formatKRW(u.balance)}</div>
           </button>
-          <button onClick={() => setAsset("coin")} className={`p-4 rounded-2xl text-left ${asset === "coin" ? "glass-strong neon-border" : "glass"}`}>
-            <Coins className={`w-4 h-4 ${asset === "coin" ? "text-secondary" : "text-muted-foreground"}`} />
-            <div className="text-[10px] text-muted-foreground mt-2">코인 잔고 (USDT)</div>
-            <div className="font-display font-black text-lg text-gradient-cyber tabular-nums">{u.coinBalance.toLocaleString()} USDT</div>
+          <button
+            onClick={() => setAsset("coin")}
+            className={`relative p-5 rounded-2xl text-left transition press overflow-hidden ${
+              asset === "coin"
+                ? "glass-strong border border-primary/50 glow-imperial"
+                : "glass border border-border/40 hover:border-primary/30"
+            }`}
+          >
+            {asset === "coin" && <div className="absolute inset-0 bg-gradient-imperial opacity-[0.06] pointer-events-none" />}
+            <div className="flex items-center gap-2">
+              <Coins className={`w-4 h-4 ${asset === "coin" ? "text-primary" : "text-muted-foreground"}`} />
+              <span className="text-[10px] tracking-[0.2em] font-bold text-muted-foreground">코인 잔고 · USDT</span>
+            </div>
+            <div className="mt-3 font-imperial text-2xl text-gradient-imperial tabular-nums">{u.coinBalance.toLocaleString()} <span className="text-sm">USDT</span></div>
           </button>
         </div>
 
         {/* Action tabs */}
-        <div className="flex gap-2 mb-4">
+        <div className="flex gap-2 mb-5">
           {[
             { id: "withdraw", label: "출금", icon: ArrowDownToLine },
             { id: "deposit", label: "충전", icon: ArrowUpFromLine },
             { id: "history", label: "내역", icon: Clock },
           ].map((t: any) => (
-            <button key={t.id} onClick={() => { setAction(t.id); setResultCode(null); }}
-              className={`flex-1 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition ${action === t.id ? "bg-gradient-primary text-primary-foreground glow-primary" : "glass text-muted-foreground"}`}>
-              <t.icon className="w-3.5 h-3.5" /> {t.label}
+            <button
+              key={t.id}
+              onClick={() => { setAction(t.id); setResultCode(null); }}
+              className={`flex-1 py-3 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 transition press ${
+                action === t.id
+                  ? "bg-gradient-imperial text-primary-foreground glow-imperial"
+                  : "glass text-muted-foreground border border-border/40 hover:text-foreground hover:border-primary/30"
+              }`}
+            >
+              <t.icon className="w-4 h-4" /> {t.label}
             </button>
           ))}
         </div>
