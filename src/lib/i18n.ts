@@ -986,7 +986,7 @@ const resources = {
       firstPay: "첫결제",
     },
   },
-    common: {
+  en: {
       cancel: "Cancel",
       confirm: "Confirm",
       save: "Save",
