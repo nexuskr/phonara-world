@@ -209,7 +209,7 @@ export default function Missions() {
         <div className="mb-4 flex items-center justify-between">
           <div>
             <h1 className="font-imperial text-2xl sm:text-3xl tracking-[0.18em] text-gradient-imperial flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-primary" /> {t("missions:title", "사이버 미션")}
+              <Sparkles className="w-5 h-5 text-primary" /> 사이버 미션
             </h1>
             <p className="text-xs text-muted-foreground mt-1">모든 게임 플레이가 잭팟에 자동 적립됩니다</p>
           </div>
