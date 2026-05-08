@@ -25,19 +25,23 @@ export default function ExitIntentModal({
   useEffect(() => {
     if (!isFlagOn("exitIntentModal")) return;
     if (typeof window === "undefined") return;
-    if (sessionStorage.getItem(KEY)) return;
 
-    function onLeave(e: MouseEvent) {
+    function trigger(reason: string) {
       if (shown) return;
-      if (e.clientY <= 0) {
-        setOpen(true);
-        setShown(true);
-        sessionStorage.setItem(KEY, "1");
-        track("funnel_exit_intent_shown");
-      }
+      if (sessionStorage.getItem(KEY)) return;
+      setOpen(true);
+      setShown(true);
+      sessionStorage.setItem(KEY, "1");
+      track("funnel_exit_intent_shown", { reason });
     }
+    function onLeave(e: MouseEvent) { if (e.clientY <= 0) trigger("mouseleave"); }
+    function onManual() { trigger("manual"); }
     document.addEventListener("mouseleave", onLeave);
-    return () => document.removeEventListener("mouseleave", onLeave);
+    window.addEventListener("phonara:exit-intent", onManual);
+    return () => {
+      document.removeEventListener("mouseleave", onLeave);
+      window.removeEventListener("phonara:exit-intent", onManual);
+    };
   }, [shown]);
 
   if (!open) return null;
