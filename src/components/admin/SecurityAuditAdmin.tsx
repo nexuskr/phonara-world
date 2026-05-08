@@ -406,8 +406,13 @@ export default function SecurityAuditAdmin() {
           <div className="flex items-center gap-2">
             <Radar className="w-4 h-4 text-gold" />
             <h3 className="font-display font-black text-sm">실시간 이상치 탐지</h3>
-            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-secondary/15 text-secondary border border-secondary/30 font-bold flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse" /> LIVE
+            <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold border flex items-center gap-1 ${
+              rtStatus === "live" ? "bg-secondary/15 text-secondary border-secondary/30"
+              : rtStatus === "connecting" ? "bg-gold/15 text-gold border-gold/30"
+              : "bg-destructive/15 text-destructive border-destructive/30"
+            }`}>
+              <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${rtStatus === "live" ? "bg-secondary" : rtStatus === "connecting" ? "bg-gold" : "bg-destructive"}`} />
+              {rtStatus === "live" ? "LIVE" : rtStatus === "connecting" ? "CONNECTING" : "OFFLINE"}
             </span>
             {(() => {
               const unack = anomalies.filter(a => !a.acknowledged).length;
