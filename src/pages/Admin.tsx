@@ -138,6 +138,7 @@ export default function Admin() {
         {tab === "security" && <SecurityAuditAdmin />}
         {tab === "ops" && <ObservabilityCockpit />}
         {tab === "perms" && <PermissionsAudit />}
+        {tab === "viral_forensics" && <ViralForensics />}
         {tab === "aml" && <AMLAdmin />}
         {tab === "ai_missions" && <MissionTemplatesAdmin />}
         {tab === "payout_audit" && <LeaderboardPayoutAudit />}
