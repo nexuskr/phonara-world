@@ -452,6 +452,7 @@ export default function Missions() {
 
 /* ─────────── Jackpot win celebration overlay ─────────── */
 function JackpotWinOverlay({ win, onClose }: { win: { amount: number; type: "main" | "mini" }; onClose: () => void }) {
+  const { t } = useTranslation("missions");
   return (
     <div className="fixed inset-0 z-[60] bg-background/90 backdrop-blur-md flex items-center justify-center p-4 animate-fade-up">
       <div className="absolute inset-0 pointer-events-none">
@@ -479,23 +480,23 @@ function JackpotWinOverlay({ win, onClose }: { win: { amount: number; type: "mai
         <div className="text-[10px] tracking-[0.3em] text-gold font-black flex items-center justify-center gap-1">
           {win.type === "main" ? (
             <>
-              <Trophy className="w-3 h-3" /> MEGA JACKPOT
+              <Trophy className="w-3 h-3" /> {t("megaJackpot")}
             </>
           ) : (
             <>
-              <Sparkles className="w-3 h-3" /> MINI JACKPOT
+              <Sparkles className="w-3 h-3" /> {t("miniJackpot")}
             </>
           )}
         </div>
         <div className="mt-3 font-display font-black text-4xl text-money-strong tabular-nums">
           +{formatKRW(win.amount)}
         </div>
-        <div className="mt-2 text-xs text-muted-foreground">잔고에 즉시 적립되었습니다</div>
+        <div className="mt-2 text-xs text-muted-foreground break-keep">{t("addedNote")}</div>
         <button
           onClick={onClose}
-          className="press sheen mt-6 w-full py-3 rounded-xl bg-gradient-gold text-gold-foreground font-display font-black glow-gold"
+          className="press sheen mt-6 w-full min-h-[56px] py-3 rounded-xl bg-gradient-gold text-gold-foreground font-display font-black glow-gold"
         >
-          받기
+          {t("receive")}
         </button>
       </div>
     </div>
