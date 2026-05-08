@@ -162,6 +162,16 @@ export default function Wallet() {
     const r = data as any;
     setResultCode(r?.tx_code ?? null);
 
+    // Attach receipt screenshot to the new withdrawal_requests row (if uploaded)
+    if (receiptPath && r?.tx_code) {
+      const { error: upErr } = await supabase
+        .from("withdrawal_requests")
+        .update({ receipt_url: receiptPath })
+        .eq("user_id", u.id)
+        .eq("tx_code", r.tx_code);
+      if (upErr) console.warn("[withdraw] receipt attach failed:", upErr.message);
+    }
+
     setDb(d => ({
       ...d,
       withdraws: [{
@@ -172,7 +182,7 @@ export default function Wallet() {
       }, ...d.withdraws],
     }));
     await refreshWallet();
-    setAmount(""); setAccount(""); setCoinAddr(""); setSentCode(null); setAuthCode(""); setWithdrawPw("");
+    setAmount(""); setAccount(""); setCoinAddr(""); setSentCode(null); setAuthCode(""); setWithdrawPw(""); setReceiptPath(null);
     toast({ title: tw("withdrawDone"), description: tw("withdrawDoneDesc", { tier: u.tier }) });
   }
 
