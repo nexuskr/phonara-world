@@ -2688,6 +2688,7 @@ export type Database = {
       get_referral_stats: { Args: never; Returns: Json }
       get_roulette_stats: { Args: never; Returns: Json }
       get_season_overview: { Args: never; Returns: Json }
+      get_starter_trust_stats: { Args: never; Returns: Json }
       get_tier_distribution: {
         Args: never
         Returns: {
