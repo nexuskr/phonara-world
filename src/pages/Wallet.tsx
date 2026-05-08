@@ -69,6 +69,7 @@ export default function Wallet() {
   // P2: AML gate
   const [amlOpen, setAmlOpen] = useState(false);
   const [amlLevel, setAmlLevel] = useState<1 | 2 | 3>(2);
+  const [receiptPath, setReceiptPath] = useState<string | null>(null);
 
   if (!user) return null;
   const u = user;
