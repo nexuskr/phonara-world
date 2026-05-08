@@ -210,6 +210,7 @@ export default function Trust() {
           </div>
         )}
 
+        {assertStatus && (
         <section className="mt-6 glass-strong rounded-3xl p-6 border border-gold/20">
           <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
             <div className="flex items-center gap-2 font-display font-black text-base">
