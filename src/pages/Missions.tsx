@@ -60,7 +60,7 @@ export default function Missions() {
   const limitReached = playsLeft <= 0;
 
   const missions = [...DEFAULT_MISSIONS, ...db.customMissions];
-  const list = missions.filter((m) => m.tier === tierTab && (catTab === "전체" || m.category === catTab));
+  const list = missions.filter((m) => m.tier === tierTab && (catTab === "all" || m.category === "게임"));
 
   // Every game play contributes to jackpot + rolls for win
   function rollJackpot(): { won: boolean; amount: number; type: "main" | "mini" } | null {
