@@ -85,27 +85,26 @@ export default function Support() {
   return (
     <Layout>
       <div className="container pt-6 pb-32 animate-liquid-in">
-        <h1 className="font-display font-black text-2xl flex items-center gap-2 mb-3">
-          <MessageSquare className="w-5 h-5 text-primary" /> <span className="text-gradient-primary">고객센터</span>
+        <h1 className="font-imperial font-black text-2xl sm:text-3xl flex items-center gap-2 mb-3 tracking-[0.04em]">
+          <MessageSquare className="w-5 h-5 text-primary" /> <span className="text-gradient-primary">{t("title")}</span>
         </h1>
 
-        <div className="flex gap-2 mb-4">
-          {[{ id: "chat", l: "1:1 라이브 채팅" }, { id: "faq", l: "FAQ" }].map((t: any) => (
-            <button key={t.id} onClick={() => setTab(t.id)}
-              className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition ${tab === t.id ? "bg-gradient-primary text-primary-foreground glow-primary" : "glass text-muted-foreground"}`}>
-              {t.l}
-            </button>
+        <div className="flex gap-2 mb-4 flex-wrap">
+          {[{ id: "chat", l: t("tabChat") }, { id: "faq", l: t("tabFaq") }].map((x: any) => (
+            <LuxChip key={x.id} active={tab === x.id} onClick={() => setTab(x.id)} className="flex-1 justify-center">
+              {x.l}
+            </LuxChip>
           ))}
         </div>
 
-        <button onClick={() => nav("/guide")} className="w-full glass-strong neon-border rounded-2xl p-3 mb-4 flex items-center justify-between hover:bg-muted/30 transition press">
+        <button onClick={() => nav("/guide")} className="w-full glass-strong neon-border rounded-2xl p-3 mb-4 flex items-center justify-between hover:bg-muted/30 transition press min-h-[56px]">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-gradient-gold glow-gold flex items-center justify-center">
               <BookOpen className="w-4 h-4 text-gold-foreground" />
             </div>
             <div className="text-left">
-              <div className="text-xs font-black">운영원칙 & 이용가이드</div>
-              <div className="text-[10px] text-muted-foreground">등급 · 잭팟 · 충전/환전 완전 정리</div>
+              <div className="text-xs font-black break-keep">{t("guideTitle")}</div>
+              <div className="text-[10px] text-muted-foreground break-keep">{t("guideSub")}</div>
             </div>
           </div>
           <ChevronDown className="w-4 h-4 -rotate-90 text-gold" />
@@ -115,27 +114,26 @@ export default function Support() {
           <div className="glass-strong rounded-3xl neon-border overflow-hidden flex flex-col h-[60vh]">
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {messages.length === 0 && (
-                <div className="text-center text-xs text-muted-foreground mt-10">
+                <div className="text-center text-xs text-muted-foreground mt-10 break-keep">
                   <div className="text-3xl mb-2">💬</div>
-                  안녕하세요! 무엇을 도와드릴까요?<br />
-                  실시간 매니저가 응답해드립니다.
+                  {t("hello")}<br />
+                  {t("helloSub")}
                 </div>
               )}
               {messages.map(m => (
                 <div key={m.id} className={`flex ${m.sender === "user" ? "justify-end" : "justify-start"}`}>
                   <div className={`max-w-[78%] px-4 py-2.5 rounded-2xl text-sm ${m.sender === "user" ? "bg-gradient-primary text-primary-foreground glow-primary" : "glass"}`}>
                     {m.message}
-                    <div className="text-[9px] opacity-60 mt-1">{new Date(m.created_at).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}</div>
+                    <div className="text-[9px] opacity-60 mt-1 tabular-nums">{new Date(m.created_at).toLocaleTimeString(i18n.language === "en" ? "en-US" : "ko-KR", { hour: "2-digit", minute: "2-digit" })}</div>
                   </div>
                 </div>
               ))}
               <div ref={endRef} />
             </div>
             <div className="border-t border-border/40 p-3 flex gap-2">
-              <input value={text} onChange={e => setText(e.target.value)} onKeyDown={e => e.key === "Enter" && send()}
-                placeholder="메시지를 입력하세요"
-                className="flex-1 bg-input/60 border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-primary" />
-              <button onClick={send} className="w-11 h-11 rounded-xl bg-gradient-primary text-primary-foreground glow-primary flex items-center justify-center"><Send className="w-4 h-4" /></button>
+              <LuxInput value={text} onChange={e => setText(e.target.value)} onKeyDown={e => e.key === "Enter" && send()}
+                placeholder={t("placeholder")} />
+              <LuxButton onClick={send} variant="primary" size="md" className="!min-w-[48px] !px-0 w-12"><Send className="w-4 h-4" /></LuxButton>
             </div>
           </div>
         )}
