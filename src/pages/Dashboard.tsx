@@ -231,7 +231,7 @@ export default function Dashboard() {
           <div className="mt-8">
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-display font-bold text-lg flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-primary" /> 오늘의 추천 미션
+                <Sparkles className="w-4 h-4 text-primary" /> {t("todayPick")}
               </h2>
               <Link to="/missions" className="text-xs text-muted-foreground hover:text-foreground flex items-center">전체 <ChevronRight className="w-3 h-3" /></Link>
             </div>
