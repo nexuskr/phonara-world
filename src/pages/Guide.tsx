@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import Layout from "@/components/Layout";
-import { ShieldCheck, Crown, Sparkles, Lock, Wallet as WalletIcon, BookOpen, Trophy, Zap, Coins, ArrowLeftRight, Star, CheckCircle2, GraduationCap, Gift, ArrowRight } from "lucide-react";
+import { ShieldCheck, Crown, Sparkles, Lock, Wallet as WalletIcon, BookOpen, Trophy, Zap, Coins, ArrowLeftRight, Star, CheckCircle2, GraduationCap, Gift, ArrowRight, Share2, Copy } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useDB } from "@/lib/store";
@@ -14,12 +14,28 @@ import { AML_TIERS, currentTierByVerificationLevel } from "@/lib/aml-tiers";
 type Tab = "starter" | "principles" | "tier" | "jackpot" | "wallet";
 type StepKey = "step1" | "step2" | "step3" | "step4" | "step5" | "step6";
 const STEP_KEYS: StepKey[] = ["step1", "step2", "step3", "step4", "step5", "step6"];
+const VALID_TABS: Tab[] = ["starter", "principles", "tier", "jackpot", "wallet"];
 
 export default function Guide() {
   const { t } = useTranslation("guide");
   const [db] = useDB();
   const isLoggedIn = !!db.user?.id;
-  const [tab, setTab] = useState<Tab>(isLoggedIn ? "principles" : "starter");
+  const [params, setParams] = useSearchParams();
+  const urlTab = params.get("tab") as Tab | null;
+  const initialTab: Tab = urlTab && VALID_TABS.includes(urlTab) ? urlTab : (isLoggedIn ? "principles" : "starter");
+  const [tab, setTab] = useState<Tab>(initialTab);
+
+  useEffect(() => {
+    if (urlTab && VALID_TABS.includes(urlTab) && urlTab !== tab) setTab(urlTab);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlTab]);
+
+  const onTab = (id: Tab) => {
+    setTab(id);
+    const next = new URLSearchParams(params);
+    next.set("tab", id);
+    setParams(next, { replace: true });
+  };
 
   const tabs = [
     { id: "starter" as const, l: t("tabStarter"), i: GraduationCap },
