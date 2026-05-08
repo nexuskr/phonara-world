@@ -25,6 +25,8 @@ import LivePurchaseTicker from "@/components/conversion/LivePurchaseTicker";
 import TierComparisonCard from "@/components/status/TierComparisonCard";
 import { useWinback } from "@/hooks/use-winback";
 import { useTranslation } from "react-i18next";
+import HubTabs from "@/components/HubTabs";
+import Disclaimer from "@/components/Disclaimer";
 
 export default function Dashboard() {
   const [db] = useDB();
