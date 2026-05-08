@@ -97,6 +97,9 @@ export function TopHUDCompact() {
       to="/treasury"
       className="md:hidden flex items-center gap-1.5 px-2.5 py-1 rounded-full glass border border-primary/30"
     >
+      {isFlagOn("tierBadge") && (
+        <TierBadge tier={(user.tier as any) ?? "NORMAL"} size="xs" withCrown={false} />
+      )}
       <Wallet className="w-3 h-3 text-primary" />
       <span className="font-hud text-xs text-gradient-imperial font-bold tabular-nums">
         {formatKRW(user.balance ?? 0)}
