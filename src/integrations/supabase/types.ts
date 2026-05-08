@@ -1381,6 +1381,27 @@ export type Database = {
         }
         Relationships: []
       }
+      empire_founding_seats_admin: {
+        Row: {
+          claimed_at: string | null
+          claimed_by: string | null
+          purchase_id: string | null
+          seat_no: number | null
+        }
+        Insert: {
+          claimed_at?: string | null
+          claimed_by?: string | null
+          purchase_id?: string | null
+          seat_no?: number | null
+        }
+        Update: {
+          claimed_at?: string | null
+          claimed_by?: string | null
+          purchase_id?: string | null
+          seat_no?: number | null
+        }
+        Relationships: []
+      }
       empire_founding_seats_public: {
         Row: {
           claimed_at: string | null
