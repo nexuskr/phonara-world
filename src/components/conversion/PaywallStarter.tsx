@@ -4,6 +4,7 @@ import { formatKRW, useDB, type Pkg } from "@/lib/store";
 import { toast } from "@/hooks/use-toast";
 import { isFlagOn } from "@/lib/conversion-flags";
 import { track } from "@/lib/analytics";
+import { useTrackView, trackClick, trackDismiss, trackConvert } from "@/lib/telemetry";
 import AnchorPrice from "./patterns/AnchorPrice";
 import CountdownLossAversion from "./patterns/CountdownLossAversion";
 import ScarcityBar from "./patterns/ScarcityBar";
@@ -31,18 +32,28 @@ export default function PaywallStarter({
   const seatsTotal = pkg.seatsLeft ? Math.max(100, pkg.seatsLeft + 23) : 100;
   const seatsUsed = seatsTotal - (pkg.seatsLeft ?? 77);
 
+  useTrackView("paywall_starter", "v1", { package_id: pkg.id, price: pkg.price });
+
   async function pay() {
     if (busy) return;
     setBusy(true);
     track("funnel_paywall_paid", { package_id: pkg.id, amount: pkg.price });
+    void trackClick("paywall_starter", "v1", { package_id: pkg.id, price: pkg.price });
     try {
       if (onSubmit) await onSubmit();
       else {
         toast({ title: "결제 페이지로 이동", description: pkg.name });
       }
+      void trackConvert("paywall_starter", "v1", { package_id: pkg.id, price: pkg.price });
     } finally {
       setBusy(false);
     }
+  }
+
+  function handleClose() {
+    void trackDismiss("paywall_starter", "v1", { package_id: pkg.id });
+    try { window.dispatchEvent(new Event("phonara:exit-intent")); } catch {}
+    setTimeout(onClose, 0);
   }
 
   return (
@@ -50,11 +61,7 @@ export default function PaywallStarter({
       <ExitIntentModal onAccept={pay} />
       <div className="w-full max-w-md glass-strong rounded-3xl p-6 neon-border relative overflow-hidden animate-fade-up">
         <button
-          onClick={() => {
-            try { window.dispatchEvent(new Event("phonara:exit-intent")); } catch {}
-            // 다음 tick에 닫기 — exit modal이 z-index 위에서 먼저 뜸
-            setTimeout(onClose, 0);
-          }}
+          onClick={handleClose}
           className="absolute top-4 right-4 w-8 h-8 rounded-full bg-muted/40 flex items-center justify-center"
           aria-label="닫기"
         >
