@@ -164,6 +164,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <div className="flex items-center gap-2">
             <TopHUD />
             <TopHUDCompact />
+            {user && (
+              <Link
+                to="/profile"
+                aria-label={t("my")}
+                className="md:hidden inline-flex items-center justify-center w-9 h-9 rounded-full glass border border-border/50 text-foreground hover:border-primary/50 transition press"
+              >
+                <UserIcon className="w-4 h-4" />
+              </Link>
+            )}
             {!user && (
               <>
                 <LanguageSwitcher />
