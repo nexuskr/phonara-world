@@ -3,6 +3,7 @@ import { Crown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { isFlagOn } from "@/lib/conversion-flags";
 import { trackClick } from "@/lib/telemetry";
+import i18n from "@/lib/i18n";
 
 type Item = {
   id: string;
