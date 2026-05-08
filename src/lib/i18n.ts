@@ -456,7 +456,7 @@ i18n
     resources,
     fallbackLng: "ko",
     supportedLngs: ["ko", "en"],
-    ns: ["common", "nav", "topbar", "hubs", "auth", "onboarding", "landing", "wallet", "lang"],
+    ns: ["common", "nav", "topbar", "hubs", "auth", "onboarding", "landing", "wallet", "dashboard", "missions", "admin", "lang"],
     defaultNS: "common",
     interpolation: { escapeValue: false },
     detection: {
