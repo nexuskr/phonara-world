@@ -1,13 +1,18 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { Target, Sparkles, Gamepad2, Crown, Layers, Users, Wallet, ArrowDownToLine, ArrowUpFromLine, Receipt, Trophy, Award, Share2, TrendingUp, BarChart3 } from "lucide-react";
+import { Target, Sparkles, Gamepad2, Crown, Layers, Users, Wallet, ArrowDownToLine, ArrowUpFromLine, Receipt, Trophy, Award, Share2, TrendingUp, BarChart3, LayoutDashboard } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { ComponentType } from "react";
 
-type HubKey = "earn" | "empire" | "treasury" | "legacy";
+type HubKey = "command" | "earn" | "empire" | "treasury" | "legacy";
 
 type Tab = { to: string; tKey: string; icon: ComponentType<{ className?: string }> };
 
 const HUBS: Record<HubKey, { tabs: Tab[] }> = {
+  command: {
+    tabs: [
+      { to: "/", tKey: "command.dashboard", icon: LayoutDashboard },
+    ],
+  },
   earn: {
     tabs: [
       { to: "/missions",   tKey: "earn.missions",    icon: Target },
