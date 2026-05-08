@@ -181,47 +181,73 @@ export default function SecurityAuditAdmin() {
 
   useEffect(() => { void load(); }, []);
 
-  // Realtime subscription: surface new anomaly events instantly
+  // Realtime subscription with admin verification + auto-resubscribe + presence indicator
+  const [rtStatus, setRtStatus] = useState<"connecting" | "live" | "down">("connecting");
   useEffect(() => {
-    const channel = supabase
-      .channel("anomaly_events_admin")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "anomaly_events" },
-        (payload) => {
-          const row = payload.new as AnomalyEvent;
-          setAnomalies((prev) => {
-            if (prev.find((p) => p.id === row.id)) return prev;
-            return [row, ...prev].slice(0, 100);
-          });
-          const isHigh = row.severity === "high" || row.severity === "critical";
-          toast({
-            title: isHigh ? "🚨 심각 이상치 탐지" : "⚠ 이상치 탐지",
-            description: `${row.rule}${row.user_id ? ` · ${String(row.user_id).slice(0, 8)}…` : ""}`,
-          });
-          // Audible cue for high severity (best-effort, ignored if blocked)
-          if (isHigh) {
-            try {
-              const Ctx = (window as any).AudioContext || (window as any).webkitAudioContext;
-              if (Ctx) {
-                const ctx = new Ctx();
-                const o = ctx.createOscillator();
-                const g = ctx.createGain();
-                o.type = "sine";
-                o.frequency.value = 880;
-                g.gain.value = 0.05;
-                o.connect(g).connect(ctx.destination);
-                o.start();
-                o.stop(ctx.currentTime + 0.2);
-                setTimeout(() => ctx.close(), 400);
-              }
-            } catch {}
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    let cancelled = false;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
+    let attempts = 0;
+
+    async function connect() {
+      // Verify admin role server-side; only authenticated admins receive events
+      const { data: isAdmin, error: roleErr } = await (supabase as any)
+        .rpc("has_role", { _user_id: (await supabase.auth.getUser()).data.user?.id, _role: "admin" });
+      if (roleErr || !isAdmin) {
+        if (!cancelled) setRtStatus("down");
+        return;
+      }
+      if (cancelled) return;
+
+      channel = supabase
+        .channel(`anomaly_events_admin_${Date.now()}`)
+        .on("postgres_changes",
+          { event: "INSERT", schema: "public", table: "anomaly_events" },
+          (payload) => {
+            const row = payload.new as AnomalyEvent;
+            setAnomalies((prev) => {
+              if (prev.find((p) => p.id === row.id)) return prev;
+              return [row, ...prev].slice(0, 100);
+            });
+            const isHigh = row.severity === "high" || row.severity === "critical";
+            toast({
+              title: isHigh ? "🚨 심각 이상치 탐지" : "⚠ 이상치 탐지",
+              description: `${row.rule}${row.user_id ? ` · ${String(row.user_id).slice(0, 8)}…` : ""}`,
+            });
+            if (isHigh) {
+              try {
+                const Ctx = (window as any).AudioContext || (window as any).webkitAudioContext;
+                if (Ctx) {
+                  const ctx = new Ctx();
+                  const o = ctx.createOscillator(); const g = ctx.createGain();
+                  o.type = "sine"; o.frequency.value = 880; g.gain.value = 0.05;
+                  o.connect(g).connect(ctx.destination);
+                  o.start(); o.stop(ctx.currentTime + 0.2);
+                  setTimeout(() => ctx.close(), 400);
+                }
+              } catch {}
+              try { (navigator as any).vibrate?.([120, 60, 120]); } catch {}
+            }
+          })
+        .subscribe((status) => {
+          if (cancelled) return;
+          if (status === "SUBSCRIBED") { setRtStatus("live"); attempts = 0; }
+          else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+            setRtStatus("down");
+            const backoff = Math.min(30_000, 1000 * Math.pow(2, attempts++));
+            retryTimer = setTimeout(() => { if (channel) supabase.removeChannel(channel); void connect(); }, backoff);
           }
-        },
-      )
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
+        });
+    }
+    void connect();
+
+    return () => {
+      cancelled = true;
+      if (retryTimer) clearTimeout(retryTimer);
+      if (channel) supabase.removeChannel(channel);
+    };
   }, []);
+
 
 
   async function runNow() {
