@@ -243,7 +243,7 @@ function Rate({ label, sub, value, accent }: { label: string; sub: string; value
   return (
     <div className={`glass-strong rounded-2xl p-4 ${accent ? "neon-border" : ""}`}>
       <div className="text-[10px] text-muted-foreground tracking-wider uppercase">{label}</div>
-      <div className={`font-display font-black text-2xl mt-1 tabular-nums ${accent ? "text-gradient-gold" : ""}`}>
+      <div className={`font-display font-black text-2xl mt-1 tabular-nums ${accent ? "text-money-strong" : ""}`}>
         {value}%
       </div>
       <div className="text-[10px] text-muted-foreground mt-0.5">{sub}</div>

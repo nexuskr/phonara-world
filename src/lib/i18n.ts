@@ -187,6 +187,41 @@ const resources = {
       formFooter: "관리자 승인 후 1시간 이내 처리 · 거래코드 자동 발급",
       historyTitle: "실시간 거래 내역",
     },
+    dashboard: {
+      title: "사령부",
+      currentBalance: "현재 잔고",
+      coinBalance: "코인 잔고",
+      withdraw: "출금하기",
+      packages: "패키지",
+      missions: "미션",
+      deposit: "충전",
+      todayPick: "오늘의 추천 미션",
+    },
+    missions: {
+      title: "사이버 미션",
+      none: "현재 노출되는 미션이 없습니다",
+      lockedTitle: "잠긴 미션",
+      lockedDesc: "패키지 업그레이드 필요",
+      packageHint: "패키지 업그레이드 시 즉시 해제",
+      alreadyDone: "이미 완료한 미션입니다",
+      capReached: "오늘의 플레이 한도 도달",
+      capDesc: "{{tier}} 등급 일일 {{n}}회를 모두 사용했습니다. 패키지 업그레이드 시 즉시 추가 횟수 해제!",
+      addedNote: "잔고에 즉시 적립되었습니다",
+    },
+    admin: {
+      title: "관리자 대시보드",
+      needAdmin: "관리자 계정으로 로그인하세요.",
+      tabDashboard: "대시보드",
+      tabDeposits: "충전 신청",
+      tabWithdrawals: "출금 신청",
+      tabPackages: "패키지",
+      tabMissions: "미션",
+      kpiDeposit: "누적 충전",
+      kpiPendingDep: "충전 대기",
+      kpiPendingWd: "출금 대기",
+      missionCreate: "미션 생성",
+      missionAdded: "미션 추가됨",
+    },
     lang: {
       ko: "한국어",
       en: "English",
@@ -371,6 +406,41 @@ const resources = {
       formFooter: "Processed within 1 hour after admin approval · Auto-issued transaction code",
       historyTitle: "Live transaction history",
     },
+    dashboard: {
+      title: "Command",
+      currentBalance: "Current balance",
+      coinBalance: "Coin balance",
+      withdraw: "Withdraw",
+      packages: "Packages",
+      missions: "Missions",
+      deposit: "Deposit",
+      todayPick: "Today's recommended mission",
+    },
+    missions: {
+      title: "Cyber Missions",
+      none: "No missions available right now",
+      lockedTitle: "Locked mission",
+      lockedDesc: "Package upgrade required",
+      packageHint: "Unlocks instantly after package upgrade",
+      alreadyDone: "You already completed this mission",
+      capReached: "Daily play limit reached",
+      capDesc: "{{tier}} tier daily {{n}} plays used. Upgrade your package for more plays!",
+      addedNote: "Credited to your balance instantly",
+    },
+    admin: {
+      title: "Admin Dashboard",
+      needAdmin: "Please sign in with an admin account.",
+      tabDashboard: "Dashboard",
+      tabDeposits: "Deposit requests",
+      tabWithdrawals: "Withdraw requests",
+      tabPackages: "Packages",
+      tabMissions: "Missions",
+      kpiDeposit: "Total deposits",
+      kpiPendingDep: "Pending deposits",
+      kpiPendingWd: "Pending withdrawals",
+      missionCreate: "Create mission",
+      missionAdded: "Mission added",
+    },
     lang: {
       ko: "한국어",
       en: "English",
@@ -386,7 +456,7 @@ i18n
     resources,
     fallbackLng: "ko",
     supportedLngs: ["ko", "en"],
-    ns: ["common", "nav", "topbar", "hubs", "auth", "onboarding", "landing", "wallet", "lang"],
+    ns: ["common", "nav", "topbar", "hubs", "auth", "onboarding", "landing", "wallet", "dashboard", "missions", "admin", "lang"],
     defaultNS: "common",
     interpolation: { escapeValue: false },
     detection: {
@@ -398,13 +468,43 @@ i18n
     react: { useSuspense: false },
   });
 
-// Sync <html lang> on language change
-const syncHtmlLang = (lng: string) => {
-  if (typeof document !== "undefined") {
-    document.documentElement.lang = lng;
-  }
+// Sync <html lang>, manifest, document title, and meta on language change
+const META = {
+  ko: {
+    title: "Phonara — 왕좌는 클릭 한 번으로 시작된다",
+    description: "PHONARA Empire — 임페리얼 골드 정산 플랫폼. 창립 멤버 30석 한정, 평생 골드 등급으로 폰 하나로 글로벌 수익을 시작하세요.",
+    manifest: "/manifest.ko.webmanifest",
+    appleTitle: "Phonara",
+  },
+  en: {
+    title: "Phonara — Your throne begins with one click",
+    description: "PHONARA Empire — Imperial gold settlement platform. Founders only, lifetime gold tier — your phone as a global earnings engine.",
+    manifest: "/manifest.en.webmanifest",
+    appleTitle: "Phonara",
+  },
+} as const;
+
+const setMeta = (sel: string, attr: string, val: string) => {
+  const el = document.querySelector(sel) as HTMLElement | null;
+  if (el) el.setAttribute(attr, val);
 };
-syncHtmlLang(i18n.language || "ko");
-i18n.on("languageChanged", syncHtmlLang);
+
+const syncDocument = (lng: string) => {
+  if (typeof document === "undefined") return;
+  const code = (lng || "ko").split("-")[0] === "en" ? "en" : "ko";
+  const m = META[code];
+  document.documentElement.lang = code;
+  document.title = m.title;
+  setMeta('meta[name="description"]', "content", m.description);
+  setMeta('link[rel="manifest"]', "href", m.manifest);
+  setMeta('meta[name="apple-mobile-web-app-title"]', "content", m.appleTitle);
+  setMeta('meta[property="og:locale"]', "content", code === "en" ? "en_US" : "ko_KR");
+  setMeta('meta[property="og:title"]', "content", m.title);
+  setMeta('meta[property="og:description"]', "content", m.description);
+  setMeta('meta[name="twitter:title"]', "content", m.title);
+  setMeta('meta[name="twitter:description"]', "content", m.description);
+};
+syncDocument(i18n.language || "ko");
+i18n.on("languageChanged", syncDocument);
 
 export default i18n;

@@ -79,7 +79,7 @@ export default function TierComparisonCard() {
 
           <div className="mt-3 glass rounded-xl p-2.5 flex items-center justify-between">
             <span className="text-[10px] text-muted-foreground">오늘 내 적립</span>
-            <span className="font-display font-black text-sm text-gradient-gold tabular-nums">
+            <span className="font-display font-black text-sm text-money-strong tabular-nums">
               {formatKRW(myDaily)}
             </span>
           </div>

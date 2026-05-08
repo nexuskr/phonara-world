@@ -98,7 +98,7 @@ export default function CommandHero() {
                 </span>
               )}
             </div>
-            <div className="font-hud font-black text-3xl md:text-5xl text-gradient-imperial tabular-nums leading-none">
+            <div className="font-hud font-black text-3xl md:text-5xl text-money-strong tabular-nums leading-none">
               {formatKRW(count)}
             </div>
             <div className="mt-2 text-[11px] text-muted-foreground">
@@ -122,7 +122,7 @@ export default function CommandHero() {
               {featured?.title ?? "오늘의 미션 시작"}
             </p>
             <div className="relative flex items-center justify-between">
-              <span className="text-gradient-imperial font-hud font-black text-base tabular-nums">
+              <span className="text-money-strong font-hud font-black text-base tabular-nums">
                 +{formatKRW(featured?.reward ?? 3000)}
               </span>
               <ChevronRight className="w-4 h-4 text-primary group-hover:translate-x-0.5 transition" />

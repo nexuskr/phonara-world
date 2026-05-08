@@ -16,7 +16,7 @@ export default function AnchorPrice({
       <span className="text-xs text-muted-foreground line-through tabular-nums">
         {formatKRW(original)}
       </span>
-      <span className="font-display font-black text-2xl text-gradient-gold tabular-nums">
+      <span className="font-display font-black text-2xl text-money-strong tabular-nums">
         {formatKRW(discounted)}
       </span>
       <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-secondary/20 text-secondary">

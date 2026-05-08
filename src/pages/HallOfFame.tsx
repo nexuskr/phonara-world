@@ -110,7 +110,7 @@ export default function HallOfFame() {
                     </span>
                     <TierBadge tier={tier} size="xs" />
                   </div>
-                  <div className="font-display font-black text-base text-gradient-gold tabular-nums mt-0.5">
+                  <div className="font-display font-black text-base text-money-strong tabular-nums mt-0.5">
                     {formatKRW(r.earned)}
                   </div>
                 </div>

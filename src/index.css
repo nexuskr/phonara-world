@@ -177,6 +177,69 @@
     border-radius: 42% 58% 63% 37% / 41% 44% 56% 59%;
     animation: blobMorph 14s ease-in-out infinite;
   }
+  /* ====== Lux Primitives — global imperial design tokens ====== */
+  .lux-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+    min-height: 48px; padding: 0.75rem 1.25rem;
+    border-radius: 0.875rem;
+    font-weight: 700; letter-spacing: 0.02em;
+    font-size: 0.875rem;
+    transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 220ms ease, filter 220ms ease, background 220ms ease, border-color 220ms ease;
+    will-change: transform;
+    word-break: keep-all;
+  }
+  .lux-btn:active { transform: translateY(1px) scale(0.985); filter: brightness(1.08); }
+  .lux-btn-primary {
+    background: var(--gradient-imperial);
+    color: hsl(var(--primary-foreground));
+    box-shadow: var(--glow-gold);
+    border: 1px solid hsl(48 100% 78% / 0.4);
+  }
+  .lux-btn-primary:hover { transform: translateY(-1px); filter: brightness(1.05); }
+  .lux-btn-ghost {
+    background: var(--gradient-glass);
+    color: hsl(var(--foreground));
+    border: 1px solid hsl(var(--border));
+    backdrop-filter: blur(16px) saturate(180%);
+  }
+  .lux-btn-ghost:hover { border-color: hsl(var(--primary) / 0.55); color: hsl(var(--primary)); }
+  .lux-btn-lg { min-height: 56px; padding: 1rem 1.5rem; font-size: 1rem; border-radius: 1rem; }
+  .lux-btn-sm { min-height: 40px; padding: 0.5rem 0.875rem; font-size: 0.75rem; }
+  .lux-input {
+    width: 100%; min-height: 52px;
+    background: hsl(var(--input) / 0.6);
+    border: 1px solid hsl(var(--border));
+    border-radius: 0.875rem;
+    padding: 0.875rem 1rem;
+    font-size: 0.95rem;
+    color: hsl(var(--foreground));
+    transition: border-color 200ms ease, box-shadow 200ms ease;
+    font-variant-numeric: tabular-nums;
+  }
+  .lux-input:focus { outline: none; border-color: hsl(var(--primary)); box-shadow: 0 0 0 3px hsl(var(--primary) / 0.18); }
+  .lux-chip {
+    display: inline-flex; align-items: center; gap: 0.375rem;
+    min-height: 32px; padding: 0.375rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem; font-weight: 700;
+    background: var(--gradient-glass);
+    border: 1px solid hsl(var(--border));
+    color: hsl(var(--foreground));
+    backdrop-filter: blur(16px) saturate(180%);
+  }
+  .lux-chip-gold {
+    background: linear-gradient(135deg, hsl(44 80% 53% / 0.15), hsl(48 100% 75% / 0.05));
+    border-color: hsl(var(--primary) / 0.4);
+    color: hsl(48 100% 78%);
+  }
+  /* Card surfaces */
+  .lux-card {
+    background: linear-gradient(135deg, hsl(230 30% 14% / 0.85), hsl(230 30% 8% / 0.7));
+    backdrop-filter: blur(28px) saturate(180%);
+    border: 1px solid hsl(var(--primary) / 0.18);
+    border-radius: 1.25rem;
+    box-shadow: var(--shadow-glass);
+  }
 }
 @layer utilities {
   .animate-float { animation: float 6s ease-in-out infinite; }

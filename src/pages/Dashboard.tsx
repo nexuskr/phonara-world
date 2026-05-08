@@ -24,9 +24,11 @@ import EmpireSignature from "@/components/status/EmpireSignature";
 import LivePurchaseTicker from "@/components/conversion/LivePurchaseTicker";
 import TierComparisonCard from "@/components/status/TierComparisonCard";
 import { useWinback } from "@/hooks/use-winback";
+import { useTranslation } from "react-i18next";
 
 export default function Dashboard() {
   const [db] = useDB();
+  const { t } = useTranslation("dashboard");
   const user = useRequireAuth() ?? db.user;
   const [burst, setBurst] = useState(false);
   const online = useOnline();
@@ -71,7 +73,7 @@ export default function Dashboard() {
               <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center"><Activity className="w-4 h-4 text-primary" /></div>
               <div>
                 <div className="text-[10px] text-muted-foreground flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" /> 오늘 정산액</div>
-                <div className="font-display font-black text-sm tabular-nums text-gradient-gold">{formatKRW(today)}</div>
+                <div className="font-display font-black text-sm tabular-nums text-money-strong">{formatKRW(today)}</div>
               </div>
             </div>
           </div>
@@ -108,15 +110,15 @@ export default function Dashboard() {
 
               <div className="relative">
                 <div className="flex items-center justify-between">
-                  <div className="text-xs text-muted-foreground tracking-widest">현재 잔고</div>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-gold/20 text-gold font-bold">{user.tier}</span>
+                  <div className="text-[10px] sm:text-xs text-muted-foreground tracking-[0.2em] uppercase">{t("currentBalance")}</div>
+                  <span className="lux-chip lux-chip-gold">{user.tier}</span>
                 </div>
                 <button onClick={() => { setBurst(true); setTimeout(() => setBurst(false), 1600); }}
-                  className="font-display font-black text-4xl sm:text-5xl mt-2 text-gradient-gold block sm:hover:scale-105 transition">
+                  className="font-display font-black text-4xl sm:text-5xl mt-2 text-money-strong block sm:hover:scale-105 transition tabular-nums">
                   {formatKRW(user.balance)}
                 </button>
                 <div className="mt-2 text-xs text-muted-foreground">
-                  코인 잔고 <span className="text-secondary font-bold">{user.coinBalance.toLocaleString()} USDT</span>
+                  {t("coinBalance")} <span className="text-money font-black tabular-nums">{user.coinBalance.toLocaleString()} USDT</span>
                 </div>
                 <div className="mt-1 flex items-center gap-2 text-xs text-secondary">
                   <TrendingUp className="w-3.5 h-3.5" /> 오늘 +{formatKRW(user.todayEarnings)} 적립됨
@@ -140,11 +142,11 @@ export default function Dashboard() {
               </div>
 
               <div className="relative grid grid-cols-2 gap-2 mt-3">
-                <Link to="/wallet" className="press sheen py-3 rounded-xl bg-gradient-primary text-primary-foreground font-bold text-sm flex items-center justify-center gap-1.5 glow-primary">
-                  <Wallet className="w-4 h-4" /> 출금하기
+                <Link to="/wallet" className="lux-btn lux-btn-primary">
+                  <Wallet className="w-4 h-4" /> {t("withdraw")}
                 </Link>
-                <Link to="/packages" className="press sheen py-3 rounded-xl glass border border-border font-bold text-sm flex items-center justify-center gap-1.5">
-                  <Crown className="w-4 h-4 text-gold" /> 패키지
+                <Link to="/packages" className="lux-btn lux-btn-ghost">
+                  <Crown className="w-4 h-4 text-primary" /> {t("packages")}
                 </Link>
               </div>
             </div>
@@ -213,10 +215,10 @@ export default function Dashboard() {
           {/* Quick actions */}
           <div className="grid grid-cols-4 gap-2 mt-5">
             {[
-              { to: "/missions", label: "미션", icon: "🎯", grad: "from-primary/20 to-primary/5" },
-              { to: "/packages", label: "패키지", icon: "👑", grad: "from-gold/20 to-gold/5" },
-              { to: "/wallet", label: "충전", icon: "💎", grad: "from-secondary/20 to-secondary/5" },
-              { to: "/support", label: "고객센터", icon: "💬", grad: "from-accent/20 to-accent/5" },
+              { to: "/missions", label: t("missions"), icon: "🎯", grad: "from-primary/20 to-primary/5" },
+              { to: "/packages", label: t("packages"), icon: "👑", grad: "from-gold/20 to-gold/5" },
+              { to: "/wallet", label: t("deposit"), icon: "💎", grad: "from-secondary/20 to-secondary/5" },
+              { to: "/support", label: t("nav:support", "고객센터"), icon: "💬", grad: "from-accent/20 to-accent/5" },
             ].map((a, i) => (
               <Link key={i} to={a.to} className={`glass rounded-2xl p-3 flex flex-col items-center gap-1 bg-gradient-to-b ${a.grad} sm:hover:scale-105 transition`}>
                 <span className="text-2xl">{a.icon}</span>
@@ -229,7 +231,7 @@ export default function Dashboard() {
           <div className="mt-8">
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-display font-bold text-lg flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-primary" /> 오늘의 추천 미션
+                <Sparkles className="w-4 h-4 text-primary" /> {t("todayPick")}
               </h2>
               <Link to="/missions" className="text-xs text-muted-foreground hover:text-foreground flex items-center">전체 <ChevronRight className="w-3 h-3" /></Link>
             </div>

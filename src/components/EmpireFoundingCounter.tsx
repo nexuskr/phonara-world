@@ -72,7 +72,7 @@ export default function EmpireFoundingCounter({ compact }: { compact?: boolean }
           </div>
         </div>
         <div className="text-right">
-          <span className="font-hud font-black text-2xl text-gradient-imperial tabular-nums">{remaining}</span>
+          <span className="font-hud font-black text-2xl text-money-strong tabular-nums">{remaining}</span>
           <span className="text-muted-foreground text-xs font-bold ml-0.5">/30</span>
         </div>
       </div>
