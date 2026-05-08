@@ -19,6 +19,7 @@ import {
 } from "@/lib/store";
 import { CheckCircle2, Sparkles, Lock, Crown, Upload, Gamepad2, X, Zap, Flame, Trophy, Heart } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 import { settleMission } from "@/lib/missions-rpc";
 import { emitEarned } from "@/components/onboarding/EarnedToast";
 import { supabase } from "@/integrations/supabase/client";
