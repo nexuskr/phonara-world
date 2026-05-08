@@ -18,13 +18,14 @@ import ErrorMonitorAdmin from "@/components/admin/ErrorMonitorAdmin";
 import SecurityAuditAdmin from "@/components/admin/SecurityAuditAdmin";
 import ObservabilityCockpit from "@/components/admin/ObservabilityCockpit";
 import PermissionsAudit from "@/components/admin/PermissionsAudit";
+import AdminUgc from "@/components/admin/AdminUgc";
 import FunnelAnalytics from "@/components/admin/FunnelAnalytics";
 import AMLAdmin from "@/components/admin/AMLAdmin";
 import MissionTemplatesAdmin from "@/components/admin/MissionTemplatesAdmin";
 import LeaderboardPayoutAudit from "@/components/admin/LeaderboardPayoutAudit";
 import { Activity, Lock, Bot } from "lucide-react";
 
-type Tab = "dashboard" | "funnel" | "analytics" | "errors" | "security" | "ops" | "perms" | "aml" | "ai_missions" | "payout_audit" | "server_dep" | "server_wd" | "packages" | "users" | "missions" | "chats" | "coin";
+type Tab = "dashboard" | "funnel" | "analytics" | "errors" | "security" | "ops" | "perms" | "aml" | "ai_missions" | "payout_audit" | "server_dep" | "server_wd" | "packages" | "users" | "missions" | "chats" | "coin" | "ugc";
 
 export default function Admin() {
   const [db, setDb] = useDB();
@@ -99,6 +100,7 @@ export default function Admin() {
     { id: "users", label: t("tabUsers"), icon: Users },
     { id: "chats", label: t("tabChats"), icon: MessageSquare },
     { id: "coin", label: t("tabCoin"), icon: Coins },
+    { id: "ugc", label: "UGC 성과", icon: BarChart3 },
   ];
 
   return (
@@ -142,6 +144,7 @@ export default function Admin() {
         {tab === "users" && <ServerUserAdmin />}
         {tab === "chats" && <ChatAdmin />}
         {tab === "coin" && <CoinAdmin />}
+        {tab === "ugc" && <AdminUgc />}
       </div>
     </Layout>
   );

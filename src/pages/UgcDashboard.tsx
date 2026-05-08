@@ -8,7 +8,9 @@ import {
   ResponsiveContainer, BarChart, Bar, LineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
 } from "recharts";
-import { BarChart3, Plus, Trash2, Loader2 } from "lucide-react";
+import { BarChart3, Plus, Trash2, Loader2, Download } from "lucide-react";
+import { toCSV, downloadCSV } from "@/lib/csv";
+import CampaignManager from "@/components/ugc/CampaignManager";
 
 type Channel = "tiktok" | "instagram" | "threads" | "naver" | "youtube" | "kakao" | "etc";
 
@@ -176,19 +178,46 @@ export default function UgcDashboard() {
           <p className="text-xs text-muted-foreground mt-1 break-keep">{t("subtitle")}</p>
         </header>
 
-        {/* Range filter */}
-        <div className="flex gap-2">
-          {RANGES.map((r) => (
-            <button
-              key={r.key}
-              onClick={() => setRangeKey(r.key)}
-              className={`min-h-[36px] px-3 rounded-lg text-xs font-bold border ${
-                rangeKey === r.key ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border text-foreground/80"
-              }`}
-            >
-              {t(`filter.${r.key}`)}
-            </button>
-          ))}
+        {/* Range filter + CSV export */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex gap-2">
+            {RANGES.map((r) => (
+              <button
+                key={r.key}
+                onClick={() => setRangeKey(r.key)}
+                className={`min-h-[36px] px-3 rounded-lg text-xs font-bold border ${
+                  rangeKey === r.key ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border text-foreground/80"
+                }`}
+              >
+                {t(`filter.${r.key}`)}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={() => {
+              if (!filtered.length) {
+                toast({ title: "내보낼 데이터가 없어요" });
+                return;
+              }
+              const csv = toCSV(filtered, [
+                { key: "event_date", label: "Date" },
+                { key: "channel", label: "Channel" },
+                { key: "campaign_slug" as any, label: "Campaign" },
+                { key: "clicks", label: "Clicks" },
+                { key: "signups", label: "Signups" },
+                { key: "conversions", label: "Conversions" },
+                { key: "dm_sent", label: "DM Sent" },
+                { key: "dm_responded", label: "DM Responded" },
+                { key: "note", label: "Note" },
+              ]);
+              const fname = `ugc-${rangeKey}-${todayKR()}.csv`;
+              downloadCSV(fname, csv);
+              toast({ title: "✓ CSV 저장됨", description: `${filtered.length}건 · ${fname}` });
+            }}
+            className="ml-auto min-h-[36px] px-3 rounded-lg text-xs font-bold border border-primary/40 text-primary flex items-center gap-1.5 hover:bg-primary/10"
+          >
+            <Download className="w-3.5 h-3.5" /> CSV 내보내기 ({filtered.length})
+          </button>
         </div>
 
         {/* KPI */}
@@ -278,6 +307,8 @@ export default function UgcDashboard() {
             {saving ? t("form.saving") : t("form.submit")}
           </button>
         </section>
+
+        <CampaignManager />
 
         {/* Recent table */}
         <section>

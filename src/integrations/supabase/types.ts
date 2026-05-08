@@ -1889,8 +1889,54 @@ export type Database = {
         }
         Relationships: []
       }
+      ugc_campaigns: {
+        Row: {
+          active: boolean
+          channel: string
+          clicks_cached: number
+          code: string | null
+          conversions_cached: number
+          created_at: string
+          id: string
+          label: string
+          slug: string
+          target_url: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          channel: string
+          clicks_cached?: number
+          code?: string | null
+          conversions_cached?: number
+          created_at?: string
+          id?: string
+          label: string
+          slug: string
+          target_url: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          channel?: string
+          clicks_cached?: number
+          code?: string | null
+          conversions_cached?: number
+          created_at?: string
+          id?: string
+          label?: string
+          slug?: string
+          target_url?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ugc_traffic_events: {
         Row: {
+          campaign_slug: string | null
           channel: string
           clicks: number
           conversions: number
@@ -1905,6 +1951,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          campaign_slug?: string | null
           channel: string
           clicks?: number
           conversions?: number
@@ -1919,6 +1966,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          campaign_slug?: string | null
           channel?: string
           clicks?: number
           conversions?: number
