@@ -13,6 +13,7 @@ import EmpireFoundingCounter from "@/components/EmpireFoundingCounter";
 import EmpireDayCountdown from "@/components/EmpireDayCountdown";
 import PaywallStarter from "@/components/conversion/PaywallStarter";
 import { isFlagOn } from "@/lib/conversion-flags";
+import Disclaimer from "@/components/Disclaimer";
 import { track } from "@/lib/analytics";
 import { LuxButton } from "@/components/ui/lux";
 
@@ -189,6 +190,7 @@ export default function Packages() {
           }}
         />
       )}
+      <Disclaimer />
     </Layout>
   );
 }

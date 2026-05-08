@@ -146,7 +146,7 @@ export type JackpotState = {
   mini: number;            // mini jackpot (KRW)
   lastMainExplode: number; // timestamp
   lastMiniExplode: number;
-  totalContrib: number;    // lifetime contributions
+  totalContrib: number;    // cumulative contributions
   recentWins: JackpotWin[];
 };
 

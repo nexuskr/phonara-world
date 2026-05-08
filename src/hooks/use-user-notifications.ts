@@ -111,7 +111,7 @@ export function useUserNotifications(userId: string | null | undefined) {
             withdrawal_complete: ["✅ 출금 완료", "출금이 완료되었습니다"],
             withdrawal_release: ["↩️ 출금 반환", "출금 신청이 거절되어 잔액이 복구되었습니다"],
             package_settle: ["📈 패키지 정산", "일일 정산이 입금되었습니다"],
-            profit_share: ["👑 EMPIRE 수익 분배", "수익 분배가 입금되었습니다"],
+            profit_share: ["👑 EMPIRE 보상", "보상이 입금되었습니다"],
             admin_adjust: ["⚙️ 잔액 조정", r.direction === "credit" ? "잔액이 증가했습니다" : "잔액이 차감되었습니다"],
           };
           const [title, baseDesc] = map[r.kind];

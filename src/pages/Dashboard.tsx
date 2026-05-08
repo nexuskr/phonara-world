@@ -25,6 +25,8 @@ import LivePurchaseTicker from "@/components/conversion/LivePurchaseTicker";
 import TierComparisonCard from "@/components/status/TierComparisonCard";
 import { useWinback } from "@/hooks/use-winback";
 import { useTranslation } from "react-i18next";
+import HubTabs from "@/components/HubTabs";
+import Disclaimer from "@/components/Disclaimer";
 
 export default function Dashboard() {
   const [db] = useDB();
@@ -56,8 +58,10 @@ export default function Dashboard() {
         <div className="absolute inset-0 bg-grid opacity-20 pointer-events-none" />
         <Particles density={particleDensity} />
 
-        <div className="container relative pt-6 pb-10">
-          {/* 🏛️ Command Hero — 영웅 카드 (잔고 + 추천 미션 + 30석) */}
+        <HubTabs hub="command" />
+
+        <div className="container relative pt-2 pb-10">
+          {/* 🏛️ Command Hero — 영웅 카드 (잔고 + 추천 미션 + 100석) */}
           <CommandHero />
 
           {/* Live ticker (compact, beneath hero) */}
@@ -258,6 +262,8 @@ export default function Dashboard() {
           <div className="mt-8">
             <LiveRanking />
           </div>
+
+          <Disclaimer className="mt-6" />
         </div>
       </div>
     </Layout>
