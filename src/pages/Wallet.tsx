@@ -277,10 +277,22 @@ export default function Wallet() {
               <PinPad value={withdrawPw} onChange={setWithdrawPw} label={`출금비밀번호 6자리 ${u.withdrawPw ? "" : "(첫 입력 시 자동 등록)"}`} />
             </div>
 
-            <button onClick={() => { void (action === "withdraw" ? submitWithdraw() : submitDeposit()); }}
-              className="w-full py-3.5 rounded-xl bg-gradient-primary text-primary-foreground font-bold glow-primary hover:scale-[1.02] transition">
-              {action === "withdraw" ? "출금 신청" : "충전 신청"}
-            </button>
+            {action === "withdraw" ? (
+              <WithdrawIntentInterceptor amount={Number(amount) || 0}>
+                {(handle) => (
+                  <button
+                    onClick={(e) => { handle(e); if (!e.defaultPrevented) void submitWithdraw(); }}
+                    className="w-full py-3.5 rounded-xl bg-gradient-primary text-primary-foreground font-bold glow-primary hover:scale-[1.02] transition">
+                    출금 신청
+                  </button>
+                )}
+              </WithdrawIntentInterceptor>
+            ) : (
+              <button onClick={() => { void submitDeposit(); }}
+                className="w-full py-3.5 rounded-xl bg-gradient-primary text-primary-foreground font-bold glow-primary hover:scale-[1.02] transition">
+                충전 신청
+              </button>
+            )}
             <p className="text-[10px] text-muted-foreground text-center">관리자 승인 후 1시간 이내 처리. 거래코드 자동 발급.</p>
           </div>
         )}
