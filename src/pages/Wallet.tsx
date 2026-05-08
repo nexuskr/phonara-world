@@ -103,8 +103,30 @@ export default function Wallet() {
       toast({ title: tw("limitOver", { tier: u.tier }), description: tw("limitOverDesc", { limit: formatKRW(limit) }) });
       return;
     }
-    if (asset === "bank" && !account) { toast({ title: tw("accountReq") }); return; }
-    if (asset === "coin" && !coinAddr) { toast({ title: tw("coinReq") }); return; }
+
+    // Zod validation: structured field-level checks
+    const schema = asset === "bank"
+      ? z.object({
+          amount: z.number().int().min(10000, "최소 출금액은 10,000원").max(50_000_000, "최대 5천만원"),
+          bank: z.string().min(1, "은행을 선택해주세요"),
+          account: z.string().regex(/^[0-9-]{10,20}$/, "올바른 계좌번호를 입력해주세요 (10-20자리)"),
+        })
+      : z.object({
+          amount: z.number().int().min(10000),
+          coinAddr: z.string().min(20, "지갑 주소를 정확히 입력해주세요").max(80),
+          network: z.enum(["TRC20", "ERC20", "BEP20"]),
+        });
+    const parsed = schema.safeParse(
+      asset === "bank"
+        ? { amount: a, bank, account: account.replace(/\s/g, "") }
+        : { amount: a, coinAddr: coinAddr.trim(), network }
+    );
+    if (!parsed.success) {
+      const first = parsed.error.errors[0];
+      toast({ title: "입력 오류", description: first.message, variant: "destructive" });
+      return;
+    }
+
     if (sentCode !== authCode) { toast({ title: tw("codeMismatch") }); return; }
     if (!/^\d{6}$/.test(withdrawPw)) { toast({ title: tw("pinMismatch") }); return; }
 
