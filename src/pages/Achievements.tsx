@@ -81,11 +81,11 @@ export default function Achievements() {
             <button
               key={c}
               onClick={() => setTab(c)}
-              className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition ${
+              className={`px-4 min-h-[44px] rounded-full text-xs font-bold whitespace-nowrap break-keep transition ${
                 tab === c ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/70"
               }`}
             >
-              {c.toUpperCase()}
+              {c === "all" ? t("all") : c.toUpperCase()}
             </button>
           ))}
         </div>
@@ -113,9 +113,9 @@ export default function Achievements() {
                     </div>
                     <p className="text-xs text-muted-foreground mt-0.5">{a.description}</p>
                     <div className="flex items-center gap-2 mt-2 text-xs">
-                      <span className="px-2 py-0.5 rounded-full bg-primary/15 text-primary font-bold">+{a.ap} AP</span>
+                      <span className="px-2 py-0.5 rounded-full bg-primary/15 text-primary font-bold tabular-nums">+{a.ap} AP</span>
                       {a.reward_credit > 0 && (
-                        <span className="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-500 font-bold">{formatKRW(a.reward_credit)}</span>
+                        <span className="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-500 font-bold tabular-nums">{formatKRW(a.reward_credit)}</span>
                       )}
                     </div>
                   </div>
@@ -132,8 +132,8 @@ export default function Achievements() {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-xl bg-background/50 border border-border p-3">
-      <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</div>
-      <div className="text-lg font-black mt-1">{value}</div>
+      <div className="text-[10px] uppercase tracking-widest text-muted-foreground break-keep">{label}</div>
+      <div className="text-lg font-black mt-1 tabular-nums">{value}</div>
     </div>
   );
 }
