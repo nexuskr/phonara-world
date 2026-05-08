@@ -1832,6 +1832,51 @@ export type Database = {
         }
         Relationships: []
       }
+      ugc_traffic_events: {
+        Row: {
+          channel: string
+          clicks: number
+          conversions: number
+          created_at: string
+          dm_responded: number
+          dm_sent: number
+          event_date: string
+          id: string
+          note: string | null
+          signups: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          channel: string
+          clicks?: number
+          conversions?: number
+          created_at?: string
+          dm_responded?: number
+          dm_sent?: number
+          event_date?: string
+          id?: string
+          note?: string | null
+          signups?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          channel?: string
+          clicks?: number
+          conversions?: number
+          created_at?: string
+          dm_responded?: number
+          dm_sent?: number
+          event_date?: string
+          id?: string
+          note?: string | null
+          signups?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       uptime_pings: {
         Row: {
           checked_at: string
