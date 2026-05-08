@@ -21,14 +21,30 @@ type Metrics = {
 const fmtKRW = (n: number) => `₩ ${Number(n || 0).toLocaleString()}`;
 const fmtPct = (n: number) => `${Number(n ?? 0).toFixed(2)}%`;
 
+type UptimeSummary = {
+  samples_24h: number;
+  success_rate_24h: number;
+  success_rate_7d: number;
+  p95_latency_ms_24h: number;
+  avg_latency_ms_24h: number;
+  last_ping_at: string | null;
+  last_ok: boolean | null;
+  generated_at: string;
+};
+
 export default function Trust() {
   const [m, setM] = useState<Metrics | null>(null);
+  const [u, setU] = useState<UptimeSummary | null>(null);
   const [loading, setLoading] = useState(true);
 
   async function load() {
     setLoading(true);
-    const { data } = await supabase.rpc("public_trust_metrics");
-    setM((data as Metrics) ?? null);
+    const [{ data: md }, { data: ud }] = await Promise.all([
+      supabase.rpc("public_trust_metrics"),
+      supabase.rpc("public_uptime_summary"),
+    ]);
+    setM((md as Metrics) ?? null);
+    setU((ud as unknown as UptimeSummary) ?? null);
     setLoading(false);
   }
   useEffect(() => { void load(); }, []);
