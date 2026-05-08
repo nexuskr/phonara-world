@@ -74,8 +74,9 @@
   }
   .font-display { font-family: 'Cormorant Garamond', 'Fraunces', 'Pretendard Variable', serif; letter-spacing: -0.005em; font-optical-sizing: auto; }
   .font-imperial { font-family: 'Italiana', 'Cormorant Garamond', 'Pretendard Variable', serif; letter-spacing: 0.16em; }
-  .font-hud { font-family: 'Space Grotesk', 'Pretendard Variable', system-ui, sans-serif; letter-spacing: 0.02em; font-variant-numeric: tabular-nums; }
-  .tabular-nums { font-feature-settings: "tnum"; font-variant-numeric: tabular-nums; }
+  /* HUD / Numbers — Pretendard with tabular numerals (1순위 추천) */
+  .font-hud { font-family: 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif; letter-spacing: 0.005em; font-variant-numeric: tabular-nums; font-feature-settings: "tnum", "ss01", "ss02"; font-weight: 600; }
+  .tabular-nums { font-family: 'Pretendard Variable', 'Pretendard', -apple-system, system-ui, sans-serif; font-feature-settings: "tnum"; font-variant-numeric: tabular-nums; }
   .text-gradient-imperial {
     background: var(--gradient-imperial);
     -webkit-background-clip: text; background-clip: text; color: transparent;
