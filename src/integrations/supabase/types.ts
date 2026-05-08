@@ -476,6 +476,33 @@ export type Database = {
         }
         Relationships: []
       }
+      idempotency_keys: {
+        Row: {
+          created_at: string
+          id: string
+          key: string
+          response: Json
+          scope: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          key: string
+          response?: Json
+          scope: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          key?: string
+          response?: Json
+          scope?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       jackpot_pool: {
         Row: {
           amount: number
@@ -1724,6 +1751,7 @@ export type Database = {
           read_ct: number
         }[]
       }
+      recover_stuck_settlements: { Args: never; Returns: Json }
       request_withdrawal: {
         Args: {
           _amount: number
@@ -1751,6 +1779,7 @@ export type Database = {
         Returns: Json
       }
       settle_package_daily: { Args: never; Returns: Json }
+      settlement_slo: { Args: never; Returns: Json }
       spin_roulette: { Args: { _kind: string }; Returns: Json }
       start_ai_bot_run: {
         Args: {
