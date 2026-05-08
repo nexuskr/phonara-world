@@ -16,6 +16,17 @@ import WithdrawIntentInterceptor from "@/components/conversion/WithdrawIntentInt
 type AssetTab = "bank" | "coin";
 type ActionTab = "withdraw" | "deposit" | "history";
 
+const BANKS = ["KB", "Shinhan", "Woori", "Hana", "Nonghyup", "Kakao Bank", "Toss Bank"] as const;
+const BANK_LABEL: Record<string, { ko: string; en: string }> = {
+  "KB": { ko: "KB국민", en: "KB Kookmin" },
+  "Shinhan": { ko: "신한", en: "Shinhan" },
+  "Woori": { ko: "우리", en: "Woori" },
+  "Hana": { ko: "하나", en: "Hana" },
+  "Nonghyup": { ko: "농협", en: "Nonghyup" },
+  "Kakao Bank": { ko: "카카오뱅크", en: "Kakao Bank" },
+  "Toss Bank": { ko: "토스뱅크", en: "Toss Bank" },
+};
+
 export default function Wallet() {
   const [db, setDb] = useDB();
   const nav = useNavigate();
@@ -30,7 +41,7 @@ export default function Wallet() {
   // shared
   const [amount, setAmount] = useState("");
   // bank
-  const [bank, setBank] = useState("KB국민");
+  const [bank, setBank] = useState<string>("KB");
   const [account, setAccount] = useState("");
   // coin
   const [coinAddr, setCoinAddr] = useState("");
