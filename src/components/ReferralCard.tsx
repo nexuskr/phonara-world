@@ -19,6 +19,7 @@ export default function ReferralCard() {
   const [applyCode, setApplyCode] = useState("");
   const [applying, setApplying] = useState(false);
   const [hasInviter, setHasInviter] = useState<boolean>(false);
+  const [daysLeft, setDaysLeft] = useState<number | null>(null);
 
   const load = async () => {
     const { data, error } = await supabase.rpc("get_referral_stats");
@@ -27,6 +28,12 @@ export default function ReferralCard() {
     if (u.user) {
       const { data: p } = await supabase.from("profiles").select("referred_by").eq("id", u.user.id).maybeSingle();
       setHasInviter(!!(p as any)?.referred_by);
+      const created = u.user.created_at ? new Date(u.user.created_at).getTime() : null;
+      if (created) {
+        const expires = created + 90 * 24 * 60 * 60 * 1000;
+        const diff = Math.ceil((expires - Date.now()) / (24 * 60 * 60 * 1000));
+        setDaysLeft(diff);
+      }
     }
     setLoading(false);
   };
@@ -95,7 +102,14 @@ export default function ReferralCard() {
               {t("headerTitle")}
               <Sparkles className="w-3.5 h-3.5 text-gold animate-pulse" />
             </h3>
-            <p className="text-[10px] text-muted-foreground break-keep">{t("headerSub1")}<span className="text-gold font-bold">{t("headerSubBold")}</span></p>
+          <p className="text-[10px] text-muted-foreground break-keep">{t("headerSub1")}<span className="text-gold font-bold">{t("headerSubBold")}</span></p>
+          {daysLeft !== null && (
+            <p className="text-[10px] mt-0.5 break-keep">
+              <span className={daysLeft > 0 ? "text-gold font-bold" : "text-muted-foreground"}>
+                {daysLeft > 0 ? t("windowDays", { days: daysLeft }) : t("windowExpired")}
+              </span>
+            </p>
+          )}
           </div>
         </div>
 

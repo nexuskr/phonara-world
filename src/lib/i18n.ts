@@ -1008,6 +1008,8 @@ const resources = {
       rule1: "• 친구의 첫 입금 시 인바이터 30,000C / 친구 10,000C 자동 지급",
       rule2: "• 가입일로부터 90일 이내에 친구가 첫 입금해야 적용",
       rule3: "• 본인 코드 불가 · 1회만 등록 · 부정행위 적발 시 보상 회수",
+      windowDays: "추천 윈도우 {{days}}일 남음",
+      windowExpired: "추천 윈도우 종료",
     },
     withdrawQueue: {
       title: "출금 큐 상태",
@@ -2344,6 +2346,8 @@ const resources = {
       rule1: "• Friend's first deposit pays inviter 30,000C / friend 10,000C automatically",
       rule2: "• Friend must complete first deposit within 90 days of signup",
       rule3: "• No self-referral · One-time apply · Rewards revoked on abuse",
+      windowDays: "{{days}} days left in referral window",
+      windowExpired: "Referral window closed",
     },
     withdrawQueue: {
       title: "Withdraw queue status",
