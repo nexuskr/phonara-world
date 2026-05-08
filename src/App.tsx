@@ -95,6 +95,7 @@ const App = () => (
               <Route path="/season-pass" element={<SeasonPass />} />
               <Route path="/quests" element={<Quests />} />
               <Route path="/unsubscribe" element={<Unsubscribe />} />
+              <Route path="/trust" element={<Trust />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
