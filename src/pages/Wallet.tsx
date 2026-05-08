@@ -152,82 +152,129 @@ export default function Wallet() {
   return (
     <Layout>
       <HubTabs hub="treasury" />
-      <div className="container pt-6 pb-10 animate-liquid-in">
-        <h1 className="font-display font-black text-2xl flex items-center gap-2 mb-1">
-          <WalletIcon className="w-5 h-5 text-primary" /> <span className="text-gradient-primary">사이버 지갑</span>
-        </h1>
-        <div className="text-[11px] text-muted-foreground mb-3">
-          <span className="text-gold font-bold">{u.tier}</span> 등급 출금 한도:{" "}
-          <span className="font-bold text-foreground">
-            {WITHDRAW_LIMITS[u.tier] === -1 ? "무제한 ∞" : formatKRW(WITHDRAW_LIMITS[u.tier])}
-          </span>
+      <div className="container pt-6 pb-10 animate-liquid-in max-w-3xl">
+        <div className="mb-5">
+          <h1 className="font-imperial text-3xl md:text-4xl tracking-[0.2em] text-gradient-imperial flex items-center gap-3">
+            <WalletIcon className="w-6 h-6 text-primary" />
+            황실 지갑
+          </h1>
+          <div className="mt-2 text-xs text-muted-foreground">
+            <span className="font-imperial tracking-[0.2em] text-gradient-imperial mr-1">{u.tier}</span>
+            등급 출금 한도 ·{" "}
+            <span className="font-bold text-foreground">
+              {WITHDRAW_LIMITS[u.tier] === -1 ? "무제한 ∞" : formatKRW(WITHDRAW_LIMITS[u.tier])}
+            </span>
+          </div>
         </div>
 
         {/* Asset switcher */}
-        <div className="grid grid-cols-2 gap-2 mb-4">
-          <button onClick={() => setAsset("bank")} className={`p-4 rounded-2xl text-left ${asset === "bank" ? "glass-strong neon-border" : "glass"}`}>
-            <Banknote className={`w-4 h-4 ${asset === "bank" ? "text-primary" : "text-muted-foreground"}`} />
-            <div className="text-[10px] text-muted-foreground mt-2">뱅크 잔고</div>
-            <div className="font-display font-black text-lg text-gradient-gold tabular-nums">{formatKRW(u.balance)}</div>
+        <div className="grid grid-cols-2 gap-3 mb-5">
+          <button
+            onClick={() => setAsset("bank")}
+            className={`relative p-5 rounded-2xl text-left transition press overflow-hidden ${
+              asset === "bank"
+                ? "glass-strong border border-primary/50 glow-imperial"
+                : "glass border border-border/40 hover:border-primary/30"
+            }`}
+          >
+            {asset === "bank" && <div className="absolute inset-0 bg-gradient-imperial opacity-[0.06] pointer-events-none" />}
+            <div className="flex items-center gap-2">
+              <Banknote className={`w-4 h-4 ${asset === "bank" ? "text-primary" : "text-muted-foreground"}`} />
+              <span className="text-[10px] tracking-[0.2em] font-bold text-muted-foreground">원화 잔고</span>
+            </div>
+            <div className="mt-3 font-imperial text-2xl text-gradient-imperial tabular-nums">{formatKRW(u.balance)}</div>
           </button>
-          <button onClick={() => setAsset("coin")} className={`p-4 rounded-2xl text-left ${asset === "coin" ? "glass-strong neon-border" : "glass"}`}>
-            <Coins className={`w-4 h-4 ${asset === "coin" ? "text-secondary" : "text-muted-foreground"}`} />
-            <div className="text-[10px] text-muted-foreground mt-2">코인 잔고 (USDT)</div>
-            <div className="font-display font-black text-lg text-gradient-cyber tabular-nums">{u.coinBalance.toLocaleString()} USDT</div>
+          <button
+            onClick={() => setAsset("coin")}
+            className={`relative p-5 rounded-2xl text-left transition press overflow-hidden ${
+              asset === "coin"
+                ? "glass-strong border border-primary/50 glow-imperial"
+                : "glass border border-border/40 hover:border-primary/30"
+            }`}
+          >
+            {asset === "coin" && <div className="absolute inset-0 bg-gradient-imperial opacity-[0.06] pointer-events-none" />}
+            <div className="flex items-center gap-2">
+              <Coins className={`w-4 h-4 ${asset === "coin" ? "text-primary" : "text-muted-foreground"}`} />
+              <span className="text-[10px] tracking-[0.2em] font-bold text-muted-foreground">코인 잔고 · USDT</span>
+            </div>
+            <div className="mt-3 font-imperial text-2xl text-gradient-imperial tabular-nums">{u.coinBalance.toLocaleString()} <span className="text-sm">USDT</span></div>
           </button>
         </div>
 
         {/* Action tabs */}
-        <div className="flex gap-2 mb-4">
+        <div className="flex gap-2 mb-5">
           {[
             { id: "withdraw", label: "출금", icon: ArrowDownToLine },
             { id: "deposit", label: "충전", icon: ArrowUpFromLine },
             { id: "history", label: "내역", icon: Clock },
           ].map((t: any) => (
-            <button key={t.id} onClick={() => { setAction(t.id); setResultCode(null); }}
-              className={`flex-1 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition ${action === t.id ? "bg-gradient-primary text-primary-foreground glow-primary" : "glass text-muted-foreground"}`}>
-              <t.icon className="w-3.5 h-3.5" /> {t.label}
+            <button
+              key={t.id}
+              onClick={() => { setAction(t.id); setResultCode(null); }}
+              className={`flex-1 py-3 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 transition press ${
+                action === t.id
+                  ? "bg-gradient-imperial text-primary-foreground glow-imperial"
+                  : "glass text-muted-foreground border border-border/40 hover:text-foreground hover:border-primary/30"
+              }`}
+            >
+              <t.icon className="w-4 h-4" /> {t.label}
             </button>
           ))}
         </div>
 
         {resultCode && (action === "withdraw" || action === "deposit") && (
-          <div className="glass-strong rounded-2xl p-5 neon-border mb-4 text-center">
-            <ShieldCheck className="w-7 h-7 text-secondary mx-auto" />
-            <div className="text-xs text-muted-foreground mt-2">발급된 거래 코드</div>
-            <div className="font-display font-black text-lg text-gradient-cyber mt-1">{resultCode}</div>
-            <button onClick={() => { navigator.clipboard.writeText(resultCode); toast({ title: "복사됨" }); }} className="mt-2 text-[11px] text-primary inline-flex items-center gap-1"><Copy className="w-3 h-3" /> 코드 복사</button>
+          <div className="glass-strong rounded-2xl p-6 border border-primary/40 glow-imperial mb-5 text-center">
+            <ShieldCheck className="w-8 h-8 text-primary mx-auto" />
+            <div className="text-[10px] tracking-[0.25em] text-muted-foreground mt-2 font-bold">발급된 거래 코드</div>
+            <div className="font-imperial text-2xl tracking-[0.15em] text-gradient-imperial mt-2">{resultCode}</div>
+            <button
+              onClick={() => { navigator.clipboard.writeText(resultCode); toast({ title: "복사됨" }); }}
+              className="mt-3 px-4 py-1.5 rounded-full glass border border-primary/30 text-xs text-primary inline-flex items-center gap-1.5 hover:border-primary/60 transition"
+            >
+              <Copy className="w-3.5 h-3.5" /> 코드 복사
+            </button>
           </div>
         )}
 
         {action !== "history" && (
-          <div className="glass-strong rounded-2xl p-5 space-y-4 neon-border">
+          <div className="glass-strong rounded-2xl p-6 space-y-5 border border-primary/20">
             <Field label="금액">
-              <input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="10,000원 이상"
-                className="w-full bg-input/60 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary" />
+              <input
+                type="number"
+                value={amount}
+                onChange={e => setAmount(e.target.value)}
+                placeholder="10,000원 이상"
+                className="w-full bg-input/60 border border-border rounded-xl px-4 py-3.5 text-base font-bold tabular-nums focus:outline-none focus:border-primary transition"
+              />
             </Field>
             <div className="grid grid-cols-3 gap-2">
               {[10000, 50000, 100000].map(v => (
-                <button key={v} onClick={() => setAmount(String(v))} className="py-2 rounded-xl glass text-xs font-bold hover:bg-primary/10">+{v.toLocaleString()}</button>
+                <button
+                  key={v}
+                  onClick={() => setAmount(String(v))}
+                  className="py-2.5 rounded-xl glass border border-border/40 text-xs font-bold hover:border-primary/40 hover:text-primary transition"
+                >
+                  +{v.toLocaleString()}
+                </button>
               ))}
             </div>
 
             {asset === "bank" && action === "withdraw" && (
               <>
                 <Field label="은행">
-                  <select value={bank} onChange={e => setBank(e.target.value)} className="w-full bg-input/60 border border-border rounded-xl px-4 py-3 text-sm">
+                  <select value={bank} onChange={e => setBank(e.target.value)} className="w-full bg-input/60 border border-border rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:border-primary">
                     {["KB국민", "신한", "우리", "하나", "농협", "카카오뱅크", "토스뱅크"].map(b => <option key={b}>{b}</option>)}
                   </select>
                 </Field>
                 <Field label="계좌번호">
                   <input value={account} onChange={e => setAccount(e.target.value)} placeholder="'-' 없이 숫자만"
-                    className="w-full bg-input/60 border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-primary" />
+                    className="w-full bg-input/60 border border-border rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:border-primary" />
                 </Field>
               </>
             )}
 
             {asset === "bank" && action === "deposit" && (
-              <div className="glass rounded-xl p-4 text-xs space-y-1">
+              <div className="glass rounded-xl p-4 text-xs space-y-2 border border-border/40">
                 <div className="flex justify-between"><span className="text-muted-foreground">입금 은행</span><span className="font-bold">KB국민 123-456-78901234</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">예금주</span><span className="font-bold">(주)Phonara</span></div>
                 <p className="text-[10px] text-muted-foreground pt-2 border-t border-border/40">송금 후 발급된 거래 코드를 입금자명에 포함해주세요.</p>
@@ -237,38 +284,41 @@ export default function Wallet() {
             {asset === "coin" && action === "withdraw" && (
               <>
                 <Field label="네트워크">
-                  <select value={network} onChange={e => setNetwork(e.target.value as any)} className="w-full bg-input/60 border border-border rounded-xl px-4 py-3 text-sm">
+                  <select value={network} onChange={e => setNetwork(e.target.value as any)} className="w-full bg-input/60 border border-border rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:border-primary">
                     {["TRC20", "ERC20", "BEP20"].map(b => <option key={b}>{b}</option>)}
                   </select>
                 </Field>
                 <Field label="수신 코인 주소">
                   <input value={coinAddr} onChange={e => setCoinAddr(e.target.value)} placeholder="USDT 주소"
-                    className="w-full bg-input/60 border border-border rounded-xl px-4 py-3 text-sm font-mono focus:outline-none focus:border-primary" />
+                    className="w-full bg-input/60 border border-border rounded-xl px-4 py-3.5 text-sm font-mono focus:outline-none focus:border-primary" />
                 </Field>
               </>
             )}
 
             {asset === "coin" && action === "deposit" && (
-              <div className="glass rounded-xl p-4 text-xs space-y-2">
+              <div className="glass rounded-xl p-4 text-xs space-y-2 border border-border/40">
                 <div className="flex justify-between"><span className="text-muted-foreground">네트워크</span><span className="font-bold">TRC20</span></div>
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col gap-1.5">
                   <span className="text-muted-foreground">관리자 입금 주소</span>
-                  <code className="font-mono text-[10px] break-all bg-muted/40 p-2 rounded-lg">TXyz1234567890ABCDEF1234567890ABCDEF12</code>
+                  <code className="font-mono text-[10px] break-all bg-muted/40 p-2.5 rounded-lg border border-border/40">TXyz1234567890ABCDEF1234567890ABCDEF12</code>
                   <button onClick={() => { navigator.clipboard.writeText("TXyz1234567890ABCDEF1234567890ABCDEF12"); toast({ title: "주소 복사됨" }); }}
-                    className="text-[11px] text-primary inline-flex items-center gap-1"><Copy className="w-3 h-3" /> 주소 복사</button>
+                    className="text-[11px] text-primary inline-flex items-center gap-1 self-start"><Copy className="w-3 h-3" /> 주소 복사</button>
                 </div>
                 <p className="text-[10px] text-muted-foreground pt-2 border-t border-border/40">송금 후 6자리 인증번호와 출금비밀번호 입력 후 거래코드를 발급받으세요.</p>
               </div>
             )}
 
             {/* Verification block */}
-            <div className="glass rounded-xl p-4 space-y-3 border border-border/40">
+            <div className="rounded-xl p-4 space-y-3 border border-primary/20 bg-primary/[0.03]">
               <div className="flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-secondary" />
-                <span className="text-xs font-display font-bold">금융급 2단계 인증</span>
+                <ShieldCheck className="w-4 h-4 text-primary" />
+                <span className="text-xs font-bold tracking-wider">금융급 2단계 인증</span>
               </div>
               {!sentCode ? (
-                <button onClick={sendCode} className="w-full py-3 rounded-xl bg-secondary text-secondary-foreground text-xs font-bold hover:scale-[1.02] transition">
+                <button
+                  onClick={sendCode}
+                  className="w-full py-3 rounded-xl glass border border-primary/40 text-primary text-xs font-bold hover:bg-primary/10 hover:border-primary/70 transition press"
+                >
                   6자리 인증번호 받기
                 </button>
               ) : (
@@ -282,24 +332,24 @@ export default function Wallet() {
                 {(handle) => (
                   <button
                     onClick={(e) => { handle(e); if (!e.defaultPrevented) void submitWithdraw(); }}
-                    className="w-full py-3.5 rounded-xl bg-gradient-primary text-primary-foreground font-bold glow-primary hover:scale-[1.02] transition">
+                    className="w-full py-4 rounded-xl bg-gradient-imperial text-primary-foreground font-bold tracking-wider glow-imperial hover:scale-[1.01] transition press">
                     출금 신청
                   </button>
                 )}
               </WithdrawIntentInterceptor>
             ) : (
               <button onClick={() => { void submitDeposit(); }}
-                className="w-full py-3.5 rounded-xl bg-gradient-primary text-primary-foreground font-bold glow-primary hover:scale-[1.02] transition">
+                className="w-full py-4 rounded-xl bg-gradient-imperial text-primary-foreground font-bold tracking-wider glow-imperial hover:scale-[1.01] transition press">
                 충전 신청
               </button>
             )}
-            <p className="text-[10px] text-muted-foreground text-center">관리자 승인 후 1시간 이내 처리. 거래코드 자동 발급.</p>
+            <p className="text-[10px] text-muted-foreground text-center pt-1">관리자 승인 후 1시간 이내 처리 · 거래코드 자동 발급</p>
           </div>
         )}
 
         {action === "history" && (
           <div>
-            <div className="text-[10px] tracking-widest text-secondary font-black mb-2">실시간 거래 내역</div>
+            <div className="text-[10px] tracking-[0.25em] text-primary font-black mb-3">실시간 거래 내역</div>
             <ServerTxList />
           </div>
         )}
@@ -311,7 +361,7 @@ export default function Wallet() {
 function Field({ label, children }: any) {
   return (
     <div>
-      <div className="text-[11px] text-muted-foreground mb-1.5 font-bold">{label}</div>
+      <div className="text-[10px] tracking-[0.2em] text-muted-foreground mb-2 font-bold uppercase">{label}</div>
       {children}
     </div>
   );
