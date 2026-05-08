@@ -99,7 +99,7 @@ export default {
         imperial: ["Italiana", "Cormorant Garamond", "Pretendard Variable", "serif"],
         sans: ["Pretendard Variable", "Pretendard", "-apple-system", "BlinkMacSystemFont", "system-ui", "sans-serif"],
         title: ["Cormorant Garamond", "Fraunces", "Pretendard Variable", "serif"],
-        hud: ["Space Grotesk", "Pretendard Variable", "system-ui", "sans-serif"],
+        hud: ["Pretendard Variable", "Pretendard", "-apple-system", "BlinkMacSystemFont", "system-ui", "sans-serif"],
         mono: ["JetBrains Mono", "monospace"],
       },
 
