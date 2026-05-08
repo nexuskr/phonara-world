@@ -45,13 +45,13 @@ const resources = {
       boostCount: "{{n}} BOOST",
     },
     hubs: {
-      earn: { title: "EARN", tagline: "돈 버는 모든 것 — 한 곳에서",
+      earn: { title: "수익 허브", tagline: "돈 버는 모든 것 — 한 곳에서",
         missions: "미션", quests: "퀘스트", roulette: "룰렛", seasonPass: "시즌패스" },
-      empire: { title: "EMPIRE", tagline: "당신의 제국, 등급으로 말하다",
-        packages: "패키지", tier: "Tier", founding: "창립멤버" },
-      treasury: { title: "TREASURY", tagline: "잔고 · 입출금 · 내역",
+      empire: { title: "제국 허브", tagline: "당신의 제국, 등급으로 말하다",
+        packages: "패키지", tier: "등급", founding: "창립멤버" },
+      treasury: { title: "황실 금고", tagline: "잔고 · 입출금 · 내역",
         wallet: "지갑", deposit: "입금", withdraw: "출금", history: "내역", settlements: "정산내역" },
-      legacy: { title: "LEGACY", tagline: "당신이 쌓은 것 — 영원히 남는다",
+      legacy: { title: "유산 허브", tagline: "당신이 쌓은 것 — 영원히 남는다",
         ranking: "랭킹", achievements: "업적", referral: "레퍼럴" },
     },
     auth: {
