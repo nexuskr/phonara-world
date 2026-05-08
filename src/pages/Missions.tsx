@@ -654,6 +654,7 @@ function ReactionGame({ reward, onResult }: { reward: number; onResult: (w: bool
 }
 
 function TapGame({ reward, onResult }: { reward: number; onResult: (w: boolean, b: number) => void }) {
+  const { t } = useTranslation("missions");
   const [count, setCount] = useState(0);
   const [time, setTime] = useState(10);
   const [running, setRunning] = useState(false);
@@ -666,14 +667,14 @@ function TapGame({ reward, onResult }: { reward: number; onResult: (w: boolean, 
       setTimeout(() => onResult(won, bonus), 400);
       return;
     }
-    const t = setTimeout(() => setTime((s) => s - 1), 1000);
-    return () => clearTimeout(t);
+    const tm = setTimeout(() => setTime((s) => s - 1), 1000);
+    return () => clearTimeout(tm);
   }, [time, running]);
   return (
     <div className="text-center">
       <div className="font-display font-black text-5xl text-money-strong tabular-nums">{count}</div>
-      <div className="text-xs text-muted-foreground mt-1">
-        남은 {time}초 · 25탭 이상 성공 · 보너스 +{formatKRW(Math.min(count * 50, reward * 2))}
+      <div className="text-xs text-muted-foreground mt-1 break-keep tabular-nums">
+        {t("gTapLeft", { s: time, val: formatKRW(Math.min(count * 50, reward * 2)) })}
       </div>
       <button
         onClick={() => {
@@ -686,7 +687,7 @@ function TapGame({ reward, onResult }: { reward: number; onResult: (w: boolean, 
         }}
         className="press mt-5 w-40 h-40 rounded-full bg-gradient-cyber text-primary-foreground font-display font-black text-xl glow-primary mx-auto block"
       >
-        {running ? "TAP!" : "시작"}
+        {running ? t("gTap") : t("gStart")}
       </button>
     </div>
   );
