@@ -242,6 +242,7 @@
   }
 }
 @layer utilities {
+  .animate-float { animation: float 6s ease-in-out infinite; }
   .animate-float-slow { animation: float 10s ease-in-out infinite; }
   .animate-pulse-glow { animation: pulseGlow 2.5s ease-in-out infinite; }
   .animate-gradient { background-size: 200% 200%; animation: gradientMove 8s ease infinite; }
