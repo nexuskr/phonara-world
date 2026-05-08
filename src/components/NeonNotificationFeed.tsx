@@ -9,6 +9,8 @@ const NEON_KIND_STYLE: Record<string, { color: string; emoji: string }> = {
   weekly_payout:       { color: "from-amber-400 to-rose-500",   emoji: "🏆" },
   weekly_pass_claim:   { color: "from-violet-400 to-fuchsia-500", emoji: "🌟" },
   rank_up:             { color: "from-yellow-300 to-amber-500", emoji: "📈" },
+  rank_change:         { color: "from-yellow-300 to-rose-500",  emoji: "🎯" },
+  weekly_pass_end:     { color: "from-violet-400 to-rose-500",  emoji: "⏰" },
   achievement:         { color: "from-pink-400 to-rose-500",    emoji: "🏅" },
 };
 
