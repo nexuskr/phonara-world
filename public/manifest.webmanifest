@@ -1,5 +1,5 @@
 {
-  "name": "Phonara — Imperial Empire",
+  "name": "Phonara — 임페리얼 엠파이어",
   "short_name": "Phonara",
   "description": "Phonara — 임페리얼 골드 엠파이어. 폰 하나로 시작하는 글로벌 수익 플랫폼.",
   "start_url": "/dashboard",
@@ -9,6 +9,7 @@
   "background_color": "#08070f",
   "theme_color": "#d4af37",
   "lang": "ko",
+  "dir": "ltr",
   "categories": ["finance", "productivity", "lifestyle"],
   "icons": [
     {

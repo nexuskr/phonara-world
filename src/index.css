@@ -74,6 +74,19 @@
     background: var(--gradient-imperial);
     -webkit-background-clip: text; background-clip: text; color: transparent;
   }
+  /* High-legibility gold for numerical displays (balances, KPI). Solid bright gold + soft glow. */
+  .text-money {
+    color: hsl(48 100% 72%);
+    text-shadow: 0 0 18px hsl(44 95% 65% / 0.45), 0 1px 0 hsl(240 30% 3% / 0.6);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.01em;
+  }
+  .text-money-strong {
+    color: hsl(48 100% 78%);
+    text-shadow: 0 0 22px hsl(44 95% 65% / 0.6), 0 0 60px hsl(44 80% 53% / 0.35), 0 1px 0 hsl(240 30% 3% / 0.7);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.01em;
+  }
   .glow-imperial { box-shadow: var(--glow-gold); }
   /* Animated grid background */
   .bg-grid {
