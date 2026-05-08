@@ -92,6 +92,7 @@ export default function Admin() {
     { id: "security", label: t("tabSecurity"), icon: ShieldCheck },
     { id: "ops", label: t("tabOps"), icon: Activity },
     { id: "perms", label: t("tabPerms"), icon: Lock },
+    { id: "viral_forensics", label: "바이럴 감사", icon: Flame },
     { id: "aml", label: "AML 결재", icon: ShieldCheck },
     { id: "ai_missions", label: "AI 미션", icon: Bot },
     { id: "payout_audit", label: "정산검증", icon: Activity },
