@@ -391,16 +391,40 @@ export default function Wallet() {
             )}
 
             {asset === "coin" && action === "deposit" && (
-              <div className="glass rounded-xl p-4 text-xs space-y-2 border border-border/40">
-                <div className="flex justify-between"><span className="text-muted-foreground">{t("network")}</span><span className="font-bold">TRC20</span></div>
-                <div className="flex flex-col gap-1.5">
-                  <span className="text-muted-foreground">{t("adminAddr")}</span>
-                  <code className="font-mono text-[10px] break-all bg-muted/40 p-2.5 rounded-lg border border-border/40">TXyz1234567890ABCDEF1234567890ABCDEF12</code>
-                  <button onClick={() => { navigator.clipboard.writeText("TXyz1234567890ABCDEF1234567890ABCDEF12"); toast({ title: "✓" }); }}
-                    className="text-[11px] text-primary inline-flex items-center gap-1 self-start min-h-[32px]"><Copy className="w-3 h-3" /> {t("copyAddr")}</button>
+              <>
+                <div className="glass rounded-xl p-4 text-xs space-y-2 border border-primary/30">
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">{t("network")}</span>
+                    <span className="font-bold">TRC20</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">{t("channelCoin")}</span>
+                    <span className="text-primary font-black">{t("channelCoinBonus")}</span>
+                  </div>
+                  <div className="flex flex-col gap-1.5 pt-1">
+                    <span className="text-muted-foreground">{t("adminAddr")}</span>
+                    <code className="font-mono text-[10px] break-all bg-muted/40 p-2.5 rounded-lg border border-border/40">TXyz1234567890ABCDEF1234567890ABCDEF12</code>
+                    <button onClick={() => { navigator.clipboard.writeText("TXyz1234567890ABCDEF1234567890ABCDEF12"); toast({ title: "✓" }); }}
+                      className="text-[11px] text-primary inline-flex items-center gap-1 self-start min-h-[32px]"><Copy className="w-3 h-3" /> {t("copyAddr")}</button>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground pt-2 border-t border-border/40">{t("coinDepositMemo")}</p>
+                  <p className="text-[10px] text-primary/80 font-bold">★ {t("coinMasterTeaser")}</p>
                 </div>
-                <p className="text-[10px] text-muted-foreground pt-2 border-t border-border/40">{t("coinDepositMemo")}</p>
-              </div>
+
+                {Number(amount) > 0 && (() => {
+                  const a = Number(amount);
+                  const bonus = Math.floor(a * 8 / 100);
+                  return (
+                    <div className="rounded-xl p-3.5 border border-primary/40 bg-gradient-imperial/10">
+                      <div className="text-[10px] tracking-[0.2em] text-primary font-bold uppercase">{t("bonusPreview")}</div>
+                      <div className="text-money-strong text-xl font-black mt-1">{formatKRW(a + bonus)}</div>
+                      <div className="text-[10px] text-muted-foreground mt-0.5">
+                        {t("bonusBreakdown", { amount: formatKRW(a), bonus: formatKRW(bonus), pct: 8 })}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </>
             )}
 
             {/* Verification block */}
