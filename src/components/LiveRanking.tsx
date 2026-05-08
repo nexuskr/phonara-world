@@ -53,7 +53,7 @@ export default function LiveRanking() {
                 <span className="text-xl">{TIER_EMOJI[(r.tier ?? "normal").toLowerCase()] ?? "🚀"}</span>
                 <span className="text-sm font-bold truncate">{r.nickname}</span>
               </div>
-              <div className="text-sm font-display font-bold text-gradient-primary tabular-nums shrink-0">{formatKRW(r.earned)}</div>
+              <div className="text-sm font-display font-bold text-money-strong tabular-nums shrink-0">{formatKRW(r.earned)}</div>
             </div>
           ))}
         </div>

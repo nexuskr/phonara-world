@@ -670,7 +670,7 @@ function TapGame({ reward, onResult }: { reward: number; onResult: (w: boolean, 
   }, [time, running]);
   return (
     <div className="text-center">
-      <div className="font-display font-black text-5xl text-gradient-primary tabular-nums">{count}</div>
+      <div className="font-display font-black text-5xl text-money-strong tabular-nums">{count}</div>
       <div className="text-xs text-muted-foreground mt-1">
         남은 {time}초 · 25탭 이상 성공 · 보너스 +{formatKRW(Math.min(count * 50, reward * 2))}
       </div>
