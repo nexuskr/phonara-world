@@ -73,7 +73,7 @@ export default function PaywallStarter({
 
         <div className="relative">
           <div className="text-[10px] tracking-[0.3em] text-secondary font-black flex items-center gap-1.5">
-            <Crown className="w-3 h-3 text-gold" /> 첫 결제 한정
+            <Crown className="w-3 h-3 text-gold" /> {t("firstOnly")}
           </div>
           <h2 className="font-imperial text-2xl text-gradient-gold mt-1">{pkg.name}</h2>
           <p className="text-xs text-muted-foreground mt-1">{pkg.tagline}</p>
