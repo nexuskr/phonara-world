@@ -20,6 +20,7 @@ const FAQ = [
 type Msg = { id: string; sender: "user" | "admin"; message: string; created_at: string };
 
 export default function Support() {
+  const { t, i18n } = useTranslation("support");
   const [db] = useDB();
   const nav = useNavigate();
   const user = useRequireAuth() ?? db.user;
