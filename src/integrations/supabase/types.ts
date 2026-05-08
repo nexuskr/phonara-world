@@ -2204,6 +2204,126 @@ export type Database = {
         }
         Relationships: []
       }
+      viral_mission_catalog: {
+        Row: {
+          active: boolean
+          ai_seed: string | null
+          asset_url: string | null
+          cooldown_hours: number
+          copy_template: string
+          created_at: string
+          daily_cap_per_user: number
+          key: string
+          lifetime_cap_per_invitee: number
+          milestone_bonuses: Json
+          platform: string
+          proof_type: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          ai_seed?: string | null
+          asset_url?: string | null
+          cooldown_hours?: number
+          copy_template: string
+          created_at?: string
+          daily_cap_per_user?: number
+          key: string
+          lifetime_cap_per_invitee?: number
+          milestone_bonuses?: Json
+          platform: string
+          proof_type?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          ai_seed?: string | null
+          asset_url?: string | null
+          cooldown_hours?: number
+          copy_template?: string
+          created_at?: string
+          daily_cap_per_user?: number
+          key?: string
+          lifetime_cap_per_invitee?: number
+          milestone_bonuses?: Json
+          platform?: string
+          proof_type?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      viral_mission_submissions: {
+        Row: {
+          catalog_key: string
+          chain_id: string | null
+          clicks_attributed: number
+          conversions_attributed: number
+          created_at: string
+          entitlement_status: string
+          id: string
+          metadata: Json
+          milestones_paid: Json
+          proof_hash: string | null
+          proof_url: string | null
+          settled_at: string | null
+          status: string
+          total_bonus_paid: number
+          user_id: string
+        }
+        Insert: {
+          catalog_key: string
+          chain_id?: string | null
+          clicks_attributed?: number
+          conversions_attributed?: number
+          created_at?: string
+          entitlement_status?: string
+          id?: string
+          metadata?: Json
+          milestones_paid?: Json
+          proof_hash?: string | null
+          proof_url?: string | null
+          settled_at?: string | null
+          status?: string
+          total_bonus_paid?: number
+          user_id: string
+        }
+        Update: {
+          catalog_key?: string
+          chain_id?: string | null
+          clicks_attributed?: number
+          conversions_attributed?: number
+          created_at?: string
+          entitlement_status?: string
+          id?: string
+          metadata?: Json
+          milestones_paid?: Json
+          proof_hash?: string | null
+          proof_url?: string | null
+          settled_at?: string | null
+          status?: string
+          total_bonus_paid?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "viral_mission_submissions_catalog_key_fkey"
+            columns: ["catalog_key"]
+            isOneToOne: false
+            referencedRelation: "viral_mission_catalog"
+            referencedColumns: ["key"]
+          },
+          {
+            foreignKeyName: "viral_mission_submissions_chain_id_fkey"
+            columns: ["chain_id"]
+            isOneToOne: false
+            referencedRelation: "viral_attribution_chain"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       viral_proof_dedupe: {
         Row: {
           created_at: string
@@ -3172,6 +3292,14 @@ export type Database = {
         Returns: Json
       }
       settle_package_daily: { Args: never; Returns: Json }
+      settle_viral_milestone: {
+        Args: {
+          _catalog_key: string
+          _chain_id: string
+          _milestone_key: string
+        }
+        Returns: Json
+      }
       settlement_slo: { Args: never; Returns: Json }
       slow_requests_top: {
         Args: { _limit?: number }
@@ -3253,6 +3381,10 @@ export type Database = {
       tier_withdraw_min: {
         Args: { t: Database["public"]["Enums"]["user_tier"] }
         Returns: number
+      }
+      toggle_rrm: {
+        Args: { _enabled: boolean; _reason: string }
+        Returns: Json
       }
       track_campaign_click: {
         Args: { _anon_id?: string; _slug: string }
