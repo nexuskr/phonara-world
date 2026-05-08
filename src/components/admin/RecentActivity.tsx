@@ -46,7 +46,7 @@ export default function RecentActivity() {
     try {
       const sinceIso = new Date(Date.now() - RANGE_HOURS[range] * 3600 * 1000).toISOString();
       const limit = 50;
-      const [mh, pp, rs, tx, ae] = await Promise.all([
+      const [mh, pp, rs, tx, ae] = await Promise.allSettled([
         supabase.from("mission_history").select("id,user_id,mission_id,tier,final_reward,is_win,created_at")
           .gte("created_at", sinceIso).order("created_at", { ascending: false }).limit(limit),
         supabase.from("package_purchases").select("id,user_id,package_name,amount,status,created_at")
@@ -54,42 +54,50 @@ export default function RecentActivity() {
         supabase.from("roulette_spins").select("id,user_id,prize_label,amount,kind,created_at")
           .gte("created_at", sinceIso).order("created_at", { ascending: false }).limit(limit),
         supabase.from("transactions").select("id,user_id,amount,direction,kind,created_at")
-          .eq("kind", "settlement" as any)
+          .in("kind", ["package_settle", "profit_share"] as any)
           .gte("created_at", sinceIso).order("created_at", { ascending: false }).limit(limit),
         supabase.from("anomaly_events").select("id,user_id,rule,severity,acknowledged,created_at")
           .gte("created_at", sinceIso).order("created_at", { ascending: false }).limit(limit),
       ]);
 
-      const errs = [mh.error, pp.error, rs.error, tx.error, ae.error].filter(Boolean);
-      if (errs.length) throw errs[0];
-
       const merged: ActivityItem[] = [];
+      const partialErrors: string[] = [];
 
-      (mh.data ?? []).forEach((r: any) => merged.push({
+      const pick = (r: PromiseSettledResult<any>, label: string): any[] => {
+        if (r.status === "rejected") { partialErrors.push(`${label}: ${String(r.reason?.message ?? r.reason)}`); return []; }
+        if (r.value?.error) { partialErrors.push(`${label}: ${r.value.error.message}`); return []; }
+        return r.value?.data ?? [];
+      };
+
+      pick(mh, "mission").forEach((r: any) => merged.push({
         id: `mh:${r.id}`, kind: "mission", ts: r.created_at, actor: r.user_id,
         summary: `${r.mission_id} · ${r.tier} · ${r.is_win ? "WIN" : "LOSE"} · ${fmtKRW(r.final_reward)}`,
         raw: r,
       }));
-      (pp.data ?? []).forEach((r: any) => merged.push({
+      pick(pp, "package").forEach((r: any) => merged.push({
         id: `pp:${r.id}`, kind: "package", ts: r.created_at, actor: r.user_id,
         summary: `${r.package_name} · ${r.status} · ${fmtKRW(r.amount)}`,
         raw: r,
       }));
-      (rs.data ?? []).forEach((r: any) => merged.push({
+      pick(rs, "roulette").forEach((r: any) => merged.push({
         id: `rs:${r.id}`, kind: "roulette", ts: r.created_at, actor: r.user_id,
         summary: `${r.kind ?? "spin"} · ${r.prize_label} · ${fmtKRW(r.amount)}`,
         raw: r,
       }));
-      (tx.data ?? []).forEach((r: any) => merged.push({
+      pick(tx, "settlement").forEach((r: any) => merged.push({
         id: `tx:${r.id}`, kind: "settlement", ts: r.created_at, actor: r.user_id,
-        summary: `${r.direction} · ${fmtKRW(r.amount)}`,
+        summary: `${r.kind} · ${r.direction} · ${fmtKRW(r.amount)}`,
         raw: r,
       }));
-      (ae.data ?? []).forEach((r: any) => merged.push({
+      pick(ae, "anomaly").forEach((r: any) => merged.push({
         id: `ae:${r.id}`, kind: "anomaly", ts: r.created_at, actor: r.user_id,
         summary: `${r.rule} · ${r.severity}${r.acknowledged ? " · ack" : ""}`,
         raw: r,
       }));
+
+      if (partialErrors.length) {
+        setError(partialErrors.join(" / "));
+      }
 
       merged.sort((a, b) => (a.ts < b.ts ? 1 : -1));
       setItems(merged);
