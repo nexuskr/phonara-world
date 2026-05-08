@@ -108,6 +108,7 @@ const App = () => (
               <Route path="/status" element={<Status />} />
              <Route path="/hall-of-fame" element={<HallOfFame />} />
               <Route path="/referral" element={<Referral />} />
+              <Route path="/ugc" element={<UgcDashboard />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
