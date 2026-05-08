@@ -6,8 +6,8 @@ import { track as trackTelemetry } from "@/lib/telemetry";
 import UnlockWall from "./UnlockWall";
 
 /**
- * FREE/NORMAL 등급 + 잔액 임계 미만일 때 출금 클릭을 가로채서 UnlockWall을 띄움.
- * 그 외에는 자식 onClick 그대로 통과.
+ * Intercepts withdraw clicks for FREE/NORMAL tier users below the threshold and shows UnlockWall.
+ * Otherwise the child onClick handler passes through untouched.
  */
 export default function WithdrawIntentInterceptor({
   amount,
@@ -23,11 +23,11 @@ export default function WithdrawIntentInterceptor({
 
   const u = db.user;
   const tier = u?.tier ?? "NORMAL";
-  // FREE/NORMAL 유저가 출금 시도 시 → wall 표시 (간단한 휴리스틱)
+  // FREE/NORMAL users attempting withdraw → show wall (simple heuristic)
   const shouldIntercept =
     isFlagOn("withdrawIntercept") &&
     tier === "NORMAL" &&
-    !u?.withdrawPw && // 첫 출금 시도
+    !u?.withdrawPw && // first withdraw attempt
     amount >= 10_000;
 
   function handle(e: MouseEvent) {

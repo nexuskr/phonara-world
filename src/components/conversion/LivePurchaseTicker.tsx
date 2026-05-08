@@ -24,7 +24,7 @@ function fmtAgo(ms: number) {
   return tt("hourAgo", { n: Math.floor(sec / 3600) });
 }
 
-/** "방금 누가 결제했다" 우측 하단 floating ticker. realtime + fallback. */
+/** Floating bottom-right ticker showing recent purchases. Realtime + fallback. */
 export default function LivePurchaseTicker() {
   const [items, setItems] = useState<Item[]>([]);
   const [idx, setIdx] = useState(0);
@@ -54,7 +54,7 @@ export default function LivePurchaseTicker() {
           return;
         }
       } catch { /* fallback */ }
-      // Fallback ticker (가입 직후 빈 DB 대응)
+      // Fallback ticker (covers fresh installs with empty DB)
       setItems(
         Array.from({ length: 8 }).map((_, i) => ({
           id: String(i),
