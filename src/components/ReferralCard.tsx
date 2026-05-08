@@ -32,7 +32,7 @@ export default function ReferralCard() {
       if (created) {
         const expires = created + 90 * 24 * 60 * 60 * 1000;
         const diff = Math.ceil((expires - Date.now()) / (24 * 60 * 60 * 1000));
-        setDaysLeft(diff);
+        setDaysLeft(Math.max(0, diff));
       }
     }
     setLoading(false);
@@ -151,14 +151,18 @@ export default function ReferralCard() {
                 value={applyCode}
                 onChange={e => setApplyCode(e.target.value.toUpperCase().slice(0, 8))}
                 placeholder="ABCD1234"
-                className="flex-1 min-h-[44px] px-3 py-2 rounded-lg bg-input/60 border border-border text-sm font-mono tracking-wider tabular-nums focus:border-gold outline-none"
+                disabled={daysLeft === 0}
+                className="flex-1 min-h-[44px] px-3 py-2 rounded-lg bg-input/60 border border-border text-sm font-mono tracking-wider tabular-nums focus:border-gold outline-none disabled:opacity-40"
                 maxLength={8}
               />
-              <button onClick={apply} disabled={applying || applyCode.length !== 8}
+              <button onClick={apply} disabled={applying || applyCode.length !== 8 || daysLeft === 0}
                 className="min-h-[44px] px-4 py-2 rounded-lg bg-gradient-gold text-black text-xs font-black disabled:opacity-40">
                 {t("applyBtn")}
               </button>
             </div>
+            {daysLeft === 0 && (
+              <p className="text-[10px] text-muted-foreground mt-2 break-keep">{t("windowExpired")}</p>
+            )}
           </div>
         )}
 

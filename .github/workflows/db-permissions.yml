@@ -23,7 +23,7 @@ jobs:
       - name: Forbidden phrase check (i18n)
         run: node scripts/check-forbidden-phrases.mjs
       - name: Run RLS + permission baseline tests
-        run: bunx vitest run src/test/rls-integrity.test.ts src/test/db-permissions.test.ts
+        run: bunx vitest run src/test/rls-integrity.test.ts src/test/db-permissions.test.ts src/test/referral-window.test.ts
       - name: Supabase CLI linter
         if: ${{ secrets.SUPABASE_ACCESS_TOKEN != '' }}
         env:

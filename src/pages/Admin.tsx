@@ -23,9 +23,10 @@ import FunnelAnalytics from "@/components/admin/FunnelAnalytics";
 import AMLAdmin from "@/components/admin/AMLAdmin";
 import MissionTemplatesAdmin from "@/components/admin/MissionTemplatesAdmin";
 import LeaderboardPayoutAudit from "@/components/admin/LeaderboardPayoutAudit";
+import ReferralsAdmin from "@/components/admin/ReferralsAdmin";
 import { Activity, Lock, Bot } from "lucide-react";
 
-type Tab = "dashboard" | "funnel" | "analytics" | "errors" | "security" | "ops" | "perms" | "aml" | "ai_missions" | "payout_audit" | "server_dep" | "server_wd" | "packages" | "users" | "missions" | "chats" | "coin" | "ugc";
+type Tab = "dashboard" | "funnel" | "analytics" | "errors" | "security" | "ops" | "perms" | "aml" | "ai_missions" | "payout_audit" | "referrals" | "server_dep" | "server_wd" | "packages" | "users" | "missions" | "chats" | "coin" | "ugc";
 
 export default function Admin() {
   const [db, setDb] = useDB();
@@ -93,6 +94,7 @@ export default function Admin() {
     { id: "aml", label: "AML 결재", icon: ShieldCheck },
     { id: "ai_missions", label: "AI 미션", icon: Bot },
     { id: "payout_audit", label: "정산검증", icon: Activity },
+    { id: "referrals", label: "추천 윈도우", icon: Users },
     { id: "server_dep", label: t("tabDeposits"), icon: ArrowUpFromLine },
     { id: "server_wd", label: t("tabWithdrawals"), icon: ArrowDownToLine },
     { id: "packages", label: t("tabPackages"), icon: Crown },
@@ -137,6 +139,7 @@ export default function Admin() {
         {tab === "aml" && <AMLAdmin />}
         {tab === "ai_missions" && <MissionTemplatesAdmin />}
         {tab === "payout_audit" && <LeaderboardPayoutAudit />}
+        {tab === "referrals" && <ReferralsAdmin />}
         {tab === "server_wd" && <WithdrawRequestsAdmin />}
         {tab === "server_dep" && <DepositRequestsAdmin />}
         {tab === "packages" && <PackagePurchasesAdmin />}

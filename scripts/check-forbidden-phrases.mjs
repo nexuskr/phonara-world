@@ -49,7 +49,21 @@ for (const f of files) {
 }
 
 if (offenders.length > 0) {
-  console.error("❌ Forbidden phrases detected:\n" + offenders.join("\n"));
+  // Group by file for a cleaner CI report
+  const grouped = offenders.reduce((acc, line) => {
+    const file = line.split(":")[0];
+    (acc[file] ||= []).push(line);
+    return acc;
+  }, {});
+  const fileCount = Object.keys(grouped).length;
+  console.error(`\n❌ Forbidden phrases detected in ${fileCount} file(s), ${offenders.length} occurrence(s):\n`);
+  for (const [file, lines] of Object.entries(grouped)) {
+    console.error(`  ${file}  (${lines.length})`);
+    for (const ln of lines) console.error(`    - ${ln.slice(file.length + 1)}`);
+  }
+  console.error("\nForbidden patterns:");
+  for (const re of BAD) console.error(`  ${re}`);
+  console.error("\nFix: replace with neutral copy (e.g. 'long-term', 'simulation', 'reward pool').");
   process.exit(1);
 }
-console.log("✅ No forbidden phrases found.");
+console.log(`✅ No forbidden phrases found (scanned ${files.length} files).`);
