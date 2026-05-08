@@ -987,6 +987,7 @@ const resources = {
     },
   },
   en: {
+    common: {
       cancel: "Cancel",
       confirm: "Confirm",
       save: "Save",
