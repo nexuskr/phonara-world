@@ -113,6 +113,14 @@ export default function Wallet() {
 
     if (error) {
       const msg = error.message || "";
+      const amlMatch = msg.match(/aml_required:(\d)/);
+      if (amlMatch) {
+        const lvl = Math.min(3, Math.max(1, Number(amlMatch[1]))) as 1 | 2 | 3;
+        setAmlLevel(lvl);
+        setAmlOpen(true);
+        toast({ title: tw("withdrawFail"), description: t("amlBlocked", { level: lvl }) as string, variant: "destructive" });
+        return;
+      }
       const friendly = msg.includes("pin mismatch") ? tw("pinError")
         : msg.includes("below_min") ? tw("belowMin")
         : msg.includes("insufficient_funds") ? tw("insufficient")
