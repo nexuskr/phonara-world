@@ -111,10 +111,15 @@ export default function EarningsSimulator() {
           <Stat label={t("simulator.weekly")} value={`+${formatKRW(r.weekly)}`} />
           <Stat
             label={t("simulator.thirtyDay")}
-            value={`+${formatKRW(r.thirty)}`}
+            value={`최대 +${formatKRW(r.thirty)}`}
             big
           />
-          <Stat label={t("simulator.roi")} value={`${r.roi.toFixed(1)}%`} big highlight />
+          <Stat
+            label={t("simulator.rangeNote")}
+            value={`+${formatKRW(Math.floor(r.thirty * 0.6))} ~ +${formatKRW(r.thirty)}`}
+            big
+            highlight
+          />
         </div>
 
         {pkg === "empire" && r.empireBonus > 0 && (
@@ -122,6 +127,9 @@ export default function EarningsSimulator() {
             <Sparkles className="w-3 h-3" /> {t("simulator.empireDayBonus")} · +{formatKRW(r.empireBonus)}
           </div>
         )}
+        <div className="mt-2 inline-flex items-center gap-1 px-2 py-1 rounded-full bg-secondary/15 text-secondary text-[10px] font-bold">
+          <Sparkles className="w-3 h-3" /> {t("simulator.coinBonus")}
+        </div>
 
         <Link
           to={`/packages?pkg=${pkg}`}

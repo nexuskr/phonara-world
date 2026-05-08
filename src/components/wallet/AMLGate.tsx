@@ -11,6 +11,8 @@ interface Props {
   level: 1 | 2 | 3;
   onClose: () => void;
   onApproved?: () => void;
+  /** Preview-only mode: shows the verification UI but never submits. */
+  mode?: "live" | "preview";
 }
 
 export default function AMLGate({ open, level, onClose, onApproved }: Props) {
