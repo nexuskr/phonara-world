@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Activity, Webhook, Snowflake, FlaskConical, RefreshCw } from "lucide-react";
+import { Activity, Webhook, Snowflake, FlaskConical, RefreshCw, Gauge } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { getSpanMetrics } from "@/lib/spans";
 
-type Sub = "slow" | "webhook" | "freeze" | "chaos";
+type Sub = "slow" | "spanq" | "webhook" | "freeze" | "chaos";
 
 export default function ObservabilityCockpit() {
   const [sub, setSub] = useState<Sub>("slow");
   const subs: { id: Sub; label: string; icon: any }[] = [
     { id: "slow", label: "Slow Top 20", icon: Activity },
+    { id: "spanq", label: "Span 품질", icon: Gauge },
     { id: "webhook", label: "Webhooks", icon: Webhook },
     { id: "freeze", label: "Freezes", icon: Snowflake },
     { id: "chaos", label: "Chaos", icon: FlaskConical },
@@ -24,12 +26,56 @@ export default function ObservabilityCockpit() {
         ))}
       </div>
       {sub === "slow" && <SlowRequests />}
+      {sub === "spanq" && <SpanQuality />}
       {sub === "webhook" && <Webhooks />}
       {sub === "freeze" && <Freezes />}
       {sub === "chaos" && <ChaosHistory />}
     </div>
   );
 }
+
+function SpanQuality() {
+  const [m, setM] = useState(getSpanMetrics());
+  useEffect(() => {
+    const id = setInterval(() => setM(getSpanMetrics()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  const total = m.flushed_ok + m.flushed_fail + m.dropped;
+  const successRate = total > 0 ? (m.flushed_ok / total) * 100 : 100;
+  const lossRate = total > 0 ? ((m.flushed_fail + m.dropped) / total) * 100 : 0;
+  const cells: [string, string | number, string?][] = [
+    ["Enqueued", m.enqueued],
+    ["성공 flush", m.flushed_ok],
+    ["실패 flush", m.flushed_fail, m.flushed_fail > 0 ? "text-destructive" : ""],
+    ["재시도", m.retried],
+    ["중복 제거", m.deduped],
+    ["손실(드롭)", m.dropped, m.dropped > 0 ? "text-destructive" : ""],
+    ["성공률", `${successRate.toFixed(2)}%`, successRate >= 99 ? "text-secondary" : "text-gold"],
+    ["손실률", `${lossRate.toFixed(2)}%`, lossRate <= 1 ? "text-secondary" : "text-destructive"],
+    ["큐", `${m.queue_size}${m.in_flight ? " ⏳" : ""}`],
+    ["마지막 flush", m.last_flush_at ? new Date(m.last_flush_at).toLocaleTimeString("ko-KR") : "—"],
+  ];
+  return (
+    <div className="glass-strong rounded-2xl p-4 neon-border space-y-3">
+      <div className="flex items-center justify-between">
+        <h3 className="font-display font-bold text-sm flex items-center gap-1.5"><Gauge className="w-4 h-4 text-gold" /> Span 계측 품질</h3>
+        <span className="text-[10px] text-muted-foreground">1초마다 갱신 · 클라이언트 로컬</span>
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+        {cells.map(([label, value, tone]) => (
+          <div key={label} className="glass rounded-xl p-2.5">
+            <div className="text-[10px] text-muted-foreground">{label}</div>
+            <div className={`font-bold tabular-nums mt-1 ${tone ?? ""}`}>{value}</div>
+          </div>
+        ))}
+      </div>
+      {m.last_error && (
+        <div className="text-[10px] text-destructive break-all glass rounded-lg p-2">최근 에러: {m.last_error}</div>
+      )}
+    </div>
+  );
+}
+
 
 function SlowRequests() {
   const [rows, setRows] = useState<any[]>([]);
