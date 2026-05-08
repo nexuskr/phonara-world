@@ -19,6 +19,7 @@ export default function ReferralCard() {
   const [applyCode, setApplyCode] = useState("");
   const [applying, setApplying] = useState(false);
   const [hasInviter, setHasInviter] = useState<boolean>(false);
+  const [daysLeft, setDaysLeft] = useState<number | null>(null);
 
   const load = async () => {
     const { data, error } = await supabase.rpc("get_referral_stats");
@@ -27,6 +28,12 @@ export default function ReferralCard() {
     if (u.user) {
       const { data: p } = await supabase.from("profiles").select("referred_by").eq("id", u.user.id).maybeSingle();
       setHasInviter(!!(p as any)?.referred_by);
+      const created = u.user.created_at ? new Date(u.user.created_at).getTime() : null;
+      if (created) {
+        const expires = created + 90 * 24 * 60 * 60 * 1000;
+        const diff = Math.ceil((expires - Date.now()) / (24 * 60 * 60 * 1000));
+        setDaysLeft(diff);
+      }
     }
     setLoading(false);
   };
