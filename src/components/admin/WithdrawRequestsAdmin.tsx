@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { sendAdminNotification } from "@/lib/admin-notify";
 import { Check, X, Clock } from "lucide-react";
+import AdminReviewModal from "@/components/admin/AdminReviewModal";
+import RequestTimeline from "@/components/RequestTimeline";
 
 type WR = {
   id: string;
@@ -24,10 +25,14 @@ function formatKRW(n: number) {
   return new Intl.NumberFormat("ko-KR").format(n) + "원";
 }
 
+type Action = "approve" | "reject" | "complete";
+
 export default function WithdrawRequestsAdmin() {
   const [list, setList] = useState<WR[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"pending" | "all">("pending");
+  const [modal, setModal] = useState<{ id: string; action: Action } | null>(null);
+  const [openTimeline, setOpenTimeline] = useState<string | null>(null);
 
   async function load() {
     setLoading(true);
@@ -48,28 +53,6 @@ export default function WithdrawRequestsAdmin() {
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, []);
-
-  async function resolve(id: string, action: "complete" | "reject" | "approve", reason?: string) {
-    const { error } = await supabase.rpc("admin_resolve_withdrawal", {
-      _request_id: id, _action: action, _reason: reason ?? null,
-    });
-    if (error) {
-      toast({ title: "처리 실패", description: error.message, variant: "destructive" });
-      return;
-    }
-    const row = list.find(w => w.id === id);
-    if (row) {
-      const tpl = action === "complete" ? "withdraw-completed" : action === "approve" ? "withdraw-approved" : "withdraw-rejected";
-      await sendAdminNotification({
-        userId: row.user_id,
-        template: tpl,
-        idempotencyKey: `wd-${action}-${id}`,
-        data: { amount: Number(row.amount), tx_code: row.tx_code, reason },
-      });
-    }
-    toast({ title: action === "complete" ? "✅ 출금 완료 + 메일" : action === "approve" ? "👍 승인 + 메일" : "거절 + 메일" });
-    void load();
-  }
 
   return (
     <div className="space-y-3">
@@ -111,24 +94,43 @@ export default function WithdrawRequestsAdmin() {
             }`}>{w.status}</span>
           </div>
 
-          {(w.status === "pending" || w.status === "approved" || w.status === "processing") && (
-            <div className="grid grid-cols-3 gap-2 mt-3">
-              {w.status === "pending" && (
-                <button onClick={() => resolve(w.id, "approve")} className="py-2 rounded-xl bg-primary/20 text-primary text-xs font-bold">👍 승인</button>
-              )}
-              <button onClick={() => resolve(w.id, "complete")} className="py-2 rounded-xl bg-secondary text-secondary-foreground text-xs font-bold flex items-center justify-center gap-1">
-                <Check className="w-3.5 h-3.5" /> 완료
-              </button>
-              <button onClick={() => {
-                const reason = prompt("거절 사유를 입력하세요");
-                if (reason) resolve(w.id, "reject", reason);
-              }} className="py-2 rounded-xl bg-destructive text-destructive-foreground text-xs font-bold flex items-center justify-center gap-1">
-                <X className="w-3.5 h-3.5" /> 거절
-              </button>
+          <div className="grid grid-cols-4 gap-2 mt-3">
+            {(w.status === "pending" || w.status === "approved" || w.status === "processing") && (
+              <>
+                {w.status === "pending" && (
+                  <button onClick={() => setModal({ id: w.id, action: "approve" })} className="py-2 rounded-xl bg-primary/20 text-primary text-xs font-bold">👍 승인</button>
+                )}
+                <button onClick={() => setModal({ id: w.id, action: "complete" })} className="py-2 rounded-xl bg-secondary text-secondary-foreground text-xs font-bold flex items-center justify-center gap-1">
+                  <Check className="w-3.5 h-3.5" /> 지급완료
+                </button>
+                <button onClick={() => setModal({ id: w.id, action: "reject" })} className="py-2 rounded-xl bg-destructive text-destructive-foreground text-xs font-bold flex items-center justify-center gap-1">
+                  <X className="w-3.5 h-3.5" /> 거절
+                </button>
+              </>
+            )}
+            <button onClick={() => setOpenTimeline(openTimeline === w.id ? null : w.id)}
+              className="py-2 rounded-xl glass text-xs font-bold flex items-center justify-center gap-1">
+              <Clock className="w-3.5 h-3.5" /> 타임라인
+            </button>
+          </div>
+          {openTimeline === w.id && (
+            <div className="mt-3">
+              <RequestTimeline kind="withdrawal" requestId={w.id} />
             </div>
           )}
         </div>
       ))}
+
+      {modal && (
+        <AdminReviewModal
+          open
+          kind="withdrawal"
+          requestId={modal.id}
+          defaultAction={modal.action}
+          onClose={() => setModal(null)}
+          onResolved={() => void load()}
+        />
+      )}
     </div>
   );
 }
