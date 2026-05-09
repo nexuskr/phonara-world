@@ -7,9 +7,10 @@
  *  - centralize copy ("문제가 발생했습니다" 등)
  *  - normalize unknown errors into user-friendly Korean messages
  */
+import type { ReactNode } from "react";
 import { toast as sonner, type ExternalToast } from "sonner";
 
-type Opts = ExternalToast & { description?: React.ReactNode };
+type Opts = ExternalToast & { description?: ReactNode };
 
 const baseClass =
   "border border-border/60 bg-card/95 text-foreground backdrop-blur-xl shadow-[0_8px_32px_hsl(240_50%_1%/0.7)]";
