@@ -2617,6 +2617,8 @@ const resources = {
         runFail: "Run failed", err: "Error" },
       claimed: "✅ Claimed",
       claimedDesc: "+{{val}} · shared to lounge",
+      capReached: "Daily earnings cap reached",
+      capReachedDesc: "No additional reward today. Try again tomorrow.",
       mini: { active: "AI bots active", running: "Running {{n}}", ready: "Ready {{n}}" },
     },
     convert: {
