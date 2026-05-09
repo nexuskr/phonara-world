@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { Check, X, Clock } from "lucide-react";
+import { Check, X, Clock, Inbox } from "lucide-react";
 import AdminReviewModal from "@/components/admin/AdminReviewModal";
 import RequestTimeline from "@/components/RequestTimeline";
+import { LoadingList } from "@/components/ui/loading-state";
+import { EmptyState } from "@/components/ui/empty-state";
 
 type WR = {
   id: string;
