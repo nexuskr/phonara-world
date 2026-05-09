@@ -11,6 +11,8 @@ import PersonalMemoryPanel from "@/components/intelligence/PersonalMemoryPanel";
 import GlobalContributionBar from "@/components/intelligence/GlobalContributionBar";
 import WinMomentOverlay from "@/components/intelligence/WinMomentOverlay";
 import WeeklyLeaderboard from "@/components/intelligence/WeeklyLeaderboard";
+import EquityCurveCard from "@/components/intelligence/EquityCurveCard";
+import AchievementShowcase from "@/components/intelligence/AchievementShowcase";
 import Disclaimer from "@/components/Disclaimer";
 import { usePaperLiquidationWatcher } from "@/hooks/use-paper-positions";
 import { useTrackView } from "@/lib/telemetry";
@@ -60,6 +62,8 @@ export default function GlobalIntelligence() {
             <h2 className="font-display font-bold text-base">Open Positions (Paper)</h2>
             <PaperPositionList />
           </div>
+          <div className="lg:col-span-2"><EquityCurveCard /></div>
+          <div className="lg:col-span-2"><AchievementShowcase /></div>
           <div className="lg:col-span-2"><TradingHistoryPanel /></div>
           <WeeklyLeaderboard />
           <PersonalMemoryPanel />
