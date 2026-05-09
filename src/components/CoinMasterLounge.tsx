@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Crown, Coins, Zap, ShieldCheck, Sparkles, Lock } from "lucide-react";
+import { LoadingCard } from "@/components/ui/loading-state";
 
 interface Stats {
   unlocked: boolean;
