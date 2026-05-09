@@ -5,10 +5,18 @@ import { supabase } from "@/integrations/supabase/client";
 import i18n from "@/lib/i18n";
 import { useDB, formatKRW } from "@/lib/store";
 import { toast } from "@/hooks/use-toast";
+import { useDailyCap, type DailyCap } from "@/hooks/use-daily-cap";
+import DailyCapMeter from "@/components/wallet/DailyCapMeter";
+import ClaimResultModal from "@/components/ai/ClaimResultModal";
+import { classifyClaim, buildClaimTelemetry, type ClaimOutcome } from "@/lib/claim-result";
+import { track } from "@/lib/telemetry";
+import type { Database } from "@/integrations/supabase/types";
 import {
   Bot, Sparkles, TrendingUp, ImageIcon, Loader2, Check, Lock,
   Crown, Zap, RefreshCw, Wallet, Clock, Flame,
 } from "lucide-react";
+
+type DbTier = Database["public"]["Enums"]["user_tier"];
 
 type Kind = "content" | "trading" | "image";
 type Status = "running" | "ready" | "claimed" | "failed";
