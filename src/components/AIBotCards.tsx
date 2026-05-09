@@ -226,6 +226,10 @@ function ContentFarmerCard({ tier, runs, used, loading }: { tier: string; runs: 
     if (!latest) return;
     try {
       const r = await claimRun(latest.id);
+      if (!r.reward || r.reward <= 0) {
+        toast({ title: t("capReached"), description: t("capReachedDesc"), variant: "destructive" });
+        return;
+      }
       toast({ title: t("claimed"), description: t("claimedDesc", { val: formatKRW(r.reward) }) });
       const u = (await supabase.auth.getUser()).data.user;
       if (u) await shareToLounge({
