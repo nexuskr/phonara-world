@@ -1184,6 +1184,30 @@ export type Database = {
         }
         Relationships: []
       }
+      pin_lockouts: {
+        Row: {
+          fail_count: number
+          last_failed_at: string | null
+          locked_until: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          fail_count?: number
+          last_failed_at?: string | null
+          locked_until?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          fail_count?: number
+          last_failed_at?: string | null
+          locked_until?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       pin_reset_audit: {
         Row: {
           created_at: string
@@ -1463,6 +1487,27 @@ export type Database = {
           period?: string
           target?: number
           xp_reward?: number
+        }
+        Relationships: []
+      }
+      rate_limit_buckets: {
+        Row: {
+          bucket_minute: string
+          count: number
+          scope: string
+          user_id: string
+        }
+        Insert: {
+          bucket_minute: string
+          count?: number
+          scope: string
+          user_id: string
+        }
+        Update: {
+          bucket_minute?: string
+          count?: number
+          scope?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -3284,6 +3329,10 @@ export type Database = {
         }
         Returns: Json
       }
+      enforce_rate_limit: {
+        Args: { _max_per_min: number; _scope: string }
+        Returns: undefined
+      }
       enqueue_ai_mission: {
         Args: {
           _ai_reasoning?: string
@@ -3319,6 +3368,7 @@ export type Database = {
       }
       finalize_weekly_pass: { Args: never; Returns: Json }
       gacha_pull: { Args: never; Returns: Json }
+      gc_rate_limit_buckets: { Args: never; Returns: number }
       gen_referral_code: { Args: never; Returns: string }
       get_active_boost_count: { Args: never; Returns: number }
       get_admin_audit_recent: {
@@ -3533,6 +3583,8 @@ export type Database = {
       }
       pay_weekly_leaderboard: { Args: never; Returns: Json }
       pay_weekly_leaderboard_dry_run: { Args: never; Returns: Json }
+      pin_lockout_status: { Args: { _user?: string }; Returns: Json }
+      pin_record_attempt: { Args: { _success: boolean }; Returns: Json }
       policy_assertions_status: { Args: never; Returns: Json }
       public_trust_history: {
         Args: { _days?: number }

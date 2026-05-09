@@ -89,6 +89,18 @@ export default function SecureWallet() {
     if (pin.length !== 6) { toast({ title: t("pinRequired") }); return; }
     if (method === "bank" && !bankAccount) { toast({ title: t("bankRequired") }); return; }
     if (method === "coin" && !coinAddress) { toast({ title: t("coinRequired") }); return; }
+
+    // Pre-check PIN lockout
+    try {
+      const { data: st } = await supabase.rpc("pin_lockout_status" as any, {});
+      const s = st as any;
+      if (s?.is_locked) {
+        const until = s.locked_until ? new Date(s.locked_until).toLocaleString("ko-KR") : "-";
+        toast({ title: "PIN 잠금 상태", description: `${until}까지 입력이 차단되었습니다.`, variant: "destructive" });
+        return;
+      }
+    } catch (_) { /* non-fatal */ }
+
     setBusy(true);
     try {
       const r = await requestWithdrawal({
@@ -98,11 +110,31 @@ export default function SecureWallet() {
         coinAddress: method === "coin" ? coinAddress : undefined,
         coinNetwork: method === "coin" ? coinNetwork : undefined,
       });
+      // success → reset fail counter
+      try { await supabase.rpc("pin_record_attempt" as any, { _success: true }); } catch (_) {}
       toast({ title: t("withdrawDone"), description: t("withdrawDoneDesc", { code: r.tx_code }) });
       setAmount(""); setPin(""); setBankAccount(""); setCoinAddress("");
       reload();
       fetchWithdrawals(userId).then(setWds);
     } catch (e: any) {
+      // If error message implies PIN mismatch, record fail
+      const msg = String(e?.message ?? "");
+      if (/pin|핀|비밀번호/i.test(msg)) {
+        try {
+          const { data: r2 } = await supabase.rpc("pin_record_attempt" as any, { _success: false });
+          const rr = r2 as any;
+          if (rr?.locked) {
+            toast({ title: "🔒 PIN 24시간 잠금", description: "5회 오입력으로 24시간 잠금되었습니다.", variant: "destructive" });
+            setBusy(false);
+            return;
+          }
+          if (rr?.fail_count) {
+            toast({ title: t("withdrawFail"), description: `${humanizeError(e)} (실패 ${rr.fail_count}/5)`, variant: "destructive" });
+            setBusy(false);
+            return;
+          }
+        } catch (_) {}
+      }
       toast({ title: t("withdrawFail"), description: humanizeError(e), variant: "destructive" });
     } finally { setBusy(false); }
   }

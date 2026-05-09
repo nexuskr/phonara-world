@@ -34,6 +34,8 @@ export default function AdminReviewModal({
   requestId,
   defaultAction = "approve",
   onResolved,
+  receiptUrl,
+  expectedAmount,
 }: {
   open: boolean;
   onClose: () => void;
@@ -41,12 +43,38 @@ export default function AdminReviewModal({
   requestId: string;
   defaultAction?: Action;
   onResolved?: () => void;
+  receiptUrl?: string | null;
+  expectedAmount?: number | null;
 }) {
   const [action, setAction] = useState<Action>(defaultAction);
   const [memo, setMemo] = useState("");
   const [reason, setReason] = useState("");
   const [checks, setChecks] = useState<Record<string, boolean>>({});
   const [busy, setBusy] = useState(false);
+  const [ocrBusy, setOcrBusy] = useState(false);
+  const [ocr, setOcr] = useState<{ amount: number | null; datetime_iso: string | null; sender: string | null; receiver: string | null; confidence: number; match?: "exact" | "near" | "mismatch" | null } | null>(null);
+
+  async function runOcr() {
+    if (!receiptUrl) { toast({ title: "영수증 이미지가 없습니다", variant: "destructive" }); return; }
+    setOcrBusy(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("receipt-ocr", {
+        body: { image_url: receiptUrl, expected_amount: expectedAmount ?? null },
+      });
+      if (error) throw error;
+      const r = data as any;
+      if (!r?.ok) throw new Error(r?.error || "ocr failed");
+      setOcr({ ...r.ocr, match: r.match });
+      // Auto-tick checklist if amount matches
+      if (r.match === "exact" || r.match === "near") {
+        setChecks((p) => ({ ...p, amount_match: true, receipt_match: true }));
+      }
+      const mTxt = r.match === "exact" ? "정확히 일치" : r.match === "near" ? "근사 일치(±1%)" : r.match === "mismatch" ? "❌ 금액 불일치" : "참고용";
+      toast({ title: `AI 분석 완료 — ${mTxt}`, description: r.ocr?.amount ? `OCR 금액: ₩${Number(r.ocr.amount).toLocaleString()}` : "금액 추출 실패" });
+    } catch (e: any) {
+      toast({ title: "AI 분석 실패", description: e.message ?? String(e), variant: "destructive" });
+    } finally { setOcrBusy(false); }
+  }
 
   if (!open) return null;
 
@@ -87,6 +115,40 @@ export default function AdminReviewModal({
         </button>
         <h3 className="font-imperial font-black text-lg">포렌식 검수</h3>
         <p className="text-xs text-muted-foreground mt-0.5">{kind} · {requestId.slice(0, 8)}…</p>
+
+        {receiptUrl && (
+          <div className="mt-3 rounded-xl border border-accent/40 bg-accent/5 p-2.5">
+            <div className="flex items-center justify-between gap-2 mb-1.5">
+              <span className="text-[10px] font-black uppercase tracking-wider text-accent">AI 영수증 분석</span>
+              <button
+                onClick={() => void runOcr()}
+                disabled={ocrBusy}
+                className="text-[11px] font-bold px-2.5 py-1 rounded-md bg-gradient-imperial text-primary-foreground disabled:opacity-50"
+              >
+                {ocrBusy ? "분석 중…" : ocr ? "다시 분석" : "AI로 영수증 자동검증"}
+              </button>
+            </div>
+            {ocr && (
+              <div className="text-[11px] space-y-0.5">
+                <div className={`font-black ${
+                  ocr.match === "exact" ? "text-emerald-500"
+                  : ocr.match === "near" ? "text-secondary"
+                  : ocr.match === "mismatch" ? "text-destructive" : "text-muted-foreground"
+                }`}>
+                  {ocr.match === "exact" ? "✓ 금액 정확 일치"
+                   : ocr.match === "near" ? "≈ 금액 근사 일치 (±1%)"
+                   : ocr.match === "mismatch" ? "✗ 금액 불일치"
+                   : "참고용 (기대값 없음)"}
+                  {" · "}신뢰도 {Math.round((ocr.confidence ?? 0) * 100)}%
+                </div>
+                {ocr.amount != null && <div>OCR 금액: <b className="tabular-nums">₩{Number(ocr.amount).toLocaleString()}</b></div>}
+                {ocr.datetime_iso && <div className="text-muted-foreground">시각: {new Date(ocr.datetime_iso).toLocaleString("ko-KR")}</div>}
+                {ocr.sender && <div className="text-muted-foreground">송금: {ocr.sender}</div>}
+                {ocr.receiver && <div className="text-muted-foreground">수취: {ocr.receiver}</div>}
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="mt-4 grid grid-cols-3 gap-1.5">
           {(["approve", "reject", ...(allowComplete ? (["complete"] as Action[]) : [])] as Action[]).map((a) => (
