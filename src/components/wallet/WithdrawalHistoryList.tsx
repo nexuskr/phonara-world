@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
-import { Clock, CheckCircle2, XCircle, Loader2, ArrowUpRight, Filter, X, Banknote, Coins, Shield, FileText } from "lucide-react";
+import { Clock, CheckCircle2, XCircle, ArrowUpRight, Filter, X, Banknote, Coins, Shield, FileText, Inbox } from "lucide-react";
 import RequestTimeline from "@/components/RequestTimeline";
+import { LoadingList } from "@/components/ui/loading-state";
+import { EmptyState } from "@/components/ui/empty-state";
 
 type Status = "pending" | "processing" | "approved" | "completed" | "rejected" | "cancelled";
 type Method = "bank" | "coin";
@@ -117,11 +119,14 @@ export default function WithdrawalHistoryList() {
       </div>
 
       {loading ? (
-        <div className="glass rounded-2xl p-6 text-center text-xs text-muted-foreground flex items-center justify-center gap-2">
-          <Loader2 className="w-3.5 h-3.5 animate-spin" /> {t("loading")}
-        </div>
+        <LoadingList rows={4} rowHeight="md" />
       ) : rows.length === 0 ? (
-        <div className="glass rounded-2xl p-10 text-center text-xs text-muted-foreground break-keep">{t("empty")}</div>
+        <EmptyState
+          icon={<Inbox className="w-5 h-5" />}
+          title={t("empty")}
+          description="출금 신청을 진행하면 처리 진행 상황이 실시간으로 표시됩니다."
+          variant="muted"
+        />
       ) : (
         <div className="space-y-2">
           {rows.map((r) => (
