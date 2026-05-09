@@ -544,7 +544,9 @@ export type Database = {
       }
       deposit_requests: {
         Row: {
+          admin_evidence_checklist: Json
           admin_id: string | null
+          admin_review_memo: string | null
           amount: number
           approved_at: string | null
           bonus_amount: number
@@ -564,7 +566,9 @@ export type Database = {
           voucher_pin_hash: string | null
         }
         Insert: {
+          admin_evidence_checklist?: Json
           admin_id?: string | null
+          admin_review_memo?: string | null
           amount: number
           approved_at?: string | null
           bonus_amount?: number
@@ -584,7 +588,9 @@ export type Database = {
           voucher_pin_hash?: string | null
         }
         Update: {
+          admin_evidence_checklist?: Json
           admin_id?: string | null
+          admin_review_memo?: string | null
           amount?: number
           approved_at?: string | null
           bonus_amount?: number
@@ -1048,7 +1054,9 @@ export type Database = {
       }
       package_purchases: {
         Row: {
+          admin_evidence_checklist: Json
           admin_id: string | null
+          admin_review_memo: string | null
           amount: number
           approved_at: string | null
           boost_multiplier: number
@@ -1078,7 +1086,9 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          admin_evidence_checklist?: Json
           admin_id?: string | null
+          admin_review_memo?: string | null
           amount: number
           approved_at?: string | null
           boost_multiplier?: number
@@ -1108,7 +1118,9 @@ export type Database = {
           user_id: string
         }
         Update: {
+          admin_evidence_checklist?: Json
           admin_id?: string | null
+          admin_review_memo?: string | null
           amount?: number
           approved_at?: string | null
           boost_multiplier?: number
@@ -1487,6 +1499,48 @@ export type Database = {
           signup_bonus_paid?: boolean
           total_commission?: number
           window_expires_at?: string | null
+        }
+        Relationships: []
+      }
+      request_status_history: {
+        Row: {
+          actor_id: string | null
+          actor_role: string
+          created_at: string
+          evidence: Json
+          from_status: string | null
+          id: string
+          memo: string | null
+          request_id: string
+          request_kind: string
+          to_status: string
+          user_id: string
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_role?: string
+          created_at?: string
+          evidence?: Json
+          from_status?: string | null
+          id?: string
+          memo?: string | null
+          request_id: string
+          request_kind: string
+          to_status: string
+          user_id: string
+        }
+        Update: {
+          actor_id?: string | null
+          actor_role?: string
+          created_at?: string
+          evidence?: Json
+          from_status?: string | null
+          id?: string
+          memo?: string | null
+          request_id?: string
+          request_kind?: string
+          to_status?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -2812,7 +2866,9 @@ export type Database = {
       }
       withdrawal_requests: {
         Row: {
+          admin_evidence_checklist: Json
           admin_id: string | null
+          admin_review_memo: string | null
           amount: number
           approved_at: string | null
           bank_account: string | null
@@ -2833,7 +2889,9 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          admin_evidence_checklist?: Json
           admin_id?: string | null
+          admin_review_memo?: string | null
           amount: number
           approved_at?: string | null
           bank_account?: string | null
@@ -2854,7 +2912,9 @@ export type Database = {
           user_id: string
         }
         Update: {
+          admin_evidence_checklist?: Json
           admin_id?: string | null
+          admin_review_memo?: string | null
           amount?: number
           approved_at?: string | null
           bank_account?: string | null
@@ -3055,18 +3115,51 @@ export type Database = {
         Args: { _action: string; _id: string; _reason?: string }
         Returns: Json
       }
-      admin_resolve_deposit: {
-        Args: { _action: string; _reason: string; _request_id: string }
-        Returns: Json
-      }
-      admin_resolve_package: {
-        Args: { _action: string; _purchase_id: string; _reason?: string }
-        Returns: Json
-      }
-      admin_resolve_withdrawal: {
-        Args: { _action: string; _reason: string; _request_id: string }
-        Returns: Json
-      }
+      admin_resolve_deposit:
+        | {
+            Args: { _action: string; _reason: string; _request_id: string }
+            Returns: Json
+          }
+        | {
+            Args: {
+              _action: string
+              _checklist?: Json
+              _memo?: string
+              _reason?: string
+              _request_id: string
+            }
+            Returns: Json
+          }
+      admin_resolve_package:
+        | {
+            Args: { _action: string; _purchase_id: string; _reason?: string }
+            Returns: Json
+          }
+        | {
+            Args: {
+              _action: string
+              _checklist?: Json
+              _memo?: string
+              _purchase_id: string
+              _reason?: string
+            }
+            Returns: Json
+          }
+      admin_resolve_withdrawal:
+        | {
+            Args: { _action: string; _reason: string; _request_id: string }
+            Returns: Json
+          }
+        | {
+            Args: {
+              _action: string
+              _checklist?: Json
+              _memo?: string
+              _reason?: string
+              _request_id: string
+            }
+            Returns: Json
+          }
       admin_set_tier: {
         Args: {
           _target: string
@@ -3467,6 +3560,20 @@ export type Database = {
             }
             Returns: string
           }
+      record_request_status: {
+        Args: {
+          _actor: string
+          _actor_role: string
+          _evidence: Json
+          _from: string
+          _kind: string
+          _memo: string
+          _request_id: string
+          _to: string
+          _user_id: string
+        }
+        Returns: undefined
+      }
       record_span: {
         Args: {
           _ended_at: string
@@ -3631,6 +3738,17 @@ export type Database = {
       trust_record_snapshot: { Args: never; Returns: string }
       unfreeze_expired: { Args: never; Returns: Json }
       unlock_achievement: { Args: { _key: string }; Returns: Json }
+      validate_deposit_input: {
+        Args: {
+          _bank_account?: string
+          _coin_address?: string
+          _coin_network?: string
+          _method: string
+          _voucher_brand?: string
+          _voucher_pin?: string
+        }
+        Returns: Json
+      }
       verify_weekly_pass_finalize: {
         Args: { _iso_week?: string }
         Returns: Json
