@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { createChart, IChartApi, ISeriesApi, LineStyle } from "lightweight-charts";
+import { createChart, AreaSeries, IChartApi, ISeriesApi, LineStyle } from "lightweight-charts";
 
 interface Props {
   symbol: string;
@@ -30,7 +30,7 @@ export default function LivePriceChart({ symbol, prices, height = 280 }: Props) 
       timeScale: { borderColor: "rgba(255,255,255,0.08)", timeVisible: true, secondsVisible: false },
       crosshair: { vertLine: { style: LineStyle.Dashed }, horzLine: { style: LineStyle.Dashed } },
     });
-    const series = chart.addAreaSeries({
+    const series = chart.addSeries(AreaSeries, {
       lineColor: "hsl(45 88% 55%)",
       topColor: "hsla(45,88%,55%,0.35)",
       bottomColor: "hsla(45,88%,55%,0)",
