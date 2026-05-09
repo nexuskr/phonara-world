@@ -103,11 +103,13 @@ Deno.serve(async (req) => {
         outputText = await callText("google/gemini-3-flash-preview", SYSTEM_PROMPTS.content, seed);
         const imgPrompt = `cyber luxury success scene, neon orange #FF3B00 and cyan #00F0FF, korean entrepreneur silhouette, cinematic 4k, ${prompt || "empire ceo"}`;
         const bytes = await callImage(imgPrompt);
-        outputPath = `${uid}/${run_id}.png`;
-        const up = await admin.storage.from("ai-outputs").upload(outputPath, bytes, {
-          contentType: "image/png", upsert: true,
-        });
-        if (up.error) throw new Error(`upload_${up.error.message}`);
+        if (bytes) {
+          outputPath = `${uid}/${run_id}.png`;
+          const up = await admin.storage.from("ai-outputs").upload(outputPath, bytes, {
+            contentType: "image/png", upsert: true,
+          });
+          if (up.error) { console.error("upload failed", up.error.message); outputPath = null; }
+        }
       } else if (kind === "image") {
         const optimized = await callText(
           "google/gemini-2.5-flash-lite",
@@ -116,11 +118,15 @@ Deno.serve(async (req) => {
         );
         outputText = optimized;
         const bytes = await callImage(`${optimized}, cinematic, neon, cyber luxury, 4k`);
-        outputPath = `${uid}/${run_id}.png`;
-        const up = await admin.storage.from("ai-outputs").upload(outputPath, bytes, {
-          contentType: "image/png", upsert: true,
-        });
-        if (up.error) throw new Error(`upload_${up.error.message}`);
+        if (bytes) {
+          outputPath = `${uid}/${run_id}.png`;
+          const up = await admin.storage.from("ai-outputs").upload(outputPath, bytes, {
+            contentType: "image/png", upsert: true,
+          });
+          if (up.error) { console.error("upload failed", up.error.message); outputPath = null; }
+        } else if (!outputText) {
+          outputText = "이미지 생성이 일시적으로 지연되어 텍스트 결과만 표시됩니다.";
+        }
       } else if (kind === "trading") {
         // Generate the report text now; PnL is computed at claim time on-chain (server seed)
         outputText = await callText(
