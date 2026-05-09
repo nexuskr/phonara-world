@@ -5,10 +5,17 @@ import { supabase } from "@/integrations/supabase/client";
 import i18n from "@/lib/i18n";
 import { useDB, formatKRW } from "@/lib/store";
 import { toast } from "@/hooks/use-toast";
+import { useDailyCap, type DailyCap } from "@/hooks/use-daily-cap";
+import DailyCapMeter from "@/components/wallet/DailyCapMeter";
+import ClaimResultModal from "@/components/ai/ClaimResultModal";
+import { useClaimFlow } from "@/hooks/use-claim-flow";
+import type { Database } from "@/integrations/supabase/types";
 import {
   Bot, Sparkles, TrendingUp, ImageIcon, Loader2, Check, Lock,
   Crown, Zap, RefreshCw, Wallet, Clock, Flame,
 } from "lucide-react";
+
+type DbTier = Database["public"]["Enums"]["user_tier"];
 
 type Kind = "content" | "trading" | "image";
 type Status = "running" | "ready" | "claimed" | "failed";
@@ -47,6 +54,8 @@ export default function AIBotCards() {
   const user = db.user;
   const tier = (user?.tier ?? "NORMAL").toUpperCase();
   const isEmpire = tier === "EMPIRE";
+  const dbTier = (user?.tier ?? "normal").toLowerCase() as DbTier;
+  const dailyCap = useDailyCap(user?.id, dbTier);
 
   const [runs, setRuns] = useState<Run[]>([]);
   const [loading, setLoading] = useState(true);
@@ -100,11 +109,20 @@ export default function AIBotCards() {
         </span>
       </div>
 
+      {/* Daily cap meter */}
+      <DailyCapMeter
+        cap={dailyCap.cap}
+        used={dailyCap.used}
+        remaining={dailyCap.remaining}
+        pct={dailyCap.pct}
+        loading={dailyCap.loading}
+      />
+
       {/* Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <ContentFarmerCard tier={tier} runs={runs} used={usedToday("content")} loading={loading} />
-        <TradingBotCard    tier={tier} runs={runs} used={usedToday("trading")} loading={loading} />
-        <ImageMakerCard    tier={tier} runs={runs} used={usedToday("image")} loading={loading} />
+        <ContentFarmerCard tier={tier} runs={runs} used={usedToday("content")} loading={loading} dailyCap={dailyCap} />
+        <TradingBotCard    tier={tier} runs={runs} used={usedToday("trading")} loading={loading} dailyCap={dailyCap} />
+        <ImageMakerCard    tier={tier} runs={runs} used={usedToday("image")} loading={loading} dailyCap={dailyCap} />
       </div>
     </section>
   );
@@ -199,7 +217,7 @@ async function getSignedUrl(path: string) {
 /* ============================================================
    1) Daily AI Content Farmer
    ============================================================ */
-function ContentFarmerCard({ tier, runs, used, loading }: { tier: string; runs: Run[]; used: number; loading: boolean }) {
+function ContentFarmerCard({ tier, runs, used, loading, dailyCap }: { tier: string; runs: Run[]; used: number; loading: boolean; dailyCap: DailyCap & { reload: () => Promise<void> } }) {
   const { t } = useTranslation("aibot");
   const limit = TIER_LIMITS[tier]?.content ?? 1;
   const reward = Math.floor(BASE_REWARD.content * (TIER_BOOST[tier] ?? 1));
@@ -207,6 +225,11 @@ function ContentFarmerCard({ tier, runs, used, loading }: { tier: string; runs: 
   const [busy, setBusy] = useState(false);
   const [topic, setTopic] = useState("");
   const [imgUrl, setImgUrl] = useState<string | null>(null);
+  const claimFlow = useClaimFlow({
+    reloadCap: dailyCap.reload,
+    capRemainingAfter: () => dailyCap.remaining,
+    errorTitle: t("err.err"),
+  });
 
   useEffect(() => {
     if (latest?.output_path) getSignedUrl(latest.output_path).then(setImgUrl);
@@ -224,20 +247,24 @@ function ContentFarmerCard({ tier, runs, used, loading }: { tier: string; runs: 
 
   const claim = async () => {
     if (!latest) return;
-    try {
-      const r = await claimRun(latest.id);
-      if (!r.reward || r.reward <= 0) {
-        toast({ title: t("capReached"), description: t("capReachedDesc"), variant: "destructive" });
-        return;
-      }
-      toast({ title: t("claimed"), description: t("claimedDesc", { val: formatKRW(r.reward) }) });
-      const u = (await supabase.auth.getUser()).data.user;
-      if (u) await shareToLounge({
-        user_id: u.id, nickname: u.user_metadata?.nickname ?? null, tier,
-        kind: "content", reward: r.reward, pnl_pct: r.pnl_pct,
-        output_text: latest.output_text, output_path: latest.output_path,
-      });
-    } catch (e: any) { toast({ title: t("err.err"), description: e.message, variant: "destructive" }); }
+    const r = await claimFlow.runClaim(latest.id, {
+      kind: "content",
+      expected: reward,
+      capLeftBefore: dailyCap.remaining,
+    });
+    if (!r || r.reward <= 0) return;
+  };
+
+  const doShare = async () => {
+    if (!latest) return;
+    const u = (await supabase.auth.getUser()).data.user;
+    if (!u) return;
+    await shareToLounge({
+      user_id: u.id, nickname: u.user_metadata?.nickname ?? null, tier,
+      kind: "content", reward: claimFlow.modal.actual, pnl_pct: claimFlow.modal.pnl_pct,
+      output_text: latest.output_text, output_path: latest.output_path,
+    });
+    claimFlow.markShared();
   };
 
   const isReady = latest?.status === "ready";
@@ -245,6 +272,7 @@ function ContentFarmerCard({ tier, runs, used, loading }: { tier: string; runs: 
   const isClaimed = latest?.status === "claimed";
 
   return (
+    <>
     <BotCard
       icon={<Sparkles className="w-4 h-4" />}
       title={t("content.title")}
@@ -298,13 +326,26 @@ function ContentFarmerCard({ tier, runs, used, loading }: { tier: string; runs: 
         </div>
       </div>
     </BotCard>
+    <ClaimResultModal
+      open={claimFlow.modal.open}
+      onClose={claimFlow.closeModal}
+      outcome={claimFlow.modal.outcome}
+      expected={claimFlow.modal.expected}
+      actual={claimFlow.modal.actual}
+      pnlPct={claimFlow.modal.pnl_pct}
+      capRemaining={claimFlow.modal.capRemaining}
+      onShare={doShare}
+      shared={claimFlow.modal.shared}
+      botKindLabel={t("content.title")}
+    />
+    </>
   );
 }
 
 /* ============================================================
    2) AI Trading Simulator Bot (8h)
    ============================================================ */
-function TradingBotCard({ tier, runs, used, loading }: { tier: string; runs: Run[]; used: number; loading: boolean }) {
+function TradingBotCard({ tier, runs, used, loading, dailyCap }: { tier: string; runs: Run[]; used: number; loading: boolean; dailyCap: DailyCap & { reload: () => Promise<void> } }) {
   const { t } = useTranslation("aibot");
   const limit = TIER_LIMITS[tier]?.trading ?? 1;
   const baseReward = Math.floor(BASE_REWARD.trading * (TIER_BOOST[tier] ?? 1));
@@ -313,6 +354,11 @@ function TradingBotCard({ tier, runs, used, loading }: { tier: string; runs: Run
   const [busy, setBusy] = useState(false);
   const [hint, setHint] = useState("");
   const [, force] = useState(0);
+  const claimFlow = useClaimFlow({
+    reloadCap: dailyCap.reload,
+    capRemainingAfter: () => dailyCap.remaining,
+    errorTitle: t("err.err"),
+  });
 
   // Realtime progress tick
   useEffect(() => {
@@ -349,30 +395,30 @@ function TradingBotCard({ tier, runs, used, loading }: { tier: string; runs: Run
 
   const claim = async () => {
     if (!latest) return;
-    try {
-      const r = await claimRun(latest.id);
-      if (!r.reward || r.reward <= 0) {
-        toast({ title: t("capReached"), description: t("capReachedDesc"), variant: "destructive" });
-        return;
-      }
-      const sign = (r.pnl_pct ?? 0) >= 0 ? "+" : "";
-      toast({
-        title: t("trading.toastClaim", { sign, pnl: r.pnl_pct?.toFixed(2) }),
-        description: t("claimedDesc", { val: formatKRW(r.reward) }),
-      });
-      const u = (await supabase.auth.getUser()).data.user;
-      if (u) await shareToLounge({
-        user_id: u.id, nickname: u.user_metadata?.nickname ?? null, tier,
-        kind: "trading", reward: r.reward, pnl_pct: r.pnl_pct,
-        output_text: latest.output_text, output_path: latest.output_path,
-      });
-    } catch (e: any) { toast({ title: t("err.err"), description: e.message, variant: "destructive" }); }
+    await claimFlow.runClaim(latest.id, {
+      kind: "trading",
+      expected: baseReward,
+      capLeftBefore: dailyCap.remaining,
+    });
+  };
+
+  const doShare = async () => {
+    if (!latest) return;
+    const u = (await supabase.auth.getUser()).data.user;
+    if (!u) return;
+    await shareToLounge({
+      user_id: u.id, nickname: u.user_metadata?.nickname ?? null, tier,
+      kind: "trading", reward: claimFlow.modal.actual, pnl_pct: claimFlow.modal.pnl_pct,
+      output_text: latest.output_text, output_path: latest.output_path,
+    });
+    claimFlow.markShared();
   };
 
   const isReady = !!latest && progress >= 100;
   const isRunning = !!latest && progress < 100;
 
   return (
+    <>
     <BotCard
       icon={<TrendingUp className="w-4 h-4" />}
       title={t("trading.title")}
@@ -446,13 +492,26 @@ function TradingBotCard({ tier, runs, used, loading }: { tier: string; runs: Run
         </div>
       </div>
     </BotCard>
+    <ClaimResultModal
+      open={claimFlow.modal.open}
+      onClose={claimFlow.closeModal}
+      outcome={claimFlow.modal.outcome}
+      expected={claimFlow.modal.expected}
+      actual={claimFlow.modal.actual}
+      pnlPct={claimFlow.modal.pnl_pct}
+      capRemaining={claimFlow.modal.capRemaining}
+      onShare={doShare}
+      shared={claimFlow.modal.shared}
+      botKindLabel={t("trading.title")}
+    />
+    </>
   );
 }
 
 /* ============================================================
    3) AI Image Empire Maker
    ============================================================ */
-function ImageMakerCard({ tier, runs, used, loading }: { tier: string; runs: Run[]; used: number; loading: boolean }) {
+function ImageMakerCard({ tier, runs, used, loading, dailyCap }: { tier: string; runs: Run[]; used: number; loading: boolean; dailyCap: DailyCap & { reload: () => Promise<void> } }) {
   const { t } = useTranslation("aibot");
   const limit = TIER_LIMITS[tier]?.image ?? 1;
   const reward = Math.floor(BASE_REWARD.image * (TIER_BOOST[tier] ?? 1));
@@ -460,6 +519,11 @@ function ImageMakerCard({ tier, runs, used, loading }: { tier: string; runs: Run
   const [busy, setBusy] = useState(false);
   const [prompt, setPrompt] = useState("");
   const [imgUrl, setImgUrl] = useState<string | null>(null);
+  const claimFlow = useClaimFlow({
+    reloadCap: dailyCap.reload,
+    capRemainingAfter: () => dailyCap.remaining,
+    errorTitle: t("err.err"),
+  });
 
   const presets = [
     t("image.preset1"),
@@ -485,20 +549,23 @@ function ImageMakerCard({ tier, runs, used, loading }: { tier: string; runs: Run
 
   const claim = async () => {
     if (!latest) return;
-    try {
-      const r = await claimRun(latest.id);
-      if (!r.reward || r.reward <= 0) {
-        toast({ title: t("capReached"), description: t("capReachedDesc"), variant: "destructive" });
-        return;
-      }
-      toast({ title: t("claimed"), description: t("claimedDesc", { val: formatKRW(r.reward) }) });
-      const u = (await supabase.auth.getUser()).data.user;
-      if (u) await shareToLounge({
-        user_id: u.id, nickname: u.user_metadata?.nickname ?? null, tier,
-        kind: "image", reward: r.reward, pnl_pct: r.pnl_pct,
-        output_text: latest.output_text, output_path: latest.output_path,
-      });
-    } catch (e: any) { toast({ title: t("err.err"), description: e.message, variant: "destructive" }); }
+    await claimFlow.runClaim(latest.id, {
+      kind: "image",
+      expected: reward,
+      capLeftBefore: dailyCap.remaining,
+    });
+  };
+
+  const doShare = async () => {
+    if (!latest) return;
+    const u = (await supabase.auth.getUser()).data.user;
+    if (!u) return;
+    await shareToLounge({
+      user_id: u.id, nickname: u.user_metadata?.nickname ?? null, tier,
+      kind: "image", reward: claimFlow.modal.actual, pnl_pct: claimFlow.modal.pnl_pct,
+      output_text: latest.output_text, output_path: latest.output_path,
+    });
+    claimFlow.markShared();
   };
 
   const isReady = latest?.status === "ready";
@@ -506,6 +573,7 @@ function ImageMakerCard({ tier, runs, used, loading }: { tier: string; runs: Run
   const isClaimed = latest?.status === "claimed";
 
   return (
+    <>
     <BotCard
       icon={<ImageIcon className="w-4 h-4" />}
       title={t("image.title")}
@@ -560,6 +628,19 @@ function ImageMakerCard({ tier, runs, used, loading }: { tier: string; runs: Run
         </div>
       </div>
     </BotCard>
+    <ClaimResultModal
+      open={claimFlow.modal.open}
+      onClose={claimFlow.closeModal}
+      outcome={claimFlow.modal.outcome}
+      expected={claimFlow.modal.expected}
+      actual={claimFlow.modal.actual}
+      pnlPct={claimFlow.modal.pnl_pct}
+      capRemaining={claimFlow.modal.capRemaining}
+      onShare={doShare}
+      shared={claimFlow.modal.shared}
+      botKindLabel={t("image.title")}
+    />
+    </>
   );
 }
 
