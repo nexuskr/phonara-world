@@ -138,8 +138,73 @@ export default function NotificationPreferencesPanel({ userId }: { userId: strin
         </table>
       </div>
       <p className="text-[10px] text-muted-foreground mt-3">
-        ⓘ 기본값은 모든 채널 켜짐. SMS는 휴대폰 인증이 완료된 계정에서만 발송됩니다.
+        ⓘ 기본값은 모든 채널 켜짐. SMS는 휴대폰 인증이 완료된 계정에서만 발송됩니다. 푸시는 브라우저별로 별도 활성화 필요.
       </p>
+    </div>
+  );
+}
+
+function PushEnableRow() {
+  const [active, setActive] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [supported, setSupported] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      const { isPushSupported, isPushActive } = await import("@/lib/push");
+      setSupported(isPushSupported());
+      setActive(await isPushActive());
+    })();
+  }, []);
+
+  async function onToggle() {
+    setBusy(true);
+    try {
+      const mod = await import("@/lib/push");
+      if (active) {
+        await mod.unsubscribePush();
+        setActive(false);
+        toast({ title: "브라우저 푸시를 껐습니다" });
+      } else {
+        const r = await mod.subscribePush();
+        if (!r.ok) {
+          toast({ title: "푸시 활성화 실패", description: r.reason, variant: "destructive" });
+        } else {
+          setActive(true);
+          toast({ title: "이 브라우저로 푸시 알림을 받습니다" });
+        }
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!supported) {
+    return (
+      <div className="mb-4 rounded-xl border border-border/40 bg-muted/20 px-3 py-2 text-[11px] text-muted-foreground">
+        이 브라우저는 푸시 알림을 지원하지 않습니다.
+      </div>
+    );
+  }
+
+  return (
+    <div className="mb-4 rounded-xl border border-primary/30 bg-primary/5 px-3 py-2.5 flex items-center justify-between gap-3">
+      <div className="flex items-center gap-2 min-w-0">
+        <Bell className={`w-4 h-4 shrink-0 ${active ? "text-secondary" : "text-muted-foreground"}`} />
+        <div className="min-w-0">
+          <div className="text-xs font-black">브라우저 푸시 알림</div>
+          <div className="text-[10px] text-muted-foreground truncate">
+            {active ? "이 브라우저로 즉시 알림을 받습니다" : "버튼을 눌러 이 브라우저에서 활성화"}
+          </div>
+        </div>
+      </div>
+      <button
+        onClick={() => void onToggle()}
+        disabled={busy}
+        className={`text-[11px] font-black px-3 py-1.5 rounded-lg shrink-0 ${active ? "bg-muted text-foreground" : "bg-gradient-imperial text-imperial-foreground"} disabled:opacity-50`}
+      >
+        {busy ? "..." : active ? "끄기" : "활성화"}
+      </button>
     </div>
   );
 }
