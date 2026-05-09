@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { refreshWallet } from "@/lib/missions-rpc";
 import ServerTxList from "@/components/wallet/ServerTxList";
 import WithdrawalHistoryList from "@/components/wallet/WithdrawalHistoryList";
+import DepositHistoryList from "@/components/wallet/DepositHistoryList";
 import WithdrawIntentInterceptor from "@/components/conversion/WithdrawIntentInterceptor";
 import AMLGate from "@/components/wallet/AMLGate";
 import WithdrawQueueStatus from "@/components/wallet/WithdrawQueueStatus";
@@ -198,8 +199,41 @@ export default function Wallet() {
     if (channel === "voucher") {
       if (!voucherPin || voucherPin.length < 12) { toast({ title: t("voucherPinPh") as string }); return; }
     }
+    // Client-side prefix guard for coin addresses (fast feedback)
+    if (channel === "coin") {
+      const addr = coinAddr.trim();
+      const okPrefix =
+        (network === "TRC20" && /^T[A-Za-z0-9]{25,40}$/.test(addr)) ||
+        (network === "ERC20" && /^0x[a-fA-F0-9]{40}$/.test(addr)) ||
+        (network === "BEP20" && /^0x[a-fA-F0-9]{40}$/.test(addr));
+      if (!okPrefix) {
+        toast({ title: "코인 주소 형식 오류", description: `${network} 네트워크 주소 형식과 다릅니다.`, variant: "destructive" });
+        return;
+      }
+    }
     try {
-      const { submitDeposit: rpcSubmitDeposit } = await import("@/lib/deposits-rpc");
+      const { submitDeposit: rpcSubmitDeposit, validateDepositInput } = await import("@/lib/deposits-rpc");
+      // Server-side validation (duplicates, network mismatch, bank length)
+      try {
+        const v = await validateDepositInput({
+          method: channel,
+          coinAddress: channel === "coin" ? coinAddr.trim() : null,
+          coinNetwork: channel === "coin" ? network : null,
+          voucherBrand: channel === "voucher" ? voucherBrand : null,
+          voucherPin: channel === "voucher" ? voucherPin : null,
+          bankAccount: channel === "bank" ? account : null,
+        });
+        const high = v.warnings?.find(w => w.severity === "high");
+        if (high) {
+          toast({ title: "신청 차단", description: high.message, variant: "destructive" });
+          return;
+        }
+        const med = v.warnings?.find(w => w.severity === "medium");
+        if (med) toast({ title: "주의", description: med.message });
+      } catch (ve: any) {
+        // validation RPC failure is non-fatal; admin will still review
+        console.warn("[deposit] validate skipped:", ve?.message);
+      }
       const r = await rpcSubmitDeposit({
         amount: a,
         method: channel,
@@ -533,6 +567,10 @@ export default function Wallet() {
             <div>
               <div className="text-[10px] tracking-[0.25em] text-primary font-black mb-3 uppercase">출금 이력</div>
               <WithdrawalHistoryList />
+            </div>
+            <div>
+              <div className="text-[10px] tracking-[0.25em] text-primary font-black mb-3 uppercase">충전 이력</div>
+              <DepositHistoryList />
             </div>
             <NotificationPreferencesPanel userId={u.id} />
             <div>
