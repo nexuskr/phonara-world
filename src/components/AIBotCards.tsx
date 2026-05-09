@@ -9,6 +9,7 @@ import { useDailyCap, type DailyCap } from "@/hooks/use-daily-cap";
 import DailyCapMeter from "@/components/wallet/DailyCapMeter";
 import ClaimResultModal from "@/components/ai/ClaimResultModal";
 import { classifyClaim, buildClaimTelemetry, type ClaimOutcome } from "@/lib/claim-result";
+import { useClaimFlow } from "@/hooks/use-claim-flow";
 import { track } from "@/lib/telemetry";
 import type { Database } from "@/integrations/supabase/types";
 import {
