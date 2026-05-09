@@ -34,12 +34,12 @@ export default function DailyCapMeter({ cap, used, remaining, pct, loading, clas
           className,
         )}
         role="status"
-        aria-label={t("wallet.dailyCap")}
+        aria-label={t("wallet:dailyCap")}
       >
         <Icon className={cn("h-3.5 w-3.5 shrink-0", `text-${tone}`)} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2">
-            <span className="text-muted-foreground">{t("wallet.dailyCap")}</span>
+            <span className="text-muted-foreground">{t("wallet:dailyCap")}</span>
             <span className="font-display font-bold tabular-nums">
               {loading ? "—" : `${formatKRW(remaining)} / ${formatKRW(cap)}`}
             </span>
@@ -66,12 +66,12 @@ export default function DailyCapMeter({ cap, used, remaining, pct, loading, clas
         className,
       )}
       role="status"
-      aria-label={t("wallet.dailyCap")}
+      aria-label={t("wallet:dailyCap")}
     >
       <div className="flex items-center justify-between text-xs">
         <div className="flex items-center gap-1.5">
           <Icon className={cn("h-3.5 w-3.5", `text-${tone}`)} />
-          <span className="text-muted-foreground">{t("wallet.dailyCap")}</span>
+          <span className="text-muted-foreground">{t("wallet:dailyCap")}</span>
         </div>
         <span className="font-display font-bold tabular-nums">
           {loading ? "—" : `${formatKRW(used)} / ${formatKRW(cap)}`}
@@ -88,7 +88,7 @@ export default function DailyCapMeter({ cap, used, remaining, pct, loading, clas
       </div>
       <div className="flex items-center justify-between text-[11px]">
         <span className={cn("text-muted-foreground", exhausted && "text-destructive font-bold")}>
-          {exhausted ? t("wallet.dailyCapReached") : t("wallet.dailyCapRemaining")}
+          {exhausted ? t("wallet:dailyCapReached") : t("wallet:dailyCapRemaining")}
         </span>
         <span className={cn("tabular-nums font-bold", `text-${tone}`)}>
           {loading ? "—" : formatKRW(remaining)}
