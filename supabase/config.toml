@@ -20,7 +20,13 @@ project_id = "ketlqzfaplppmupaiwft"
   [functions.webhook-dispatcher]
     verify_jwt = true
   [functions.chaos-probe]
-    verify_jwt = false
+    verify_jwt = true
+  [functions.send-push]
+    verify_jwt = true
+  [functions.dm-composer]
+    verify_jwt = true
+  [functions.verify-submission]
+    verify_jwt = true
   [functions.attribute-click]
     verify_jwt = false
   [functions.toggle-rrm]

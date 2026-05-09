@@ -47,6 +47,21 @@ serve(async (req) => {
   }
 
   try {
+    // Require authenticated caller
+    const authHeader = req.headers.get("Authorization") ?? "";
+    if (!authHeader.toLowerCase().startsWith("bearer ")) {
+      return json({ error: "unauthorized" }, 401);
+    }
+    const userClient = createClient(
+      SUPABASE_URL,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } },
+    );
+    const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+    const { data: claims } = await userClient.auth.getClaims(token);
+    const callerId = claims?.claims?.sub as string | undefined;
+    if (!callerId) return json({ error: "unauthorized" }, 401);
+
     const body = await req.json().catch(() => ({}));
     const submission_id: string | undefined = body?.submission_id;
 
@@ -57,6 +72,22 @@ serve(async (req) => {
     const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
       auth: { persistSession: false },
     });
+
+    // Authorization: caller must own the submission OR be admin
+    const { data: sub, error: subErr } = await supabase
+      .from("viral_submissions")
+      .select("user_id")
+      .eq("id", submission_id)
+      .maybeSingle();
+    if (subErr) throw subErr;
+    if (!sub) return json({ error: "not_found" }, 404);
+
+    const { data: isAdmin } = await supabase.rpc("has_role", {
+      _user_id: callerId, _role: "admin",
+    });
+    if (sub.user_id !== callerId && !isAdmin) {
+      return json({ error: "forbidden" }, 403);
+    }
 
     // 1) Circuit state (read-only)
     const { data: circuit, error: circuitErr } = await supabase

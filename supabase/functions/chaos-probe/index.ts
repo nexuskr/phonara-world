@@ -1,5 +1,6 @@
 // Daily chaos probe — runs same-style read-only probes the script does,
 // then records to chaos_runs via service_role.
+// SECURITY: requires service_role JWT (verify_jwt=true) — internal cron only.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, apikey, content-type" };
@@ -15,6 +16,21 @@ const SENSITIVE = [
 
 type Result = { name: string; pass: boolean; detail: string };
 
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let mismatch = 0;
+  for (let i = 0; i < a.length; i++) mismatch |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return mismatch === 0;
+}
+
+function isAuthorizedInternal(req: Request): boolean {
+  if (!SERVICE) return false;
+  const auth = req.headers.get("Authorization") ?? "";
+  const token = auth.replace(/^Bearer\s+/i, "").trim();
+  if (!token) return false;
+  return timingSafeEqual(token, SERVICE);
+}
+
 async function probeAnonDenied(table: string): Promise<Result> {
   const r = await fetch(`${SUPABASE_URL}/rest/v1/${table}?select=*&limit=1`, {
     headers: { apikey: ANON },
@@ -27,6 +43,11 @@ async function probeAnonDenied(table: string): Promise<Result> {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (!isAuthorizedInternal(req)) {
+    return new Response(JSON.stringify({ error: "forbidden" }), {
+      status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
   const start = Date.now();
   const results: Result[] = [];
 

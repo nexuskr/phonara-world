@@ -1,4 +1,5 @@
 // Web Push dispatcher — called from `notifications` AFTER INSERT trigger via pg_net
+// SECURITY: requires service_role JWT (verify_jwt=true). Trigger passes service role key.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import webpush from "https://esm.sh/web-push@3.6.7";
 
@@ -17,9 +18,27 @@ if (VAPID_PUBLIC && VAPID_PRIVATE) {
   try { webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC, VAPID_PRIVATE); } catch (_) {}
 }
 
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let mismatch = 0;
+  for (let i = 0; i < a.length; i++) mismatch |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return mismatch === 0;
+}
+
+function isAuthorizedInternal(req: Request): boolean {
+  if (!SERVICE_KEY) return false;
+  const auth = req.headers.get("Authorization") ?? "";
+  const token = auth.replace(/^Bearer\s+/i, "").trim();
+  if (!token) return false;
+  return timingSafeEqual(token, SERVICE_KEY);
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
+    if (!isAuthorizedInternal(req)) {
+      return json({ ok: false, error: "forbidden" }, 403);
+    }
     if (!VAPID_PUBLIC || !VAPID_PRIVATE) {
       return new Response(JSON.stringify({ ok: false, error: "VAPID keys not configured" }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
