@@ -201,6 +201,51 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
+      {/* Mobile secondary nav — extra destinations not in bottom 5-tab bar */}
+      {user && (
+        <div className="md:hidden sticky top-14 z-30 glass border-b border-border/40">
+          <div className="container py-2">
+            <div className="flex gap-1.5 overflow-x-auto no-scrollbar -mx-1 px-1">
+              {SIDE_EXTRA.map((item) => {
+                const Icon = item.icon;
+                const active = loc.pathname.startsWith(item.to);
+                return (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold transition press ${
+                      item.gold
+                        ? active
+                          ? "bg-gradient-imperial text-primary-foreground glow-imperial"
+                          : "border border-primary/40 text-primary"
+                        : active
+                          ? "bg-primary/15 text-primary border border-primary/30"
+                          : "glass text-muted-foreground border border-border/40"
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    <span>{t(item.labelKey)}</span>
+                  </NavLink>
+                );
+              })}
+              {user.isAdmin && (
+                <NavLink
+                  to="/admin"
+                  className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold transition press ${
+                    loc.pathname.startsWith("/admin")
+                      ? "bg-primary/15 text-primary border border-primary/30"
+                      : "glass text-primary border border-primary/40"
+                  }`}
+                >
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>{t("admin")}</span>
+                </NavLink>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       <main className="relative">{children}</main>
       <NeonNotificationFeed />
 
