@@ -8,9 +8,11 @@ import { track } from "@/lib/telemetry";
 export function usePaperLiquidationWatcher() {
   const { prices } = useBybitTicker();
   const tick = usePaperStore((s) => s.tick);
+  const hasPositions = usePaperStore((s) => s.positions.length > 0);
   const lastRef = useRef<number>(0);
 
   useEffect(() => {
+    if (!hasPositions) return;
     const now = Date.now();
     if (now - lastRef.current < 800) return;
     lastRef.current = now;
@@ -28,5 +30,5 @@ export function usePaperLiquidationWatcher() {
         },
       });
     }
-  }, [prices, tick]);
+  }, [prices, tick, hasPositions]);
 }
