@@ -3171,6 +3171,7 @@ export type Database = {
       }
       _cron_security_self_audit: { Args: never; Returns: undefined }
       _cron_settle_package_daily: { Args: never; Returns: Json }
+      _edge_internal_auth_header: { Args: never; Returns: Json }
       _period_key: { Args: { _period: string }; Returns: string }
       acknowledge_anomaly: {
         Args: { _id: string; _note?: string }
