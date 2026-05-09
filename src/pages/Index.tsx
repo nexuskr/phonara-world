@@ -164,16 +164,20 @@ export default function Index() {
         {/* CTA */}
         <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-up" style={{ animationDelay: "0.3s" }}>
           <Link
-            to="/secure-auth?signup=1"
-            onClick={() => onCta("hero")}
+            to="/global-intelligence"
+            onClick={() => { onCta("hero_infra"); track("cta_click", { surface: "hero_infra", variant: "trading" }); }}
             className="group relative px-8 py-4 rounded-2xl font-display font-bold text-base sm:text-lg bg-gradient-imperial text-primary-foreground glow-imperial animate-pulse-glow hover:scale-105 transition flex items-center gap-2"
           >
-            <Crown className="w-5 h-5" />
+            <TrendingUp className="w-5 h-5" />
             {t("ctaPrimary")}
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition" />
           </Link>
-          <Link to="/secure-auth" className="text-sm text-muted-foreground hover:text-foreground transition">
-            {t("ctaSecondary")}
+          <Link
+            to="/empire"
+            onClick={() => { onCta("hero_infra"); track("cta_click", { surface: "hero_infra", variant: "tier" }); }}
+            className="px-6 py-3 rounded-2xl text-sm font-bold border border-primary/40 text-primary hover:bg-primary/10 transition inline-flex items-center gap-2"
+          >
+            <Crown className="w-4 h-4" /> Infrastructure Tier 참여하기
           </Link>
         </div>
 
