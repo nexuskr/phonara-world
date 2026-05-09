@@ -9,6 +9,8 @@ import PaperPositionList from "@/components/intelligence/PaperPositionList";
 import TradingHistoryPanel from "@/components/intelligence/TradingHistoryPanel";
 import PersonalMemoryPanel from "@/components/intelligence/PersonalMemoryPanel";
 import GlobalContributionBar from "@/components/intelligence/GlobalContributionBar";
+import WinMomentOverlay from "@/components/intelligence/WinMomentOverlay";
+import WeeklyLeaderboard from "@/components/intelligence/WeeklyLeaderboard";
 import Disclaimer from "@/components/Disclaimer";
 import { usePaperLiquidationWatcher } from "@/hooks/use-paper-positions";
 import { useTrackView } from "@/lib/telemetry";
