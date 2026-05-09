@@ -10,6 +10,9 @@ import {
   MessageSquare,
   User as UserIcon,
   ChevronRight,
+  Network,
+  Eye,
+  TrendingUp,
 } from "lucide-react";
 import { useDB } from "@/lib/store";
 import React from "react";
@@ -50,9 +53,13 @@ const NAV: NavItem[] = [
   { to: "/legacy",   matches: ["/legacy", "/achievements"],                                                   icon: Trophy,          labelKey: "legacy" },
 ];
 
-const SIDE_EXTRA = [
-  { to: "/support", icon: MessageSquare, labelKey: "support" as const },
-  { to: "/profile", icon: UserIcon,      labelKey: "my" as const },
+const SIDE_EXTRA: Array<{ to: string; icon: typeof MessageSquare; labelKey: any; gold?: boolean }> = [
+  { to: "/global-intelligence", icon: TrendingUp, labelKey: "tradingArena", gold: true },
+  { to: "/intelligence-loop", icon: Network, labelKey: "intelligenceLoop" },
+  { to: "/infrastructure", icon: Zap, labelKey: "infrastructure" },
+  { to: "/vision", icon: Eye, labelKey: "vision" },
+  { to: "/support", icon: MessageSquare, labelKey: "support" },
+  { to: "/profile", icon: UserIcon, labelKey: "my" },
 ];
 
 function isActive(item: NavItem, pathname: string) {
@@ -115,7 +122,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   key={item.to}
                   to={item.to}
                   className={`flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition ${
-                    active ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                    item.gold
+                      ? active
+                        ? "bg-gradient-imperial text-primary-foreground glow-imperial"
+                        : "border border-primary/40 text-primary hover:bg-primary/10"
+                      : active
+                        ? "text-primary"
+                        : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   <Icon className="w-4 h-4" />

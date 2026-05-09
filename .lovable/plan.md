@@ -1,120 +1,172 @@
-# Phonara.world 최종 폴리싱 로드맵
+# Plan — Decision Intelligence Infrastructure 리브랜딩 + Paper Long/Short Trading Arena (FINAL)
 
-현재 코어(Cloud, RLS, 권한 baseline, 결제 3채널, 포렌식 검수, 타임라인, CI)는 안정적. 이제 "최후 1%"를 채우는 작업입니다. 우선순위 P0(무조건) → P3(여유) 순.
+## 범위 원칙 (NON-GOAL — 절대 위반 금지)
+- DB 스키마 / RLS / RPC / Auth / 결제 / Empire·Sovereign 플로우 **변경 없음**
+- `conversion_events`는 **INSERT 로그 전용** (기존 surface 패턴 그대로)
+- `wallet_balances` / `telemetry` / `empire_*` **읽기 전용**
+- 기존 라우트·컴포넌트 보존, **추가만**
+- 마이그레이션 **0건**
+- 모든 Paper Trading 화면 시뮬레이션 disclaimer 고정
 
----
-
-## 🔴 P0 — 출시 전 필수 (1~2일)
-
-### 1. 입금 폼 클라이언트 측 검증 통합 (구멍 발견)
-- `validate_deposit_input` RPC가 이미 존재하지만 `src/pages/Wallet.tsx` / `Packages.tsx`의 폼이 **호출하지 않음** → 관리자만 검증하는 단방향 구조.
-- **할 일**: Wallet `submitDeposit()`, Packages `submitPackagePurchase()` 호출 직전에 RPC 실행 → 중복/네트워크 불일치/계좌 형식 오류 즉시 토스트.
-- **추가**: 코인 주소 prefix별 정규식(`0x`/`T`/`bc1`) 클라이언트 1차 가드.
-
-### 2. SMS·푸시 알림 실 연동
-- `notification_preferences`로 사용자 동의는 받지만 SMS/푸시 채널이 **DB 플래그만 존재 — 실제 발송 코드 없음**.
-- **선택**: 
-  - SMS: 알리고(국내 저렴) 또는 Twilio
-  - 푸시: Web Push (VAPID) — 서버리스로 충분
-- **할 일**: `send-transactional-email` 패턴 그대로 `send-sms` / `send-push` Edge Function 추가 + `tg_*_status_change` 트리거에서 채널 분기.
-
-### 3. AdminReviewModal 처리 결과 → 사용자 모달 동기화 점검
-- DepositRequestsAdmin/Packages는 사용자 측 history 컴포넌트가 미흡.
-- **할 일**: 사용자 Wallet의 deposit 탭에 `DepositHistoryList`(WithdrawalHistoryList와 동급) 신설, RequestTimeline 임베드.
-
-### 4. Edge Function 보안 감사
-- `verify-submission`, `ai-mission-generator` 등 9개 함수의 입력 zod 검증·rate limit 일치 여부 일괄 점검.
-- 미검증 함수 발견 시 즉시 패치.
-
----
-
-## 🟠 P1 — 운영 안정성 (3~5일)
-
-### 5. 어드민 대시보드 KPI 시각화 보강
-- ObservabilityCockpit이 있지만 "오늘 입금/출금/패키지 매출/순이익" 카드형 일일 위젯 부재.
-- **할 일**: `daily_treasury_snapshot` 머티리얼라이즈드 뷰 + Admin 첫 페이지 카드 4개.
-
-### 6. Anomaly 자동 대응
-- `anomaly_events`는 기록만 함. Critical 이벤트(예: 1분 내 5회 실패) 발생 시 **자동 계정 동결**(`account_freezes` 인서트) 트리거 추가.
-
-### 7. Rate Limiting 표준화
-- `submit_deposit`, `request_withdrawal` 등 핵심 RPC에 `pg_throttle` 패턴(분당 N회) 적용. 현재 미구현이면 봇 공격에 취약.
-
-### 8. AML Gate UX 개선
-- AMLGate 차단 시 "어떤 서류가 필요한가"를 명시한 단계별 가이드 카드 + 업로드 진행도. 현재는 메시지만.
-
-### 9. PIN 보안 강화
-- 출금 PIN 5회 오입력 시 24h 락아웃 + 이메일 통지. 현재 무제한 시도 가능 추정.
-
-### 10. Receipt 이미지 OCR 자동 검증
-- Lovable AI Gateway(`google/gemini-2.5-flash`)로 영수증 금액·시간 자동 추출 → 신청 금액과 일치 여부 보조 체크 → 어드민 검수 1초 → 0초.
-
----
-
-## 🟡 P2 — 사용자 경험 폴리싱 (1주)
-
-### 11. i18n 누락 점검
-- 새로 추가된 "포렌식 승인", "타임라인", "관리자 검수 메모" 등이 한글 하드코딩. ko/en 양방향 정리.
-
-### 12. 모바일 첫 로드 성능
-- 라이트하우스 측정 → 코드스플릿(특히 Admin/UGC), 이미지 lazy, font-display: swap 확인.
-
-### 13. 접근성(a11y)
-- 현재 `aria-label` 18개뿐. Modal trap focus, ESC 닫기, 색대비, 폼 라벨 연결을 위한 일괄 패스.
-
-### 14. ErrorBoundary 세분화 + Sentry
-- 페이지별 fallback + 운영용 에러 수집(Sentry/Logtail).
-
-### 15. 빈 상태(Empty State) 일관화
-- "아직 신청 내역이 없습니다" 문구·아이콘 통일 컴포넌트.
-
-### 16. 로딩 스켈레톤
-- Dashboard/Wallet/Packages/Empire 첫 진입 시 깜빡임 → shadcn Skeleton 통일.
-
-### 17. Real-time 재연결 처리
-- 네트워크 끊김 시 채널 자동 reconnect 토스트 + retry.
-
----
-
-## 🟢 P3 — 장기 가치 (선택)
-
-### 18. 관리자 감사 로그 검색 UI
-- `admin_audit_log` 키워드/날짜/관리자별 필터.
-
-### 19. 사용자 데이터 다운로드(GDPR/PIPA)
-- 프로필 탭에 "내 데이터 받기" 버튼 → ZIP(JSON+CSV) 생성 Edge Function.
-
-### 20. 2FA(TOTP) 어드민 강제
-- has_role('admin') 사용자 로그인 후 TOTP 검증 단계.
-
-### 21. CI 확장
-- 현재 RLS+권한 drift만 검사. E2E(Playwright) 핵심 플로우(가입→충전→미션→출금) 추가.
-
-### 22. 백업·복원 리허설
-- 주 1회 PITR 복원 테스트 워크플로우.
-
-### 23. SEO·OG 카드
-- 메타 태그·OG 이미지·sitemap.xml·robots.txt 마지막 점검.
-
-### 24. Storybook 도입
-- LuxButton, Disclaimer, RequestTimeline 등 핵심 UI 시각 회귀 방지.
-
----
-
-## 추천 실행 순서
+## 0. 패키지 추가
+```bash
+npm install lightweight-charts zustand idb-keyval date-fns
 ```
-Day 1-2:  P0 #1, #3, #4   (코드 구멍 마감)
-Day 3-4:  P0 #2 SMS/푸시
-Day 5-7:  P1 #5~#10
-Week 2:   P2 (UX 폴리싱)
-Week 3+:  P3 (선택적 가치)
+- `lightweight-charts` — 실시간 캔들 차트
+- `zustand` — Paper Trading 상태 관리
+- `idb-keyval` — IndexedDB 영속화
+- `date-fns` — 시간/필터 포맷팅
+
+## 1. 카피 리브랜딩
+**대상:** `src/pages/Index.tsx`, `index.html`, `src/lib/i18n.ts`
+
+- Hero KO: "세계 AI 의사결정 인텔리전스 인프라"
+- Hero EN: "Global AI Decision Intelligence Infrastructure"
+- 서브카피: "입금한 돈으로 실시간 Paper Long/Short Trading을 통해 직접 돈을 불려보세요. 한 방이 당신의 인생을 바꿀 수 있다."
+- CTA 1차: `[지금 Trading Arena 시작하기]` → `/global-intelligence`
+- CTA 2차: `[Infrastructure Tier 참여하기]` → `/empire`
+- `<title>` / `<meta description>` / OG / Twitter 카드 ko·en 교체
+- 기존 Hero 마크업/애니메이션 보존, 텍스트만 교체
+
+## 2. 신규 정적 페이지 3개
+```text
+src/pages/Infrastructure.tsx     → /infrastructure
+src/pages/IntelligenceLoop.tsx   → /intelligence-loop
+src/pages/Vision.tsx             → /vision
+```
+- `App.tsx`: lazy import + Route 3개
+- 모든 페이지 하단: `<Disclaimer />` + Paper Trading 강화 경고
+- 모든 페이지 Trading Arena 진입 CTA
+- **/infrastructure** — 3-Layer 다이어그램 (Personal Memory · Daily Optimization · Global Learning)
+- **/intelligence-loop** — 7노드 SVG + Framer Motion 플라이휠 (Long/Short Decision 골드 강조)
+- **/vision** — 매니페스토 ko/en 병기
+
+## 3. /global-intelligence — Paper Trading Arena (핵심)
+
+### 신규 파일 (15)
+```text
+src/pages/GlobalIntelligence.tsx
+src/components/intelligence/LiveCounterRow.tsx
+src/components/intelligence/DecisionCoreCard.tsx
+src/components/intelligence/PersonalMemoryPanel.tsx
+src/components/intelligence/LivePriceChart.tsx          // lightweight-charts
+src/components/intelligence/LongShortTradingPanel.tsx
+src/components/intelligence/PaperPositionList.tsx
+src/components/intelligence/TradingHistoryPanel.tsx
+src/components/intelligence/GlobalContributionBar.tsx
+src/lib/paper-trading/types.ts
+src/lib/paper-trading/store.ts                          // zustand + idb persist
+src/lib/paper-trading/engine.ts                         // PnL/청산/레버리지
+src/lib/paper-trading/bybit-feed.ts                     // WS + REST 폴백
+src/hooks/use-paper-positions.ts
+src/hooks/use-bybit-ticker.ts
 ```
 
-## 가장 임팩트 큰 Top 3 (시간 부족 시)
-1. **#1 폼 검증 통합** — 어드민 부담을 즉시 줄임
-2. **#2 SMS/푸시** — 사용자 신뢰도 급상승
-3. **#10 OCR 자동검증** — 운영 인건비 -70%
+### 레이아웃 (≤947 1열 / ≥1024 2열)
+```text
+┌─ LiveCounterRow (Today Volume · Live Traders · My Total PnL) ─────┐
+├─ DecisionCoreCard (AI 추천 3카드 + Long/Short 프리필) ─────────────┤
+├─ LongShortTradingPanel ───────────────────────────────────────────┤
+│   LivePriceChart (lightweight-charts + Bybit WS, 1m candles)      │
+│   20코인 셀렉트 / 금액 입력 / 1×~100× 레버리지 슬라이더            │
+│   초대형 Long·Short 버튼 + 실시간 예상 PnL · 청산가 · 필요 마진     │
+├─ PaperPositionList (Open, 실시간 PnL pulse) ──────────────────────┤
+├─ TradingHistoryPanel ─────────────────────────────────────────────┤
+│   Open / Closed / All 탭 + 기간/Win-Loss/코인/Side 필터 + 검색     │
+│   컬럼: 시간 · 코인 · Side · Lev · 진입/청산가 · 실현 PnL · ROI%    │
+│   요약: Win Rate · Total PnL · Best Trade · Avg ROI                │
+│   [Export CSV] (date-fns + src/lib/csv.ts 재사용)                  │
+│   큰 승리 행 골드 하이라이트 + 불꽃 이펙트                          │
+├─ PersonalMemoryPanel (최근 결정 이력) ─────────────────────────────┤
+└─ GlobalContributionBar + Weekly Top Trader Leaderboard ──────────┘
+```
 
----
+### Bybit Public WebSocket
+- `wss://stream.bybit.com/v5/public/linear` (인증 불필요)
+- 토픽: `tickers.{SYMBOL}`, `kline.1.{SYMBOL}` — 20코인 화이트리스트
+- 자동 재연결, 30s ping, 끊김 시 마지막 가격 캐시 + "Reconnecting…" 배지
+- 폴백: REST `/v5/market/tickers` 5s 폴링
 
-어떤 묶음부터 진행할지 알려주세요. 추천: **P0 전체(#1~#4)를 한 번에** 끝내는 것을 권장합니다.
+### Paper Trading Engine
+```ts
+type Position = {
+  id: string; symbol: string;
+  side: 'long' | 'short';
+  leverage: number;        // 1..100
+  margin: number;          // USDT
+  entry: number; openedAt: number;
+  closed?: { price: number; at: number; pnl: number; roi: number;
+             reason: 'manual' | 'liquidation' };
+};
+```
+- `size = (margin * leverage) / entry`
+- `pnl = (price - entry) * size * (long ? 1 : -1)`
+- `roi = pnl / margin`, `roi <= -1` 자동 청산, 수수료 0
+
+### 영속화
+- `zustand` + `idb-keyval` persist
+- 키: `phonara_paper_positions`, `phonara_paper_history`
+- 새로고침 시 Open 포지션 현재가로 PnL 재계산
+- CSV: 기존 `src/lib/csv.ts`
+
+### Empire Balance 분리 (안전장치)
+- `useWallet()` 잔액 **읽기만**, 절대 mutate 금지
+- Paper Credit = wallet.available_balance **미러 + 클라이언트 ±**
+- UI 두 줄: "Empire Balance (실거래)" / "Trading Credit (Paper)"
+- 패널 상단 고정 disclaimer: *"Paper Trading은 학습용 시뮬레이션입니다. 실제 잔액에 영향을 주지 않습니다."*
+- "Empire Δ" 컬럼 **(Paper)** 라벨
+
+### Decision Core (규칙 기반 v1)
+- 3카드: BTC 단기 / 알트 모멘텀 / 헷지
+- 단순 EMA·모멘텀, LLM 호출 없음
+- `[이 결정으로 진입]` → TradingPanel 자동 프리필
+
+### LiveCounterRow / Leaderboard
+- Today Volume / My Total PnL = 본인 세션 (zustand)
+- Live Traders = 정적 시드 + 본인 세션
+- 주간 ROI Top5 = 시드 + 본인 세션
+
+## 4. Navigation & 도파민
+- `SIDE_EXTRA` 최상단 **Trading Arena** 골드 배지
+- 추가 항목: Intelligence Loop / Infrastructure / Vision
+- 비로그인 헤더 "Trading Arena" 강조 버튼
+- `/global-intelligence` 상단 "My Trading History" 탭 강조
+- 승리 청산: Framer Motion 파티클 + 카운트업 + `@/lib/notify` 토스트 + 사운드 옵션(디폴트 OFF)
+- Near Miss(-90%~-99% ROI) 시각 텐션, Combo Multiplier, Daily Jackpot 배너 (시각 연출 전용, 실제 정산 X)
+
+## 5. UX 프리미티브 준수 (메모리 룰)
+- 빈상태: `@/components/ui/empty-state`
+- 로딩: `@/components/ui/loading-state`
+- 토스트: `@/lib/notify` (sonner 직접 호출 금지)
+- 색상: 디자인 토큰(HSL semantic, primary/imperial)만
+
+## 6. i18n
+`src/lib/i18n.ts` ko/en 네임스페이스 append:
+- `trading`, `infrastructure`, `intelligence`, `vision`, `nav.tradingArena`
+
+## 7. 텔레메트리
+신규 surface 키 (`src/lib/telemetry.ts` 기존 `track()` 사용):
+- `hero_infra`, `global_intel_view`
+- `paper_trade` (cta_click=open / convert=close / dismiss=cancel, meta: symbol/side/lev/margin)
+- `trading_history_view`, `trading_csv_export`
+
+## 8. 검증
+- `npm install` + 빌드 통과
+- 4개 신규 라우트 200
+- Bybit WS 연결/재연결, 20코인 전환, REST 폴백
+- Open PnL 1초 이내 갱신, 새로고침 후 복원
+- History 정렬·필터·검색·CSV export
+- 실 wallet 잔액 변동 0 (useWallet mutate 호출 없음)
+- 회귀: 로그인 / 미션 클레임 / 출금 / Empire 결제 진입 수동 확인
+
+## 9. 산출물
+- 신규 **15** (3 페이지 + 9 컴포넌트 + 4 lib + 2 hook)
+- 수정 **6** (`App.tsx`, `Index.tsx`, `Layout.tsx`, `index.html`, `i18n.ts`, `Empire.tsx` 카피만)
+- 패키지 **4**, 마이그레이션 **0**
+
+## 10. 리스크 / 비범위
+- 실제 Empire Balance 변동 → 결제·AML·정산 충돌, **비포함** (Paper Credit 미러)
+- Live Traders 실수치 집계 → 시드+세션
+- AI 결정 v1 규칙 기반, LLM 통합 후속
+- 법무: 전 Trading 화면 시뮬레이션 disclaimer 고정. "Decision Intelligence Infrastructure"는 카테고리 묘사 표현
+- Daily Jackpot/Combo 등 도파민 연출 시각 전용, 실제 보상 없음 (오인 방지 라벨)

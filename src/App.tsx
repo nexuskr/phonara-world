@@ -44,6 +44,10 @@ const HallOfFame = lazy(() => import("./pages/HallOfFame.tsx"));
 const Referral = lazy(() => import("./pages/Referral.tsx"));
 const UgcDashboard = lazy(() => import("./pages/UgcDashboard.tsx"));
 const CampaignRedirect = lazy(() => import("./pages/CampaignRedirect.tsx"));
+const GlobalIntelligence = lazy(() => import("./pages/GlobalIntelligence.tsx"));
+const Infrastructure = lazy(() => import("./pages/Infrastructure.tsx"));
+const IntelligenceLoop = lazy(() => import("./pages/IntelligenceLoop.tsx"));
+const Vision = lazy(() => import("./pages/Vision.tsx"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -111,6 +115,10 @@ const App = () => (
               <Route path="/referral" element={<Referral />} />
               <Route path="/ugc" element={<UgcDashboard />} />
               <Route path="/c/:slug" element={<CampaignRedirect />} />
+              <Route path="/global-intelligence" element={<GlobalIntelligence />} />
+              <Route path="/infrastructure" element={<Infrastructure />} />
+              <Route path="/intelligence-loop" element={<IntelligenceLoop />} />
+              <Route path="/vision" element={<Vision />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
