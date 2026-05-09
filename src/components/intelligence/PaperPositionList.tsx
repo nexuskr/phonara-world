@@ -40,8 +40,21 @@ export default function PaperPositionList() {
     );
   }
 
+  const totalPnl = positions.reduce((s, p) => s + computePnl(p, prices[p.symbol] ?? p.entry), 0);
+
   return (
     <div className="space-y-2">
+      <div className="flex items-center justify-between gap-2 px-1">
+        <div className="text-xs text-muted-foreground">
+          {positions.length}개 포지션 · 미실현{" "}
+          <span className={`font-mono font-bold ${totalPnl >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+            {totalPnl >= 0 ? "+" : ""}{totalPnl.toFixed(2)}
+          </span>
+        </div>
+        <Button size="sm" variant="outline" onClick={closeAll} className="h-7 text-xs">
+          <X className="w-3 h-3 mr-1" /> Close All
+        </Button>
+      </div>
       {positions.map((p) => {
         const price = prices[p.symbol] ?? p.entry;
         const pnl = computePnl(p, price);
