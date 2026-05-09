@@ -6,6 +6,8 @@ import { useBybitTicker } from "@/hooks/use-bybit-ticker";
 import { notify } from "@/lib/notify";
 import { track } from "@/lib/telemetry";
 import { Activity } from "lucide-react";
+import { celebrateWin, levelFromPnl, playLossThud } from "@/lib/paper-trading/celebrate";
+import { pushWinMoment } from "./WinMomentOverlay";
 
 export default function PaperPositionList() {
   const { prices } = useBybitTicker();
@@ -57,8 +59,15 @@ export default function PaperPositionList() {
                 if (closed) {
                   const cp = closed.closed!;
                   if (cp.pnl > 0) {
+                    const lvl = levelFromPnl(cp.pnl);
+                    celebrateWin(lvl);
+                    pushWinMoment({
+                      id: closed.id, pnl: cp.pnl, roi: cp.roi,
+                      symbol: p.symbol, side: p.side, leverage: p.leverage, level: lvl,
+                    });
                     notify.success(`익절: +${cp.pnl.toFixed(2)} USDT`, { description: `${p.symbol} ${(cp.roi * 100).toFixed(1)}%` });
                   } else {
+                    playLossThud();
                     notify.message(`청산 완료: ${cp.pnl.toFixed(2)} USDT`);
                   }
                   track("convert", {

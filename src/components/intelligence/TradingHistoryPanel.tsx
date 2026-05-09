@@ -193,10 +193,11 @@ export default function TradingHistoryPanel() {
                 const roi = r.closed?.roi ? r.closed.roi * 100 : (pnl / r.margin) * 100;
                 const positive = pnl >= 0;
                 const big = pnl >= 100;
+                const huge = pnl >= 500;
                 return (
                   <tr
                     key={r.id}
-                    className={`border-t border-border/30 ${big ? "bg-primary/10" : ""}`}
+                    className={`border-t border-border/30 ${huge ? "bg-primary/20 ring-1 ring-primary/40" : big ? "bg-primary/10" : ""}`}
                   >
                     <td className="px-2 py-2 whitespace-nowrap text-muted-foreground">
                       {format(r.closed?.at ?? r.openedAt, "MM/dd HH:mm")}
@@ -208,9 +209,9 @@ export default function TradingHistoryPanel() {
                     <td className="px-2 py-2">{r.leverage}×</td>
                     <td className="px-2 py-2 font-mono tabular-nums">{r.entry.toFixed(2)}</td>
                     <td className="px-2 py-2 font-mono tabular-nums">{(r.closed?.price ?? live).toFixed(2)}</td>
-                    <td className={`px-2 py-2 text-right font-mono tabular-nums font-bold ${positive ? "text-emerald-400" : "text-rose-400"} ${big ? "text-base" : ""}`}>
+                    <td className={`px-2 py-2 text-right font-mono tabular-nums font-bold ${positive ? (huge ? "text-primary drop-shadow-[0_0_10px_hsl(45_88%_55%/0.6)]" : "text-emerald-400") : "text-rose-400"} ${big ? "text-base" : ""}`}>
                       {positive ? "+" : ""}{pnl.toFixed(2)}
-                      {big && " 🔥"}
+                      {huge ? " 👑" : big ? " 🔥" : ""}
                     </td>
                     <td className={`px-2 py-2 text-right font-mono tabular-nums ${positive ? "text-emerald-400" : "text-rose-400"}`}>
                       {roi.toFixed(1)}%

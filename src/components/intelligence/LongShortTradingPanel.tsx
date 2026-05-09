@@ -12,6 +12,7 @@ import { computeSize, liquidationPrice } from "@/lib/paper-trading/engine";
 import { notify } from "@/lib/notify";
 import { track } from "@/lib/telemetry";
 import LivePriceChart from "./LivePriceChart";
+import CountUp from "./CountUp";
 import { useBybitTicker, type FeedStatus } from "@/hooks/use-bybit-ticker";
 
 export interface PrefilledOrder {
@@ -90,9 +91,7 @@ export default function LongShortTradingPanel({ prefilled }: { prefilled?: Prefi
         </div>
         <div className="px-3 py-2 rounded-md border border-primary/30 bg-primary/5 flex items-center justify-between text-sm">
           <span className="text-primary text-xs">Trading Credit (Paper)</span>
-          <span className="font-mono tabular-nums font-bold text-primary">
-            {credit.toFixed(2)}
-          </span>
+          <CountUp value={credit} decimals={2} duration={600} className="font-mono tabular-nums font-bold text-primary" />
         </div>
       </div>
 

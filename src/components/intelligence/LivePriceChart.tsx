@@ -11,7 +11,7 @@ export default function LivePriceChart({ symbol, prices, height = 280 }: Props) 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<"Area"> | null>(null);
-  const lastBarRef = useRef<{ time: number; open: number; high: number; low: number; close: number } | null>(null);
+  const seedTimeRef = useRef<number>(0);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -47,22 +47,46 @@ export default function LivePriceChart({ symbol, prices, height = 280 }: Props) 
       chart.remove();
       chartRef.current = null;
       seriesRef.current = null;
-      lastBarRef.current = null;
+      seedTimeRef.current = 0;
     };
   }, [height]);
 
-  // Reset chart on symbol change
+  // Seed historical klines on symbol change
   useEffect(() => {
+    let cancelled = false;
+    seedTimeRef.current = 0;
     if (seriesRef.current) seriesRef.current.setData([]);
-    lastBarRef.current = null;
+    (async () => {
+      try {
+        const res = await fetch(
+          `https://api.bybit.com/v5/market/kline?category=linear&symbol=${symbol}&interval=1&limit=200`,
+        );
+        const json = await res.json();
+        const list: any[] = json?.result?.list ?? [];
+        if (cancelled || !seriesRef.current || !list.length) return;
+        const seen = new Set<number>();
+        const data = list
+          .map((row) => ({ time: Math.floor(parseInt(row[0], 10) / 1000), value: parseFloat(row[4]) }))
+          .filter((d) => Number.isFinite(d.time) && Number.isFinite(d.value) && !seen.has(d.time) && (seen.add(d.time), true))
+          .sort((a, b) => a.time - b.time);
+        seriesRef.current.setData(data as any);
+        seedTimeRef.current = data.length ? data[data.length - 1].time : 0;
+        chartRef.current?.timeScale().fitContent();
+      } catch {}
+    })();
+    return () => { cancelled = true; };
   }, [symbol]);
 
-  // Append price ticks
+  // Append live ticks (monotonic time guard)
   useEffect(() => {
     const price = prices[symbol];
     if (!price || !seriesRef.current) return;
     const t = Math.floor(Date.now() / 1000);
-    seriesRef.current.update({ time: t as any, value: price });
+    if (t < seedTimeRef.current) return;
+    seedTimeRef.current = t;
+    try {
+      seriesRef.current.update({ time: t as any, value: price });
+    } catch {}
   }, [prices, symbol]);
 
   return (
