@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
-import { Clock, CheckCircle2, XCircle, Loader2, ArrowUpRight, Filter, X, Banknote, Coins, Shield } from "lucide-react";
+import { Clock, CheckCircle2, XCircle, Loader2, ArrowUpRight, Filter, X, Banknote, Coins, Shield, FileText } from "lucide-react";
+import RequestTimeline from "@/components/RequestTimeline";
 
 type Status = "pending" | "processing" | "approved" | "completed" | "rejected" | "cancelled";
 type Method = "bank" | "coin";
