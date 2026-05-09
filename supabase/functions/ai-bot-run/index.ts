@@ -38,22 +38,35 @@ async function callText(model: string, system: string, user: string) {
   return j.choices?.[0]?.message?.content ?? "";
 }
 
-async function callImage(prompt: string): Promise<Uint8Array> {
-  const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${LOVABLE_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: "google/gemini-2.5-flash-image",
-      messages: [{ role: "user", content: prompt }],
-      modalities: ["image", "text"],
-    }),
-  });
-  if (!r.ok) throw new Error(`ai_image_${r.status}`);
-  const j = await r.json();
-  const url: string | undefined = j.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-  if (!url) throw new Error("no_image");
-  const b64 = url.split(",")[1];
-  return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+async function callImage(prompt: string): Promise<Uint8Array | null> {
+  // Try primary then fallback model. Returns null instead of throwing when the
+  // gateway responds with text-only (transient model behavior) — caller decides.
+  const models = ["google/gemini-2.5-flash-image", "google/gemini-3.1-flash-image-preview"];
+  for (const model of models) {
+    try {
+      const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${LOVABLE_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model,
+          messages: [{ role: "user", content: prompt }],
+          modalities: ["image", "text"],
+        }),
+      });
+      if (r.status === 429 || r.status === 402) throw new Error(`ai_image_${r.status}`);
+      if (!r.ok) { console.error(`image ${model} ${r.status}`, await r.text().catch(() => "")); continue; }
+      const j = await r.json();
+      const url: string | undefined = j.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+      if (!url) { console.warn(`image ${model} returned no image`); continue; }
+      const b64 = url.split(",")[1];
+      return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      if (msg.includes("429") || msg.includes("402")) throw e;
+      console.error(`image ${model} threw`, msg);
+    }
+  }
+  return null;
 }
 
 Deno.serve(async (req) => {
@@ -90,11 +103,13 @@ Deno.serve(async (req) => {
         outputText = await callText("google/gemini-3-flash-preview", SYSTEM_PROMPTS.content, seed);
         const imgPrompt = `cyber luxury success scene, neon orange #FF3B00 and cyan #00F0FF, korean entrepreneur silhouette, cinematic 4k, ${prompt || "empire ceo"}`;
         const bytes = await callImage(imgPrompt);
-        outputPath = `${uid}/${run_id}.png`;
-        const up = await admin.storage.from("ai-outputs").upload(outputPath, bytes, {
-          contentType: "image/png", upsert: true,
-        });
-        if (up.error) throw new Error(`upload_${up.error.message}`);
+        if (bytes) {
+          outputPath = `${uid}/${run_id}.png`;
+          const up = await admin.storage.from("ai-outputs").upload(outputPath, bytes, {
+            contentType: "image/png", upsert: true,
+          });
+          if (up.error) { console.error("upload failed", up.error.message); outputPath = null; }
+        }
       } else if (kind === "image") {
         const optimized = await callText(
           "google/gemini-2.5-flash-lite",
@@ -103,11 +118,15 @@ Deno.serve(async (req) => {
         );
         outputText = optimized;
         const bytes = await callImage(`${optimized}, cinematic, neon, cyber luxury, 4k`);
-        outputPath = `${uid}/${run_id}.png`;
-        const up = await admin.storage.from("ai-outputs").upload(outputPath, bytes, {
-          contentType: "image/png", upsert: true,
-        });
-        if (up.error) throw new Error(`upload_${up.error.message}`);
+        if (bytes) {
+          outputPath = `${uid}/${run_id}.png`;
+          const up = await admin.storage.from("ai-outputs").upload(outputPath, bytes, {
+            contentType: "image/png", upsert: true,
+          });
+          if (up.error) { console.error("upload failed", up.error.message); outputPath = null; }
+        } else if (!outputText) {
+          outputText = "이미지 생성이 일시적으로 지연되어 텍스트 결과만 표시됩니다.";
+        }
       } else if (kind === "trading") {
         // Generate the report text now; PnL is computed at claim time on-chain (server seed)
         outputText = await callText(
