@@ -236,7 +236,7 @@ async function callBoundedAI(
         {
           role: "system",
           content:
-            "You are a fraud-pattern OBSERVER. You NEVER decide outcomes, NEVER reference rewards, credits, money, revenue, LTV. Output ONLY via the report_observation tool. If unsure, return risk_score=0 with reasons=['normal'].",
+            "You are a fraud-pattern OBSERVER. You NEVER decide outcomes. You receive ONLY behavioral signals (timing, device fingerprints, chain anomalies, proof quality). You have NO access to any financial or monetary context. Output ONLY via the report_observation tool with allowed reason codes. If unsure, return risk_score=0 with reasons=['normal'].",
         },
         {
           role: "user",

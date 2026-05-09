@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { TrendingUp, Sparkles, Crown } from "lucide-react";
 import { formatKRW } from "@/lib/store";
+import Disclaimer from "@/components/Disclaimer";
 
 type Pkg = "easy" | "easy150" | "empire";
 
@@ -138,9 +139,7 @@ export default function EarningsSimulator() {
           <Sparkles className="w-4 h-4" /> {t("simulator.ctaPay")}
         </Link>
 
-        <p className="mt-2 text-[10px] text-muted-foreground text-center break-keep">
-          {t("simulator.disclaimer")}
-        </p>
+        <Disclaimer variant="compact" className="mt-2 text-center" />
       </div>
     </div>
   );
