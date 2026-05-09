@@ -5,7 +5,7 @@ import { computePnl, computeRoi } from "@/lib/paper-trading/engine";
 import { useBybitTicker } from "@/hooks/use-bybit-ticker";
 import { notify } from "@/lib/notify";
 import { track } from "@/lib/telemetry";
-import { Activity } from "lucide-react";
+import { Activity, X } from "lucide-react";
 import { celebrateWin, levelFromPnl, playLossThud } from "@/lib/paper-trading/celebrate";
 import { pushWinMoment } from "./WinMomentOverlay";
 
@@ -13,6 +13,20 @@ export default function PaperPositionList() {
   const { prices } = useBybitTicker();
   const positions = usePaperStore((s) => s.positions);
   const close = usePaperStore((s) => s.close);
+
+  const closeAll = () => {
+    if (!positions.length) return;
+    let totalPnl = 0;
+    for (const p of [...positions]) {
+      const price = prices[p.symbol] ?? p.entry;
+      const closed = close(p.id, price, "manual");
+      if (closed?.closed) totalPnl += closed.closed.pnl;
+    }
+    if (totalPnl > 0) celebrateWin(levelFromPnl(totalPnl));
+    else if (totalPnl < 0) playLossThud();
+    notify.message(`전체 청산 완료: ${totalPnl >= 0 ? "+" : ""}${totalPnl.toFixed(2)} USDT`);
+    track("cta_click", { surface: "paper_trade", variant: "close_all", meta: { pnl: totalPnl } });
+  };
 
   if (!positions.length) {
     return (
