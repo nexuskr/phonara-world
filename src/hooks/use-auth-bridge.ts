@@ -52,12 +52,15 @@ export function useAuthBridge() {
       setTimeout(() => { syncFromSession(session); }, 0);
       if (event === "SIGNED_IN" && session?.user) {
         setTimeout(() => { void registerCurrentDevice(); }, 500);
+        // P1: persona auto-classify (best-effort, never block)
+        setTimeout(() => { void supabase.rpc("assign_persona" as any).then(() => {}); }, 800);
       }
     });
     supabase.auth.getSession().then(({ data }) => {
       syncFromSession(data.session);
       if (data.session?.user) {
         setTimeout(() => { void registerCurrentDevice(); }, 500);
+        setTimeout(() => { void supabase.rpc("assign_persona" as any).then(() => {}); }, 800);
       }
     });
     return () => sub.subscription.unsubscribe();

@@ -24,6 +24,8 @@ import { settleMission } from "@/lib/missions-rpc";
 import { emitEarned } from "@/components/onboarding/EarnedToast";
 import { supabase } from "@/integrations/supabase/client";
 import AIBotCards from "@/components/AIBotCards";
+import { usePersonaMissions, PERSONA_LABEL } from "@/hooks/use-persona-missions";
+import { Sparkle } from "lucide-react";
 
 const tierFilters: { key: Tier; tk: string; color: string }[] = [
   { key: "NORMAL", tk: "tierNormal", color: "text-secondary" },
@@ -47,6 +49,7 @@ export default function Missions() {
   const [gameOpen, setGameOpen] = useState<Mission | null>(null);
   const [catTab, setCatTab] = useState<"all" | "game">("game");
   const [jackpotWin, setJackpotWin] = useState<{ amount: number; type: "main" | "mini" } | null>(null);
+  const { persona, recommended } = usePersonaMissions();
 
   if (!user) return null;
   const userTier = user.tier;
@@ -253,6 +256,25 @@ export default function Missions() {
           </div>
         )}
 
+        {/* P1: 페르소나 추천 스트립 */}
+        {persona && (
+          <div className="mb-4 glass rounded-2xl px-4 py-3 flex items-center justify-between gap-3 neon-border">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-8 h-8 rounded-xl bg-gradient-primary flex items-center justify-center glow-primary shrink-0">
+                <Sparkle className="w-4 h-4 text-primary-foreground" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-[9px] tracking-widest text-primary font-black">내 페르소나</div>
+                <div className="text-sm font-display font-black truncate break-keep">{PERSONA_LABEL[persona]}</div>
+              </div>
+            </div>
+            <div className="text-[10px] text-muted-foreground text-right shrink-0">
+              <div className="font-bold text-gold tabular-nums">{recommended.size}</div>
+              <div>추천 미션</div>
+            </div>
+          </div>
+        )}
+
         {/* Tier tabs */}
         <div className="grid grid-cols-4 gap-2 mb-4">
           {tierFilters.map((tf) => {
@@ -350,7 +372,12 @@ export default function Missions() {
                 )}
                 <div className="relative">
                   <div className="flex items-center justify-between text-[10px] mb-2">
-                    <span className="px-2 py-0.5 rounded-full bg-primary/15 text-primary font-bold">{m.category}</span>
+                    <div className="flex items-center gap-1">
+                      <span className="px-2 py-0.5 rounded-full bg-primary/15 text-primary font-bold">{m.category}</span>
+                      {recommended.has(m.id) && (
+                        <span className="px-2 py-0.5 rounded-full bg-gold/20 text-gold font-black animate-pulse">⭐ 추천</span>
+                      )}
+                    </div>
                     <div className="flex items-center gap-1">
                       {m.fomoLimit && (
                         <span className="px-2 py-0.5 rounded-full bg-destructive/20 text-destructive font-bold animate-pulse tabular-nums">
