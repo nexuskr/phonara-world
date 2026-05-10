@@ -37,14 +37,27 @@ export const useRealStore = create<State>()((set, get) => ({
     });
   },
 
-  async open({ symbol, side, leverage, margin, mark }) {
+  async open({ symbol, side, leverage, margin, mark, tpPct, slPct, trailingPct }) {
     const { data, error } = await supabase.rpc("live_open_position", {
       p_symbol: symbol, p_side: side, p_leverage: leverage,
       p_margin: margin, p_mark_price: mark,
+      p_tp_pct: tpPct ?? null, p_sl_pct: slPct ?? null, p_trailing_pct: trailingPct ?? null,
     });
     if (error) return { error: error.message };
     await get().load();
     return { id: data as string };
+  },
+
+  async setTriggers(id, { tpPct, slPct, trailingPct }) {
+    const { error } = await supabase.rpc("live_set_position_triggers", {
+      p_position_id: id,
+      p_tp_pct: tpPct ?? null,
+      p_sl_pct: slPct ?? null,
+      p_trailing_pct: trailingPct ?? null,
+    });
+    if (error) return { error: error.message };
+    await get().load();
+    return { ok: true };
   },
 
   async close(id, mark) {
