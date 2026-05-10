@@ -87,7 +87,7 @@ export default function OpsReport() {
           <LoadingList rows={4} />
         ) : reports.length === 0 ? (
           <EmptyState
-            icon={FileText}
+            icon={<FileText className="h-6 w-6" />}
             title="아직 리포트가 없습니다"
             description="‘지금 생성’ 버튼으로 첫 리포트를 만들어 보세요."
           />
