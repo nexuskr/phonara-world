@@ -21,6 +21,8 @@ class BybitFeed {
     if (this.started) return;
     this.started = true;
     this.alive = true;
+    // Immediate REST warm-up so prices appear within ~1s even if WS is slow/blocked.
+    this.fetchRestOnce();
     this.connect();
   }
 
