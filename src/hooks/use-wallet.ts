@@ -39,8 +39,22 @@ export function useWallet(userId: string | undefined) {
             return next;
           });
         })
+      // Trade close → wallet update arrives separately, but force-reload as a safety net
+      // (covers cases where the wallet UPDATE event arrives before the trade INSERT, or
+      // when only a transaction row was inserted without an explicit balance UPDATE).
+      .on("postgres_changes",
+        { event: "INSERT", schema: "public", table: "live_trade_history", filter: `user_id=eq.${userId}` },
+        () => { reload(); })
       .subscribe();
-    return () => { supabase.removeChannel(ch); };
+
+    // Cross-component manual refresh hook (e.g. after deposit approval, mission claim).
+    const onRefresh = () => { reload(); };
+    window.addEventListener("wallet:refresh", onRefresh);
+
+    return () => {
+      supabase.removeChannel(ch);
+      window.removeEventListener("wallet:refresh", onRefresh);
+    };
   }, [userId, reload]);
 
   return { wallet, loading, reload, pulse };
