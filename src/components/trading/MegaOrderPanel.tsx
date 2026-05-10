@@ -54,6 +54,12 @@ function MegaOrderPanelImpl({ mode, symbol, setSymbol, price, balance, onSubmit,
   const [slPct, setSlPct] = useState<string>("");
   const [trailingOn, setTrailingOn] = useState(false);
   const [trailingPct, setTrailingPct] = useState<string>("10");
+  // Margin mode + abs price toggles
+  const [marginMode, setMarginMode] = useState<MarginMode>("isolated");
+  const [tpPriceMode, setTpPriceMode] = useState<"pct" | "price">("pct");
+  const [slPriceMode, setSlPriceMode] = useState<"pct" | "price">("pct");
+  const [tpPrice, setTpPrice] = useState<string>("");
+  const [slPrice, setSlPrice] = useState<string>("");
 
   useEffect(() => {
     setMargin(unit === "KRW" ? "100000" : "100");
@@ -63,6 +69,8 @@ function MegaOrderPanelImpl({ mode, symbol, setSymbol, price, balance, onSubmit,
   const tpNum = Math.max(0, parseFloat(tpPct) || 0);
   const slNum = Math.max(0, parseFloat(slPct) || 0);
   const trailNum = Math.max(0, parseFloat(trailingPct) || 0);
+  const tpPriceNum = Math.max(0, parseFloat(tpPrice) || 0);
+  const slPriceNum = Math.max(0, parseFloat(slPrice) || 0);
 
   const setPct = (p: number) => {
     const raw = balance * p;
