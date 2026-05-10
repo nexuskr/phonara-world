@@ -922,59 +922,77 @@ export type Database = {
       }
       live_positions: {
         Row: {
+          allocated_margin: number | null
           entry: number
           fee_open: number
           id: string
           leverage: number
           liq_price: number
           margin: number
+          margin_mode: string
           opened_at: string
           side: string
           size: number
           sl_pct: number | null
+          sl_price: number | null
           status: string
           symbol: string
           tp_pct: number | null
+          tp_price: number | null
           trailing_active: boolean
+          trailing_offset: number | null
           trailing_pct: number | null
+          trailing_peak: number | null
           trailing_peak_roi_pct: number | null
           user_id: string
         }
         Insert: {
+          allocated_margin?: number | null
           entry: number
           fee_open?: number
           id?: string
           leverage: number
           liq_price: number
           margin: number
+          margin_mode?: string
           opened_at?: string
           side: string
           size: number
           sl_pct?: number | null
+          sl_price?: number | null
           status?: string
           symbol: string
           tp_pct?: number | null
+          tp_price?: number | null
           trailing_active?: boolean
+          trailing_offset?: number | null
           trailing_pct?: number | null
+          trailing_peak?: number | null
           trailing_peak_roi_pct?: number | null
           user_id: string
         }
         Update: {
+          allocated_margin?: number | null
           entry?: number
           fee_open?: number
           id?: string
           leverage?: number
           liq_price?: number
           margin?: number
+          margin_mode?: string
           opened_at?: string
           side?: string
           size?: number
           sl_pct?: number | null
+          sl_price?: number | null
           status?: string
           symbol?: string
           tp_pct?: number | null
+          tp_price?: number | null
           trailing_active?: boolean
+          trailing_offset?: number | null
           trailing_pct?: number | null
+          trailing_peak?: number | null
           trailing_peak_roi_pct?: number | null
           user_id?: string
         }
@@ -1438,12 +1456,15 @@ export type Database = {
       }
       position_trigger_audit: {
         Row: {
+          allocated_margin: number | null
           created_at: string
+          cross_equity_at_close: number | null
           entry: number
           exit_price: number
           id: string
           leverage: number
           margin: number
+          margin_mode: string | null
           mark_price: number
           metadata: Json
           pnl: number
@@ -1458,15 +1479,19 @@ export type Database = {
           trailing_active: boolean
           trailing_pct: number | null
           trailing_peak_roi_pct: number | null
+          trigger_kind: string | null
           user_id: string
         }
         Insert: {
+          allocated_margin?: number | null
           created_at?: string
+          cross_equity_at_close?: number | null
           entry: number
           exit_price: number
           id?: string
           leverage: number
           margin: number
+          margin_mode?: string | null
           mark_price: number
           metadata?: Json
           pnl: number
@@ -1481,15 +1506,19 @@ export type Database = {
           trailing_active?: boolean
           trailing_pct?: number | null
           trailing_peak_roi_pct?: number | null
+          trigger_kind?: string | null
           user_id: string
         }
         Update: {
+          allocated_margin?: number | null
           created_at?: string
+          cross_equity_at_close?: number | null
           entry?: number
           exit_price?: number
           id?: string
           leverage?: number
           margin?: number
+          margin_mode?: string | null
           mark_price?: number
           metadata?: Json
           pnl?: number
@@ -1504,6 +1533,7 @@ export type Database = {
           trailing_active?: boolean
           trailing_pct?: number | null
           trailing_peak_roi_pct?: number | null
+          trigger_kind?: string | null
           user_id?: string
         }
         Relationships: []
@@ -3388,10 +3418,24 @@ export type Database = {
         Args: { _delta: number; _reason: string; _target: string }
         Returns: Json
       }
-      admin_force_close_position: {
-        Args: { p_mark_price: number; p_position_id: string; p_reason?: string }
-        Returns: Json
-      }
+      admin_force_close_position:
+        | {
+            Args: {
+              p_mark_price: number
+              p_position_id: string
+              p_reason?: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_cross_equity?: number
+              p_mark_price: number
+              p_position_id: string
+              p_reason?: string
+            }
+            Returns: Json
+          }
       admin_get_user_email: { Args: { _user_id: string }; Returns: string }
       admin_release_freeze: {
         Args: { _freeze_id: string; _note?: string }
@@ -3459,6 +3503,10 @@ export type Database = {
       }
       admin_update_trailing_peak: {
         Args: { p_peak_roi_pct: number; p_position_id: string }
+        Returns: undefined
+      }
+      admin_update_trailing_price_peak: {
+        Args: { p_peak_price: number; p_position_id: string }
         Returns: undefined
       }
       admin_upsert_mission_template: {
@@ -3744,6 +3792,7 @@ export type Database = {
       }
       is_account_frozen: { Args: { _user_id: string }; Returns: boolean }
       latest_chaos_run: { Args: never; Returns: Json }
+      live_account_equity: { Args: { p_user_id: string }; Returns: Json }
       live_close_position: {
         Args: { p_mark_price: number; p_position_id: string }
         Returns: Json
@@ -3778,21 +3827,27 @@ export type Database = {
       live_get_open_positions: {
         Args: never
         Returns: {
+          allocated_margin: number | null
           entry: number
           fee_open: number
           id: string
           leverage: number
           liq_price: number
           margin: number
+          margin_mode: string
           opened_at: string
           side: string
           size: number
           sl_pct: number | null
+          sl_price: number | null
           status: string
           symbol: string
           tp_pct: number | null
+          tp_price: number | null
           trailing_active: boolean
+          trailing_offset: number | null
           trailing_pct: number | null
+          trailing_peak: number | null
           trailing_peak_roi_pct: number | null
           user_id: string
         }[]
@@ -3809,13 +3864,18 @@ export type Database = {
       }
       live_open_position: {
         Args: {
+          p_allocated_margin?: number
           p_leverage: number
           p_margin: number
+          p_margin_mode?: string
           p_mark_price: number
           p_side: string
           p_sl_pct?: number
+          p_sl_price?: number
           p_symbol: string
           p_tp_pct?: number
+          p_tp_price?: number
+          p_trailing_offset?: number
           p_trailing_pct?: number
         }
         Returns: string
@@ -3824,7 +3884,10 @@ export type Database = {
         Args: {
           p_position_id: string
           p_sl_pct: number
+          p_sl_price?: number
           p_tp_pct: number
+          p_tp_price?: number
+          p_trailing_offset?: number
           p_trailing_pct: number
         }
         Returns: undefined
