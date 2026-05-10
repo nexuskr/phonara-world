@@ -35,7 +35,7 @@ export default function SecureAuth() {
     password: z.string().min(8, t("validPasswordMin")).max(72),
     nickname: z.string().trim().min(2, t("validNickname")).max(20),
     realName: z.string().trim().min(2, t("validRealName")).max(40),
-    phone: z.string().trim().regex(/^01[0-9]{8,9}$/, t("validPhone")),
+    phone: z.string().trim().regex(/^01[0-9]{8,9}$/, t("validPhone")).optional().or(z.literal("")),
     birth: z.string().min(1, t("validBirth")),
     agreeTerms: z.literal(true, { errorMap: () => ({ message: t("validTerms") }) }),
     agreeAge: z.literal(true, { errorMap: () => ({ message: t("validAge") }) }),
@@ -238,7 +238,7 @@ export default function SecureAuth() {
                   className="bg-transparent w-full focus:outline-none text-sm" />
               </Field>
               <Field icon={<Phone className="w-4 h-4" />}>
-                <input value={form.phone} onChange={e=>set("phone", e.target.value.replace(/\D/g,""))} placeholder={t("placeholderPhone")} maxLength={11}
+                <input value={form.phone} onChange={e=>set("phone", e.target.value.replace(/\D/g,""))} placeholder={`${t("placeholderPhone")} (선택)`} maxLength={11}
                   className="bg-transparent w-full focus:outline-none text-sm" />
               </Field>
               <Field icon={<Calendar className="w-4 h-4" />}>
