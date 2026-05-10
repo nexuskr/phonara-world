@@ -3750,6 +3750,7 @@ export type Database = {
         Args: { _delta: number; _reason: string; _target: string }
         Returns: Json
       }
+      admin_cockpit_metrics: { Args: never; Returns: Json }
       admin_force_close_position:
         | {
             Args: {
