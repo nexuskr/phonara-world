@@ -63,7 +63,7 @@ function OpenPositionsLiveImpl({
       if (roi <= -0.99 && !liqLock.current.has(p.id)) {
         liqLock.current.add(p.id);
         onLiquidate(p.id, m).then(() => {
-          triggerFx({ kind: "liquidate", pnl: -p.margin, roi: -1, symbol: p.symbol });
+          triggerFx({ kind: "liquidate", pnl: -p.margin, roi: -1, symbol: p.symbol, unit });
           setReplay(buildReplay(p, m, -p.margin, -1, "liquidation"));
         }).catch(() => liqLock.current.delete(p.id));
       }
@@ -247,9 +247,9 @@ function PositionRowImpl({ position: p, mark, busy, unit, onClose }: RowProps) {
               const r = await onClose(p.id, mark);
               if ("error" in r) return;
               if (r.pnl > 0) {
-                triggerFx({ kind: r.roi >= 5 ? "legendary" : "win", pnl: r.pnl, roi: r.roi, symbol: p.symbol });
+                triggerFx({ kind: r.roi >= 5 ? "legendary" : "win", pnl: r.pnl, roi: r.roi, symbol: p.symbol, unit });
               } else {
-                triggerFx({ kind: "loss", pnl: r.pnl, roi: r.roi, symbol: p.symbol });
+                triggerFx({ kind: "loss", pnl: r.pnl, roi: r.roi, symbol: p.symbol, unit });
               }
             }}
           >

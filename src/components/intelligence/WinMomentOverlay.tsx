@@ -11,6 +11,7 @@ export interface WinMoment {
   side: "long" | "short";
   leverage: number;
   level: "small" | "big" | "huge";
+  unit?: "USDT" | "KRW";
 }
 
 let _push: ((m: WinMoment) => void) | null = null;
@@ -52,14 +53,18 @@ export default function WinMomentOverlay() {
               {moment.level === "huge" ? "LEGENDARY WIN" : moment.level === "big" ? "BIG WIN" : "WIN"}
             </div>
             <div className="mt-3 font-display font-black text-5xl sm:text-6xl text-primary drop-shadow-[0_0_24px_hsl(45_88%_55%/0.6)]">
-              <CountUp value={moment.pnl} prefix="+" suffix=" USDT" decimals={2} duration={900} />
+              {moment.unit === "KRW" ? (
+                <CountUp value={moment.pnl} prefix="+₩" suffix="" decimals={0} duration={900} />
+              ) : (
+                <CountUp value={moment.pnl} prefix="+" suffix=" USDT" decimals={2} duration={900} />
+              )}
             </div>
             <div className="mt-2 text-sm text-muted-foreground">
               {moment.symbol} · <span className={moment.side === "long" ? "text-emerald-400" : "text-rose-400"}>
                 {moment.side.toUpperCase()}
               </span> · {moment.leverage}× · ROI <span className="text-primary font-bold">{(moment.roi * 100).toFixed(1)}%</span>
             </div>
-            <div className="mt-1 text-[10px] text-muted-foreground/70">Paper Trading 시뮬레이션</div>
+            <div className="mt-1 text-[10px] text-muted-foreground/70">{moment.unit === "KRW" ? "REAL · Empire Trade" : "Paper Trading 시뮬레이션"}</div>
           </motion.div>
         </motion.div>
       )}

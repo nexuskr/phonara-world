@@ -3,7 +3,16 @@ import confetti from "canvas-confetti";
 import { sfx } from "@/lib/trading/sounds";
 
 type FxKind = "win" | "legendary" | "liquidate" | "loss" | null;
-interface Fx { kind: FxKind; pnl: number; roi: number; symbol?: string }
+type FxUnit = "USDT" | "KRW";
+interface Fx { kind: FxKind; pnl: number; roi: number; symbol?: string; unit?: FxUnit }
+
+function fmtFx(n: number, unit: FxUnit): string {
+  if (unit === "KRW") {
+    const abs = Math.abs(Math.floor(n));
+    return `${n < 0 ? "-" : ""}₩${abs.toLocaleString()}`;
+  }
+  return `${n.toLocaleString(undefined, { maximumFractionDigits: 2 })} USDT`;
+}
 
 const queue: Fx[] = [];
 let pushExternal: ((fx: Fx) => void) | null = null;
@@ -135,7 +144,7 @@ function DopamineLayerImpl() {
                   : fx.kind === "win" ? "text-emerald-100"
                   : "text-red-100"
               }`}>
-                {fx.pnl >= 0 ? "+" : ""}{fx.pnl.toLocaleString(undefined, { maximumFractionDigits: 0 })} USDT
+                {fx.pnl >= 0 ? "+" : ""}{fmtFx(fx.pnl, fx.unit ?? "USDT")}
               </div>
               <div className="mt-1 text-xs font-mono tabular-nums opacity-80">
                 ROI {(fx.roi * 100).toFixed(1)}% {fx.symbol ? `· ${fx.symbol}` : ""}
