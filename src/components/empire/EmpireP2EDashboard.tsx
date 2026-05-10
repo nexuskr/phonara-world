@@ -90,12 +90,12 @@ export default function EmpireP2EDashboard() {
       const res = data as any;
       setCombo({ steps: res.steps ?? {}, reward: res.reward ?? 0, completed: res.completed ?? 0 });
       if (res.reward > 0) {
-        notify.success("🎉 Legendary Combo!", `+${formatKRW(res.reward)} 적립 + Recovery 부스트 1회권`);
+        notify.success("🎉 Legendary Combo!", { description: `+${formatKRW(res.reward)} 적립 + Recovery 부스트 1회권`);
       } else {
-        notify.info("콤보 진행", `${res.completed}/4 단계 완수`);
+        notify.info("콤보 진행", { description: `${res.completed}/4 단계 완수`);
       }
     } catch (e: any) {
-      notify.error("진행 실패", e?.message ?? "잠시 후 다시 시도해주세요");
+      notify.error("진행 실패", { description: e?.message ?? "잠시 후 다시 시도해주세요" });
     }
   }, []);
 
@@ -107,13 +107,13 @@ export default function EmpireP2EDashboard() {
       if (error) throw error;
       const res = data as any;
       if (res.claimed > 0) {
-        notify.success("⏳ Idle 수령", `+${formatKRW(res.claimed)} (${res.hours}시간 경과)`);
+        notify.success("⏳ Idle 수령", { description: `+${formatKRW(res.claimed)} (${res.hours}시간 경과)`);
       } else {
-        notify.info("쌓이는 중", `다시 시도하려면 시간이 더 필요합니다 (일 상한 ${formatKRW(res.daily_cap)})`);
+        notify.info("쌓이는 중", { description: `다시 시도하려면 시간이 더 필요합니다 (일 상한 ${formatKRW(res.daily_cap)})`);
       }
       await load();
     } catch (e: any) {
-      notify.error("수령 실패", e?.message ?? "잠시 후 다시 시도해주세요");
+      notify.error("수령 실패", { description: e?.message ?? "잠시 후 다시 시도해주세요" });
     } finally {
       setClaiming(false);
     }
@@ -133,7 +133,7 @@ export default function EmpireP2EDashboard() {
       const res = data as any;
       setTap({ count: res.tap_count ?? 0, lastReward: res.reward ?? 0 });
       if (res.reward > 0) {
-        notify.success("⚡ 보강 보상", `+${formatKRW(res.reward)} · 누적 ${res.tap_count}탭`);
+        notify.success("⚡ 보강 보상", { description: `+${formatKRW(res.reward)} · 누적 ${res.tap_count}탭`);
       }
     } catch {
       /* silent — 어뷰즈 방지 */
