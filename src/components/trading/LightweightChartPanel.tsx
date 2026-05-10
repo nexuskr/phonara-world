@@ -85,7 +85,7 @@ function LightweightChartPanelImpl({ symbol, price, overlays = [], height = 320,
     series.setData([]);
 
     (async () => {
-      const history = await fetchKlineHistory(symbol, interval, 500);
+      const history = await fetchKlineHistory(symbol, interval, 1000);
       if (cancelled || !seriesRef.current) return;
       const data: CandlestickData[] = history.map((b) => ({
         time: b.time as UTCTimestamp,
