@@ -148,24 +148,29 @@ export default function Admin() {
         {tab === "dashboard" && <><TodayKpiCards /><AdminDashboardCharts /></>}
         {tab === "funnel" && <FunnelAnalytics />}
         {tab === "analytics" && <AdvancedAnalytics />}
-        {tab === "errors" && <ErrorMonitorAdmin />}
-        {tab === "security" && <SecurityAuditAdmin />}
-        {tab === "ops" && <ObservabilityCockpit />}
-        {tab === "perms" && <PermissionsAudit />}
-        {tab === "viral_forensics" && <ViralForensics />}
-        {tab === "aml" && <AMLAdmin />}
-        {tab === "ai_missions" && <MissionTemplatesAdmin />}
-        {tab === "payout_audit" && <LeaderboardPayoutAudit />}
-        {tab === "referrals" && <ReferralsAdmin />}
-        {tab === "server_wd" && <WithdrawRequestsAdmin />}
-        {tab === "server_dep" && <DepositRequestsAdmin />}
-        {tab === "packages" && <PackagePurchasesAdmin />}
-        {tab === "missions" && <MissionAdmin />}
-        {tab === "users" && <ServerUserAdmin />}
-        {tab === "chats" && <ChatAdmin />}
-        {tab === "coin" && <CoinAdmin />}
-        {tab === "ugc" && <AdminUgc />}
-        {tab === "insurance" && <InsuranceFundDashboard variant="admin" />}
+        <AdminAal2Gate protectedTabs={SENSITIVE_ADMIN_TABS} currentTab={tab}>
+          {tab === "dashboard" && <><TodayKpiCards /><AdminDashboardCharts /></>}
+          {tab === "funnel" && <FunnelAnalytics />}
+          {tab === "analytics" && <AdvancedAnalytics />}
+          {tab === "errors" && <ErrorMonitorAdmin />}
+          {tab === "security" && <SecurityAuditAdmin />}
+          {tab === "ops" && <ObservabilityCockpit />}
+          {tab === "perms" && <PermissionsAudit />}
+          {tab === "viral_forensics" && <ViralForensics />}
+          {tab === "aml" && <AMLAdmin />}
+          {tab === "ai_missions" && <MissionTemplatesAdmin />}
+          {tab === "payout_audit" && <LeaderboardPayoutAudit />}
+          {tab === "referrals" && <ReferralsAdmin />}
+          {tab === "server_wd" && <WithdrawRequestsAdmin />}
+          {tab === "server_dep" && <DepositRequestsAdmin />}
+          {tab === "packages" && <PackagePurchasesAdmin />}
+          {tab === "missions" && <MissionAdmin />}
+          {tab === "users" && <ServerUserAdmin />}
+          {tab === "chats" && <ChatAdmin />}
+          {tab === "coin" && <CoinAdmin />}
+          {tab === "ugc" && <AdminUgc />}
+          {tab === "insurance" && <InsuranceFundDashboard variant="admin" />}
+        </AdminAal2Gate>
       </div>
     </Layout>
   );
