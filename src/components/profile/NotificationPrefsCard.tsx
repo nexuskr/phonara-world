@@ -20,8 +20,8 @@ export default function NotificationPrefsCard() {
     (async () => {
       const { data: u } = await supabase.auth.getUser();
       if (!u?.user) { setLoading(false); return; }
-      const { data } = await supabase
-        .from("profiles")
+      const { data } = await (supabase
+        .from("profiles") as any)
         .select("sms_notifications_enabled, email_notifications_enabled, phone")
         .eq("id", u.user.id)
         .maybeSingle();
@@ -41,7 +41,7 @@ export default function NotificationPrefsCard() {
       if (!u?.user) throw new Error("로그인이 필요합니다");
       const { error } = await supabase
         .from("profiles")
-        .update({ [field]: value })
+        .update({ [field]: value } as any)
         .eq("id", u.user.id);
       if (error) throw error;
       if (field === "sms_notifications_enabled") setSmsOn(value);
