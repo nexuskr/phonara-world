@@ -132,6 +132,31 @@ export default function SecureAuth() {
     } finally { setBusy(false); }
   }
 
+  async function sendMagicLink() {
+    const email = form.email.trim();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      toast({ title: t("errInputCheck"), description: t("validEmail"), variant: "destructive" });
+      return;
+    }
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          shouldCreateUser: true,
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+      if (error) throw error;
+      toast({
+        title: "매직링크 발송 완료",
+        description: `${email} 로 로그인 링크를 보냈어요. 메일함을 확인해주세요.`,
+      });
+    } catch (e: any) {
+      toast({ title: t("errLoginFail"), description: e.message, variant: "destructive" });
+    } finally { setBusy(false); }
+  }
+
   return (
     <div className="relative min-h-screen flex items-center justify-center px-4 py-10 overflow-hidden">
       <div className="absolute inset-0 bg-grid opacity-20" />
