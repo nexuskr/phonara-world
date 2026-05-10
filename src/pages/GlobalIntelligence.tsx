@@ -226,7 +226,11 @@ export default function GlobalIntelligence() {
 
           <div className="grid lg:grid-cols-2 gap-4">
             <div className="lg:col-span-2">
+              <TotalPnLHeader positions={positionsAsLive} prices={prices} unit={mode === "real" ? "KRW" : "USDT"} />
+            </div>
+            <div className="lg:col-span-2">
               <ChartWithHeader symbol={symbol} setSymbol={setSymbol} price={price} stat={stats[symbol]} overlays={overlays} height={380} />
+            </div>
             </div>
             <div className="lg:col-span-2">
               <MegaOrderPanel
