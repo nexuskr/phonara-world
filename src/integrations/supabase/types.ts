@@ -4304,6 +4304,7 @@ export type Database = {
       pin_lockout_status: { Args: { _user?: string }; Returns: Json }
       pin_record_attempt: { Args: { _success: boolean }; Returns: Json }
       policy_assertions_status: { Args: never; Returns: Json }
+      public_live_pulse: { Args: never; Returns: Json }
       public_trust_history: {
         Args: { _days?: number }
         Returns: {
