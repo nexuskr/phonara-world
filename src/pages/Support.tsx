@@ -26,6 +26,7 @@ export default function Support() {
   const nav = useNavigate();
   const user = useRequireAuth() ?? db.user;
   const [text, setText] = useState("");
+  const [aiBusy, setAiBusy] = useState(false);
   const [tab, setTab] = useState<"chat" | "faq">("chat");
   const [open, setOpen] = useState<number | null>(null);
   const [messages, setMessages] = useState<Msg[]>([]);
