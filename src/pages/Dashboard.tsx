@@ -18,6 +18,7 @@ import { Flame, Zap, Trophy, ChevronRight, TrendingUp, Sparkles, Crown, Wallet, 
 import FirstTimeOnboarding from "@/components/FirstTimeOnboarding";
 import FirstMissionCard from "@/components/FirstMissionCard";
 import CommandHero from "@/components/CommandHero";
+import EmpireP2EDashboard from "@/components/empire/EmpireP2EDashboard";
 import SixtySecondFlow from "@/components/onboarding/SixtySecondFlow";
 import EarnedToast from "@/components/onboarding/EarnedToast";
 import EmpireSignature from "@/components/status/EmpireSignature";
