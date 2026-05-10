@@ -124,7 +124,10 @@ export default function GlobalIntelligence() {
     if (margin > realAvailable) return notify.error("Empire Balance가 부족합니다.");
     setBusy(true);
     try {
-      const r = await realOpen({ symbol, side, leverage, margin: Math.floor(margin), mark: price });
+      const r = await realOpen({
+        symbol, side, leverage, margin: Math.floor(margin), mark: price,
+        tpPct: triggers?.tpPct, slPct: triggers?.slPct, trailingPct: triggers?.trailingPct,
+      });
       if ("error" in r) return notify.error(r.error);
       if (triggers && "id" in r && typeof (r as any).id === "string") setTrigger((r as any).id, { ...triggers, peakRoiPct: 0 });
       notify.success(`${side === "long" ? "LONG" : "SHORT"} 진입 (REAL)`, {
