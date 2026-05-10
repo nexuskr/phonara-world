@@ -171,7 +171,7 @@ function MegaOrderPanelImpl({ mode, symbol, setSymbol, price, balance, onSubmit,
       <div>
         <div className="flex items-baseline justify-between">
           <label className="text-xs text-muted-foreground">
-            Margin ({unit === "KRW" ? "원화 / KRW" : "USDT"})
+            {marginMode === "isolated" ? "Allocated Margin (이 포지션 전용)" : "Margin"} ({unit === "KRW" ? "원화 / KRW" : "USDT"})
             <span className="ml-2 text-[10px] text-muted-foreground/70">잔액 {fmtMoney(balance, unit)}</span>
           </label>
           <div className="flex gap-1">
