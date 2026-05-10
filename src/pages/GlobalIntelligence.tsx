@@ -181,9 +181,9 @@ export default function GlobalIntelligence() {
 
   return (
     <>
-      <RedDisclaimerBanner />
       <Layout>
-        <div className="container py-4 sm:py-6 space-y-4 pt-[88px] sm:pt-[96px]">
+        <RedDisclaimerBanner />
+        <div className="container py-4 sm:py-6 space-y-4">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div>
               <Link to="/" className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
