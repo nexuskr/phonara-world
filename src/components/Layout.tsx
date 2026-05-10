@@ -202,6 +202,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
+      {/* Phase 2 — 초직관 6대 메뉴 (로그인 사용자 전용, 데스크탑/모바일 공통) */}
+      {user && <QuickAccessStrip />}
+
       {/* Mobile secondary nav — extra destinations not in bottom 5-tab bar */}
       {user && (
         <div className="md:hidden sticky top-14 z-30 glass border-b border-border/40">
