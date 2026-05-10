@@ -112,9 +112,9 @@ const App = () => (
               {/* 기존 라우트 — 그대로 작동 (HubTabs 통해 통합 UX) */}
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/missions" element={<Missions />} />
-              <Route path="/roulette" element={<Roulette />} />
-              <Route path="/packages" element={<Packages />} />
-              <Route path="/wallet" element={<Wallet />} />
+              <Route path="/roulette" element={<ReviewerGuard><Roulette /></ReviewerGuard>} />
+              <Route path="/packages" element={<ReviewerGuard><Packages /></ReviewerGuard>} />
+              <Route path="/wallet" element={<ReviewerGuard><Wallet /></ReviewerGuard>} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/support" element={<Support />} />
               <Route path="/support/tickets" element={<SupportTickets />} />
