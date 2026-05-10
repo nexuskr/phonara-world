@@ -206,6 +206,15 @@ export default function SecureAuth() {
           <div className="flex-1 h-px bg-border" />
         </div>
 
+        <button
+          onClick={sendMagicLink}
+          disabled={busy || !form.email}
+          className="w-full mb-3 py-3 rounded-xl glass border border-primary/40 text-foreground font-bold text-sm hover:scale-[1.02] hover:border-primary transition disabled:opacity-50 flex items-center justify-center gap-2"
+        >
+          <Sparkles className="w-4 h-4 text-primary" />
+          매직링크로 로그인 (비밀번호 불필요)
+        </button>
+
         <div className="space-y-3">
           {mode === "signup" && (
             <Field icon={<Sparkles className="w-4 h-4" />}>
