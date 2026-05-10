@@ -93,7 +93,10 @@ export default function MegaOrderPanel({ mode, symbol, setSymbol, price, balance
       {/* Margin */}
       <div>
         <div className="flex items-baseline justify-between">
-          <label className="text-xs text-muted-foreground">Margin (USDT)</label>
+          <label className="text-xs text-muted-foreground">
+            Margin ({unit === "KRW" ? "원화 / KRW" : "USDT"})
+            <span className="ml-2 text-[10px] text-muted-foreground/70">잔액 {fmtMoney(balance, unit)}</span>
+          </label>
           <div className="flex gap-1">
             {[0.25, 0.5, 0.75, 1].map((p) => (
               <button
@@ -115,6 +118,9 @@ export default function MegaOrderPanel({ mode, symbol, setSymbol, price, balance
           value={margin} onChange={(e) => setMargin(e.target.value)}
           className="mt-1 bg-background/60 text-lg font-mono tabular-nums font-bold"
         />
+        <div className="mt-1 text-[10px] text-muted-foreground/70">
+          ≈ {fmtMoney(cross.value, cross.unit, { decimals: cross.unit === "USDT" ? 2 : 0 })}
+        </div>
       </div>
 
       {/* Leverage */}
