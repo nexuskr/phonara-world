@@ -247,9 +247,9 @@ function PositionRowImpl({ position: p, mark, busy, unit, onClose }: RowProps) {
               const r = await onClose(p.id, mark);
               if ("error" in r) return;
               if (r.pnl > 0) {
-                triggerFx({ kind: r.roi >= 5 ? "legendary" : "win", pnl: r.pnl, roi: r.roi, symbol: p.symbol });
+                triggerFx({ kind: r.roi >= 5 ? "legendary" : "win", pnl: r.pnl, roi: r.roi, symbol: p.symbol, unit });
               } else {
-                triggerFx({ kind: "loss", pnl: r.pnl, roi: r.roi, symbol: p.symbol });
+                triggerFx({ kind: "loss", pnl: r.pnl, roi: r.roi, symbol: p.symbol, unit });
               }
             }}
           >
