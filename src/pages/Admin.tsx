@@ -173,6 +173,7 @@ export default function Admin() {
           {tab === "coin" && <CoinAdmin />}
           {tab === "ugc" && <AdminUgc />}
           {tab === "insurance" && <InsuranceFundDashboard variant="admin" />}
+          {tab === "accounting" && <OperatorAccounting />}
         </AdminAal2Gate>
       </div>
     </Layout>
