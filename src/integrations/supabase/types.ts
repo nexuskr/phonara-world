@@ -1186,6 +1186,205 @@ export type Database = {
         }
         Relationships: []
       }
+      guild_chat_messages: {
+        Row: {
+          created_at: string
+          guild_id: string
+          id: string
+          message: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          guild_id: string
+          id?: string
+          message: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          guild_id?: string
+          id?: string
+          message?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guild_chat_messages_guild_id_fkey"
+            columns: ["guild_id"]
+            isOneToOne: false
+            referencedRelation: "guilds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guild_members: {
+        Row: {
+          contribution: number
+          guild_id: string
+          id: string
+          joined_at: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          contribution?: number
+          guild_id: string
+          id?: string
+          joined_at?: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          contribution?: number
+          guild_id?: string
+          id?: string
+          joined_at?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guild_members_guild_id_fkey"
+            columns: ["guild_id"]
+            isOneToOne: false
+            referencedRelation: "guilds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guild_war_contributions: {
+        Row: {
+          created_at: string
+          guild_id: string
+          id: string
+          score: number
+          user_id: string
+          war_id: string
+        }
+        Insert: {
+          created_at?: string
+          guild_id: string
+          id?: string
+          score?: number
+          user_id: string
+          war_id: string
+        }
+        Update: {
+          created_at?: string
+          guild_id?: string
+          id?: string
+          score?: number
+          user_id?: string
+          war_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guild_war_contributions_guild_id_fkey"
+            columns: ["guild_id"]
+            isOneToOne: false
+            referencedRelation: "guilds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guild_war_contributions_war_id_fkey"
+            columns: ["war_id"]
+            isOneToOne: false
+            referencedRelation: "guild_wars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guild_wars: {
+        Row: {
+          attacker_guild_id: string
+          attacker_score: number
+          defender_guild_id: string
+          defender_score: number
+          ends_at: string
+          id: string
+          started_at: string
+          status: string
+          winner_guild_id: string | null
+        }
+        Insert: {
+          attacker_guild_id: string
+          attacker_score?: number
+          defender_guild_id: string
+          defender_score?: number
+          ends_at?: string
+          id?: string
+          started_at?: string
+          status?: string
+          winner_guild_id?: string | null
+        }
+        Update: {
+          attacker_guild_id?: string
+          attacker_score?: number
+          defender_guild_id?: string
+          defender_score?: number
+          ends_at?: string
+          id?: string
+          started_at?: string
+          status?: string
+          winner_guild_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guild_wars_attacker_guild_id_fkey"
+            columns: ["attacker_guild_id"]
+            isOneToOne: false
+            referencedRelation: "guilds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guild_wars_defender_guild_id_fkey"
+            columns: ["defender_guild_id"]
+            isOneToOne: false
+            referencedRelation: "guilds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      guilds: {
+        Row: {
+          created_at: string
+          description: string | null
+          emblem: string
+          id: string
+          leader_id: string
+          max_members: number
+          member_count: number
+          name: string
+          total_power: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          emblem?: string
+          id?: string
+          leader_id: string
+          max_members?: number
+          member_count?: number
+          name: string
+          total_power?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          emblem?: string
+          id?: string
+          leader_id?: string
+          max_members?: number
+          member_count?: number
+          name?: string
+          total_power?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       handbook_progress: {
         Row: {
           bonus_paid: boolean
@@ -4630,9 +4829,21 @@ export type Database = {
         Returns: Json
       }
       claim_weekly_pass_reward: { Args: { _level: number }; Returns: Json }
+      contribute_guild_war: {
+        Args: { _score: number; _war_id: string }
+        Returns: boolean
+      }
+      create_guild: {
+        Args: { _description?: string; _emblem?: string; _name: string }
+        Returns: string
+      }
       cron_run_finalize_weekly_pass: { Args: never; Returns: Json }
       cron_run_pay_weekly_leaderboard: { Args: never; Returns: Json }
       current_season_id: { Args: never; Returns: string }
+      declare_guild_war: {
+        Args: { _defender_guild_id: string }
+        Returns: string
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
@@ -4766,6 +4977,17 @@ export type Database = {
           observed_roles: string[]
         }[]
       }
+      get_guild_leaderboard: {
+        Args: { _limit?: number }
+        Returns: {
+          emblem: string
+          guild_id: string
+          member_count: number
+          name: string
+          rank: number
+          total_power: number
+        }[]
+      }
       get_my_empire_map: { Args: never; Returns: Json }
       get_my_quests: { Args: never; Returns: Json }
       get_my_security_events: {
@@ -4889,8 +5111,14 @@ export type Database = {
         Returns: string
       }
       is_account_frozen: { Args: { _user_id: string }; Returns: boolean }
+      is_guild_member: {
+        Args: { _guild_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_passkey_verified: { Args: never; Returns: boolean }
+      join_guild: { Args: { _guild_id: string }; Returns: boolean }
       latest_chaos_run: { Args: never; Returns: Json }
+      leave_guild: { Args: never; Returns: boolean }
       live_account_equity: { Args: { p_user_id: string }; Returns: Json }
       live_close_position: {
         Args: { p_mark_price: number; p_position_id: string }
@@ -5206,6 +5434,7 @@ export type Database = {
           title: string
         }[]
       }
+      send_guild_message: { Args: { _message: string }; Returns: string }
       set_user_risk_limits: {
         Args: {
           p_daily_loss_cap: number
