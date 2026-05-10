@@ -18,6 +18,7 @@ import { Flame, Zap, Trophy, ChevronRight, TrendingUp, Sparkles, Crown, Wallet, 
 import FirstTimeOnboarding from "@/components/FirstTimeOnboarding";
 import FirstMissionCard from "@/components/FirstMissionCard";
 import CommandHero from "@/components/CommandHero";
+import EmpireP2EDashboard from "@/components/empire/EmpireP2EDashboard";
 import SixtySecondFlow from "@/components/onboarding/SixtySecondFlow";
 import EarnedToast from "@/components/onboarding/EarnedToast";
 import EmpireSignature from "@/components/status/EmpireSignature";
@@ -63,6 +64,11 @@ export default function Dashboard() {
         <div className="container relative pt-2 pb-10">
           {/* 🏛️ Command Hero — 영웅 카드 (잔고 + 추천 미션 + 100석) */}
           <CommandHero />
+
+          {/* P2 — Empire P2E (Daily Combo + Idle Growth + Tap-to-Reinforce) */}
+          <div className="mt-4">
+            <EmpireP2EDashboard />
+          </div>
 
           {/* Live ticker (compact, beneath hero) */}
           <div className="grid grid-cols-2 gap-2 mt-4 mb-4">
