@@ -371,6 +371,96 @@ export type Database = {
         }
         Relationships: []
       }
+      arena_pool: {
+        Row: {
+          balance: number
+          id: number
+          operator_margin: number
+          total_collected: number
+          total_paid: number
+          updated_at: string
+        }
+        Insert: {
+          balance?: number
+          id?: number
+          operator_margin?: number
+          total_collected?: number
+          total_paid?: number
+          updated_at?: string
+        }
+        Update: {
+          balance?: number
+          id?: number
+          operator_margin?: number
+          total_collected?: number
+          total_paid?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      arena_rounds: {
+        Row: {
+          amp_factor: number
+          exit_pnl_pct: number | null
+          id: string
+          leverage: number
+          margin: number
+          mode: string
+          opened_at: string
+          operator_rake: number | null
+          opponent_id: string | null
+          reward: number | null
+          settled_at: string | null
+          side: string
+          sl_pct: number
+          status: string
+          symbol: string
+          tp_pct: number
+          user_id: string
+          winner_id: string | null
+        }
+        Insert: {
+          amp_factor?: number
+          exit_pnl_pct?: number | null
+          id?: string
+          leverage: number
+          margin: number
+          mode: string
+          opened_at?: string
+          operator_rake?: number | null
+          opponent_id?: string | null
+          reward?: number | null
+          settled_at?: string | null
+          side: string
+          sl_pct: number
+          status?: string
+          symbol: string
+          tp_pct: number
+          user_id: string
+          winner_id?: string | null
+        }
+        Update: {
+          amp_factor?: number
+          exit_pnl_pct?: number | null
+          id?: string
+          leverage?: number
+          margin?: number
+          mode?: string
+          opened_at?: string
+          operator_rake?: number | null
+          opponent_id?: string | null
+          reward?: number | null
+          settled_at?: string | null
+          side?: string
+          sl_pct?: number
+          status?: string
+          symbol?: string
+          tp_pct?: number
+          user_id?: string
+          winner_id?: string | null
+        }
+        Relationships: []
+      }
       badges_catalog: {
         Row: {
           created_at: string
@@ -4103,6 +4193,23 @@ export type Database = {
         Returns: Json
       }
       apply_referral_code: { Args: { _code: string }; Returns: Json }
+      arena_join_duel: { Args: { p_round_id: string }; Returns: Json }
+      arena_open_round: {
+        Args: {
+          p_leverage: number
+          p_margin: number
+          p_mode: string
+          p_side: string
+          p_sl_pct: number
+          p_symbol: string
+          p_tp_pct: number
+        }
+        Returns: Json
+      }
+      arena_settle_round: {
+        Args: { p_exit_pnl_pct: number; p_round_id: string }
+        Returns: Json
+      }
       assert_audit_sync: { Args: never; Returns: undefined }
       assert_trading_limits: { Args: { p_margin: number }; Returns: undefined }
       assert_trading_price: {
