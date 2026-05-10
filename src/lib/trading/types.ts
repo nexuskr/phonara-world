@@ -1,6 +1,8 @@
 export type Side = "long" | "short";
 export type Mode = "paper" | "real";
 
+export type MarginMode = "isolated" | "cross";
+
 export interface LivePosition {
   id: string;
   user_id: string;
@@ -14,6 +16,19 @@ export interface LivePosition {
   fee_open: number;
   status: "open" | "closed" | "liquidated";
   opened_at: string;
+  // Margin mode + abs-price triggers (added in 2026-05 migration; nullable for legacy rows).
+  margin_mode?: MarginMode;
+  allocated_margin?: number | null;
+  tp_price?: number | null;
+  sl_price?: number | null;
+  trailing_offset?: number | null;
+  trailing_peak?: number | null;
+  // Existing ROI%-based fields are mirrored on the row but not all consumers need them.
+  tp_pct?: number | null;
+  sl_pct?: number | null;
+  trailing_pct?: number | null;
+  trailing_active?: boolean;
+  trailing_peak_roi_pct?: number | null;
 }
 
 export interface LiveTrade {
