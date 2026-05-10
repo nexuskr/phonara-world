@@ -34,6 +34,7 @@ const CompleteProfile = lazy(() => import("./pages/CompleteProfile.tsx"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback.tsx"));
 const SecurityTotp = lazy(() => import("./pages/security/Totp.tsx"));
 const SecurityPasskey = lazy(() => import("./pages/security/Passkey.tsx"));
+const SecurityOverview = lazy(() => import("./pages/security/Overview.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 const Achievements = lazy(() => import("./pages/Achievements.tsx"));
 const SeasonPass = lazy(() => import("./pages/SeasonPass.tsx"));
