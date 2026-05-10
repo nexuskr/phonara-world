@@ -164,6 +164,16 @@ export default function Wallet() {
         toast({ title: tw("withdrawFail"), description: t("amlBlocked", { level: lvl }) as string, variant: "destructive" });
         return;
       }
+      // 서버측 스텝업 강제 — 클라이언트 우회 차단됨
+      if (msg.includes("step_up_required")) {
+        const reAuth = await requireStepUp("출금");
+        if (reAuth) {
+          toast({ title: "재인증 완료", description: "출금 버튼을 다시 눌러주세요." });
+        } else {
+          toast({ title: "추가 인증 필요", description: "보안을 위해 강화 인증이 필요합니다.", variant: "destructive" });
+        }
+        return;
+      }
       const friendly = msg.includes("pin mismatch") ? tw("pinError")
         : msg.includes("below_min") ? tw("belowMin")
         : msg.includes("insufficient_funds") ? tw("insufficient")
