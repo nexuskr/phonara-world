@@ -40,13 +40,10 @@ Deno.serve(async (req) => {
   const sb = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
 
   if (!isServiceRole) {
-    // Validate JWT and check admin role
-    const userClient = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_ANON_KEY")!, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const { data: claims } = await userClient.auth.getClaims(token);
-    const uid = claims?.claims?.sub as string | undefined;
-    if (!uid) {
+    // Validate JWT via service-role client (supabase-js 2.45.0 compatible)
+    const { data: userData, error: userErr } = await sb.auth.getUser(token);
+    const uid = userData?.user?.id;
+    if (userErr || !uid) {
       return new Response(JSON.stringify({ error: "unauthorized" }), {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
