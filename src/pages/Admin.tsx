@@ -29,6 +29,12 @@ import ReferralsAdmin from "@/components/admin/ReferralsAdmin";
 import ViralForensics from "@/components/admin/ViralForensics";
 import InsuranceFundDashboard from "@/components/InsuranceFundDashboard";
 import AdminAal2Banner from "@/components/admin/AdminAal2Banner";
+import AdminAal2Gate from "@/components/admin/AdminAal2Gate";
+
+const SENSITIVE_ADMIN_TABS = [
+  "server_wd", "server_dep", "users", "packages", "coin",
+  "perms", "aml", "payout_audit", "security", "ops", "viral_forensics",
+];
 import { Activity, Lock, Bot, Flame } from "lucide-react";
 
 type Tab = "dashboard" | "funnel" | "analytics" | "errors" | "security" | "ops" | "perms" | "viral_forensics" | "aml" | "ai_missions" | "payout_audit" | "referrals" | "server_dep" | "server_wd" | "packages" | "users" | "missions" | "chats" | "coin" | "ugc" | "insurance";
@@ -142,24 +148,29 @@ export default function Admin() {
         {tab === "dashboard" && <><TodayKpiCards /><AdminDashboardCharts /></>}
         {tab === "funnel" && <FunnelAnalytics />}
         {tab === "analytics" && <AdvancedAnalytics />}
-        {tab === "errors" && <ErrorMonitorAdmin />}
-        {tab === "security" && <SecurityAuditAdmin />}
-        {tab === "ops" && <ObservabilityCockpit />}
-        {tab === "perms" && <PermissionsAudit />}
-        {tab === "viral_forensics" && <ViralForensics />}
-        {tab === "aml" && <AMLAdmin />}
-        {tab === "ai_missions" && <MissionTemplatesAdmin />}
-        {tab === "payout_audit" && <LeaderboardPayoutAudit />}
-        {tab === "referrals" && <ReferralsAdmin />}
-        {tab === "server_wd" && <WithdrawRequestsAdmin />}
-        {tab === "server_dep" && <DepositRequestsAdmin />}
-        {tab === "packages" && <PackagePurchasesAdmin />}
-        {tab === "missions" && <MissionAdmin />}
-        {tab === "users" && <ServerUserAdmin />}
-        {tab === "chats" && <ChatAdmin />}
-        {tab === "coin" && <CoinAdmin />}
-        {tab === "ugc" && <AdminUgc />}
-        {tab === "insurance" && <InsuranceFundDashboard variant="admin" />}
+        <AdminAal2Gate protectedTabs={SENSITIVE_ADMIN_TABS} currentTab={tab}>
+          {tab === "dashboard" && <><TodayKpiCards /><AdminDashboardCharts /></>}
+          {tab === "funnel" && <FunnelAnalytics />}
+          {tab === "analytics" && <AdvancedAnalytics />}
+          {tab === "errors" && <ErrorMonitorAdmin />}
+          {tab === "security" && <SecurityAuditAdmin />}
+          {tab === "ops" && <ObservabilityCockpit />}
+          {tab === "perms" && <PermissionsAudit />}
+          {tab === "viral_forensics" && <ViralForensics />}
+          {tab === "aml" && <AMLAdmin />}
+          {tab === "ai_missions" && <MissionTemplatesAdmin />}
+          {tab === "payout_audit" && <LeaderboardPayoutAudit />}
+          {tab === "referrals" && <ReferralsAdmin />}
+          {tab === "server_wd" && <WithdrawRequestsAdmin />}
+          {tab === "server_dep" && <DepositRequestsAdmin />}
+          {tab === "packages" && <PackagePurchasesAdmin />}
+          {tab === "missions" && <MissionAdmin />}
+          {tab === "users" && <ServerUserAdmin />}
+          {tab === "chats" && <ChatAdmin />}
+          {tab === "coin" && <CoinAdmin />}
+          {tab === "ugc" && <AdminUgc />}
+          {tab === "insurance" && <InsuranceFundDashboard variant="admin" />}
+        </AdminAal2Gate>
       </div>
     </Layout>
   );

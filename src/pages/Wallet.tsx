@@ -23,6 +23,8 @@ import RiskLimitsPanel from "@/components/wallet/RiskLimitsPanel";
 import InsuranceFundDashboard from "@/components/InsuranceFundDashboard";
 import { z } from "zod";
 import Disclaimer from "@/components/Disclaimer";
+import StepUpGate from "@/components/security/StepUpGate";
+import { useStepUp } from "@/hooks/use-step-up";
 
 type AssetTab = "bank" | "coin";
 type ActionTab = "withdraw" | "deposit" | "history";
@@ -50,6 +52,7 @@ export default function Wallet() {
   const user = useRequireAuth() ?? db.user;
   const [asset, setAsset] = useState<AssetTab>("bank");
   const [action, setAction] = useState<ActionTab>("withdraw");
+  const { requireStepUp, dialogProps: stepUpProps } = useStepUp();
 
   useEffect(() => { void refreshWallet(); }, []);
 
@@ -133,6 +136,13 @@ export default function Wallet() {
 
     if (sentCode !== authCode) { toast({ title: tw("codeMismatch") }); return; }
     if (!/^\d{6}$/.test(withdrawPw)) { toast({ title: tw("pinMismatch") }); return; }
+
+    // 강력 스텝업 인증 (TOTP 우선, 없으면 이메일 OTP)
+    const stepUpOk = await requireStepUp("출금");
+    if (!stepUpOk) {
+      toast({ title: "추가 인증이 필요합니다", description: "출금 진행 전 본인확인을 완료해주세요.", variant: "destructive" });
+      return;
+    }
 
     const { data, error } = await supabase.rpc("request_withdrawal", {
       _amount: a,
@@ -269,6 +279,7 @@ export default function Wallet() {
 
   return (
     <Layout>
+      <StepUpGate {...stepUpProps} />
       <HubTabs hub="treasury" />
       <div className="container pt-6 pb-10 animate-liquid-in max-w-3xl">
         <div className="mb-5 sm:mb-6">
