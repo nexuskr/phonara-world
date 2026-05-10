@@ -106,6 +106,7 @@ const App = () => (
               <Route path="/wallet" element={<Wallet />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/support" element={<Support />} />
+              <Route path="/support/tickets" element={<SupportTickets />} />
               <Route path="/guide" element={<Guide />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/admin/cockpit" element={<AdminCockpit />} />
