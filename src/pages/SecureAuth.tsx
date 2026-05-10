@@ -25,6 +25,7 @@ export default function SecureAuth() {
   const { isReady, hasSession } = useAuthReady();
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [busy, setBusy] = useState(false);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
   const [form, setForm] = useState({
     email: "", password: "", nickname: "", realName: "", phone: "", birth: "",
     agreeTerms: false, agreeAge: false,
@@ -180,7 +181,12 @@ export default function SecureAuth() {
           <ShieldCheck className="w-4 h-4 text-secondary" />
           <span className="text-[10px] tracking-[0.3em] text-muted-foreground font-bold">{t("secureV3")}</span>
         </div>
-        <p className="text-xs text-center text-muted-foreground mt-1">{mode === "login" ? t("taglineLogin") : t("taglineSignup")}</p>
+        <h1 className="text-center font-imperial font-black text-xl sm:text-2xl text-gradient-imperial tracking-[0.04em] mt-2">
+          제국에 오신 것을 환영합니다 <span aria-hidden>✨</span>
+        </h1>
+        <p className="text-xs text-center text-muted-foreground mt-1 break-keep">
+          3초 만에 시작하세요. 강제 입금 없습니다.
+        </p>
 
         <div className="grid grid-cols-2 gap-2 mt-5 mb-4">
           {(["login","signup"] as const).map(m => (
@@ -191,6 +197,7 @@ export default function SecureAuth() {
           ))}
         </div>
 
+        {/* 1순위: Google + Apple */}
         <div className="grid grid-cols-2 gap-2">
           <button onClick={() => social("google")} disabled={busy}
             className="py-3 rounded-xl bg-white text-black font-bold text-sm hover:scale-[1.02] transition disabled:opacity-50">
@@ -202,79 +209,99 @@ export default function SecureAuth() {
           </button>
         </div>
 
+        {/* 2순위: Magic Link — 최상위 CTA로 승격 */}
         <div className="flex items-center gap-3 my-4">
           <div className="flex-1 h-px bg-border" />
           <span className="text-[10px] text-muted-foreground tracking-widest">{t("orEmail")}</span>
           <div className="flex-1 h-px bg-border" />
         </div>
 
+        <Field icon={<Mail className="w-4 h-4" />}>
+          <input type="email" value={form.email} onChange={e=>set("email", e.target.value)} placeholder={t("placeholderEmail")}
+            className="bg-transparent w-full focus:outline-none text-sm" />
+        </Field>
         <button
           onClick={sendMagicLink}
           disabled={busy || !form.email}
-          className="w-full mb-3 py-3 rounded-xl glass border border-primary/40 text-foreground font-bold text-sm hover:scale-[1.02] hover:border-primary transition disabled:opacity-50 flex items-center justify-center gap-2"
+          className="w-full mt-3 py-3.5 rounded-xl bg-gradient-imperial text-primary-foreground font-bold text-sm glow-imperial hover:scale-[1.02] transition disabled:opacity-50 flex items-center justify-center gap-2"
         >
-          <Sparkles className="w-4 h-4 text-primary" />
-          매직링크로 로그인 (비밀번호 불필요)
+          <Sparkles className="w-4 h-4" />
+          이메일로 바로 제국 시작하기
+          <ArrowRight className="w-4 h-4" />
+        </button>
+        <p className="text-[10px] text-center text-muted-foreground mt-2">
+          비밀번호 없이 5분 내에 도착하는 매직링크로 입장합니다.
+        </p>
+
+        {/* 3순위: 고급 옵션 (비밀번호/회원가입 추가 필드) */}
+        <button
+          type="button"
+          onClick={() => setAdvancedOpen(v => !v)}
+          className="mt-4 w-full text-[11px] text-muted-foreground hover:text-foreground transition flex items-center justify-center gap-1"
+          aria-expanded={advancedOpen}
+        >
+          {advancedOpen ? "▲ 고급 옵션 닫기" : "▼ 고급 옵션 (비밀번호 사용)"}
         </button>
 
-        <div className="space-y-3">
-          {mode === "signup" && (
-            <Field icon={<Sparkles className="w-4 h-4" />}>
-              <input value={form.nickname} onChange={e=>set("nickname", e.target.value)} placeholder={t("placeholderNickname")} maxLength={20}
+        {advancedOpen && (
+          <div className="space-y-3 mt-3">
+            {mode === "signup" && (
+              <Field icon={<Sparkles className="w-4 h-4" />}>
+                <input value={form.nickname} onChange={e=>set("nickname", e.target.value)} placeholder={t("placeholderNickname")} maxLength={20}
+                  className="bg-transparent w-full focus:outline-none text-sm" />
+              </Field>
+            )}
+            <Field icon={<Lock className="w-4 h-4" />}>
+              <input type="password" value={form.password} onChange={e=>set("password", e.target.value)} placeholder={mode==="signup"?t("placeholderPasswordSignup"):t("placeholderPasswordLogin")}
                 className="bg-transparent w-full focus:outline-none text-sm" />
             </Field>
-          )}
-          <Field icon={<Mail className="w-4 h-4" />}>
-            <input type="email" value={form.email} onChange={e=>set("email", e.target.value)} placeholder={t("placeholderEmail")}
-              className="bg-transparent w-full focus:outline-none text-sm" />
-          </Field>
-          <Field icon={<Lock className="w-4 h-4" />}>
-            <input type="password" value={form.password} onChange={e=>set("password", e.target.value)} placeholder={mode==="signup"?t("placeholderPasswordSignup"):t("placeholderPasswordLogin")}
-              className="bg-transparent w-full focus:outline-none text-sm" />
-          </Field>
 
-          {mode === "signup" && (
-            <>
-              <Field icon={<UserIcon className="w-4 h-4" />}>
-                <input value={form.realName} onChange={e=>set("realName", e.target.value)} placeholder={t("placeholderRealName")} maxLength={40}
-                  className="bg-transparent w-full focus:outline-none text-sm" />
-              </Field>
-              <Field icon={<Phone className="w-4 h-4" />}>
-                <input value={form.phone} onChange={e=>set("phone", e.target.value.replace(/\D/g,""))} placeholder={`${t("placeholderPhone")} (선택)`} maxLength={11}
-                  className="bg-transparent w-full focus:outline-none text-sm" />
-              </Field>
-              <Field icon={<Calendar className="w-4 h-4" />}>
-                <input type="date" value={form.birth} onChange={e=>set("birth", e.target.value)}
-                  className="bg-transparent w-full focus:outline-none text-sm text-muted-foreground" />
-              </Field>
+            {mode === "signup" && (
+              <>
+                <Field icon={<UserIcon className="w-4 h-4" />}>
+                  <input value={form.realName} onChange={e=>set("realName", e.target.value)} placeholder={t("placeholderRealName")} maxLength={40}
+                    className="bg-transparent w-full focus:outline-none text-sm" />
+                </Field>
+                <Field icon={<Phone className="w-4 h-4" />}>
+                  <input value={form.phone} onChange={e=>set("phone", e.target.value.replace(/\D/g,""))} placeholder={`${t("placeholderPhone")} (선택)`} maxLength={11}
+                    className="bg-transparent w-full focus:outline-none text-sm" />
+                </Field>
+                <Field icon={<Calendar className="w-4 h-4" />}>
+                  <input type="date" value={form.birth} onChange={e=>set("birth", e.target.value)}
+                    className="bg-transparent w-full focus:outline-none text-sm text-muted-foreground" />
+                </Field>
+                <p className="text-[10px] text-muted-foreground px-1 break-keep">
+                  본 서비스는 만 19세 이상 성인만 이용 가능합니다.
+                </p>
 
-              <label className="flex items-start gap-2 text-[11px] text-muted-foreground cursor-pointer px-1">
-                <input type="checkbox" checked={form.agreeTerms} onChange={e=>set("agreeTerms", e.target.checked)} className="mt-0.5 accent-primary" />
-                <span>
-                  <Trans i18nKey="agreeTerms" ns="auth"
-                    components={{ 1: <span className="text-foreground" />, 3: <span className="text-foreground" /> }} />
-                </span>
-              </label>
-              <label className="flex items-start gap-2 text-[11px] text-muted-foreground cursor-pointer px-1">
-                <input type="checkbox" checked={form.agreeAge} onChange={e=>set("agreeAge", e.target.checked)} className="mt-0.5 accent-primary" />
-                <span>
-                  <Trans i18nKey="agreeAge" ns="auth"
-                    components={{ 1: <span className="text-foreground" /> }} />
-                </span>
-              </label>
-            </>
-          )}
-        </div>
+                <label className="flex items-start gap-2 text-[11px] text-muted-foreground cursor-pointer px-1">
+                  <input type="checkbox" checked={form.agreeTerms} onChange={e=>set("agreeTerms", e.target.checked)} className="mt-0.5 accent-primary" />
+                  <span>
+                    <Trans i18nKey="agreeTerms" ns="auth"
+                      components={{ 1: <span className="text-foreground" />, 3: <span className="text-foreground" /> }} />
+                  </span>
+                </label>
+                <label className="flex items-start gap-2 text-[11px] text-muted-foreground cursor-pointer px-1">
+                  <input type="checkbox" checked={form.agreeAge} onChange={e=>set("agreeAge", e.target.checked)} className="mt-0.5 accent-primary" />
+                  <span>
+                    <Trans i18nKey="agreeAge" ns="auth"
+                      components={{ 1: <span className="text-foreground" /> }} />
+                  </span>
+                </label>
+              </>
+            )}
 
-        <button onClick={submit} disabled={busy}
-          className="mt-5 w-full py-3.5 rounded-xl bg-gradient-primary text-primary-foreground font-bold glow-primary hover:scale-[1.02] transition flex items-center justify-center gap-2 disabled:opacity-50">
-          {busy ? tc("processing") : (<>{mode==="login"?t("btnLogin"):t("btnSignup")} <ArrowRight className="w-4 h-4" /></>)}
-        </button>
+            <button onClick={submit} disabled={busy}
+              className="mt-2 w-full py-3 rounded-xl glass border border-primary/40 text-foreground font-bold text-sm hover:border-primary hover:scale-[1.02] transition flex items-center justify-center gap-2 disabled:opacity-50">
+              {busy ? tc("processing") : (<>{mode==="login"?t("btnLogin"):t("btnSignup")} <ArrowRight className="w-4 h-4" /></>)}
+            </button>
 
-        {mode === "login" && (
-          <div className="flex justify-between mt-3 text-[11px] text-muted-foreground">
-            <Link to="/forgot-password" className="hover:text-primary transition">{t("forgotPassword")}</Link>
-            <button onClick={()=>setMode("signup")} className="hover:text-primary transition">{t("noAccount")}</button>
+            {mode === "login" && (
+              <div className="flex justify-between mt-1 text-[11px] text-muted-foreground">
+                <Link to="/forgot-password" className="hover:text-primary transition">{t("forgotPassword")}</Link>
+                <button onClick={()=>setMode("signup")} className="hover:text-primary transition">{t("noAccount")}</button>
+              </div>
+            )}
           </div>
         )}
       </div>

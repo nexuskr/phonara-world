@@ -101,6 +101,14 @@ const App = () => (
               <Route path="/treasury/settlements" element={<Settlements />} />
               <Route path="/legacy" element={<Navigate to="/achievements" replace />} />
 
+              {/* 초직관 6대 메뉴 alias — 20~70대 한국인용 */}
+              <Route path="/start" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/earnings" element={<Navigate to="/missions" replace />} />
+              <Route path="/arena" element={<Navigate to="/global-intelligence" replace />} />
+              <Route path="/lounge" element={<Navigate to="/empire" replace />} />
+              <Route path="/jackpot" element={<Navigate to="/roulette" replace />} />
+              {/* /wallet 는 이미 존재 */}
+
               {/* 기존 라우트 — 그대로 작동 (HubTabs 통해 통합 UX) */}
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/missions" element={<Missions />} />
