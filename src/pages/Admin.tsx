@@ -30,10 +30,12 @@ import ViralForensics from "@/components/admin/ViralForensics";
 import InsuranceFundDashboard from "@/components/InsuranceFundDashboard";
 import AdminAal2Banner from "@/components/admin/AdminAal2Banner";
 import AdminAal2Gate from "@/components/admin/AdminAal2Gate";
+import OperatorAccounting from "@/components/admin/OperatorAccounting";
 
 const SENSITIVE_ADMIN_TABS = [
   "server_wd", "server_dep", "users", "packages", "coin",
   "perms", "aml", "payout_audit", "security", "ops", "viral_forensics",
+  "accounting",
 ];
 import { Activity, Lock, Bot, Flame } from "lucide-react";
 
