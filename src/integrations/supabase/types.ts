@@ -733,6 +733,27 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_combo_progress: {
+        Row: {
+          date: string
+          rewarded_at: string | null
+          steps: Json
+          user_id: string
+        }
+        Insert: {
+          date?: string
+          rewarded_at?: string | null
+          steps?: Json
+          user_id: string
+        }
+        Update: {
+          date?: string
+          rewarded_at?: string | null
+          steps?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
       daily_stats: {
         Row: {
           best_streak: number
@@ -976,6 +997,39 @@ export type Database = {
         }
         Relationships: []
       }
+      empire_units: {
+        Row: {
+          acquired_at: string
+          id: string
+          level: number
+          stats: Json
+          tier: string
+          updated_at: string
+          user_id: string
+          xp: number
+        }
+        Insert: {
+          acquired_at?: string
+          id?: string
+          level?: number
+          stats?: Json
+          tier: string
+          updated_at?: string
+          user_id: string
+          xp?: number
+        }
+        Update: {
+          acquired_at?: string
+          id?: string
+          level?: number
+          stats?: Json
+          tier?: string
+          updated_at?: string
+          user_id?: string
+          xp?: number
+        }
+        Relationships: []
+      }
       error_logs: {
         Row: {
           context: Json
@@ -1093,6 +1147,30 @@ export type Database = {
           response?: Json
           scope?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      idle_growth_state: {
+        Row: {
+          accrued_amount: number
+          daily_claimed: number
+          last_claim_at: string | null
+          last_tick_at: string
+          user_id: string
+        }
+        Insert: {
+          accrued_amount?: number
+          daily_claimed?: number
+          last_claim_at?: string | null
+          last_tick_at?: string
+          user_id: string
+        }
+        Update: {
+          accrued_amount?: number
+          daily_claimed?: number
+          last_claim_at?: string | null
+          last_tick_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -2755,6 +2833,30 @@ export type Database = {
           id?: string
           metadata?: Json | null
           reason?: string
+        }
+        Relationships: []
+      }
+      tap_counters: {
+        Row: {
+          date: string
+          last_tap_at: string
+          rewarded_taps: number
+          tap_count: number
+          user_id: string
+        }
+        Insert: {
+          date?: string
+          last_tap_at?: string
+          rewarded_taps?: number
+          tap_count?: number
+          user_id: string
+        }
+        Update: {
+          date?: string
+          last_tap_at?: string
+          rewarded_taps?: number
+          tap_count?: number
+          user_id?: string
         }
         Relationships: []
       }
@@ -4430,6 +4532,7 @@ export type Database = {
       }
       claim_founding_seat: { Args: { _purchase_id: string }; Returns: Json }
       claim_handbook_bonus: { Args: never; Returns: Json }
+      claim_idle_growth: { Args: never; Returns: Json }
       claim_quest: { Args: { _quest_key: string }; Returns: Json }
       claim_season_reward: {
         Args: { _level: number; _track: string }
@@ -4484,6 +4587,7 @@ export type Database = {
         Args: { _badge_key: string; _slot: number }
         Returns: Json
       }
+      evolve_empire_unit: { Args: { _unit_id: string }; Returns: Json }
       fill_pending_order: {
         Args: { p_mark_price: number; p_order_id: string }
         Returns: string
@@ -4853,6 +4957,7 @@ export type Database = {
       pin_lockout_status: { Args: { _user?: string }; Returns: Json }
       pin_record_attempt: { Args: { _success: boolean }; Returns: Json }
       policy_assertions_status: { Args: never; Returns: Json }
+      progress_daily_combo: { Args: { _step: string }; Returns: Json }
       public_live_pulse: { Args: never; Returns: Json }
       public_trust_history: {
         Args: { _days?: number }
@@ -5110,6 +5215,7 @@ export type Database = {
         }
         Returns: Json
       }
+      tap_reinforce: { Args: { _nonce: string }; Returns: Json }
       tick_weekly_leaderboard_ranks: { Args: never; Returns: Json }
       tier_boost: {
         Args: { t: Database["public"]["Enums"]["user_tier"] }
