@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import Layout from "@/components/Layout";
@@ -19,6 +19,7 @@ import PersonalMemoryPanel from "@/components/intelligence/PersonalMemoryPanel";
 import GlobalContributionBar from "@/components/intelligence/GlobalContributionBar";
 import WinMomentOverlay, { pushWinMoment } from "@/components/intelligence/WinMomentOverlay";
 import Disclaimer from "@/components/Disclaimer";
+import LazyMount from "@/components/util/LazyMount";
 import { Button } from "@/components/ui/button";
 import { useBybitTicker } from "@/hooks/use-bybit-ticker";
 import { useSession, useWallet } from "@/hooks/use-wallet";
@@ -96,7 +97,7 @@ export default function GlobalIntelligence() {
   }, [positionsAsLive, symbol]);
 
   // Submit handler
-  const submit = async ({ side, leverage, margin }: { side: "long"|"short"; leverage: number; margin: number }) => {
+  const submit = useCallback(async ({ side, leverage, margin }: { side: "long"|"short"; leverage: number; margin: number }) => {
     if (!price) return notify.error("가격을 불러오는 중입니다.");
     if (margin <= 0) return notify.error("Margin을 입력하세요.");
 
@@ -112,7 +113,6 @@ export default function GlobalIntelligence() {
       return;
     }
 
-    // Real
     if (!userId) return notify.error("로그인이 필요합니다.");
     if (margin > realAvailable) return notify.error("Empire Balance가 부족합니다.");
     setBusy(true);
@@ -124,7 +124,7 @@ export default function GlobalIntelligence() {
       });
       track("cta_click", { surface: "real_trade", variant: side, meta: { symbol, leverage, margin } });
     } finally { setBusy(false); }
-  };
+  }, [mode, price, paperCredit, paperOpen, symbol, userId, realAvailable, realOpen]);
 
   // Close (paper or real)
   const closePos = async (id: string, mark: number) => {
