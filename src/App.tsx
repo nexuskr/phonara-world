@@ -68,6 +68,7 @@ const queryClient = new QueryClient({
 function SessionWatcher() {
   useSessionGuard();
   useAuthBridge();
+  useAdultGate();
   const loc = useLocation();
   useEffect(() => { recordRouteChange(loc.pathname); }, [loc.pathname]);
   if (typeof window !== "undefined") {
