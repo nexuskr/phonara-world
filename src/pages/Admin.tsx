@@ -28,6 +28,7 @@ import LeaderboardPayoutAudit from "@/components/admin/LeaderboardPayoutAudit";
 import ReferralsAdmin from "@/components/admin/ReferralsAdmin";
 import ViralForensics from "@/components/admin/ViralForensics";
 import InsuranceFundDashboard from "@/components/InsuranceFundDashboard";
+import AdminAal2Banner from "@/components/admin/AdminAal2Banner";
 import { Activity, Lock, Bot, Flame } from "lucide-react";
 
 type Tab = "dashboard" | "funnel" | "analytics" | "errors" | "security" | "ops" | "perms" | "viral_forensics" | "aml" | "ai_missions" | "payout_audit" | "referrals" | "server_dep" | "server_wd" | "packages" | "users" | "missions" | "chats" | "coin" | "ugc" | "insurance";
@@ -126,6 +127,9 @@ export default function Admin() {
           <KPI icon={ArrowDownToLine} label={t("kpiPendingWd")} v={pendingWd.toLocaleString()} hot={pendingWd > 0} />
         </div>
 
+        <div className="mb-4">
+          <AdminAal2Banner />
+        </div>
         <div className="flex gap-2 mb-4 overflow-x-auto -mx-5 px-5 pb-1">
           {tabs.map((tt) => (
             <button key={tt.id} onClick={() => setTab(tt.id)}
