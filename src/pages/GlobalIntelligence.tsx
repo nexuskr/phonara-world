@@ -199,10 +199,15 @@ export default function GlobalIntelligence() {
       const r = await closePos(p.id, m);
       if (r && !("error" in r)) total += r.pnl;
     }
-    if (total > 0) triggerFx({ kind: total >= 5000 ? "legendary" : "win", pnl: total, roi: 0 });
-    else if (total < 0) triggerFx({ kind: "loss", pnl: total, roi: 0 });
-    notify.message(`전체 청산: ${total >= 0 ? "+" : ""}${total.toFixed(2)} USDT`);
-  }, [positionsAsLive, prices, closePos]);
+    const unit: "USDT" | "KRW" = mode === "real" ? "KRW" : "USDT";
+    const bigThreshold = mode === "real" ? 7_000_000 : 5000;
+    if (total > 0) triggerFx({ kind: total >= bigThreshold ? "legendary" : "win", pnl: total, roi: 0, unit });
+    else if (total < 0) triggerFx({ kind: "loss", pnl: total, roi: 0, unit });
+    const totalStr = unit === "KRW"
+      ? `${total >= 0 ? "+" : "-"}₩${Math.abs(Math.floor(total)).toLocaleString()}`
+      : `${total >= 0 ? "+" : ""}${total.toFixed(2)} USDT`;
+    notify.message(`전체 청산: ${totalStr}`);
+  }, [positionsAsLive, prices, closePos, mode]);
 
   const history = mode === "real" ? realHistory : paperHistory.map((p) => ({
     id: p.id, user_id: userId ?? "paper", symbol: p.symbol, side: p.side,
