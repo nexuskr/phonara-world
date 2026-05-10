@@ -140,14 +140,37 @@ export default function Support() {
                   {t("helloSub")}
                 </div>
               )}
-              {messages.map(m => (
-                <div key={m.id} className={`flex ${m.sender === "user" ? "justify-end" : "justify-start"}`}>
-                  <div className={`max-w-[78%] px-4 py-2.5 rounded-2xl text-sm ${m.sender === "user" ? "bg-gradient-primary text-primary-foreground glow-primary" : "glass"}`}>
-                    {m.message}
-                    <div className="text-[9px] opacity-60 mt-1 tabular-nums">{new Date(m.created_at).toLocaleTimeString(i18n.language === "en" ? "en-US" : "ko-KR", { hour: "2-digit", minute: "2-digit" })}</div>
+              {messages.map(m => {
+                const isUser = m.sender === "user";
+                const isAi = m.sender === "ai";
+                return (
+                  <div key={m.id} className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
+                    <div className={`max-w-[78%] px-4 py-2.5 rounded-2xl text-sm whitespace-pre-wrap break-words ${
+                      isUser
+                        ? "bg-gradient-primary text-primary-foreground glow-primary"
+                        : isAi
+                          ? "glass border border-primary/30"
+                          : "glass"
+                    }`}>
+                      {isAi && (
+                        <div className="flex items-center gap-1 text-[10px] font-bold text-primary mb-1">
+                          <Sparkles className="w-3 h-3" /> AI 1차 응답
+                        </div>
+                      )}
+                      {m.message}
+                      <div className="text-[9px] opacity-60 mt-1 tabular-nums">{new Date(m.created_at).toLocaleTimeString(i18n.language === "en" ? "en-US" : "ko-KR", { hour: "2-digit", minute: "2-digit" })}</div>
+                    </div>
+                  </div>
+                );
+              })}
+              {aiBusy && (
+                <div className="flex justify-start">
+                  <div className="glass border border-primary/30 px-4 py-2.5 rounded-2xl text-sm flex items-center gap-2 text-muted-foreground">
+                    <Sparkles className="w-3 h-3 text-primary animate-pulse" />
+                    <span className="animate-pulse">AI가 답변을 작성 중...</span>
                   </div>
                 </div>
-              ))}
+              )}
               <div ref={endRef} />
             </div>
             <div className="border-t border-border/40 p-3 flex gap-2">
