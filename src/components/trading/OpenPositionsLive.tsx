@@ -4,11 +4,13 @@ import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Activity, X, Heart, Target, ShieldCheck, TrendingUp as TUp, Pencil, Check } from "lucide-react";
 import type { LivePosition } from "@/lib/trading/types";
+import { FEE_RATE, SLIPPAGE } from "@/lib/trading/types";
 import { computePnl, computeRoi, liquidationProgress } from "@/lib/trading/engine";
 import { triggerFx } from "./DopamineLayer";
 import { sfx } from "@/lib/trading/sounds";
 import { useTriggerStore, type PositionTriggers } from "@/lib/trading/triggers-store";
 import { notify } from "@/lib/notify";
+import LiquidationReplayModal, { type ReplayPayload } from "./LiquidationReplayModal";
 
 interface CloseResult { pnl: number; roi: number; credit: number; exit: number }
 interface CloseError { error: string }
