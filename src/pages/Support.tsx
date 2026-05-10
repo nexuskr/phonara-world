@@ -73,19 +73,35 @@ export default function Support() {
 
   async function send() {
     if (!text.trim() || !threadId || !authUid || aiBusy) return;
-    const t = text.trim(); setText("");
+    const raw = text.trim();
+    setText("");
+
+    // 클라이언트 측 PII 마스킹: 서버 저장 전에 안전한 텍스트만 INSERT
+    const { maskPii, PII_LABEL } = await import("@/lib/pii");
+    const { masked, hits } = maskPii(raw);
+    const piiDetected = hits.length > 0;
+    if (piiDetected) {
+      const { notify } = await import("@/lib/notify");
+      const kinds = Array.from(new Set(hits.map(h => h.kind))).map(k => PII_LABEL[k]).join(", ");
+      notify.warning("개인정보 자동 마스킹", {
+        description: `${kinds} 정보가 안전하게 가려졌습니다.`,
+      });
+    }
+
     await supabase.from("support_messages").insert({
-      thread_id: threadId, user_id: authUid, sender: "user", message: t,
+      thread_id: threadId, user_id: authUid, sender: "user",
+      message: masked, pii_masked: piiDetected,
     });
     await supabase.from("support_threads").update({
-      last_message: t, last_message_at: new Date().toISOString(),
+      last_message: masked, last_message_at: new Date().toISOString(),
+      ...(piiDetected ? { last_pii_at: new Date().toISOString() } : {}),
     }).eq("id", threadId);
 
-    // Trigger AI 1차 응답
+    // Trigger AI 1차 응답 (마스킹된 메시지 전송)
     setAiBusy(true);
     try {
       const { error } = await supabase.functions.invoke("ai-support-reply", {
-        body: { thread_id: threadId, message: t },
+        body: { thread_id: threadId, message: masked },
       });
       if (error) {
         const status = (error as any)?.context?.status;
@@ -105,9 +121,18 @@ export default function Support() {
   return (
     <Layout>
       <div className="container pt-6 pb-32 animate-liquid-in">
-        <h1 className="font-imperial font-black text-2xl sm:text-3xl flex items-center gap-2 mb-3 tracking-[0.04em]">
-          <MessageSquare className="w-5 h-5 text-primary" /> <span className="text-gradient-primary">{t("title")}</span>
-        </h1>
+        <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
+          <h1 className="font-imperial font-black text-2xl sm:text-3xl flex items-center gap-2 tracking-[0.04em]">
+            <MessageSquare className="w-5 h-5 text-primary" /> <span className="text-gradient-primary">{t("title")}</span>
+          </h1>
+          <button
+            type="button"
+            onClick={() => nav("/support/tickets")}
+            className="text-xs text-primary underline-offset-4 hover:underline whitespace-nowrap"
+          >
+            내 티켓 보기 →
+          </button>
+        </div>
 
         <div className="flex gap-2 mb-4 flex-wrap">
           {[{ id: "chat", l: t("tabChat") }, { id: "faq", l: t("tabFaq") }].map((x: any) => (
@@ -143,6 +168,16 @@ export default function Support() {
               {messages.map(m => {
                 const isUser = m.sender === "user";
                 const isAi = m.sender === "ai";
+                const isSystem = m.sender === "system";
+                if (isSystem) {
+                  return (
+                    <div key={m.id} className="flex justify-center">
+                      <div className="text-[11px] text-muted-foreground bg-muted/30 rounded-full px-3 py-1 border border-border/40">
+                        {m.message}
+                      </div>
+                    </div>
+                  );
+                }
                 return (
                   <div key={m.id} className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
                     <div className={`max-w-[78%] px-4 py-2.5 rounded-2xl text-sm whitespace-pre-wrap break-words ${

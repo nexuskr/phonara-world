@@ -2229,11 +2229,51 @@ export type Database = {
         }
         Relationships: []
       }
+      support_kb_articles: {
+        Row: {
+          active: boolean
+          category: string
+          content: string
+          created_at: string
+          created_by: string | null
+          id: string
+          source_file_path: string | null
+          tags: string[]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          category?: string
+          content: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          source_file_path?: string | null
+          tags?: string[]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          category?: string
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          source_file_path?: string | null
+          tags?: string[]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       support_messages: {
         Row: {
           created_at: string
           id: string
           message: string
+          pii_masked: boolean
           sender: string
           thread_id: string
           user_id: string
@@ -2242,6 +2282,7 @@ export type Database = {
           created_at?: string
           id?: string
           message: string
+          pii_masked?: boolean
           sender: string
           thread_id: string
           user_id: string
@@ -2250,6 +2291,7 @@ export type Database = {
           created_at?: string
           id?: string
           message?: string
+          pii_masked?: boolean
           sender?: string
           thread_id?: string
           user_id?: string
@@ -2264,15 +2306,50 @@ export type Database = {
           },
         ]
       }
+      support_routing_rules: {
+        Row: {
+          active: boolean
+          assigned_to: string | null
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          priority: string
+        }
+        Insert: {
+          active?: boolean
+          assigned_to?: string | null
+          category: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          priority?: string
+        }
+        Update: {
+          active?: boolean
+          assigned_to?: string | null
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          priority?: string
+        }
+        Relationships: []
+      }
       support_threads: {
         Row: {
           ai_escalated: boolean
           ai_last_category: string | null
+          assigned_to: string | null
           created_at: string
           id: string
           last_message: string | null
           last_message_at: string
+          last_pii_at: string | null
           nickname: string
+          priority: string
+          resolved_at: string | null
+          status: string
           unread_admin: number
           unread_user: number
           user_id: string
@@ -2280,11 +2357,16 @@ export type Database = {
         Insert: {
           ai_escalated?: boolean
           ai_last_category?: string | null
+          assigned_to?: string | null
           created_at?: string
           id?: string
           last_message?: string | null
           last_message_at?: string
+          last_pii_at?: string | null
           nickname: string
+          priority?: string
+          resolved_at?: string | null
+          status?: string
           unread_admin?: number
           unread_user?: number
           user_id: string
@@ -2292,11 +2374,16 @@ export type Database = {
         Update: {
           ai_escalated?: boolean
           ai_last_category?: string | null
+          assigned_to?: string | null
           created_at?: string
           id?: string
           last_message?: string | null
           last_message_at?: string
+          last_pii_at?: string | null
           nickname?: string
+          priority?: string
+          resolved_at?: string | null
+          status?: string
           unread_admin?: number
           unread_user?: number
           user_id?: string
@@ -4464,6 +4551,10 @@ export type Database = {
         Args: { _method: string; _new_pin: string }
         Returns: Json
       }
+      resolve_support_thread: {
+        Args: { _note?: string; _thread_id: string }
+        Returns: undefined
+      }
       roulette_daily_limit: {
         Args: { _tier: Database["public"]["Enums"]["user_tier"] }
         Returns: number
@@ -4475,6 +4566,16 @@ export type Database = {
       run_policy_assertions: { Args: never; Returns: Json }
       run_security_self_audit: { Args: { _source?: string }; Returns: Json }
       run_uptime_canary: { Args: never; Returns: undefined }
+      search_support_kb: {
+        Args: { _limit?: number; _query: string }
+        Returns: {
+          category: string
+          content: string
+          id: string
+          score: number
+          title: string
+        }[]
+      }
       set_user_risk_limits: {
         Args: {
           p_daily_loss_cap: number
@@ -4511,6 +4612,8 @@ export type Database = {
         Returns: Json
       }
       settlement_slo: { Args: never; Returns: Json }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
       slow_requests_top: {
         Args: { _limit?: number }
         Returns: {
