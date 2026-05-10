@@ -235,6 +235,7 @@ export default function GlobalIntelligence() {
                 onLiquidate={liquidatePos as any}
                 onCloseAll={closeAll}
                 modeLabel={mode === "real" ? "REAL" : "PAPER"}
+                unit={mode === "real" ? "KRW" : "USDT"}
               />
             </div>
             <div className="lg:col-span-2">
