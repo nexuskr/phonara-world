@@ -152,7 +152,7 @@ export default function MegaOrderPanel({ mode, symbol, setSymbol, price, balance
         <Stat label="Long Liq" v={liqLong.toFixed(4)} tone="loss" />
         <Stat label="Short Liq" v={liqShort.toFixed(4)} tone="loss" />
         <Stat label="Size" v={`${sizeLong.toFixed(4)}/${sizeShort.toFixed(4)}`} />
-        <Stat label="Fee 0.1%" v={fee.toLocaleString()} tone="warn" />
+        <Stat label={`Fee 0.1% (${unit})`} v={fmtMoney(fee, unit, { decimals: 0 })} tone="warn" />
       </div>
 
       {/* Big buttons */}
