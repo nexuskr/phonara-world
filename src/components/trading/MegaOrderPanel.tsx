@@ -144,12 +144,27 @@ function MegaOrderPanelImpl({ mode, symbol, setSymbol, price, balance, onSubmit,
             mode === "real" ? "bg-amber-500/20 text-amber-200 border border-amber-400/40" : "bg-cyan-500/20 text-cyan-200 border border-cyan-400/40"
           }`}>{mode === "real" ? "REAL" : "PAPER"}</span>
         </div>
-        <Select value={symbol} onValueChange={setSymbol}>
-          <SelectTrigger className="w-40 bg-background/60"><SelectValue /></SelectTrigger>
-          <SelectContent className="max-h-72">
-            {ARENA_SYMBOLS.map((s) => <SelectItem key={s} value={s}>{s.replace("USDT","")}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-2">
+          <div className="inline-flex rounded-lg border border-border/50 bg-background/60 p-0.5 text-[10px] font-black">
+            {(["isolated","cross"] as const).map((m) => (
+              <button
+                key={m}
+                onClick={() => setMarginMode(m)}
+                className={`px-2 py-1 rounded-md transition ${
+                  marginMode === m
+                    ? "bg-primary/20 text-primary"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >{m === "isolated" ? "Isolated" : "Cross"}</button>
+            ))}
+          </div>
+          <Select value={symbol} onValueChange={setSymbol}>
+            <SelectTrigger className="w-32 bg-background/60"><SelectValue /></SelectTrigger>
+            <SelectContent className="max-h-72">
+              {ARENA_SYMBOLS.map((s) => <SelectItem key={s} value={s}>{s.replace("USDT","")}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Margin */}
