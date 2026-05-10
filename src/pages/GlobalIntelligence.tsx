@@ -14,6 +14,7 @@ import DopamineLayer, { triggerFx } from "@/components/trading/DopamineLayer";
 import TotalPnLHeader from "@/components/trading/TotalPnLHeader";
 import { useTriggerStore } from "@/lib/trading/triggers-store";
 import { usePositionTriggerWatcher } from "@/hooks/use-position-trigger-watcher";
+import { usePositionWatcher } from "@/lib/trading/position-watcher";
 import LiveCounterRow from "@/components/intelligence/LiveCounterRow";
 import DecisionCoreCard from "@/components/intelligence/DecisionCoreCard";
 import EquityCurveCard from "@/components/intelligence/EquityCurveCard";
@@ -198,11 +199,14 @@ export default function GlobalIntelligence() {
     onClose: (id, mark) => closePos(id, mark),
   });
 
+  // Real-mode absolute-price SL/TP/Trailing watcher + Cross equity warning (~1Hz).
+  usePositionWatcher({ enabled: mode === "real", userId });
+
   return (
     <>
       <Layout>
         <RedDisclaimerBanner />
-        <div className="container py-4 sm:py-6 space-y-4">
+        <div className="container py-4 sm:py-6 space-y-4 safe-top safe-x">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div>
               <Link to="/" className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
