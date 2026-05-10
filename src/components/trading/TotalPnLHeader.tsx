@@ -89,6 +89,21 @@ function TotalPnLHeaderImpl({ positions, prices, unit }: Props) {
           </div>
         )}
       </div>
+      {hasCross && (
+        <div className="mt-2 flex items-center justify-end gap-3 text-[11px] font-mono tabular-nums text-muted-foreground border-t border-border/40 pt-2">
+          <span>
+            <span className="opacity-70 mr-1">Equity</span>
+            <span className="text-foreground font-bold">{equityUSDT.toFixed(2)} {unit}</span>
+          </span>
+          <span className="opacity-40">·</span>
+          <span>
+            <span className="opacity-70 mr-1">Maint. Margin</span>
+            <span className={`font-bold ${mmrPct < 50 ? "text-rose-400" : mmrPct < 100 ? "text-amber-300" : "text-emerald-300"}`}>
+              {mmrPct.toFixed(1)}%
+            </span>
+          </span>
+        </div>
+      )}
     </section>
   );
 }
