@@ -88,7 +88,7 @@ export default function AdminCockpit() {
     return (
       <Layout>
         <div className="container py-12">
-          <EmptyState icon={ShieldCheck} title="권한 없음" description="관리자 전용 화면입니다." />
+          <EmptyState icon={<ShieldCheck className="w-6 h-6" />} title="권한 없음" description="관리자 전용 화면입니다." />
         </div>
       </Layout>
     );
