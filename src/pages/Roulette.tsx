@@ -24,6 +24,7 @@ export default function Roulette() {
   const [lastResult, setLastResult] = useState<{ label: string; amount: number; segment: number } | null>(null);
   const [pulling, setPulling] = useState(false);
   const [gachaResult, setGachaResult] = useState<{ grade: string; label: string; amount: number; profit: number } | null>(null);
+  const [nearMiss, setNearMiss] = useState(false);
 
   const SEGMENTS = [
     { label: t("seg0"), color: "hsl(var(--muted))" },
