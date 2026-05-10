@@ -20,11 +20,21 @@ interface Props {
 }
 
 export default function MegaOrderPanel({ mode, symbol, setSymbol, price, balance, onSubmit, busy }: Props) {
+  const unit = unitForMode(mode);
   const [leverage, setLeverage] = useState(20);
-  const [margin, setMargin] = useState("100");
+  const [margin, setMargin] = useState(unit === "KRW" ? "100000" : "100");
+
+  // Reset margin default when mode/unit changes
+  useEffect(() => {
+    setMargin(unit === "KRW" ? "100000" : "100");
+  }, [unit]);
 
   const marginNum = Math.max(0, parseFloat(margin) || 0);
-  const setPct = (p: number) => setMargin(Math.max(0, Math.floor(balance * p * 100) / 100).toString());
+  const setPct = (p: number) => {
+    const raw = balance * p;
+    const v = unit === "KRW" ? Math.floor(raw) : Math.floor(raw * 100) / 100;
+    setMargin(Math.max(0, v).toString());
+  };
 
   const longEntry = useMemo(() => price ? applySlippage("long", price, true) : 0, [price]);
   const shortEntry = useMemo(() => price ? applySlippage("short", price, true) : 0, [price]);
@@ -33,6 +43,7 @@ export default function MegaOrderPanel({ mode, symbol, setSymbol, price, balance
   const liqLong = useMemo(() => liquidationPrice("long", longEntry, leverage), [longEntry, leverage]);
   const liqShort = useMemo(() => liquidationPrice("short", shortEntry, leverage), [shortEntry, leverage]);
   const fee = useMemo(() => openFee(marginNum, leverage), [marginNum, leverage]);
+  const cross = approxCross(marginNum, unit);
 
   const heat = leverage / MAX_LEVERAGE; // 0..1
   const hot = heat >= 0.5;
