@@ -4290,6 +4290,7 @@ export type Database = {
       public_trust_metrics: { Args: never; Returns: Json }
       public_uptime_heatmap_90d: { Args: never; Returns: Json }
       public_uptime_summary: { Args: never; Returns: Json }
+      public_withdrawal_sla: { Args: never; Returns: Json }
       purchase_season_pass: { Args: never; Returns: Json }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
