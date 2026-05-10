@@ -190,6 +190,19 @@ export default function Profile() {
             </div>
             <span className="text-xs text-primary font-bold">설정 →</span>
           </Link>
+          <Link
+            to="/security/passkey"
+            className="flex items-center justify-between glass-strong rounded-2xl p-4 neon-border hover:scale-[1.01] transition"
+          >
+            <div className="flex items-center gap-3">
+              <Fingerprint className="w-5 h-5 text-accent" />
+              <div>
+                <div className="font-bold text-sm">Passkey (생체 인증)</div>
+                <div className="text-xs text-muted-foreground">지문·얼굴로 빠른 강력 인증</div>
+              </div>
+            </div>
+            <span className="text-xs text-accent font-bold">설정 →</span>
+          </Link>
         </div>
 
         {/* ===== Upgraded Badges ===== */}
