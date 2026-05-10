@@ -256,6 +256,25 @@ export default function Missions() {
           </div>
         )}
 
+        {/* P1: 페르소나 추천 스트립 */}
+        {persona && (
+          <div className="mb-4 glass rounded-2xl px-4 py-3 flex items-center justify-between gap-3 neon-border">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-8 h-8 rounded-xl bg-gradient-primary flex items-center justify-center glow-primary shrink-0">
+                <Sparkle className="w-4 h-4 text-primary-foreground" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-[9px] tracking-widest text-primary font-black">내 페르소나</div>
+                <div className="text-sm font-display font-black truncate break-keep">{PERSONA_LABEL[persona]}</div>
+              </div>
+            </div>
+            <div className="text-[10px] text-muted-foreground text-right shrink-0">
+              <div className="font-bold text-gold tabular-nums">{recommended.size}</div>
+              <div>추천 미션</div>
+            </div>
+          </div>
+        )}
+
         {/* Tier tabs */}
         <div className="grid grid-cols-4 gap-2 mb-4">
           {tierFilters.map((tf) => {
