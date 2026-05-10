@@ -29,6 +29,7 @@ function fmtAgo(ms: number) {
 export default function LivePurchaseTicker() {
   const [items, setItems] = useState<Item[]>([]);
   const [idx, setIdx] = useState(0);
+  const botFeed = useBotFeed(30);
 
   useEffect(() => {
     if (!isFlagOn("livePurchaseTicker")) return;
@@ -55,16 +56,6 @@ export default function LivePurchaseTicker() {
           return;
         }
       } catch { /* fallback */ }
-      // Fallback ticker (covers fresh installs with empty DB)
-      setItems(
-        Array.from({ length: 8 }).map((_, i) => ({
-          id: String(i),
-          nickname: FALLBACK_NICKS[i % FALLBACK_NICKS.length],
-          pkg: FALLBACK_PKGS[i % FALLBACK_PKGS.length],
-          tier: i % 4 === 3 ? "EMPIRE" : "VIP",
-          ago: i18n.getFixedT(null, "convert")("minAgo", { n: (i + 1) * 2 }),
-        })),
-      );
     }
 
     void load();
@@ -86,11 +77,33 @@ export default function LivePurchaseTicker() {
     };
   }, []);
 
+  // P0.5 — 봇 시드 피드를 메인 소스로 사용 (실제 결제 발생 시 prepend)
+  const merged: Item[] = [
+    ...items,
+    ...botFeed
+      .filter(f => f.event_type === "package_purchase" || f.event_type === "withdrawal" || f.event_type === "new_signup")
+      .map(f => {
+        const m = f.event_text.match(/(STARTER|Starter|Easy \d+|EMPIRE|ELITE|PHANTOM|VIP)/);
+        const pkg = m ? m[0] : (f.event_type === "withdrawal" ? "출금완료" : "제국합류");
+        return {
+          id: `bot-${f.id}`,
+          nickname: `${f.avatar_emoji} ${f.nickname}`,
+          pkg,
+          tier: pkg.toUpperCase().includes("EMPIRE") || pkg.toUpperCase().includes("PHANTOM") ? "EMPIRE" : "VIP",
+          ago: fmtAgo(new Date(f.occurred_at).getTime()),
+        };
+      }),
+  ];
+
   useEffect(() => {
-    if (items.length === 0) return;
-    const t = setInterval(() => setIdx((v) => (v + 1) % items.length), 5000);
+    if (merged.length === 0) return;
+    const t = setInterval(() => setIdx((v) => (v + 1) % merged.length), 5000);
     return () => clearInterval(t);
-  }, [items.length]);
+  }, [merged.length]);
+
+  if (!isFlagOn("livePurchaseTicker") || merged.length === 0) return null;
+  const it = merged[idx % merged.length];
+  if (!it) return null;
 
   if (!isFlagOn("livePurchaseTicker") || items.length === 0) return null;
   const it = items[idx];
