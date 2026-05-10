@@ -17,24 +17,14 @@ function timingSafeEqual(a: string, b: string): boolean {
   return mismatch === 0;
 }
 
-function parseJwtClaims(token: string): Record<string, unknown> | null {
-  const parts = token.split(".");
-  if (parts.length < 2) return null;
-  try {
-    const payload = parts[1].replaceAll("-", "+").replaceAll("_", "/")
-      .padEnd(Math.ceil(parts[1].length / 4) * 4, "=");
-    return JSON.parse(atob(payload)) as Record<string, unknown>;
-  } catch { return null; }
-}
-
 function isAuthorizedCron(req: Request): boolean {
   const auth = req.headers.get("Authorization") ?? "";
   const token = auth.replace(/^Bearer\s+/i, "").trim();
   if (!token) return false;
   const expected = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-  if (expected && token.length === expected.length && timingSafeEqual(token, expected)) return true;
-  const claims = parseJwtClaims(token);
-  return claims?.role === "service_role";
+  if (!expected) return false;
+  if (token.length !== expected.length) return false;
+  return timingSafeEqual(token, expected);
 }
 
 type Pos = {
