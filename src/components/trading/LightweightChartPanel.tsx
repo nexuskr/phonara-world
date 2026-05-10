@@ -3,7 +3,7 @@ import {
   createChart, CandlestickSeries, type IChartApi, type ISeriesApi,
   type IPriceLine, LineStyle, type CandlestickData, type UTCTimestamp,
 } from "lightweight-charts";
-import { getFeed, fetchKlineHistory, type KlineBar } from "@/lib/paper-trading/bybit-feed";
+import { getFeed, fetchKlineHistory, type KlineBar, type KlineInterval } from "@/lib/paper-trading/bybit-feed";
 
 interface OverlayLine { price: number; color: string; title: string }
 
@@ -13,12 +13,17 @@ interface Props {
   price: number;
   overlays?: OverlayLine[];
   height?: number;
+  interval?: KlineInterval;
 }
 
-const BUCKET_SEC = 60;
-function bucket(ts: number) { return Math.floor(ts / BUCKET_SEC) * BUCKET_SEC; }
+const INTERVAL_SECONDS: Record<KlineInterval, number> = {
+  "1": 60, "3": 180, "5": 300, "15": 900, "30": 1800,
+  "60": 3600, "240": 14400, "D": 86400, "W": 604800,
+};
 
-function LightweightChartPanelImpl({ symbol, price, overlays = [], height = 320 }: Props) {
+function bucket(ts: number, sec: number) { return Math.floor(ts / sec) * sec; }
+
+function LightweightChartPanelImpl({ symbol, price, overlays = [], height = 320, interval = "1" }: Props) {
   const ref = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
@@ -28,7 +33,6 @@ function LightweightChartPanelImpl({ symbol, price, overlays = [], height = 320 
   const klineActiveRef = useRef(false);
   const lastDevLogRef = useRef(0);
 
-  // Init chart
   useEffect(() => {
     if (!ref.current) return;
     const chart = createChart(ref.current, {
@@ -69,7 +73,7 @@ function LightweightChartPanelImpl({ symbol, price, overlays = [], height = 320 
     return () => { ro.disconnect(); chart.remove(); chartRef.current = null; seriesRef.current = null; };
   }, [height]);
 
-  // Symbol load: REST history + kline subscribe
+  // Symbol/interval load: REST history + kline subscribe
   useEffect(() => {
     let cancelled = false;
     const series = seriesRef.current;
@@ -81,7 +85,7 @@ function LightweightChartPanelImpl({ symbol, price, overlays = [], height = 320 
     series.setData([]);
 
     (async () => {
-      const history = await fetchKlineHistory(symbol, "1", 300);
+      const history = await fetchKlineHistory(symbol, interval, 500);
       if (cancelled || !seriesRef.current) return;
       const data: CandlestickData[] = history.map((b) => ({
         time: b.time as UTCTimestamp,
@@ -93,7 +97,7 @@ function LightweightChartPanelImpl({ symbol, price, overlays = [], height = 320 
     })();
 
     const feed = getFeed();
-    const off = feed.onKline(symbol, (bar: KlineBar) => {
+    const off = feed.onKline(symbol, interval, (bar: KlineBar) => {
       if (cancelled || !seriesRef.current) return;
       klineActiveRef.current = true;
       const arr = candlesRef.current;
@@ -104,7 +108,7 @@ function LightweightChartPanelImpl({ symbol, price, overlays = [], height = 320 
       };
       if (!last || (last.time as number) < bar.time) {
         arr.push(candle);
-        if (arr.length > 600) arr.shift();
+        if (arr.length > 800) arr.shift();
       } else if ((last.time as number) === bar.time) {
         last.open = bar.open; last.high = bar.high; last.low = bar.low; last.close = bar.close;
       }
@@ -116,27 +120,28 @@ function LightweightChartPanelImpl({ symbol, price, overlays = [], height = 320 
         if (now - lastDevLogRef.current >= 1000) {
           lastDevLogRef.current = now;
           // eslint-disable-next-line no-console
-          console.debug("[KLINE]", symbol, bar.close);
+          console.debug("[KLINE]", interval, symbol, bar.close);
         }
       }
     });
 
     return () => { cancelled = true; off(); };
-  }, [symbol]);
+  }, [symbol, interval]);
 
   // Tick fallback: only used if kline events are NOT flowing yet.
   useEffect(() => {
     if (klineActiveRef.current) return;
     const series = seriesRef.current;
     if (!series || !price) return;
-    const t = bucket(Math.floor(Date.now() / 1000)) as UTCTimestamp;
+    const sec = INTERVAL_SECONDS[interval] ?? 60;
+    const t = bucket(Math.floor(Date.now() / 1000), sec) as UTCTimestamp;
     const arr = candlesRef.current;
     const last = arr[arr.length - 1];
     if (!last || (last.time as number) < t) {
       const open = last ? last.close : price;
       const candle: CandlestickData = { time: t, open, high: Math.max(open, price), low: Math.min(open, price), close: price };
       arr.push(candle);
-      if (arr.length > 600) arr.shift();
+      if (arr.length > 800) arr.shift();
       series.update(candle);
     } else {
       last.high = Math.max(last.high, price);
@@ -144,9 +149,8 @@ function LightweightChartPanelImpl({ symbol, price, overlays = [], height = 320 
       last.close = price;
       series.update(last);
     }
-  }, [price]);
+  }, [price, interval]);
 
-  // Overlay lines (hash-compared to avoid recreating every tick)
   useEffect(() => {
     const s = seriesRef.current; if (!s) return;
     const sig = overlays.map((o) => `${o.price.toFixed(6)}|${o.color}|${o.title}`).join(";");
