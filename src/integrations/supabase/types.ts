@@ -4136,6 +4136,15 @@ export type Database = {
             }
             Returns: string
           }
+      record_paper_trade_outcome: {
+        Args: {
+          p_is_win: boolean
+          p_pnl: number
+          p_side: string
+          p_symbol: string
+        }
+        Returns: Json
+      }
       record_request_status: {
         Args: {
           _actor: string
