@@ -31,3 +31,5 @@ project_id = "ketlqzfaplppmupaiwft"
     verify_jwt = false
   [functions.toggle-rrm]
     verify_jwt = true
+  [functions.liquidation-watcher]
+    verify_jwt = false
