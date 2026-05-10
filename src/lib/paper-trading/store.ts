@@ -57,6 +57,22 @@ export const usePaperStore = create<State>()(
           history: [closedPos, ...s.history].slice(0, 500),
           comboWins: pnl > 0 ? s.comboWins + 1 : 0,
         }));
+        // Fire-and-forget: mission/XP/streak progress for authenticated users
+        (async () => {
+          try {
+            const { supabase } = await import("@/integrations/supabase/client");
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+            await supabase.rpc("record_paper_trade_outcome", {
+              p_symbol: pos.symbol,
+              p_side: pos.side,
+              p_pnl: pnl,
+              p_is_win: pnl > 0,
+            });
+          } catch (e) {
+            console.warn("paper trade outcome record skipped", e);
+          }
+        })();
         return closedPos;
       },
       tick: (priceMap) => {
