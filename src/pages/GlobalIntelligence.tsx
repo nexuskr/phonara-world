@@ -140,22 +140,31 @@ export default function GlobalIntelligence() {
     } finally { setBusy(false); }
   }, [mode, price, paperCredit, paperOpen, symbol, userId, realAvailable, realOpen, setTrigger]);
 
-  // Close (paper or real)
-  const closePos = useCallback(async (id: string, mark: number) => {
+  // Close (paper or real). `reason` is forwarded by the trigger watcher (tp/sl/trailing).
+  const closePos = useCallback(async (id: string, mark: number, reason?: "tp" | "sl" | "trailing" | "manual") => {
     if (mode === "real") {
       setBusy(true);
       try {
         const r = await realClose(id, mark);
         if ("error" in r) { notify.error(r.error); return r; }
+        // Real-mode notification fires from realtime live_trade_history INSERT (real-store).
         return r;
       } finally { setBusy(false); }
     }
     const closed = paperClose(id, mark, "manual");
     const cp = closed?.closed;
     if (!cp) return { error: "fail" };
+    const sym = closed!.symbol;
+    const sideUp = closed!.side.toUpperCase();
+    const pnlStr = `${cp.pnl >= 0 ? "+" : ""}${cp.pnl.toFixed(2)} USDT (${(cp.roi * 100).toFixed(2)}%)`;
+    const desc = `${sym} ${sideUp} ${closed!.leverage}× · ${pnlStr}`;
+    if (reason === "tp") notify.success("익절(TP) 자동 청산 (Paper)", { description: desc });
+    else if (reason === "sl") notify.error("손절(SL) 자동 청산 (Paper)", { description: desc });
+    else if (reason === "trailing") notify.info("트레일링 스탑 자동 청산 (Paper)", { description: desc });
+    else notify.message("포지션 청산 (Paper)", { description: desc });
     if (cp.pnl > 0) {
       const lvl = levelFromPnl(cp.pnl); celebrateWin(lvl);
-      pushWinMoment({ id, pnl: cp.pnl, roi: cp.roi, symbol: closed!.symbol, side: closed!.side, leverage: closed!.leverage, level: lvl });
+      pushWinMoment({ id, pnl: cp.pnl, roi: cp.roi, symbol: sym, side: closed!.side, leverage: closed!.leverage, level: lvl });
     } else {
       playLossThud();
     }

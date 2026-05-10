@@ -1,6 +1,28 @@
 import { create } from "zustand";
 import { supabase } from "@/integrations/supabase/client";
+import { notify } from "@/lib/notify";
 import type { LivePosition, LiveTrade, MarginMode, Side } from "./types";
+
+function reasonLabel(reason: string): { title: string; variant: "success" | "error" | "info" } {
+  switch (reason) {
+    case "tp": return { title: "익절(TP) 자동 청산", variant: "success" };
+    case "sl": return { title: "손절(SL) 자동 청산", variant: "error" };
+    case "trailing": return { title: "트레일링 스탑 자동 청산", variant: "info" };
+    case "liquidation": return { title: "강제 청산 (Liquidation)", variant: "error" };
+    case "manual": return { title: "포지션 청산 완료", variant: "info" };
+    default: return { title: `포지션 청산 (${reason})`, variant: "info" };
+  }
+}
+
+function notifyHistoryRow(row: any) {
+  if (!row) return;
+  const { title, variant } = reasonLabel(String(row.reason ?? ""));
+  const pnl = Number(row.pnl ?? 0);
+  const roi = Number(row.roi ?? 0) * 100;
+  const sign = pnl >= 0 ? "+" : "";
+  const desc = `${row.symbol} ${String(row.side ?? "").toUpperCase()} ${row.leverage}× · PnL ${sign}${Math.round(pnl).toLocaleString()}원 (${sign}${roi.toFixed(2)}%)`;
+  notify[variant](title, { description: desc });
+}
 
 export interface OpenArgs {
   symbol: string;
@@ -126,7 +148,10 @@ export const useRealStore = create<State>()((set, get) => ({
         () => { get().load(); })
       .on("postgres_changes",
         { event: "INSERT", schema: "public", table: "live_trade_history", filter: `user_id=eq.${userId}` },
-        () => { get().load(); })
+        (payload) => {
+          notifyHistoryRow(payload.new);
+          get().load();
+        })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   },
