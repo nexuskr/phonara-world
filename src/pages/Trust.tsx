@@ -54,6 +54,19 @@ type ChaosLatest = {
   duration_ms: number; pass_rate: number | null; source: string;
 } | null;
 
+type PayoutSla = {
+  count_7d: number;
+  avg_minutes_7d: number;
+  p95_minutes_7d: number;
+  sla_30min_rate_7d: number;
+  count_30d: number;
+  paid_30d: number;
+  avg_minutes_30d: number;
+  p95_minutes_30d: number;
+  sla_30min_rate_30d: number;
+  generated_at: string;
+} | null;
+
 export default function Trust() {
   const { t, i18n } = useTranslation("trust");
   const lng = i18n.language?.startsWith("en") ? "en" : "ko";
