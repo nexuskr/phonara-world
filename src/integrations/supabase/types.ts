@@ -4085,6 +4085,7 @@ export type Database = {
         Args: { _deposit_amount: number; _user_id: string }
         Returns: number
       }
+      _check_daily_operator_pnl: { Args: never; Returns: Json }
       _credit_referral_commission: {
         Args: { _base: number; _invitee: string; _source: string }
         Returns: undefined
