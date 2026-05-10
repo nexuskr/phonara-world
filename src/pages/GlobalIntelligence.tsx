@@ -7,6 +7,7 @@ import ModeToggle from "@/components/trading/ModeToggle";
 import ChartWithHeader from "@/components/trading/ChartWithHeader";
 import MegaOrderPanel from "@/components/trading/MegaOrderPanel";
 import type { OrderTriggers } from "@/components/trading/MegaOrderPanel";
+import { PendingOrderManager } from "@/components/trading/PendingOrderManager";
 import OpenPositionsLive from "@/components/trading/OpenPositionsLive";
 import TradingHistoryGold from "@/components/trading/TradingHistoryGold";
 import ComboStreakHUD from "@/components/trading/ComboStreakHUD";
