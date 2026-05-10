@@ -133,7 +133,18 @@ function PositionRowImpl({ position: p, mark, busy, unit, onClose }: RowProps) {
       }`}
     >
       <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 items-center">
-        <div className="text-sm font-black">{p.symbol}</div>
+        <div className="text-sm font-black flex items-center gap-1.5 flex-wrap">
+          <span>{p.symbol}</span>
+          {p.margin_mode === "cross" ? (
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded-md border border-secondary/40 bg-secondary/10 text-secondary text-[9px] font-bold uppercase tracking-wider">
+              Cross
+            </span>
+          ) : (
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded-md border border-primary/40 bg-primary/10 text-primary text-[9px] font-bold uppercase tracking-wider">
+              Iso{p.allocated_margin ? ` · ${Math.round(Number(p.allocated_margin))}u` : ""}
+            </span>
+          )}
+        </div>
         <div className={`text-xs font-black ${p.side === "long" ? "text-emerald-400" : "text-rose-400"}`}>
           {p.side.toUpperCase()} {p.leverage}×
         </div>
@@ -218,6 +229,8 @@ const PositionRow = memo(PositionRowImpl, (a, b) =>
   a.position.leverage === b.position.leverage &&
   a.position.size === b.position.size &&
   a.position.liq_price === b.position.liq_price &&
+  a.position.margin_mode === b.position.margin_mode &&
+  a.position.allocated_margin === b.position.allocated_margin &&
   a.mark === b.mark &&
   a.busy === b.busy &&
   a.unit === b.unit &&
