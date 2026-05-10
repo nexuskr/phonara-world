@@ -137,6 +137,13 @@ export default function Wallet() {
     if (sentCode !== authCode) { toast({ title: tw("codeMismatch") }); return; }
     if (!/^\d{6}$/.test(withdrawPw)) { toast({ title: tw("pinMismatch") }); return; }
 
+    // 강력 스텝업 인증 (TOTP 우선, 없으면 이메일 OTP)
+    const stepUpOk = await requireStepUp("출금");
+    if (!stepUpOk) {
+      toast({ title: "추가 인증이 필요합니다", description: "출금 진행 전 본인확인을 완료해주세요.", variant: "destructive" });
+      return;
+    }
+
     const { data, error } = await supabase.rpc("request_withdrawal", {
       _amount: a,
       _method: asset === "bank" ? "bank" : "coin",
