@@ -4034,6 +4034,17 @@ export type Database = {
         }[]
       }
       get_my_quests: { Args: never; Returns: Json }
+      get_my_security_events: {
+        Args: { _limit?: number }
+        Returns: {
+          acknowledged: boolean
+          created_at: string
+          evidence: Json
+          id: string
+          rule: string
+          severity: string
+        }[]
+      }
       get_my_weekly_referral_rank: { Args: never; Returns: Json }
       get_next_empire_day: { Args: never; Returns: string }
       get_permission_change_log: {
