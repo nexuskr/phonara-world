@@ -121,9 +121,18 @@ export default function Support() {
   return (
     <Layout>
       <div className="container pt-6 pb-32 animate-liquid-in">
-        <h1 className="font-imperial font-black text-2xl sm:text-3xl flex items-center gap-2 mb-3 tracking-[0.04em]">
-          <MessageSquare className="w-5 h-5 text-primary" /> <span className="text-gradient-primary">{t("title")}</span>
-        </h1>
+        <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
+          <h1 className="font-imperial font-black text-2xl sm:text-3xl flex items-center gap-2 tracking-[0.04em]">
+            <MessageSquare className="w-5 h-5 text-primary" /> <span className="text-gradient-primary">{t("title")}</span>
+          </h1>
+          <button
+            type="button"
+            onClick={() => nav("/support/tickets")}
+            className="text-xs text-primary underline-offset-4 hover:underline whitespace-nowrap"
+          >
+            내 티켓 보기 →
+          </button>
+        </div>
 
         <div className="flex gap-2 mb-4 flex-wrap">
           {[{ id: "chat", l: t("tabChat") }, { id: "faq", l: t("tabFaq") }].map((x: any) => (
