@@ -30,14 +30,16 @@ import ViralForensics from "@/components/admin/ViralForensics";
 import InsuranceFundDashboard from "@/components/InsuranceFundDashboard";
 import AdminAal2Banner from "@/components/admin/AdminAal2Banner";
 import AdminAal2Gate from "@/components/admin/AdminAal2Gate";
+import OperatorAccounting from "@/components/admin/OperatorAccounting";
 
 const SENSITIVE_ADMIN_TABS = [
   "server_wd", "server_dep", "users", "packages", "coin",
   "perms", "aml", "payout_audit", "security", "ops", "viral_forensics",
+  "accounting",
 ];
 import { Activity, Lock, Bot, Flame } from "lucide-react";
 
-type Tab = "dashboard" | "funnel" | "analytics" | "errors" | "security" | "ops" | "perms" | "viral_forensics" | "aml" | "ai_missions" | "payout_audit" | "referrals" | "server_dep" | "server_wd" | "packages" | "users" | "missions" | "chats" | "coin" | "ugc" | "insurance";
+type Tab = "dashboard" | "funnel" | "analytics" | "errors" | "security" | "ops" | "perms" | "viral_forensics" | "aml" | "ai_missions" | "payout_audit" | "referrals" | "server_dep" | "server_wd" | "packages" | "users" | "missions" | "chats" | "coin" | "ugc" | "insurance" | "accounting";
 
 export default function Admin() {
   const [db, setDb] = useDB();
@@ -116,6 +118,7 @@ export default function Admin() {
     { id: "coin", label: t("tabCoin"), icon: Coins },
     { id: "ugc", label: "UGC 성과", icon: BarChart3 },
     { id: "insurance", label: "보험펀드", icon: ShieldCheck },
+    { id: "accounting", label: "회계 (Zero-Loss)", icon: Coins },
   ];
 
   return (
@@ -170,6 +173,7 @@ export default function Admin() {
           {tab === "coin" && <CoinAdmin />}
           {tab === "ugc" && <AdminUgc />}
           {tab === "insurance" && <InsuranceFundDashboard variant="admin" />}
+          {tab === "accounting" && <OperatorAccounting />}
         </AdminAal2Gate>
       </div>
     </Layout>

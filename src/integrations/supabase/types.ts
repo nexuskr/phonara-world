@@ -4089,6 +4089,10 @@ export type Database = {
             Returns: Json
           }
       admin_get_user_email: { Args: { _user_id: string }; Returns: string }
+      admin_operator_pnl: {
+        Args: { p_from?: string; p_to?: string }
+        Returns: Json
+      }
       admin_release_freeze: {
         Args: { _freeze_id: string; _note?: string }
         Returns: undefined
