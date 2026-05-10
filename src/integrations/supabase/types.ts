@@ -667,6 +667,36 @@ export type Database = {
         }
         Relationships: []
       }
+      coin_trade_coupons: {
+        Row: {
+          code: string
+          created_at: string
+          expires_at: string
+          id: string
+          kind: string
+          redeemed_at: string | null
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          kind?: string
+          redeemed_at?: string | null
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          kind?: string
+          redeemed_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       conversion_events: {
         Row: {
           anon_id: string
@@ -976,6 +1006,39 @@ export type Database = {
         }
         Relationships: []
       }
+      empire_battles: {
+        Row: {
+          created_at: string
+          id: string
+          mode: string
+          pnl: number
+          result: string
+          side: string
+          territory: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mode?: string
+          pnl?: number
+          result: string
+          side: string
+          territory?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mode?: string
+          pnl?: number
+          result?: string
+          side?: string
+          territory?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       empire_founding_seats: {
         Row: {
           claimed_at: string | null
@@ -994,6 +1057,33 @@ export type Database = {
           claimed_by?: string | null
           purchase_id?: string | null
           seat_no?: number
+        }
+        Relationships: []
+      }
+      empire_map_progress: {
+        Row: {
+          conquest_count: number
+          last_battle_at: string | null
+          raid_count: number
+          territories: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          conquest_count?: number
+          last_battle_at?: string | null
+          raid_count?: number
+          territories?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          conquest_count?: number
+          last_battle_at?: string | null
+          raid_count?: number
+          territories?: Json
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -4523,6 +4613,7 @@ export type Database = {
       check_rls_integrity: { Args: never; Returns: Json }
       claim_ai_bot_run: { Args: { _run_id: string }; Returns: Json }
       claim_ai_mission: { Args: { _mission_id: string }; Returns: Json }
+      claim_coin_first_win: { Args: never; Returns: Json }
       claim_daily_attendance: {
         Args: { user_id: string }
         Returns: {
@@ -4675,6 +4766,7 @@ export type Database = {
           observed_roles: string[]
         }[]
       }
+      get_my_empire_map: { Args: never; Returns: Json }
       get_my_quests: { Args: never; Returns: Json }
       get_my_security_events: {
         Args: { _limit?: number }
@@ -5019,6 +5111,10 @@ export type Database = {
             }
             Returns: string
           }
+      record_empire_battle: {
+        Args: { _mode?: string; _pnl: number; _result: string; _side: string }
+        Returns: Json
+      }
       record_paper_trade_outcome: {
         Args: {
           p_is_win: boolean
@@ -5064,6 +5160,7 @@ export type Database = {
         Returns: string
       }
       recover_stuck_settlements: { Args: never; Returns: Json }
+      redeem_real_coupon: { Args: { _code: string }; Returns: Json }
       redetect_anomaly: { Args: { _id: string }; Returns: Json }
       register_device: { Args: { _fp: string; _ua?: string }; Returns: Json }
       request_withdraw_otp: { Args: never; Returns: Json }
