@@ -174,6 +174,14 @@ export default function Wallet() {
         }
         return;
       }
+      if (msg.includes("account_frozen")) {
+        toast({
+          title: "계정이 일시 동결되었습니다",
+          description: "단시간 내 출금 시도가 비정상적으로 많아 24시간 자동 동결되었습니다. 본인이 한 시도가 아니라면 즉시 고객센터로 문의해주세요.",
+          variant: "destructive",
+        });
+        return;
+      }
       const friendly = msg.includes("pin mismatch") ? tw("pinError")
         : msg.includes("below_min") ? tw("belowMin")
         : msg.includes("insufficient_funds") ? tw("insufficient")
