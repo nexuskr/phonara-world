@@ -383,7 +383,7 @@ export default function Lounge() {
                 </h3>
                 {leaderboard.length === 0 ? (
                   <EmptyState
-                    icon={Trophy}
+                    icon={<Trophy className="h-6 w-6" />}
                     title="첫 길드를 만들어보세요"
                     description="명예의 전당 1위는 당신의 것"
                   />
