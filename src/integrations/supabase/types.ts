@@ -2066,6 +2066,39 @@ export type Database = {
         }
         Relationships: []
       }
+      recovery_bonus_eligibility: {
+        Row: {
+          consumed_at: string | null
+          consumed_event_id: string | null
+          created_at: string
+          eligible_until: string
+          id: string
+          liquidation_amount: number
+          source: string
+          user_id: string
+        }
+        Insert: {
+          consumed_at?: string | null
+          consumed_event_id?: string | null
+          created_at?: string
+          eligible_until: string
+          id?: string
+          liquidation_amount: number
+          source?: string
+          user_id: string
+        }
+        Update: {
+          consumed_at?: string | null
+          consumed_event_id?: string | null
+          created_at?: string
+          eligible_until?: string
+          id?: string
+          liquidation_amount?: number
+          source?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       recovery_bonus_events: {
         Row: {
           bonus_amount: number
@@ -4718,6 +4751,15 @@ export type Database = {
           p_symbol: string
         }
         Returns: Json
+      }
+      record_recovery_eligibility: {
+        Args: {
+          p_liquidation_amount: number
+          p_source?: string
+          p_user_id: string
+          p_window_hours?: number
+        }
+        Returns: string
       }
       record_request_status: {
         Args: {

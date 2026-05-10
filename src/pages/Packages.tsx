@@ -118,7 +118,13 @@ export default function Packages() {
                       </>
                     ) : (
                       <>
-                        <div className="mt-5 grid grid-cols-3 gap-2">
+                        {/* Phase 6 — 출금 수수료 0% 영구 보장 배지 */}
+                        <div className="mt-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gradient-to-r from-gold/20 to-primary/15 border border-gold/40 text-[10px] font-bold text-gold">
+                          <Check className="w-3 h-3" />
+                          <span>출금 수수료 0% 영구 보장</span>
+                        </div>
+
+                        <div className="mt-3 grid grid-cols-3 gap-2">
                           <Stat label={t("statCharge")} value={formatKRW(p.price)} />
                           <Stat label={t("statDaily")} value={formatKRW(p.dailyReturn)} highlight />
                           <Stat label={t("statDuration")} value={t("durationDays", { n: p.duration })} />
