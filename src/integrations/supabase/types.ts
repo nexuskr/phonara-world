@@ -1405,6 +1405,27 @@ export type Database = {
         }
         Relationships: []
       }
+      mission_personas: {
+        Row: {
+          created_at: string
+          mission_id: string
+          persona: string
+          priority: number
+        }
+        Insert: {
+          created_at?: string
+          mission_id: string
+          persona: string
+          priority?: number
+        }
+        Update: {
+          created_at?: string
+          mission_id?: string
+          persona?: string
+          priority?: number
+        }
+        Relationships: []
+      }
       mission_templates: {
         Row: {
           active: boolean
@@ -1964,6 +1985,7 @@ export type Database = {
           last_attendance: string | null
           last_reset_date: string | null
           nickname: string
+          persona: string
           phone: string | null
           profile_completed: boolean
           real_name: string | null
@@ -1995,6 +2017,7 @@ export type Database = {
           last_attendance?: string | null
           last_reset_date?: string | null
           nickname: string
+          persona?: string
           phone?: string | null
           profile_completed?: boolean
           real_name?: string | null
@@ -2026,6 +2049,7 @@ export type Database = {
           last_attendance?: string | null
           last_reset_date?: string | null
           nickname?: string
+          persona?: string
           phone?: string | null
           profile_completed?: boolean
           real_name?: string | null
@@ -4379,6 +4403,7 @@ export type Database = {
         Args: { p_price: number; p_symbol: string }
         Returns: undefined
       }
+      assign_persona: { Args: never; Returns: string }
       auto_freeze_critical_anomalies: { Args: never; Returns: Json }
       award_xp: { Args: { _amount: number; _source?: Json }; Returns: Json }
       bulk_acknowledge_anomalies: {
@@ -4598,6 +4623,13 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      get_recommended_missions: {
+        Args: never
+        Returns: {
+          mission_id: string
+          priority: number
+        }[]
       }
       get_referral_leaderboard: {
         Args: { _limit?: number }
