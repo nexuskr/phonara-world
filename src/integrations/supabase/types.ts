@@ -1916,6 +1916,42 @@ export type Database = {
         }
         Relationships: []
       }
+      recovery_bonus_events: {
+        Row: {
+          bonus_amount: number
+          bonus_pct: number
+          created_at: string
+          deposit_amount: number
+          funding_source: string
+          id: string
+          note: string | null
+          user_id: string
+          user_tier: string
+        }
+        Insert: {
+          bonus_amount: number
+          bonus_pct: number
+          created_at?: string
+          deposit_amount: number
+          funding_source: string
+          id?: string
+          note?: string | null
+          user_id: string
+          user_tier: string
+        }
+        Update: {
+          bonus_amount?: number
+          bonus_pct?: number
+          created_at?: string
+          deposit_amount?: number
+          funding_source?: string
+          id?: string
+          note?: string | null
+          user_id?: string
+          user_tier?: string
+        }
+        Relationships: []
+      }
       referral_earnings: {
         Row: {
           base_amount: number
@@ -4263,6 +4299,10 @@ export type Database = {
           rank: number
           tier: Database["public"]["Enums"]["user_tier"]
         }[]
+      }
+      grant_recovery_bonus: {
+        Args: { p_amount: number; p_source?: string }
+        Returns: Json
       }
       harvest_machine: { Args: { _purchase_id: string }; Returns: Json }
       has_role: {
