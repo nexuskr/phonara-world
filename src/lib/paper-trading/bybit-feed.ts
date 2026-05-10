@@ -213,23 +213,37 @@ class BybitFeed {
       ws.onopen = () => {
         window.clearTimeout(watchdog);
         this.restMode = false;
+        this.reconnectAttempt = 0;
+        this.lastMessageAt = Date.now();
         if (this.restTimer) { window.clearInterval(this.restTimer); this.restTimer = null; }
         // Default subscriptions: tickers + 1m kline for all symbols.
         const args: string[] = [];
+        const seen = new Set<string>();
         for (const s of SYMBOLS) {
-          args.push(`tickers.${s}`);
-          args.push(`kline.${DEFAULT_INTERVAL}.${s}`);
+          const t1 = `tickers.${s}`;
+          const t2 = `kline.${DEFAULT_INTERVAL}.${s}`;
+          if (!seen.has(t1)) { seen.add(t1); args.push(t1); }
+          if (!seen.has(t2)) { seen.add(t2); args.push(t2); }
         }
         // Re-subscribe any active non-default kline topics (e.g. if user had switched timeframe before reconnect).
-        for (const t of this.activeKlineTopics) args.push(t);
+        for (const t of this.activeKlineTopics) {
+          if (!seen.has(t)) { seen.add(t); args.push(t); }
+        }
         this.sendSub(args);
 
         this.pingTimer = window.setInterval(() => {
           try { ws.send(JSON.stringify({ op: "ping" })); } catch {}
         }, 20_000);
+        // Pong watchdog: if no incoming message for 30s, force reconnect.
+        this.pongWatchdog = window.setInterval(() => {
+          if (this.lastMessageAt && Date.now() - this.lastMessageAt > 30_000) {
+            try { ws.close(); } catch {}
+          }
+        }, 5_000);
         this.status("open");
       };
       ws.onmessage = (ev) => {
+        this.lastMessageAt = Date.now();
         try {
           const msg = JSON.parse(ev.data);
           const topic: string | undefined = msg.topic;
@@ -298,15 +312,23 @@ class BybitFeed {
       ws.onclose = () => {
         window.clearTimeout(watchdog);
         if (this.pingTimer) { window.clearInterval(this.pingTimer); this.pingTimer = null; }
+        if (this.pongWatchdog) { window.clearInterval(this.pongWatchdog); this.pongWatchdog = null; }
         if (!this.alive) return;
         this.status("reconnecting");
         this.startRestFallback();
-        this.reconnectTimer = window.setTimeout(() => this.connect(), 3_000);
+        // Exponential backoff: 1s, 2s, 4s, 8s, 15s cap.
+        const delays = [1_000, 2_000, 4_000, 8_000, 15_000];
+        const delay = delays[Math.min(this.reconnectAttempt, delays.length - 1)];
+        this.reconnectAttempt++;
+        this.reconnectTimer = window.setTimeout(() => this.connect(), delay);
       };
     } catch {
       window.clearTimeout(watchdog);
       this.startRestFallback();
-      this.reconnectTimer = window.setTimeout(() => this.connect(), 5_000);
+      const delays = [1_000, 2_000, 4_000, 8_000, 15_000];
+      const delay = delays[Math.min(this.reconnectAttempt, delays.length - 1)];
+      this.reconnectAttempt++;
+      this.reconnectTimer = window.setTimeout(() => this.connect(), delay);
     }
   }
 
