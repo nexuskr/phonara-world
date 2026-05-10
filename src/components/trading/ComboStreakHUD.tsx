@@ -1,6 +1,7 @@
+import { memo } from "react";
 import { Flame } from "lucide-react";
 
-export default function ComboStreakHUD({ wins }: { wins: number }) {
+function ComboStreakHUDImpl({ wins }: { wins: number }) {
   if (wins < 1) return null;
   const tier = wins >= 7 ? "INFERNO" : wins >= 5 ? "BLAZE" : wins >= 3 ? "HOT" : "WARM";
   const mult = wins >= 7 ? "x3.0" : wins >= 5 ? "x2.0" : wins >= 3 ? "x1.5" : "x1.2";
@@ -16,3 +17,5 @@ export default function ComboStreakHUD({ wins }: { wins: number }) {
     </div>
   );
 }
+
+export default memo(ComboStreakHUDImpl);
