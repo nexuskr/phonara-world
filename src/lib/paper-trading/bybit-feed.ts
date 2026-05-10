@@ -1,12 +1,24 @@
 import { SYMBOLS } from "./types";
 
+export interface TickerStat {
+  last: number;
+  change24hPct: number; // -100..+inf, percent
+  volume24h: number; // base volume
+  turnover24h: number; // quote volume (USDT)
+  high24h: number;
+  low24h: number;
+}
+
 type PriceListener = (priceMap: Record<string, number>) => void;
+type StatsListener = (stats: Record<string, TickerStat>) => void;
 type StatusListener = (s: "connecting" | "open" | "reconnecting" | "rest-fallback") => void;
 
 class BybitFeed {
   private ws: WebSocket | null = null;
   private prices: Record<string, number> = {};
+  private stats: Record<string, TickerStat> = {};
   private listeners = new Set<PriceListener>();
+  private statsListeners = new Set<StatsListener>();
   private statusListeners = new Set<StatusListener>();
   private reconnectTimer: number | null = null;
   private pingTimer: number | null = null;
