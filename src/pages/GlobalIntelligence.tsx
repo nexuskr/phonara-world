@@ -212,7 +212,7 @@ export default function GlobalIntelligence() {
 
           <div className="grid lg:grid-cols-2 gap-4">
             <div className="lg:col-span-2">
-              <LightweightChartPanel symbol={symbol} price={price} overlays={overlays} height={320} />
+              <ChartWithHeader symbol={symbol} setSymbol={setSymbol} price={price} stat={stats[symbol]} overlays={overlays} height={380} />
             </div>
             <div className="lg:col-span-2">
               <MegaOrderPanel
