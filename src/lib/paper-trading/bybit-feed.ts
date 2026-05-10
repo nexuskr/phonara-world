@@ -167,11 +167,8 @@ class BybitFeed {
       this.emit();
     } catch {}
   }
-        }
-      }
-      this.emit();
-    } catch {}
-  }
+
+
 
   private startRestFallback() {
     if (this.restMode) return;
