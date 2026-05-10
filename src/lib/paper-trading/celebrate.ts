@@ -65,8 +65,11 @@ export function celebrateWin(level: "small" | "big" | "huge" = "small") {
   playWinChime(level !== "small");
 }
 
-export function levelFromPnl(pnl: number): "small" | "big" | "huge" {
-  if (pnl >= 500) return "huge";
-  if (pnl >= 100) return "big";
+export function levelFromPnl(pnl: number, unit: "USDT" | "KRW" = "USDT"): "small" | "big" | "huge" {
+  // KRW thresholds use ~1400 KRW/USDT reference so visual tiers match across modes.
+  const huge = unit === "KRW" ? 700_000 : 500;
+  const big = unit === "KRW" ? 140_000 : 100;
+  if (pnl >= huge) return "huge";
+  if (pnl >= big) return "big";
   return "small";
 }
