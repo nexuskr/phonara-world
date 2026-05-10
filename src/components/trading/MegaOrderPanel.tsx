@@ -41,8 +41,8 @@ export default function MegaOrderPanel({ mode, symbol, setSymbol, price, balance
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
       if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
-      if (e.key === "l" || e.key === "L") { e.preventDefault(); doSubmit("long"); }
-      else if (e.key === "s" || e.key === "S") { e.preventDefault(); doSubmit("short"); }
+      if (e.key === "l" || e.key === "L") { e.preventDefault(); if (!busy) doSubmit("long"); }
+      else if (e.key === "s" || e.key === "S") { e.preventDefault(); if (!busy) doSubmit("short"); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
