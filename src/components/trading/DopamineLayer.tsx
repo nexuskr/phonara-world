@@ -144,7 +144,7 @@ function DopamineLayerImpl() {
                   : fx.kind === "win" ? "text-emerald-100"
                   : "text-red-100"
               }`}>
-                {fx.pnl >= 0 ? "+" : ""}{fx.pnl.toLocaleString(undefined, { maximumFractionDigits: 0 })} USDT
+                {fx.pnl >= 0 ? "+" : ""}{fmtFx(fx.pnl, fx.unit ?? "USDT")}
               </div>
               <div className="mt-1 text-xs font-mono tabular-nums opacity-80">
                 ROI {(fx.roi * 100).toFixed(1)}% {fx.symbol ? `· ${fx.symbol}` : ""}
