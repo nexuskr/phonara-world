@@ -35,8 +35,9 @@ export default function ModeToggle({
             <span className={mode === "paper" ? "text-cyan-200" : "text-muted-foreground"}>PAPER</span>
           </div>
           <div className={`mt-1 font-mono tabular-nums text-sm font-bold ${mode === "paper" ? "text-cyan-100" : "text-muted-foreground"}`}>
-            {fmt(paperBalance)} USDT
+            {fmt(paperBalance)} <span className="text-[10px] opacity-70">USDT</span>
           </div>
+          <div className="text-[9px] mt-0.5 text-muted-foreground/60 uppercase tracking-wider">시뮬레이션</div>
         </button>
 
         <button
