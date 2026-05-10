@@ -186,6 +186,13 @@ export default function GlobalIntelligence() {
 
   const combo = mode === "real" ? realCombo : paperCombo;
 
+  // Client-side SL/TP/Trailing enforcement (works for both Paper & Real).
+  usePositionTriggerWatcher({
+    positions: positionsAsLive,
+    prices,
+    onClose: (id, mark) => closePos(id, mark),
+  });
+
   return (
     <>
       <Layout>
