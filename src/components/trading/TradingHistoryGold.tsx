@@ -49,7 +49,7 @@ export default function TradingHistoryGold({ history, unit = "USDT" }: { history
               <span className="font-mono tabular-nums text-foreground">{Number(t.close_price).toFixed(4)}</span>
             </div>
             <div className={`font-mono tabular-nums font-black ${pos ? "text-emerald-400" : "text-rose-400"}`}>
-              {pos ? "+" : ""}{t.pnl.toLocaleString()}
+              {pos ? "+" : ""}{fmt(t.pnl)}
             </div>
             <div className={`font-mono tabular-nums ${pos ? "text-emerald-400" : "text-rose-400"}`}>
               {(Number(t.roi) * 100).toFixed(1)}%
