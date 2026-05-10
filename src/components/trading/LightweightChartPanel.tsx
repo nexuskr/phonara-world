@@ -1,7 +1,14 @@
 import { useEffect, useRef } from "react";
-import { createChart, AreaSeries, type IChartApi, type ISeriesApi, type Time, type IPriceLine, LineStyle } from "lightweight-charts";
+import {
+  createChart, CandlestickSeries, type IChartApi, type ISeriesApi,
+  type Time, type IPriceLine, LineStyle, type CandlestickData, type UTCTimestamp,
+} from "lightweight-charts";
 
-interface OverlayLine { price: number; color: string; title: string; }
+interface OverlayLine { price: number; color: string; title: string }
+
+const BUCKET_SEC = 60; // 1-minute candles
+
+function bucket(ts: number) { return Math.floor(ts / BUCKET_SEC) * BUCKET_SEC; }
 
 export default function LightweightChartPanel({
   symbol, price, overlays = [], height = 320,
@@ -13,7 +20,8 @@ export default function LightweightChartPanel({
 }) {
   const ref = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
-  const seriesRef = useRef<ISeriesApi<"Area"> | null>(null);
+  const seriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
+  const candlesRef = useRef<CandlestickData[]>([]);
   const linesRef = useRef<IPriceLine[]>([]);
   const lastSymbol = useRef(symbol);
 
@@ -23,25 +31,29 @@ export default function LightweightChartPanel({
     const chart = createChart(ref.current, {
       layout: {
         background: { color: "transparent" },
-        textColor: "#94a3b8",
+        textColor: "#cbd5e1",
         fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
       },
       grid: {
-        vertLines: { color: "rgba(148,163,184,0.06)" },
-        horzLines: { color: "rgba(148,163,184,0.06)" },
+        vertLines: { color: "rgba(244,180,55,0.04)" },
+        horzLines: { color: "rgba(244,180,55,0.04)" },
       },
-      timeScale: { timeVisible: true, secondsVisible: true, borderVisible: false },
+      timeScale: { timeVisible: true, secondsVisible: false, borderVisible: false, rightOffset: 5 },
       rightPriceScale: { borderVisible: false },
       crosshair: { mode: 1 },
       width: ref.current.clientWidth,
       height,
     });
-    const series = chart.addSeries(AreaSeries, {
-      lineColor: "rgba(244,180,55,0.9)",
-      topColor: "rgba(244,180,55,0.35)",
-      bottomColor: "rgba(244,180,55,0.0)",
+    const series = chart.addSeries(CandlestickSeries, {
+      upColor: "#34d399",
+      downColor: "#f43f5e",
+      borderUpColor: "#34d399",
+      borderDownColor: "#f43f5e",
+      wickUpColor: "rgba(52,211,153,0.8)",
+      wickDownColor: "rgba(244,63,94,0.8)",
       priceLineVisible: true,
-      lineWidth: 2,
+      priceLineColor: "rgba(244,180,55,0.7)",
+      priceLineStyle: LineStyle.Dotted,
     });
     chartRef.current = chart;
     seriesRef.current = series;
@@ -57,16 +69,31 @@ export default function LightweightChartPanel({
   // Reset on symbol change
   useEffect(() => {
     if (lastSymbol.current !== symbol && seriesRef.current) {
+      candlesRef.current = [];
       seriesRef.current.setData([]);
       lastSymbol.current = symbol;
     }
   }, [symbol]);
 
-  // Tick updates
+  // Tick → 1m candles
   useEffect(() => {
     if (!seriesRef.current || !price) return;
-    const t = (Math.floor(Date.now() / 1000)) as Time;
-    seriesRef.current.update({ time: t, value: price });
+    const t = bucket(Math.floor(Date.now() / 1000)) as UTCTimestamp;
+    const arr = candlesRef.current;
+    const last = arr[arr.length - 1];
+    if (!last || (last.time as number) < t) {
+      const open = last ? last.close : price;
+      const candle: CandlestickData = { time: t, open, high: Math.max(open, price), low: Math.min(open, price), close: price };
+      arr.push(candle);
+      // Cap history at 480 candles (8h)
+      if (arr.length > 480) arr.shift();
+      seriesRef.current.update(candle);
+    } else {
+      last.high = Math.max(last.high, price);
+      last.low = Math.min(last.low, price);
+      last.close = price;
+      seriesRef.current.update(last);
+    }
   }, [price]);
 
   // Overlay lines
@@ -86,14 +113,6 @@ export default function LightweightChartPanel({
   }, [overlays]);
 
   return (
-    <div className="rounded-2xl border border-border/40 bg-background/40 p-2 sm:p-3">
-      <div className="flex items-center justify-between mb-2 px-1">
-        <span className="text-xs font-black tracking-widest">{symbol}</span>
-        <span className="text-xs font-mono tabular-nums text-amber-300">
-          {price ? price.toLocaleString(undefined, { maximumFractionDigits: 6 }) : "—"}
-        </span>
-      </div>
-      <div ref={ref} style={{ width: "100%", height }} />
-    </div>
+    <div ref={ref} style={{ width: "100%", height }} />
   );
 }
