@@ -55,10 +55,15 @@ class BybitFeed {
   private connect() {
     if (!this.alive) return;
     this.status("connecting");
+    // Watchdog: if WS doesn't open within 4s, kick REST polling.
+    const watchdog = window.setTimeout(() => {
+      if (this.ws && this.ws.readyState !== WebSocket.OPEN) this.startRestFallback();
+    }, 4_000);
     try {
       const ws = new WebSocket("wss://stream.bybit.com/v5/public/linear");
       this.ws = ws;
       ws.onopen = () => {
+        window.clearTimeout(watchdog);
         this.restMode = false;
         if (this.restTimer) { window.clearInterval(this.restTimer); this.restTimer = null; }
         ws.send(JSON.stringify({
@@ -86,6 +91,7 @@ class BybitFeed {
       };
       ws.onerror = () => { /* will close */ };
       ws.onclose = () => {
+        window.clearTimeout(watchdog);
         if (this.pingTimer) { window.clearInterval(this.pingTimer); this.pingTimer = null; }
         if (!this.alive) return;
         this.status("reconnecting");
@@ -93,6 +99,7 @@ class BybitFeed {
         this.reconnectTimer = window.setTimeout(() => this.connect(), 3_000);
       };
     } catch {
+      window.clearTimeout(watchdog);
       this.startRestFallback();
       this.reconnectTimer = window.setTimeout(() => this.connect(), 5_000);
     }
