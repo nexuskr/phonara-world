@@ -21,8 +21,7 @@ function isAuthorizedCron(req: Request): boolean {
   if (!token) return false;
   const service = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
   if (service && token.length === service.length && timingSafeEqual(token, service)) return true;
-  const anon = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-  if (anon && token.length === anon.length && timingSafeEqual(token, anon)) return true;
+  // Anon key fallback REMOVED — pg_cron must invoke with service-role key.
   return false;
 }
 

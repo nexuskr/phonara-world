@@ -8,7 +8,6 @@ const corsHeaders = {
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 
 function timingSafeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) return false;
@@ -37,7 +36,8 @@ function shouldTrigger(kind: string, side: string, trigger: number, price: numbe
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   const auth = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "").trim();
-  const ok = auth && (timingSafeEqual(auth, SERVICE_KEY) || timingSafeEqual(auth, ANON_KEY));
+  // Anon key fallback REMOVED — only service-role key (used by pg_cron via vault) is accepted.
+  const ok = !!auth && timingSafeEqual(auth, SERVICE_KEY);
   if (!ok) {
     return new Response(JSON.stringify({ error: "unauthorized" }), {
       status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },

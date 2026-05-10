@@ -24,6 +24,13 @@ const STATUS_MSG: Record<string, string> = {
   cancelled: "🚫 출금 요청이 취소되었습니다.",
 };
 
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let m = 0;
+  for (let i = 0; i < a.length; i++) m |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return m === 0;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
@@ -32,6 +39,15 @@ Deno.serve(async (req) => {
     const TWILIO_FROM = Deno.env.get("TWILIO_FROM_NUMBER");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+    // AUTH GUARD: only callers presenting the service-role key (DB trigger via pg_net) are allowed.
+    const auth = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "").trim();
+    if (!auth || !timingSafeEqual(auth, SERVICE_KEY)) {
+      return new Response(JSON.stringify({ error: "unauthorized" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     if (!LOVABLE_API_KEY || !TWILIO_API_KEY || !TWILIO_FROM) {
       return new Response(JSON.stringify({ error: "twilio_not_configured" }), {
         status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -50,7 +66,7 @@ Deno.serve(async (req) => {
     const { data: profile } = await sb
       .from("profiles")
       .select("phone")
-      .eq("user_id", body.user_id)
+      .eq("id", body.user_id)
       .maybeSingle();
     const phone = profile?.phone?.trim();
     if (!phone) {

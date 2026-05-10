@@ -23,10 +23,8 @@ function isAuthorizedCron(req: Request): boolean {
   if (!token) return false;
   const service = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
   if (service && token.length === service.length && timingSafeEqual(token, service)) return true;
-  // Allow internal pg_net cron call signed with anon key — function uses service-role
-  // client internally; admin_force_close_position still gates on service_role/admin role.
-  const anon = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-  if (anon && token.length === anon.length && timingSafeEqual(token, anon)) return true;
+  // Anon key fallback REMOVED: pg_cron jobs must now sign with the service-role key
+  // (vault.decrypted_secrets.email_queue_service_role_key) to invoke this function.
   return false;
 }
 
