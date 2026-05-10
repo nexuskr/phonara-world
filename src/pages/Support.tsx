@@ -34,7 +34,7 @@ export default function Support() {
   const [authUid, setAuthUid] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages.length]);
+  useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages.length, aiBusy]);
 
   // bootstrap thread + load messages + subscribe
   useEffect(() => {
