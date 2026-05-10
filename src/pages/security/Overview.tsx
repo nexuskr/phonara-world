@@ -8,6 +8,7 @@ import {
   Lock, CheckCircle2, Circle, AlertTriangle, ChevronRight, BellRing, Activity,
 } from "lucide-react";
 import { LoadingList } from "@/components/ui/loading-state";
+import MyDevices from "@/components/security/MyDevices";
 
 type Status = "complete" | "partial" | "missing";
 
