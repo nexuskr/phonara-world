@@ -16,7 +16,15 @@ export interface OrderTriggers {
   slPct?: number;
   /** Trailing stop drawdown percent from peak ROI (e.g. 10 means trail at -10% from peak ROI). */
   trailingPct?: number;
+  /** Absolute take-profit price. */
+  tpPrice?: number;
+  /** Absolute stop-loss price. */
+  slPrice?: number;
+  /** Absolute trailing offset (price units from peak). */
+  trailingOffset?: number;
 }
+
+export type MarginMode = "isolated" | "cross";
 
 interface Props {
   mode: Mode;
@@ -24,7 +32,14 @@ interface Props {
   setSymbol: (s: string) => void;
   price: number;
   balance: number;
-  onSubmit: (args: { side: "long" | "short"; leverage: number; margin: number; triggers?: OrderTriggers }) => void;
+  onSubmit: (args: {
+    side: "long" | "short";
+    leverage: number;
+    margin: number;
+    triggers?: OrderTriggers;
+    marginMode: MarginMode;
+    allocatedMargin?: number;
+  }) => void;
   busy?: boolean;
 }
 
@@ -39,6 +54,12 @@ function MegaOrderPanelImpl({ mode, symbol, setSymbol, price, balance, onSubmit,
   const [slPct, setSlPct] = useState<string>("");
   const [trailingOn, setTrailingOn] = useState(false);
   const [trailingPct, setTrailingPct] = useState<string>("10");
+  // Margin mode + abs price toggles
+  const [marginMode, setMarginMode] = useState<MarginMode>("isolated");
+  const [tpPriceMode, setTpPriceMode] = useState<"pct" | "price">("pct");
+  const [slPriceMode, setSlPriceMode] = useState<"pct" | "price">("pct");
+  const [tpPrice, setTpPrice] = useState<string>("");
+  const [slPrice, setSlPrice] = useState<string>("");
 
   useEffect(() => {
     setMargin(unit === "KRW" ? "100000" : "100");
@@ -48,6 +69,8 @@ function MegaOrderPanelImpl({ mode, symbol, setSymbol, price, balance, onSubmit,
   const tpNum = Math.max(0, parseFloat(tpPct) || 0);
   const slNum = Math.max(0, parseFloat(slPct) || 0);
   const trailNum = Math.max(0, parseFloat(trailingPct) || 0);
+  const tpPriceNum = Math.max(0, parseFloat(tpPrice) || 0);
+  const slPriceNum = Math.max(0, parseFloat(slPrice) || 0);
 
   const setPct = (p: number) => {
     const raw = balance * p;
@@ -73,8 +96,10 @@ function MegaOrderPanelImpl({ mode, symbol, setSymbol, price, balance, onSubmit,
 
   const buildTriggers = (): OrderTriggers | undefined => {
     const t: OrderTriggers = {};
-    if (tpNum > 0) t.tpPct = tpNum;
-    if (slNum > 0) t.slPct = slNum;
+    if (tpPriceMode === "price" && tpPriceNum > 0) t.tpPrice = tpPriceNum;
+    else if (tpNum > 0) t.tpPct = tpNum;
+    if (slPriceMode === "price" && slPriceNum > 0) t.slPrice = slPriceNum;
+    else if (slNum > 0) t.slPct = slNum;
     if (trailingOn && trailNum > 0) t.trailingPct = trailNum;
     return Object.keys(t).length ? t : undefined;
   };
@@ -89,11 +114,18 @@ function MegaOrderPanelImpl({ mode, symbol, setSymbol, price, balance, onSubmit,
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [marginNum, leverage, price, tpNum, slNum, trailingOn, trailNum]);
+  }, [marginNum, leverage, price, tpNum, slNum, trailingOn, trailNum, tpPriceNum, slPriceNum, tpPriceMode, slPriceMode, marginMode]);
 
   const doSubmit = (side: "long" | "short") => {
     sfx.click();
-    onSubmit({ side, leverage, margin: marginNum, triggers: buildTriggers() });
+    onSubmit({
+      side,
+      leverage,
+      margin: marginNum,
+      triggers: buildTriggers(),
+      marginMode,
+      allocatedMargin: marginMode === "isolated" ? marginNum : undefined,
+    });
   };
 
   return (
@@ -112,19 +144,34 @@ function MegaOrderPanelImpl({ mode, symbol, setSymbol, price, balance, onSubmit,
             mode === "real" ? "bg-amber-500/20 text-amber-200 border border-amber-400/40" : "bg-cyan-500/20 text-cyan-200 border border-cyan-400/40"
           }`}>{mode === "real" ? "REAL" : "PAPER"}</span>
         </div>
-        <Select value={symbol} onValueChange={setSymbol}>
-          <SelectTrigger className="w-40 bg-background/60"><SelectValue /></SelectTrigger>
-          <SelectContent className="max-h-72">
-            {ARENA_SYMBOLS.map((s) => <SelectItem key={s} value={s}>{s.replace("USDT","")}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-2">
+          <div className="inline-flex rounded-lg border border-border/50 bg-background/60 p-0.5 text-[10px] font-black">
+            {(["isolated","cross"] as const).map((m) => (
+              <button
+                key={m}
+                onClick={() => setMarginMode(m)}
+                className={`px-2 py-1 rounded-md transition ${
+                  marginMode === m
+                    ? "bg-primary/20 text-primary"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >{m === "isolated" ? "Isolated" : "Cross"}</button>
+            ))}
+          </div>
+          <Select value={symbol} onValueChange={setSymbol}>
+            <SelectTrigger className="w-32 bg-background/60"><SelectValue /></SelectTrigger>
+            <SelectContent className="max-h-72">
+              {ARENA_SYMBOLS.map((s) => <SelectItem key={s} value={s}>{s.replace("USDT","")}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Margin */}
       <div>
         <div className="flex items-baseline justify-between">
           <label className="text-xs text-muted-foreground">
-            Margin ({unit === "KRW" ? "원화 / KRW" : "USDT"})
+            {marginMode === "isolated" ? "Allocated Margin (이 포지션 전용)" : "Margin"} ({unit === "KRW" ? "원화 / KRW" : "USDT"})
             <span className="ml-2 text-[10px] text-muted-foreground/70">잔액 {fmtMoney(balance, unit)}</span>
           </label>
           <div className="flex gap-1">

@@ -52,17 +52,22 @@ class BybitFeed {
 
   private reconnectTimer: number | null = null;
   private pingTimer: number | null = null;
+  private pongWatchdog: number | null = null;
   private restTimer: number | null = null;
   private alive = true;
   private restMode = false;
   private started = false;
   private dirty = false;
   private emitScheduled = false;
+  private reconnectAttempt = 0;
+  private lastMessageAt = 0;
+  private visibilityBound = false;
 
   start() {
     if (this.started) return;
     this.started = true;
     this.alive = true;
+    this.bindVisibility();
     this.fetchRestOnce();
     this.connect();
   }
@@ -71,9 +76,27 @@ class BybitFeed {
     this.alive = false;
     if (this.reconnectTimer) window.clearTimeout(this.reconnectTimer);
     if (this.pingTimer) window.clearInterval(this.pingTimer);
+    if (this.pongWatchdog) window.clearInterval(this.pongWatchdog);
     if (this.restTimer) window.clearInterval(this.restTimer);
     try { this.ws?.close(); } catch {}
     this.ws = null;
+  }
+
+  private bindVisibility() {
+    if (this.visibilityBound || typeof document === "undefined") return;
+    this.visibilityBound = true;
+    const kick = () => {
+      if (!this.alive) return;
+      if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+        if (this.reconnectTimer) { window.clearTimeout(this.reconnectTimer); this.reconnectTimer = null; }
+        this.reconnectAttempt = 0;
+        this.connect();
+      }
+    };
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") kick();
+    });
+    window.addEventListener("online", kick);
   }
 
   onPrices(fn: PriceListener) { this.listeners.add(fn); return () => this.listeners.delete(fn); }
@@ -190,23 +213,37 @@ class BybitFeed {
       ws.onopen = () => {
         window.clearTimeout(watchdog);
         this.restMode = false;
+        this.reconnectAttempt = 0;
+        this.lastMessageAt = Date.now();
         if (this.restTimer) { window.clearInterval(this.restTimer); this.restTimer = null; }
         // Default subscriptions: tickers + 1m kline for all symbols.
         const args: string[] = [];
+        const seen = new Set<string>();
         for (const s of SYMBOLS) {
-          args.push(`tickers.${s}`);
-          args.push(`kline.${DEFAULT_INTERVAL}.${s}`);
+          const t1 = `tickers.${s}`;
+          const t2 = `kline.${DEFAULT_INTERVAL}.${s}`;
+          if (!seen.has(t1)) { seen.add(t1); args.push(t1); }
+          if (!seen.has(t2)) { seen.add(t2); args.push(t2); }
         }
         // Re-subscribe any active non-default kline topics (e.g. if user had switched timeframe before reconnect).
-        for (const t of this.activeKlineTopics) args.push(t);
+        for (const t of this.activeKlineTopics) {
+          if (!seen.has(t)) { seen.add(t); args.push(t); }
+        }
         this.sendSub(args);
 
         this.pingTimer = window.setInterval(() => {
           try { ws.send(JSON.stringify({ op: "ping" })); } catch {}
         }, 20_000);
+        // Pong watchdog: if no incoming message for 30s, force reconnect.
+        this.pongWatchdog = window.setInterval(() => {
+          if (this.lastMessageAt && Date.now() - this.lastMessageAt > 30_000) {
+            try { ws.close(); } catch {}
+          }
+        }, 5_000);
         this.status("open");
       };
       ws.onmessage = (ev) => {
+        this.lastMessageAt = Date.now();
         try {
           const msg = JSON.parse(ev.data);
           const topic: string | undefined = msg.topic;
@@ -275,15 +312,23 @@ class BybitFeed {
       ws.onclose = () => {
         window.clearTimeout(watchdog);
         if (this.pingTimer) { window.clearInterval(this.pingTimer); this.pingTimer = null; }
+        if (this.pongWatchdog) { window.clearInterval(this.pongWatchdog); this.pongWatchdog = null; }
         if (!this.alive) return;
         this.status("reconnecting");
         this.startRestFallback();
-        this.reconnectTimer = window.setTimeout(() => this.connect(), 3_000);
+        // Exponential backoff: 1s, 2s, 4s, 8s, 15s cap.
+        const delays = [1_000, 2_000, 4_000, 8_000, 15_000];
+        const delay = delays[Math.min(this.reconnectAttempt, delays.length - 1)];
+        this.reconnectAttempt++;
+        this.reconnectTimer = window.setTimeout(() => this.connect(), delay);
       };
     } catch {
       window.clearTimeout(watchdog);
       this.startRestFallback();
-      this.reconnectTimer = window.setTimeout(() => this.connect(), 5_000);
+      const delays = [1_000, 2_000, 4_000, 8_000, 15_000];
+      const delay = delays[Math.min(this.reconnectAttempt, delays.length - 1)];
+      this.reconnectAttempt++;
+      this.reconnectTimer = window.setTimeout(() => this.connect(), delay);
     }
   }
 
@@ -341,7 +386,7 @@ export function getFeed(): BybitFeed {
 export async function fetchKlineHistory(
   symbol: string,
   interval: KlineInterval = "1",
-  limit = 300,
+  limit = 1000,
 ): Promise<KlineBar[]> {
   const url = `https://api.bybit.com/v5/market/kline?category=linear&symbol=${encodeURIComponent(symbol)}&interval=${interval}&limit=${limit}`;
   try {

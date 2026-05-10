@@ -103,7 +103,7 @@ export default function GlobalIntelligence() {
   const setTrigger = useTriggerStore((s) => s.set);
 
   // Submit handler
-  const submit = useCallback(async ({ side, leverage, margin, triggers }: { side: "long"|"short"; leverage: number; margin: number; triggers?: OrderTriggers }) => {
+  const submit = useCallback(async ({ side, leverage, margin, triggers, marginMode, allocatedMargin }: { side: "long"|"short"; leverage: number; margin: number; triggers?: OrderTriggers; marginMode: "isolated"|"cross"; allocatedMargin?: number }) => {
     if (!price) return notify.error("가격을 불러오는 중입니다.");
     if (margin <= 0) return notify.error("Margin을 입력하세요.");
 
@@ -112,11 +112,11 @@ export default function GlobalIntelligence() {
       const entry = applySlippage(side, price, true);
       const pos = paperOpen({ symbol, side, leverage, margin, entry });
       if (!pos) return notify.error("주문을 열 수 없습니다.");
-      if (triggers) setTrigger(pos.id, { ...triggers, peakRoiPct: 0 });
-      notify.success(`${side === "long" ? "Long" : "Short"} 진입 (Paper)`, {
+      if (triggers) setTrigger(pos.id, { tpPct: triggers.tpPct, slPct: triggers.slPct, trailingPct: triggers.trailingPct, peakRoiPct: 0 });
+      notify.success(`${side === "long" ? "Long" : "Short"} 진입 (Paper · ${marginMode === "isolated" ? "Iso" : "Cross"})`, {
         description: `${symbol} ${leverage}× · ${margin} USDT`,
       });
-      track("cta_click", { surface: "paper_trade", variant: side, meta: { symbol, leverage, margin } });
+      track("cta_click", { surface: "paper_trade", variant: side, meta: { symbol, leverage, margin, marginMode } });
       return;
     }
 
@@ -127,13 +127,15 @@ export default function GlobalIntelligence() {
       const r = await realOpen({
         symbol, side, leverage, margin: Math.floor(margin), mark: price,
         tpPct: triggers?.tpPct, slPct: triggers?.slPct, trailingPct: triggers?.trailingPct,
+        tpPrice: triggers?.tpPrice, slPrice: triggers?.slPrice, trailingOffset: triggers?.trailingOffset,
+        marginMode, allocatedMargin,
       });
       if ("error" in r) return notify.error(r.error);
-      if (triggers && "id" in r && typeof (r as any).id === "string") setTrigger((r as any).id, { ...triggers, peakRoiPct: 0 });
-      notify.success(`${side === "long" ? "LONG" : "SHORT"} 진입 (REAL)`, {
+      if (triggers && "id" in r && typeof (r as any).id === "string") setTrigger((r as any).id, { tpPct: triggers.tpPct, slPct: triggers.slPct, trailingPct: triggers.trailingPct, peakRoiPct: 0 });
+      notify.success(`${side === "long" ? "LONG" : "SHORT"} 진입 (REAL · ${marginMode === "isolated" ? "Iso" : "Cross"})`, {
         description: `${symbol} ${leverage}× · ${margin.toLocaleString()} USDT`,
       });
-      track("cta_click", { surface: "real_trade", variant: side, meta: { symbol, leverage, margin } });
+      track("cta_click", { surface: "real_trade", variant: side, meta: { symbol, leverage, margin, marginMode } });
     } finally { setBusy(false); }
   }, [mode, price, paperCredit, paperOpen, symbol, userId, realAvailable, realOpen, setTrigger]);
 
