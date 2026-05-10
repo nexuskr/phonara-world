@@ -37,6 +37,22 @@ function OpenPositionsLiveImpl({
 }: Props) {
   const fmt = fmtFn(unit);
   const liqLock = useRef<Set<string>>(new Set());
+  const [replay, setReplay] = useState<ReplayPayload | null>(null);
+
+  const buildReplay = (p: LivePosition, exit: number, pnl: number, roi: number, reason: ReplayPayload["reason"]): ReplayPayload => {
+    const feeOpen = Number(p.fee_open ?? 0) || Math.floor(p.margin * p.leverage * FEE_RATE);
+    const feeClose = Math.floor(exit * Number(p.size) * FEE_RATE);
+    const slippage = Math.floor(exit * Number(p.size) * SLIPPAGE);
+    const insuranceShare = reason === "liquidation"
+      ? Math.max(0, Math.floor(p.margin * 0.25))
+      : Math.floor((feeOpen + feeClose) * 0.25);
+    return {
+      symbol: p.symbol, side: p.side as "long" | "short", leverage: p.leverage,
+      margin: p.margin, entry: Number(p.entry), exit, pnl, roi,
+      feeOpen, feeClose, reason, insuranceShare, slippage,
+      openedAt: p.opened_at, closedAt: new Date().toISOString(),
+    };
+  };
 
   // Auto-liquidate when ROI <= -0.99
   useEffect(() => {
@@ -48,6 +64,7 @@ function OpenPositionsLiveImpl({
         liqLock.current.add(p.id);
         onLiquidate(p.id, m).then(() => {
           triggerFx({ kind: "liquidate", pnl: -p.margin, roi: -1, symbol: p.symbol });
+          setReplay(buildReplay(p, m, -p.margin, -1, "liquidation"));
         }).catch(() => liqLock.current.delete(p.id));
       }
     }
