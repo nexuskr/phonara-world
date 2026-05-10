@@ -1205,6 +1205,27 @@ export type Database = {
         }
         Relationships: []
       }
+      oracle_prices: {
+        Row: {
+          last_price: number
+          source: string
+          symbol: string
+          updated_at: string
+        }
+        Insert: {
+          last_price: number
+          source?: string
+          symbol: string
+          updated_at?: string
+        }
+        Update: {
+          last_price?: number
+          source?: string
+          symbol?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       package_purchases: {
         Row: {
           admin_evidence_checklist: Json
@@ -2171,6 +2192,48 @@ export type Database = {
           daily_max_missions?: number
           daily_max_reward?: number
           tier?: string
+        }
+        Relationships: []
+      }
+      trading_safeguards_config: {
+        Row: {
+          enabled: boolean
+          id: number
+          max_daily_loss: number
+          max_margin_per_position: number
+          oracle_max_age_seconds: number
+          price_deviation_pct: number
+          rl_close_per_min: number
+          rl_liquidate_per_min: number
+          rl_open_per_min: number
+          rl_triggers_per_min: number
+          updated_at: string
+        }
+        Insert: {
+          enabled?: boolean
+          id?: number
+          max_daily_loss?: number
+          max_margin_per_position?: number
+          oracle_max_age_seconds?: number
+          price_deviation_pct?: number
+          rl_close_per_min?: number
+          rl_liquidate_per_min?: number
+          rl_open_per_min?: number
+          rl_triggers_per_min?: number
+          updated_at?: string
+        }
+        Update: {
+          enabled?: boolean
+          id?: number
+          max_daily_loss?: number
+          max_margin_per_position?: number
+          oracle_max_age_seconds?: number
+          price_deviation_pct?: number
+          rl_close_per_min?: number
+          rl_liquidate_per_min?: number
+          rl_open_per_min?: number
+          rl_triggers_per_min?: number
+          updated_at?: string
         }
         Relationships: []
       }
@@ -3542,6 +3605,11 @@ export type Database = {
       }
       apply_referral_code: { Args: { _code: string }; Returns: Json }
       assert_audit_sync: { Args: never; Returns: undefined }
+      assert_trading_limits: { Args: { p_margin: number }; Returns: undefined }
+      assert_trading_price: {
+        Args: { p_price: number; p_symbol: string }
+        Returns: undefined
+      }
       auto_freeze_critical_anomalies: { Args: never; Returns: Json }
       award_xp: { Args: { _amount: number; _source?: Json }; Returns: Json }
       bulk_acknowledge_anomalies: {
