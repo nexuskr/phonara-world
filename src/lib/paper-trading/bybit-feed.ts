@@ -48,8 +48,10 @@ class BybitFeed {
   }
 
   onPrices(fn: PriceListener) { this.listeners.add(fn); return () => this.listeners.delete(fn); }
+  onStats(fn: StatsListener) { this.statsListeners.add(fn); return () => this.statsListeners.delete(fn); }
   onStatus(fn: StatusListener) { this.statusListeners.add(fn); return () => this.statusListeners.delete(fn); }
   getPrices() { return { ...this.prices }; }
+  getStats() { return { ...this.stats }; }
 
   private emit() {
     this.dirty = true;
@@ -58,11 +60,18 @@ class BybitFeed {
       this.emitTimer = null;
       if (!this.dirty) return;
       this.dirty = false;
-      const snap = { ...this.prices };
-      for (const fn of this.listeners) fn(snap);
+      const psnap = { ...this.prices };
+      const ssnap = { ...this.stats };
+      for (const fn of this.listeners) fn(psnap);
+      for (const fn of this.statsListeners) fn(ssnap);
     }, 120);
   }
   private status(s: Parameters<StatusListener>[0]) { for (const fn of this.statusListeners) fn(s); }
+
+  private updateStat(sym: string, partial: Partial<TickerStat>) {
+    const prev = this.stats[sym] ?? { last: 0, change24hPct: 0, volume24h: 0, turnover24h: 0, high24h: 0, low24h: 0 };
+    this.stats[sym] = { ...prev, ...partial };
+  }
 
   private connect() {
     if (!this.alive) return;
