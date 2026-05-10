@@ -49,6 +49,7 @@ export default function Missions() {
   const [gameOpen, setGameOpen] = useState<Mission | null>(null);
   const [catTab, setCatTab] = useState<"all" | "game">("game");
   const [jackpotWin, setJackpotWin] = useState<{ amount: number; type: "main" | "mini" } | null>(null);
+  const { persona, recommended } = usePersonaMissions();
 
   if (!user) return null;
   const userTier = user.tier;
