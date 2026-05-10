@@ -73,19 +73,35 @@ export default function Support() {
 
   async function send() {
     if (!text.trim() || !threadId || !authUid || aiBusy) return;
-    const t = text.trim(); setText("");
+    const raw = text.trim();
+    setText("");
+
+    // 클라이언트 측 PII 마스킹: 서버 저장 전에 안전한 텍스트만 INSERT
+    const { maskPii, PII_LABEL } = await import("@/lib/pii");
+    const { masked, hits } = maskPii(raw);
+    const piiDetected = hits.length > 0;
+    if (piiDetected) {
+      const { notify } = await import("@/lib/notify");
+      const kinds = Array.from(new Set(hits.map(h => h.kind))).map(k => PII_LABEL[k]).join(", ");
+      notify.warning("개인정보 자동 마스킹", {
+        description: `${kinds} 정보가 안전하게 가려졌습니다.`,
+      });
+    }
+
     await supabase.from("support_messages").insert({
-      thread_id: threadId, user_id: authUid, sender: "user", message: t,
+      thread_id: threadId, user_id: authUid, sender: "user",
+      message: masked, pii_masked: piiDetected,
     });
     await supabase.from("support_threads").update({
-      last_message: t, last_message_at: new Date().toISOString(),
+      last_message: masked, last_message_at: new Date().toISOString(),
+      ...(piiDetected ? { last_pii_at: new Date().toISOString() } : {}),
     }).eq("id", threadId);
 
-    // Trigger AI 1차 응답
+    // Trigger AI 1차 응답 (마스킹된 메시지 전송)
     setAiBusy(true);
     try {
       const { error } = await supabase.functions.invoke("ai-support-reply", {
-        body: { thread_id: threadId, message: t },
+        body: { thread_id: threadId, message: masked },
       });
       if (error) {
         const status = (error as any)?.context?.status;
