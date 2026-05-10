@@ -227,6 +227,13 @@ export default function Index() {
           <p className="text-xs sm:text-sm text-muted-foreground mt-2">{t("megaSub")}</p>
           <LivePayoutSlaBadge />
           <LivePulseStrip />
+          <Link
+            to="/global/live"
+            className="inline-flex items-center gap-1.5 mt-3 text-[11px] font-bold text-secondary hover:text-primary transition"
+          >
+            글로벌 라이브 펄스 전체 보기
+            <ArrowRight className="w-3 h-3" />
+          </Link>
         </div>
       </section>
 
