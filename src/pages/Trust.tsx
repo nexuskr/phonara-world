@@ -54,6 +54,19 @@ type ChaosLatest = {
   duration_ms: number; pass_rate: number | null; source: string;
 } | null;
 
+type PayoutSla = {
+  count_7d: number;
+  avg_minutes_7d: number;
+  p95_minutes_7d: number;
+  sla_30min_rate_7d: number;
+  count_30d: number;
+  paid_30d: number;
+  avg_minutes_30d: number;
+  p95_minutes_30d: number;
+  sla_30min_rate_30d: number;
+  generated_at: string;
+} | null;
+
 export default function Trust() {
   const { t, i18n } = useTranslation("trust");
   const lng = i18n.language?.startsWith("en") ? "en" : "ko";
@@ -70,6 +83,7 @@ export default function Trust() {
   const [history, setHistory] = useState<HistoryRow[]>([]);
   const [historyDays, setHistoryDays] = useState<7 | 30>(30);
   const [assertStatus, setAssertStatus] = useState<AssertionStatus>(null);
+  const [payoutSla, setPayoutSla] = useState<PayoutSla>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -103,6 +117,9 @@ export default function Trust() {
       setHistory((histD as HistoryRow[]) ?? []);
       sb.rpc("policy_assertions_status").then(({ data, error: e }: any) => {
         if (!e) setAssertStatus((data as AssertionStatus) ?? null);
+      });
+      sb.rpc("public_withdrawal_sla").then(({ data, error: e }: any) => {
+        if (!e) setPayoutSla((data as PayoutSla) ?? null);
       });
       void prefetchTrust(historyDays);
     } catch (e: any) {
@@ -282,6 +299,77 @@ export default function Trust() {
             <Tile icon={Clock} label={t("p95")} value={`${u?.p95_latency_ms_24h ?? 0} ${t("msUnit")}`} loading={loading && !m && !u} ok={(u?.p95_latency_ms_24h ?? 0) <= 1500} />
             <Tile icon={Clock} label={t("lastPing")} value={(u?.last_ping_at ? new Date(u.last_ping_at).toLocaleTimeString(dtLocale) : "—")} loading={loading && !m && !u} ok={!!u?.last_ok} small />
           </div>
+        </section>
+
+        {/* Public Payout SLA */}
+        <section className="mt-6 glass-strong rounded-3xl p-6 border border-gold/30">
+          <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
+            <div className="flex items-center gap-2 font-display font-black text-base break-keep">
+              <Clock className="w-5 h-5 text-gold" /> {t("payoutSlaTitle")}
+            </div>
+            <div className="text-[10px] text-muted-foreground break-keep">{t("payoutSlaHint")}</div>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <Tile
+              icon={Activity}
+              label={t("payoutSla30Rate7d")}
+              value={fmtPct(payoutSla?.sla_30min_rate_7d ?? 0)}
+              loading={loading && !payoutSla}
+              ok={(payoutSla?.sla_30min_rate_7d ?? 0) >= 95}
+            />
+            <Tile
+              icon={Clock}
+              label={t("payoutAvg7d")}
+              value={`${(payoutSla?.avg_minutes_7d ?? 0).toFixed(1)} ${t("minutesUnit")}`}
+              loading={loading && !payoutSla}
+              ok={(payoutSla?.avg_minutes_7d ?? 0) <= 30}
+            />
+            <Tile
+              icon={Clock}
+              label={t("payoutP95_7d")}
+              value={`${(payoutSla?.p95_minutes_7d ?? 0).toFixed(1)} ${t("minutesUnit")}`}
+              loading={loading && !payoutSla}
+              ok={(payoutSla?.p95_minutes_7d ?? 0) <= 60}
+            />
+            <Tile
+              icon={TrendingUp}
+              label={t("payoutCount7d")}
+              value={fmtNum(payoutSla?.count_7d ?? 0)}
+              loading={loading && !payoutSla}
+              ok={(payoutSla?.count_7d ?? 0) > 0}
+            />
+            <Tile
+              icon={Activity}
+              label={t("payoutSla30Rate30d")}
+              value={fmtPct(payoutSla?.sla_30min_rate_30d ?? 0)}
+              loading={loading && !payoutSla}
+              ok={(payoutSla?.sla_30min_rate_30d ?? 0) >= 95}
+            />
+            <Tile
+              icon={Clock}
+              label={t("payoutAvg30d")}
+              value={`${(payoutSla?.avg_minutes_30d ?? 0).toFixed(1)} ${t("minutesUnit")}`}
+              loading={loading && !payoutSla}
+              ok={(payoutSla?.avg_minutes_30d ?? 0) <= 30}
+            />
+            <Tile
+              icon={Clock}
+              label={t("payoutP95_30d")}
+              value={`${(payoutSla?.p95_minutes_30d ?? 0).toFixed(1)} ${t("minutesUnit")}`}
+              loading={loading && !payoutSla}
+              ok={(payoutSla?.p95_minutes_30d ?? 0) <= 60}
+            />
+            <Tile
+              icon={TrendingUp}
+              label={t("payoutCount30d")}
+              value={fmtNum(payoutSla?.count_30d ?? 0)}
+              loading={loading && !payoutSla}
+              ok={(payoutSla?.count_30d ?? 0) > 0}
+            />
+          </div>
+          <p className="mt-3 text-[10px] text-muted-foreground break-keep">
+            {t("payoutSlaNote")}
+          </p>
         </section>
 
         <section className="mt-6 glass-strong rounded-3xl p-6 border border-primary/20">
