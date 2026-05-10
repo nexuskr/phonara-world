@@ -377,13 +377,14 @@ function MegaOrderPanelImpl({ mode, symbol, setSymbol, price, balance, onSubmit,
 
 export default memo(MegaOrderPanelImpl);
 
-function Stat({ label, v, tone }: { label: string; v: string; tone?: "loss" | "warn" }) {
+function Stat({ label, v, sub, tone }: { label: string; v: string; sub?: string; tone?: "loss" | "warn" }) {
   return (
     <div className="rounded-xl bg-background/40 border border-border/40 p-2">
       <div className="text-[10px] text-muted-foreground uppercase tracking-wider">{label}</div>
       <div className={`font-mono tabular-nums font-bold mt-0.5 text-sm ${
         tone === "loss" ? "text-rose-300" : tone === "warn" ? "text-amber-300" : "text-foreground"
       }`}>{v}</div>
+      {sub && <div className="text-[10px] text-muted-foreground/70 font-mono tabular-nums mt-0.5">{sub}</div>}
     </div>
   );
 }
