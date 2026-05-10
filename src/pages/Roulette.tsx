@@ -73,8 +73,16 @@ export default function Roulette() {
     setTimeout(() => {
       setSpinning(false);
       setLastResult({ label: res.label, amount: res.amount, segment: res.segment });
-      if (res.amount > 0) toast({ title: `🎉 ${res.label}`, description: `+${formatKRW(res.amount)}` });
-      else toast({ title: t("tryAgain"), description: res.label });
+      // Near-miss: 잭팟 칸(5,6,7) 인접하지만 비잭팟이면 위기탈출 연출
+      const jackpotSegs = new Set([5, 6, 7]);
+      const adjacentToJackpot = [4, 0].includes(res.segment); // 인접 칸(7→0 wrap, 5←4)
+      if (!jackpotSegs.has(res.segment) && adjacentToJackpot) {
+        setNearMiss(true);
+      } else if (res.amount > 0) {
+        toast({ title: `🎉 ${res.label}`, description: `+${formatKRW(res.amount)}` });
+      } else {
+        toast({ title: t("tryAgain"), description: res.label });
+      }
       loadAll();
     }, 4200);
   }
