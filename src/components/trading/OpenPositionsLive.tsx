@@ -63,8 +63,9 @@ export default function OpenPositionsLive({
         <div className="text-xs text-muted-foreground">
           {positions.length}개 · 미실현{" "}
           <span className={`font-mono font-bold ${total >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-            {total >= 0 ? "+" : ""}{total.toFixed(2)}
+            {total >= 0 ? "+" : ""}{fmt(total)}
           </span>
+          <span className="ml-1 text-[10px] opacity-70">{unit}</span>
         </div>
         <Button size="sm" variant="outline" onClick={onCloseAll} className="h-7 text-xs">
           <X className="w-3 h-3 mr-1" /> Close All
