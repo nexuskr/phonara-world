@@ -66,14 +66,16 @@ Deno.serve(async (req) => {
 
   // Build event batch from last 5 minutes
   const since = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-  const [{ data: anomalies }, { data: freezes }] = await Promise.all([
+  const [{ data: anomalies }, { data: freezes }, { data: trades }] = await Promise.all([
     sb.from("anomaly_events").select("id,user_id,rule,severity,created_at").gte("created_at", since).eq("acknowledged", false),
     sb.from("account_freezes").select("id,user_id,reason,severity,frozen_at,expires_at").gte("frozen_at", since),
+    sb.from("live_trade_history").select("id,user_id,symbol,side,leverage,margin,entry_price,exit_price,pnl,roi,reason,fee_open,fee_close,closed_at").gte("closed_at", since),
   ]);
 
   const events: Array<{ event: string; data: any }> = [
     ...(anomalies ?? []).map(a => ({ event: "anomaly", data: a })),
     ...(freezes ?? []).map(f => ({ event: "freeze", data: f })),
+    ...(trades ?? []).map(t => ({ event: t.reason === "liquidation" ? "trade.liquidated" : "trade.closed", data: t })),
   ];
   if (events.length === 0) {
     return new Response(JSON.stringify({ ok: true, delivered: 0 }), {
