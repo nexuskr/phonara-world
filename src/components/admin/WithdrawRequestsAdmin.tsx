@@ -59,6 +59,7 @@ export default function WithdrawRequestsAdmin() {
 
   return (
     <div className="space-y-3">
+      <WithdrawSlaCard list={list} />
       <div className="flex gap-2">
         <button onClick={() => setFilter("pending")} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${filter==="pending"?"bg-gradient-gold text-gold-foreground":"glass text-muted-foreground"}`}>
           대기/처리중
