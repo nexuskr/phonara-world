@@ -53,6 +53,7 @@ const GlobalIntelligence = lazy(() => import("./pages/GlobalIntelligence.tsx"));
 const Infrastructure = lazy(() => import("./pages/Infrastructure.tsx"));
 const IntelligenceLoop = lazy(() => import("./pages/IntelligenceLoop.tsx"));
 const Vision = lazy(() => import("./pages/Vision.tsx"));
+const GlobalLive = lazy(() => import("./pages/GlobalLive.tsx"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
