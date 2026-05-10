@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import Layout from "@/components/Layout";
 import { useDB, formatKRW } from "@/lib/store";
-import { ShieldCheck, Star, Trophy, Settings, Award, Lock, X, Mail, KeyRound, BookOpen, LogOut, Crown, Flame } from "lucide-react";
+import { ShieldCheck, Star, Trophy, Settings, Award, Lock, X, Mail, KeyRound, BookOpen, LogOut, Crown, Flame, Fingerprint } from "lucide-react";
 import PinPad from "@/components/PinPad";
 import PinResetDialog from "@/components/PinResetDialog";
 import { toast } from "@/hooks/use-toast";
