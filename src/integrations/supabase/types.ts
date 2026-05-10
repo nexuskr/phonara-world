@@ -2266,6 +2266,8 @@ export type Database = {
       }
       support_threads: {
         Row: {
+          ai_escalated: boolean
+          ai_last_category: string | null
           created_at: string
           id: string
           last_message: string | null
@@ -2276,6 +2278,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          ai_escalated?: boolean
+          ai_last_category?: string | null
           created_at?: string
           id?: string
           last_message?: string | null
@@ -2286,6 +2290,8 @@ export type Database = {
           user_id: string
         }
         Update: {
+          ai_escalated?: boolean
+          ai_last_category?: string | null
           created_at?: string
           id?: string
           last_message?: string | null
