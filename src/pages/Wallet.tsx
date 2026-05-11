@@ -78,6 +78,22 @@ export default function Wallet() {
   const [amlOpen, setAmlOpen] = useState(false);
   const [amlLevel, setAmlLevel] = useState<1 | 2 | 3>(2);
   const [receiptPath, setReceiptPath] = useState<string | null>(null);
+  // 어드민에서 관리하는 코인 입금 주소 목록
+  const [coinAddrs, setCoinAddrs] = useState<Array<{ network: string; address: string; label: string | null; memo: string | null }>>([]);
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const { data } = await supabase
+        .from("coin_deposit_addresses")
+        .select("network,address,label,memo,sort_order")
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true });
+      if (!alive) return;
+      setCoinAddrs((data ?? []) as any);
+    })();
+    return () => { alive = false; };
+  }, []);
+  const activeCoinAddr = coinAddrs.find(a => a.network === network) ?? coinAddrs[0] ?? null;
 
   if (!user) return null;
   const u = user;
