@@ -95,6 +95,7 @@ const App = () => (
         <BrowserRouter>
           <SessionWatcher />
           <ReviewerMaskRoot />
+          <ReviewerBadge />
           <Suspense fallback={<RouteFallback />}>
             <Routes>
               <Route path="/" element={<Index />} />
