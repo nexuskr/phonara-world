@@ -404,20 +404,33 @@ input, select, textarea { font-size: 16px; } /* prevents iOS auto-zoom on focus 
   }
 }
 
-/* ===== Senior mode (큰 글씨 / 큰 버튼 / 채도 완화) ===== */
+/* ===== Senior mode (큰 글씨 / 큰 버튼 / 채도 완화) — Phase 4 강화 ===== */
 html.senior-mode {
   font-size: 18px;
+  line-height: 1.6;
 }
 html.senior-mode button,
 html.senior-mode [role="button"],
 html.senior-mode a.press {
   min-height: 56px;
+  font-size: 1.05rem;
 }
+html.senior-mode .text-\[9px\],
 html.senior-mode .text-\[10px\],
 html.senior-mode .text-\[11px\],
 html.senior-mode .text-xs {
-  font-size: 0.95rem !important;
-  line-height: 1.4 !important;
+  font-size: 1rem !important;
+  line-height: 1.5 !important;
 }
-html.senior-mode .text-sm { font-size: 1.05rem !important; }
-html.senior-mode .text-base { font-size: 1.15rem !important; }
+html.senior-mode .text-sm { font-size: 1.15rem !important; line-height: 1.55 !important; }
+html.senior-mode .text-base { font-size: 1.25rem !important; line-height: 1.6 !important; }
+html.senior-mode .text-lg { font-size: 1.4rem !important; line-height: 1.55 !important; }
+html.senior-mode h1, html.senior-mode h2, html.senior-mode h3 {
+  letter-spacing: -0.01em;
+}
+/* 미션 카드 / sticky CTA 본문 22px 강제 */
+html.senior-mode .mission-card,
+html.senior-mode [data-senior-text] {
+  font-size: 1.375rem !important;
+  line-height: 1.6 !important;
+}
