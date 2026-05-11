@@ -89,6 +89,8 @@ export default function AIMissionCard() {
       notify.error("청구 실패", { description: error.message });
       return;
     }
+    const { refreshWallet } = await import("@/lib/walletRefresh");
+    refreshWallet();
     load();
   }
 
