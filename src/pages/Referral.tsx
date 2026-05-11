@@ -9,6 +9,7 @@ import {
   Trophy, ChevronDown, MessageCircle, Instagram, Music2, Youtube, Globe, Send,
 } from "lucide-react";
 import DMComposer from "@/components/guide/DMComposer";
+import EmpireTreePreview from "@/components/referral/EmpireTreePreview";
 
 type Stats = {
   code: string | null;
