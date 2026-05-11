@@ -109,6 +109,7 @@ export default function EmpireP2EDashboard() {
       if (error) throw error;
       const res = data as any;
       if (res.claimed > 0) {
+        import("@/lib/walletRefresh").then(m => m.refreshWallet());
         notify.success("⏳ Idle 수령", { description: `+${formatKRW(res.claimed)} (${res.hours}시간 경과)` });
       } else {
         notify.info("쌓이는 중", { description: `다시 시도하려면 시간이 더 필요합니다 (일 상한 ${formatKRW(res.daily_cap)})` });
