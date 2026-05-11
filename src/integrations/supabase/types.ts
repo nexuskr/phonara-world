@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      ab_assignments: {
+        Row: {
+          assigned_at: string
+          experiment_key: string
+          id: string
+          user_id: string
+          variant: string
+        }
+        Insert: {
+          assigned_at?: string
+          experiment_key: string
+          id?: string
+          user_id: string
+          variant: string
+        }
+        Update: {
+          assigned_at?: string
+          experiment_key?: string
+          id?: string
+          user_id?: string
+          variant?: string
+        }
+        Relationships: []
+      }
+      ab_experiments: {
+        Row: {
+          created_at: string
+          description: string | null
+          experiment_key: string
+          id: string
+          is_active: boolean
+          label: string
+          updated_at: string
+          variants: Json
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          experiment_key: string
+          id?: string
+          is_active?: boolean
+          label: string
+          updated_at?: string
+          variants?: Json
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          experiment_key?: string
+          id?: string
+          is_active?: boolean
+          label?: string
+          updated_at?: string
+          variants?: Json
+        }
+        Relationships: []
+      }
       account_freezes: {
         Row: {
           created_at: string
@@ -4971,6 +5028,7 @@ export type Database = {
       gacha_pull: { Args: never; Returns: Json }
       gc_rate_limit_buckets: { Args: never; Returns: number }
       gen_referral_code: { Args: never; Returns: string }
+      get_ab_variant: { Args: { p_experiment_key: string }; Returns: string }
       get_active_boost_count: { Args: never; Returns: number }
       get_admin_audit_recent: {
         Args: { _limit?: number }
