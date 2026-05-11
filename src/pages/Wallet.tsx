@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import Layout from "@/components/Layout";
 import HubTabs from "@/components/HubTabs";
@@ -53,6 +53,15 @@ export default function Wallet() {
   const user = useRequireAuth() ?? db.user;
   const [asset, setAsset] = useState<AssetTab>("bank");
   const [action, setAction] = useState<ActionTab>("withdraw");
+  const [searchParams] = useSearchParams();
+  const isFirstDepositIntent = searchParams.get("intent") === "first-deposit";
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (tab === "deposit") setAction("deposit");
+    else if (tab === "withdraw") setAction("withdraw");
+    else if (tab === "history") setAction("history");
+    if (isFirstDepositIntent) setAction("deposit");
+  }, [searchParams, isFirstDepositIntent]);
   const { requireStepUp, dialogProps: stepUpProps } = useStepUp();
 
   useEffect(() => { void refreshWallet(); }, []);
