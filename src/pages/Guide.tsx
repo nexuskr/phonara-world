@@ -16,6 +16,7 @@ import FomoFinalCTA from "@/components/guide/FomoFinalCTA";
 import { SceneNetworkEffect } from "@/components/guide/SceneNetworkEffect";
 import { SceneGuildWar } from "@/components/guide/SceneGuildWar";
 import { SceneEmpireMap } from "@/components/guide/SceneEmpireMap";
+import { CinemaTransition } from "@/components/guide/EmpireFX";
 
 /**
  * 풀스크린 스토리텔링 가이드 — 7씬
@@ -85,14 +86,23 @@ export default function Guide() {
         {isStarter ? (
           <>
             <FomoScrollHero isLoggedIn={isLoggedIn} large={largeText} />
+            <CinemaTransition />
             <SceneProblem large={largeText} />
+            <CinemaTransition />
             <SceneSolution large={largeText} />
+            <CinemaTransition />
             <SceneProof large={largeText} />
+            <CinemaTransition />
             <ScenePersona large={largeText} />
+            <CinemaTransition />
             <SceneNetworkEffect large={largeText} isLoggedIn={isLoggedIn} />
+            <CinemaTransition />
             <SceneGuildWar large={largeText} />
+            <CinemaTransition />
             <SceneEmpireMap large={largeText} />
+            <CinemaTransition />
             <ScenePackage large={largeText} />
+            <CinemaTransition />
             <FomoFinalCTA large={largeText} />
           </>
         ) : (

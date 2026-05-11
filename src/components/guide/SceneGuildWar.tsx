@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { motion, useReducedMotion } from "framer-motion";
 import { Swords, Trophy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { GoldNebulaBg, AnimatedCounter, SimBadge, senior } from "./EmpireFX";
+import { GoldNebulaBg, AnimatedCounter, SimBadge, RankMedal, senior } from "./EmpireFX";
 
 type GuildRow = { id: string; name: string; emblem: string; total_power: number; member_count: number };
 
@@ -48,36 +48,39 @@ export function SceneGuildWar({ large = false }: { large?: boolean }) {
           </h2>
         </div>
 
-        {/* 상금 풀 */}
-        <div className="glass-strong rounded-2xl border border-gold/40 px-4 py-4 text-center mb-4">
+        {/* 상금 풀 — 메가 카운터 */}
+        <motion.div
+          initial={reduce ? false : { opacity: 0, scale: 0.92 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true, margin: "-80px" }}
+          className="glass-strong rounded-2xl border border-gold/50 px-4 py-5 text-center mb-4 shadow-[0_0_28px_hsl(var(--gold)/0.32)]"
+        >
           <div className="text-[10px] tracking-[0.3em] font-black text-gold/80 mb-1 flex items-center justify-center gap-1.5">
             <Trophy className="w-3 h-3" /> 이번 시즌 상금 풀 <SimBadge />
           </div>
-          <div className={`font-imperial text-3xl text-gradient-gold ${senior.h2}`}>
-            ₩<AnimatedCounter to={142_800_000} duration={2.2} jitter={15_000} />
+          <div className={`font-imperial text-[34px] sm:text-4xl text-gradient-gold ${senior.h2}`}>
+            ₩<AnimatedCounter to={142_800_000} duration={2.4} jitter={15_000} />
           </div>
           <div className={`text-[11px] text-muted-foreground mt-1 break-keep ${senior.body}`}>
             우승 길드 멤버에게 기여도 비례 자동 분배
           </div>
-        </div>
+        </motion.div>
 
-        {/* TOP 3 */}
+        {/* TOP 3 with medals */}
         <div className="space-y-2.5 mb-4">
           {display.map((g, i) => (
             <motion.div
               key={g.id}
               initial={reduce ? false : { opacity: 0, x: -20 }}
               whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true, margin: "-40px" }}
+              viewport={{ once: true, margin: "-80px" }}
               transition={{ delay: i * 0.1 }}
-              className={`glass-strong rounded-2xl p-3 flex items-center gap-3 border ${i === 0 ? "border-gold/60 shadow-[0_0_18px_hsl(var(--gold)/0.3)]" : "border-gold/20"}`}
+              className={`glass-strong rounded-2xl p-3 flex items-center gap-3 border ${i === 0 ? "border-gold/65 shadow-[0_0_22px_hsl(var(--gold)/0.35)]" : "border-gold/25"}`}
             >
-              <div className={`text-[10px] tracking-widest font-black w-6 text-center ${i === 0 ? "text-gold" : "text-muted-foreground"}`}>
-                #{i + 1}
-              </div>
+              <RankMedal rank={(i + 1) as 1 | 2 | 3} size={36} />
               <div className="text-2xl">{g.emblem}</div>
               <div className="flex-1 min-w-0">
-                <div className={`font-bold text-sm break-keep ${senior.body}`}>{g.name}</div>
+                <div className={`font-bold text-sm break-keep ${senior.bodyXl}`}>{g.name}</div>
                 <div className="text-[10px] text-muted-foreground">멤버 {g.member_count}명</div>
               </div>
               <div className="text-right">

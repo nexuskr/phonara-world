@@ -2,7 +2,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { AlertTriangle, ArrowUp, ArrowDown, ShieldCheck, Clock, Crown, Sparkles, Swords } from "lucide-react";
 import LivePayoutSlaBadge from "@/components/landing/LivePayoutSlaBadge";
 import PayoutTicker from "@/components/PayoutTicker";
-import { GoldNebulaBg, ParticleField, AnimatedCounter, GoldDivider, senior } from "./EmpireFX";
+import { GoldNebulaBg, ParticleField, AnimatedCounter, GoldDivider, ImperialSeal, senior } from "./EmpireFX";
 
 /**
  * Phase 4 / 영화급 — 씬2~6.
@@ -193,30 +193,35 @@ export function SceneProof({ large = false }: { large?: boolean }) {
           </h2>
         </div>
 
-        {/* 거대 골드 인장 */}
-        <div className="relative mx-auto w-44 h-44 mb-6">
-          {!reduce && (
-            <motion.div
-              className="absolute inset-0 rounded-full"
-              animate={{ rotate: 360 }}
-              transition={{ duration: 28, repeat: Infinity, ease: "linear" }}
-              style={{ background: "conic-gradient(from 0deg, hsl(var(--gold)/0.0), hsl(var(--gold)/0.7), hsl(var(--gold)/0.0))" }}
-            />
-          )}
-          <div className="absolute inset-2 rounded-full bg-background flex items-center justify-center border-2 border-gold/70 shadow-[0_0_40px_hsl(var(--gold)/0.45)]">
-            <div className="text-center">
-              <Crown className="w-7 h-7 mx-auto text-gold" />
-              <div className="font-imperial text-[11px] tracking-[0.25em] text-gold mt-1">GUARANTEED</div>
-              <div className={`font-imperial text-base text-gradient-gold leading-tight mt-0.5`}>운영자<br />무손실</div>
-            </div>
+        {/* 황금 임페리얼 인장 */}
+        <motion.div
+          initial={reduce ? false : { opacity: 0, scale: 0.85 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.7, ease: "easeOut" }}
+          className="mb-6"
+        >
+          <ImperialSeal size={180} label="GUARANTEED" title={"운영자\n무손실"} caption="EMPIRE · EST. 2024" />
+        </motion.div>
+
+        {/* 24h 메가 카운터 */}
+        <motion.div
+          initial={reduce ? false : { opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-80px" }}
+          className="glass-strong rounded-2xl border border-gold/40 px-4 py-4 text-center mb-4 shadow-[0_0_24px_hsl(var(--gold)/0.25)]"
+        >
+          <div className="text-[10px] tracking-[0.3em] font-black text-gold/80 mb-1">최근 24시간 누적 출금</div>
+          <div className={`font-imperial text-[28px] sm:text-3xl text-gradient-gold ${senior.h2}`}>
+            ₩<AnimatedCounter to={8_241_500_000} duration={2.6} jitter={120_000} format={(v) => v.toLocaleString()} />
           </div>
-        </div>
+        </motion.div>
 
         <div className="space-y-3">
           <LivePayoutSlaBadge />
           <PayoutTicker />
         </div>
-        <p className={`text-center text-xs text-muted-foreground mt-5 break-keep ${senior.body}`}>
+        <p className={`text-center text-xs text-muted-foreground mt-5 break-keep ${senior.bodyXl}`}>
           평균 출금 23분 · OTP 2단계 인증 필수 · 사업자 정식 등록
         </p>
       </div>
@@ -243,15 +248,17 @@ export function ScenePersona({ large = false }: { large?: boolean }) {
           </h2>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-3" style={{ perspective: 1200 }}>
           {personas.map((p, i) => (
             <motion.div
               key={p.age}
               initial={reduce ? false : { opacity: 0, y: 22 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-40px" }}
+              viewport={{ once: true, margin: "-80px" }}
               transition={{ delay: i * 0.1, duration: 0.55 }}
-              className="relative glass-strong rounded-2xl p-4 flex items-center gap-4 border border-gold/25 overflow-hidden"
+              whileHover={reduce ? undefined : { rotateX: -4, rotateY: 5, scale: 1.02 }}
+              style={{ transformStyle: "preserve-3d" }}
+              className="relative glass-strong rounded-2xl p-4 flex items-center gap-4 border border-gold/30 overflow-hidden shadow-[0_0_18px_hsl(var(--gold)/0.18)]"
             >
               {!reduce && (
                 <motion.div
@@ -260,12 +267,12 @@ export function ScenePersona({ large = false }: { large?: boolean }) {
                   transition={{ duration: 5, repeat: Infinity, ease: "linear", delay: i * 0.4 }}
                 />
               )}
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary/25 to-accent/15 flex items-center justify-center text-3xl shrink-0 ring-2 ring-gold/60 shadow-[0_0_16px_hsl(var(--gold)/0.35)]">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary/30 to-accent/20 flex items-center justify-center text-3xl shrink-0 ring-2 ring-gold/70 shadow-[0_0_18px_hsl(var(--gold)/0.45)]">
                 {p.emoji}
               </div>
               <div className="flex-1 min-w-0 relative">
                 <div className="text-[10px] tracking-widest font-black text-gold">{p.age}</div>
-                <div className={`font-bold text-sm break-keep ${senior.body}`}>{p.title}</div>
+                <div className={`font-bold text-sm break-keep ${senior.bodyXl}`}>{p.title}</div>
                 <div className={`text-xs text-muted-foreground break-keep ${senior.body}`}>{p.line}</div>
               </div>
             </motion.div>
