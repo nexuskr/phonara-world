@@ -27,8 +27,7 @@ const Dashboard = lazy(() => import("./pages/Dashboard.tsx"));
 const EmpireArena = lazy(() => import("./pages/EmpireArena.tsx"));
 const TradingArenaWithArmy = lazy(() => import("./pages/TradingArenaWithArmy.tsx"));
 const TradingArenaBybit = lazy(() => import("./pages/TradingArenaBybit.tsx"));
-const Lounge = lazy(() => import("./pages/Lounge.tsx"));
-const Roulette = lazy(() => import("./pages/Roulette.tsx"));
+// Lounge/Roulette/Quests/SeasonPass/Ugc/Whales — /missions·/achievements 로 통합 (라우트 redirect 만 유지)
 const Missions = lazy(() => import("./pages/Missions.tsx"));
 const Packages = lazy(() => import("./pages/Packages.tsx"));
 const Wallet = lazy(() => import("./pages/Wallet.tsx"));
