@@ -1783,6 +1783,57 @@ export type Database = {
         }
         Relationships: []
       }
+      line_link_tokens: {
+        Row: {
+          consumed_at: string | null
+          created_at: string
+          expires_at: string
+          token: string
+          user_id: string
+        }
+        Insert: {
+          consumed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          token: string
+          user_id: string
+        }
+        Update: {
+          consumed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          token?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      line_subscriptions: {
+        Row: {
+          display_name: string | null
+          line_user_id: string
+          link_token: string | null
+          linked_at: string
+          unlinked_at: string | null
+          user_id: string
+        }
+        Insert: {
+          display_name?: string | null
+          line_user_id: string
+          link_token?: string | null
+          linked_at?: string
+          unlinked_at?: string | null
+          user_id: string
+        }
+        Update: {
+          display_name?: string | null
+          line_user_id?: string
+          link_token?: string | null
+          linked_at?: string
+          unlinked_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       live_positions: {
         Row: {
           allocated_margin: number | null
@@ -5404,6 +5455,7 @@ export type Database = {
         Returns: boolean
       }
       is_passkey_verified: { Args: never; Returns: boolean }
+      issue_line_link_token: { Args: never; Returns: string }
       join_guild: { Args: { _guild_id: string }; Returns: boolean }
       latest_chaos_run: { Args: never; Returns: Json }
       leave_guild: { Args: never; Returns: boolean }
