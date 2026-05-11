@@ -73,7 +73,7 @@ export default function DepositReceiptUpload({ onUploaded }: Props) {
         </label>
       ) : (
         <div className="flex items-center gap-3 rounded-xl p-3 border border-primary/40 bg-primary/[0.06]">
-          {previewUrl && <img src={previewUrl} alt="이체 영수증 미리보기" className="w-12 h-12 rounded-lg object-cover" />}
+          {previewUrl && <img src={previewUrl} alt="이체 영수증 미리보기" className="w-12 h-12 rounded-lg object-cover" loading="lazy" decoding="async" />}
           <div className="flex-1 text-[11px] font-mono text-muted-foreground truncate">첨부 완료</div>
           <button
             onClick={clear}

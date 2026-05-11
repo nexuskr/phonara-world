@@ -548,7 +548,7 @@ function UGCModal({ mission, onClose, onSubmit }: { mission: Mission; onClose: (
         <label className="mt-4 block">
           <div className="glass rounded-2xl p-6 border-2 border-dashed border-border hover:border-primary text-center cursor-pointer">
             {file ? (
-              <img src={file} className="max-h-40 mx-auto rounded-lg" alt="" />
+              <img src={file} className="max-h-40 mx-auto rounded-lg" alt="" loading="lazy" decoding="async" />
             ) : (
               <>
                 <Upload className="w-7 h-7 mx-auto text-muted-foreground" />

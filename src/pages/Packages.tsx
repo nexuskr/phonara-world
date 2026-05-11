@@ -274,7 +274,7 @@ function PurchaseModal({ pkg, onClose }: { pkg: Pkg; onClose: () => void }) {
           <label className="mt-4 block">
             <div className="glass rounded-2xl p-4 border-2 border-dashed border-border hover:border-primary transition cursor-pointer text-center min-h-[120px] flex flex-col items-center justify-center">
               {screenshot ? (
-                <img src={screenshot} alt="screenshot" className="max-h-32 mx-auto rounded-lg" />
+                <img src={screenshot} alt="입금 영수증" className="max-h-32 mx-auto rounded-lg" loading="lazy" decoding="async" />
               ) : (
                 <>
                   <Upload className="w-6 h-6 mx-auto text-muted-foreground" />

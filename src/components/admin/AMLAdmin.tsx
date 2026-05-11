@@ -183,7 +183,7 @@ export default function AMLAdmin() {
           className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-6 cursor-pointer"
           onClick={() => setPreviewUrl(null)}
         >
-          <img src={previewUrl} alt="selfie" className="max-w-full max-h-full rounded-xl" />
+          <img src={previewUrl} alt="AML 셀피" className="max-w-full max-h-full rounded-xl" loading="lazy" decoding="async" />
           <div className="absolute top-4 right-4 text-white text-xs bg-black/50 px-3 py-1 rounded">클릭하여 닫기</div>
         </div>
       )}

@@ -65,7 +65,7 @@ export default function WithdrawReceiptUpload({ userId, onUploaded }: Props) {
         </label>
       ) : (
         <div className="flex items-center gap-3 rounded-xl p-3 border border-primary/40 bg-primary/[0.06]">
-          {previewUrl && <img src={previewUrl} alt="receipt" className="w-12 h-12 rounded-lg object-cover" />}
+          {previewUrl && <img src={previewUrl} alt="출금 영수증 미리보기" className="w-12 h-12 rounded-lg object-cover" loading="lazy" decoding="async" />}
           <div className="flex-1 text-[11px] font-mono text-muted-foreground truncate">{path}</div>
           <button onClick={clear} className="p-1.5 rounded-lg hover:bg-destructive/10 text-destructive transition">
             <X className="w-4 h-4" />

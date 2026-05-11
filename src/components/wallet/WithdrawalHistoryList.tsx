@@ -247,7 +247,7 @@ function DetailModal({ req, onClose }: { req: WR; onClose: () => void }) {
             <div>
               <div className="text-[10px] text-muted-foreground mb-1">{t("modal.receipt")}</div>
               <a href={signedUrl} target="_blank" rel="noreferrer" className="block">
-                <img src={signedUrl} alt="receipt" className="rounded-lg border border-border max-h-48 object-contain bg-card" />
+                <img src={signedUrl} alt="출금 영수증" className="rounded-lg border border-border max-h-48 object-contain bg-card" loading="lazy" decoding="async" />
               </a>
             </div>
           )}
