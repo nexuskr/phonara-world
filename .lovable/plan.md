@@ -1,50 +1,146 @@
-# 군대 배틀 → 실전 트레이딩 자동 연결
+# 군대 배틀 — 한국인 20~70대 "아 이거구나" + 즉시 가입 전환 설계
 
-## 현재 동작
-`/arena/army` (TradingArenaWithArmy) 에서 REAL 모드로 토글한 뒤 "📈 오른다" 또는 "📉 내린다"를 누르면:
-- toast로 "🔥 실전 모드 — /trade 페이지에서 실거래로 진입하세요" 만 뜨고 끝남
-- 사용자가 직접 페이지 이동을 해야 해서 동선이 끊김
+## 핵심 진단 (현재 군대 배틀의 한계)
 
-## 변경 동작
-REAL 모드에서 오른다/내린다를 누르면:
-1. 짧은 안내 토스트 (선택한 방향 표시) 1회
-2. **즉시 `/arena` (TradingArenaBybit, 바이비트급 실전 차트) 로 자동 이동**
-3. URL 쿼리로 의도를 넘겨 실전 화면에서 자동 프리필:
-   - `/arena?mode=real&side=long&symbol=BTCUSDT&size=100`
-   - `/arena?mode=real&side=short&symbol=ETHUSDT&size=100`
+1. **첫 화면이 "비트코인 가격으로 군대가 전진합니다"** — 60~70대는 "비트코인"이 무엇인지 모르고 이탈
+2. **"Conquest · 영토 정복" / "Raid · 적국 약탈"** — 영어/게이머 전문 용어, 50~70대 단절
+3. **로그인/AdultGate 통과 후에야 뭐 하는 곳인지 보임** — 가입 전 체험이 없어 전환율 낮음
+4. **주식/전세사기/MLM과 무엇이 다른지** 한 문장도 없음 — 신뢰 진입점 부재
+5. **세로 동선이 차트 → 군대 → HUD → 버튼** 순이라 군대(핵심 비유)가 화면 가운데에서 묻힘
 
-Paper 모드는 기존대로 그 자리에서 군대 배틀 진행 (변경 없음).
+## 설계 원칙 — "3초 이해 · 10초 체험 · 30초 가입"
 
-## 수정 파일 (2개, 프론트엔드만)
+- **비유 우선 언어**: "비트코인 오르내림" → "동전 위쪽 / 아래쪽" + 작은 보조 설명
+- **연령대별 페르소나 카피 슬롯** (20대=재미/30대=부수입/40~50대=노후/60~70대=용돈·안전) — 자동 회전 or 첫 진입 1회 선택
+- **가입 전 데모 1회 무료 전투** — AdultGate 통과 후 게스트로 60초 시연
+- **주식·MLM·전세사기 비교 카드** — 영구 노출되는 "왜 안전한가" 신뢰벽
+- **시니어 모드** — 큰 글씨 / 단순 색상 / 음성 안내 토글 (기존 LargeTextToggle 검토 후 채택)
 
-### 1) `src/pages/TradingArenaWithArmy.tsx`
-- `useNavigate` 추가
-- `placeBet` 콜백 안의 `if (mode === "real")` 분기를:
-  ```ts
-  if (mode === "real") {
-    notify.info(side === "long" ? "🔥 실전 LONG 진입" : "🔥 실전 SHORT 진입", {
-      description: "실전 트레이딩 화면으로 이동합니다",
-    });
-    navigate(`/arena?mode=real&side=${side}&symbol=${symbol}&size=${size}`);
-    return;
-  }
+## 1) 첫 화면 5초 안에 보이는 4가지
+
+```text
+┌────────────────────────────────────────────┐
+│  ⚔️  내 군대가 싸워서 돈을 번다             │  ← 한 줄 슬로건 (h1, 32px)
+│  비트코인 가격이 오르면 내 군대 승리,        │  ← 18px 비유 설명
+│  내리면 적 군대 승리                         │
+│                                            │
+│  [▶ 30초 데모 보기]   [무료 1회 전투 체험]   │  ← 가입 전 CTA 2개
+│                                            │
+│  실시간: 지금 12,847명이 전투 중 · 오늘 ₩… │  ← LivePulseStrip
+└────────────────────────────────────────────┘
+```
+
+- "트레이딩 / 레버리지 / 청산 / 펀딩비" 등 **전문어는 모두 가림** (호버시에만 노출)
+- 슬로건은 i18n 키 `arena.army.hero.slogan.{persona}` 로 분기
+
+## 2) "오른다 / 내린다" 버튼 재설계
+
+현재: `📈 오른다 — Conquest · 영토 정복` / `📉 내린다 — Raid · 적국 약탈`
+
+변경:
+```text
+┌─────────────────┐  ┌─────────────────┐
+│  📈 위쪽 베팅   │  │  📉 아래쪽 베팅 │
+│  내 군대 전진!  │  │  적 군대 후퇴!  │
+│  +1% 자동 승리  │  │  +1% 자동 승리  │
+│  -0.6% 자동 종료│  │  -0.6% 자동 종료│
+└─────────────────┘  └─────────────────┘
+```
+
+- 영어 부제(Conquest/Raid)는 hover 툴팁으로만 보존 (영어/MZ 페르소나 유지)
+- TP/SL을 **"자동 승리 / 자동 종료"** 로 항상 한글 문장
+
+## 3) 가입 전 체험 — 게스트 데모 60초
+
+- AdultGate 통과 → 자동 시작 가능한 **`/arena/army?demo=1`** 진입 모드
+- 무작위 시드 가격을 60초간 흐르게 하고 군대가 실제로 움직임
+- 결과 화면에서 만 첫 가입 CTA:
   ```
-- 기존 paper 분기, battleStore, 토너먼트/HUD/DopamineLayer/Recovery 흐름은 그대로
+  당신의 모의 전투 결과: +₩12,300 (가상)
+  ─────────────────────────────────
+  진짜로 받으려면 1초만에 가입하세요
+  [📨 매직링크로 1초 가입]   [구글로 시작]
+  ```
+- 데모 중에는 모든 DB 호출 없음 — 순수 클라이언트 가격 시드
 
-### 2) `src/pages/TradingArenaBybit.tsx`
-- 마운트 시 `useSearchParams` 로 `mode/side/symbol/size` 읽기
-- 값이 있으면:
-  - `setMode('real')` (이미 REAL 동의 절차는 군대 페이지에서 사용자가 토글했으므로 그대로 적용; 단 잔액이 0이면 충전 배너가 자동 노출 — 기존 로직)
-  - `setSymbol(symbol)` (지원 페어 화이트리스트 검증)
-  - `setSize(size)` (숫자/최소값 검증)
-  - `side` 는 MegaOrderPanel 의 초기 선택 탭으로 전달 (props가 없으면 `data-prefill-side` 로 노출 후 패널 내부 useEffect로 반영 — 한 파일 안에서 와이어링)
-- 이후 쿼리스트링은 `history.replaceState`로 정리 (새로고침 시 무한 재진입 방지)
+## 4) "주식 / 전세사기 / MLM과 무엇이 다른가" — 영구 신뢰벽
 
-## 절대 불변
-- 기존 군대 배틀 paper 흐름 / battleStore / Recovery / Imperial Score 트리거 / DB / 디자인 토큰 / MegaOrderPanel/OpenPositionsLive 내부 코드 변경 없음
-- AdultGate, Magic Link CTA, 운영자 무손실 구조 그대로
+군대 배틀 페이지 하단에 4단 비교 카드 (스크롤 시 sticky로 한 줄 요약 헤더):
 
-## 검증
-1. `/arena/army` → REAL 토글 → 동의 → "📈 오른다" → 즉시 `/arena` 로 이동, 바이비트 화면이 BTCUSDT/REAL/롱 사이드/사이즈 100 으로 프리필
-2. `/arena/army` → PAPER → "오른다" → 기존 군대 배틀 정상 진행 (회귀 없음)
-3. REAL 잔액 0인 경우 `/arena` 이동 후 충전 배너 노출 (기존 로직 그대로)
+| 항목 | 주식 | 전세사기 | MLM·다단계 | **Phonara 군대 배틀** |
+|------|------|----------|-------------|-------------------------|
+| 원금 손실 한도 | 무제한 | 100% | 100% + 채무 | **베팅한 금액만** |
+| 하루 만에 결과 | ✕ | ✕ | ✕ | **60초 ~ 24시간** |
+| 사람을 모아야 함 | ✕ | — | ✓ 강제 | **✕ 본인만으로 가능** |
+| 출금 보장 | △ 증권사 | ✕ | ✕ | **자동 출금 + 보험금** |
+| 가족·지인 피해 | ✕ | ✕ | ✓ | **✕ 절대 불가** |
+
+- 표는 모바일에서 **세로 카드 4장**으로 자동 재배치
+- 헤드라인: **"우리는 사람을 모으라 하지 않습니다. 군대만 보내면 됩니다."**
+
+## 5) 페르소나별 진입 메시지 (FirstTimeOnboarding 1회 분기)
+
+| 페르소나 | 진입 메시지 | 추천 시작 사이즈 |
+|----------|-------------|------------------|
+| 20대 (게임/재미) | "캐릭터 키우듯 군대 키우세요" | 50 USDT |
+| 30대 (부수입) | "퇴근 후 60초로 부수입을" | 100 USDT |
+| 40~50대 (노후) | "은행 이자보다 빠른 진짜 자산" | 100 USDT |
+| 60~70대 (용돈·안전) | "큰 글씨로 쉽게 · 손주 용돈 만들기" | 50 USDT + 시니어 모드 자동 ON |
+
+- 첫 진입 시 **"20대 / 30~40대 / 50~60대 / 70대 이상"** 4지선다 1회 클릭 (DB profiles.persona)
+- 이후 슬로건/카피/색상/폰트 크기 자동 분기
+
+## 6) 시니어 모드 (60~70대 핵심)
+
+- `mem://design/ux-primitives` 기반 LargeTextToggle 확장 (or 신규 `SeniorMode` 토글)
+- 적용:
+  - 본문 18px → 22px, 버튼 min-height 44px → 60px
+  - 색상: 빨강/초록 채도 30% 낮춤 (시야 피로 ↓)
+  - 한 화면에 버튼 2개 이상 배치 금지 — 위쪽/아래쪽 베팅만 거대하게
+  - 음성 안내: `speechSynthesis` "위쪽에 베팅하시려면 위 버튼을 누르세요"
+  - 모든 영어 단어 한글 병기: `BTCUSDT` → `비트코인(BTC)`
+- 토글은 헤더 상단 우측 별도 위치 + 한 번 켜면 7일 sessionStorage 유지
+
+## 7) 매직링크 최우선 CTA + 즉시 입금 동선
+
+- 데모/회원가입 직후 무조건 매직링크 입력란 단독 노출
+- 가입 직후 → `/arena/army?onboarded=1` 로 복귀
+- 첫 전투 직전 화면에서 **"₩50,000부터 시작"** preset chip 노출 (이미 Sprint 1 완료)
+- 잔액 0이면 군대 배틀에서 위쪽/아래쪽 버튼 누를 때 작은 토스트 + 입금 시트(`/wallet?intent=first-deposit&amount=50000`) 자동 오픈
+
+## 8) 변경 파일 (프론트엔드 와이어링만)
+
+신규
+- `src/components/arena/ArmyHeroExplain.tsx` — 슬로건 + 비유 설명 + 데모 CTA (≤180줄)
+- `src/components/arena/GuestDemoBattle.tsx` — 게스트 60초 가격 시드 + 군대 렌더 (≤220줄)
+- `src/components/arena/TrustComparisonWall.tsx` — 주식/전세사기/MLM 비교 4단 카드 (≤180줄)
+- `src/components/arena/PersonaPicker.tsx` — 4지선다 1회 모달 + persona 저장 (≤150줄)
+- `src/components/arena/SeniorModeToggle.tsx` — 시니어 모드 토글 + speechSynthesis 헬퍼 (≤140줄)
+- `src/lib/persona.ts` — persona 키 + i18n 분기 헬퍼
+
+수정
+- `src/pages/TradingArenaWithArmy.tsx` — 위 컴포넌트 5개 와이어링, 배치 순서 재조정
+- `src/components/arena/ArenaHeader.tsx` — h1 슬로건/부제 한글화, 페르소나 분기
+- `src/components/arena/LongShortBetPanel.tsx` — 버튼 카피 "위쪽 베팅 / 아래쪽 베팅", TP/SL 한글
+- `src/lib/i18n.ts` — arena.army.* 키 추가 (한/영)
+
+DB (선택, 페르소나 저장)
+- `profiles.persona text` 컬럼 추가 마이그레이션 (1회) + RPC `set_persona(_p text)` — 본인만 update
+- 페르소나가 없어도 모두 작동 (기본=`general`)
+
+## 9) 절대 불변
+
+- battleStore / armyMapping / Recovery / Imperial Score / Booster / DopamineLayer / ComboStreak 로직 변경 없음
+- 디자인 토큰 (Gold & Dark Empire) 1픽셀 변경 없음 — 시니어 모드는 token 클래스 변형만
+- AdultGate 강제, Magic Link 최우선, 운영자 무손실 구조 유지
+- 데모는 DB 호출 0건 (어뷰징 차단)
+
+## 10) 검증 체크리스트
+
+1. 비로그인 상태로 `/arena/army` → 슬로건 / 데모 CTA 즉시 보임
+2. 데모 60초 정상 흐름 → 결과 화면에서 매직링크 CTA 단독 노출
+3. 페르소나 4지선다 → 선택값에 따라 슬로건 / 추천 사이즈 변경
+4. 시니어 모드 ON → 폰트 22px / 버튼 60px / 음성 안내 1회 재생
+5. 비교 카드 모바일 951px / 데스크탑 모두 가독성 OK
+6. 기존 paper/real 전투 흐름 회귀 없음 (`/arena/army` 정상)
+7. REAL 모드 위쪽/아래쪽 → 기존 핸드오프 `/arena?mode=real&...` 정상 작동
