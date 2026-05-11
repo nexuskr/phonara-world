@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Crown, Sword, Shield, Users, Send, Plus, Trophy, Flame } from "lucide-react";
+import { Crown, Sword, Shield, Users, Send, Plus, Trophy, Flame, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { Card } from "@/components/ui/card";
@@ -11,6 +11,7 @@ import { LoadingList } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
 import { notify } from "@/lib/notify";
 import Layout from "@/components/Layout";
+import GuildActivityTicker from "@/components/lounge/GuildActivityTicker";
 
 type Guild = {
   id: string;
@@ -21,6 +22,7 @@ type Guild = {
   max_members: number;
   description: string | null;
   leader_id: string;
+  is_seed?: boolean;
 };
 
 type ChatMsg = { id: string; user_id: string; message: string; created_at: string };
