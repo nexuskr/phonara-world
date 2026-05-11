@@ -86,6 +86,8 @@ export function useClaimFlow(opts: {
       });
 
       await opts.reloadCap();
+      const { refreshWallet } = await import("@/lib/walletRefresh");
+      refreshWallet();
 
       setModal({
         open: true,
