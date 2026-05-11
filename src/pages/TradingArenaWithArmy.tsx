@@ -1,4 +1,5 @@
 import { useEffect, useSyncExternalStore, useState, useCallback, useRef, useMemo, lazy, Suspense } from "react";
+import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import HubTabs from "@/components/HubTabs";
 import { useRequireAuth } from "@/hooks/use-require-auth";
@@ -39,6 +40,7 @@ function useDelta1s(symbol: string, currentPrice: number) {
 
 export default function TradingArenaWithArmy() {
   const user = useRequireAuth();
+  const navigate = useNavigate();
   const [symbol, setSymbol] = useState<typeof SYMBOLS[number]>("BTCUSDT");
   const [size, setSize] = useState(100);
   const [mode, setMode] = useState<"paper" | "real">("paper");
@@ -96,14 +98,17 @@ export default function TradingArenaWithArmy() {
     if (!price) { notify.warning("가격 수신 대기 중"); return; }
     if (battle.phase === "fighting") { notify.info("전투 중"); return; }
     if (mode === "real") {
-      notify.info("🔥 실전 모드", { description: "/trade 페이지에서 실거래로 진입하세요" });
+      notify.info(side === "long" ? "🔥 실전 LONG 진입" : "🔥 실전 SHORT 진입", {
+        description: "실전 트레이딩 화면으로 이동합니다",
+      });
+      navigate(`/arena?mode=real&side=${side}&symbol=${symbol}&size=${size}`);
       return;
     }
     battleStore.start({ side, symbol, size, entryPrice: price, tpPct: 1.0, slPct: 0.6 });
     notify.info(side === "long" ? "📈 Conquest 시작" : "📉 Raid 시작", {
       description: `${symbol} @ ${price.toFixed(2)} · ${size} USDT`,
     });
-  }, [price, symbol, size, battle.phase, mode]);
+  }, [price, symbol, size, battle.phase, mode, navigate]);
 
   const resetBattle = useCallback(() => {
     battleStore.reset();

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useSyncExternalStore, useCallback, lazy, Suspense } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useSearchParams } from "react-router-dom";
 import { Swords, Flame, Wallet as WalletIcon, Crown } from "lucide-react";
 import Layout from "@/components/Layout";
 import HubTabs from "@/components/HubTabs";
@@ -74,6 +74,28 @@ export default function TradingArenaBybit() {
   const [mode, setMode] = useState<Mode>("paper");
   const [symbol, setSymbol] = useState<string>("BTCUSDT");
   const [busy, setBusy] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Prefill from /arena/army REAL handoff: ?mode=real&side=long&symbol=BTCUSDT&size=100
+  useEffect(() => {
+    const qMode = searchParams.get("mode");
+    const qSymbol = searchParams.get("symbol");
+    const qSide = searchParams.get("side");
+    if (!qMode && !qSymbol && !qSide) return;
+    if (qMode === "real") setMode("real");
+    if (qSymbol && /^[A-Z]{2,10}USDT$/.test(qSymbol)) setSymbol(qSymbol);
+    if (qSide === "long" || qSide === "short") {
+      notify.info(qSide === "long" ? "📈 LONG 사이드 선택" : "📉 SHORT 사이드 선택", {
+        description: "주문 패널에서 LONG / SHORT 버튼을 눌러 체결하세요",
+      });
+    }
+    // Clean up query so refresh doesn't re-trigger
+    const next = new URLSearchParams(searchParams);
+    ["mode", "side", "symbol", "size"].forEach((k) => next.delete(k));
+    setSearchParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
 
   const { prices, stats } = usePriceStore();
   const price = prices[symbol] ?? 0;
