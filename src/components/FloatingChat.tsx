@@ -69,9 +69,9 @@ export default function FloatingChat() {
       <button
         onClick={() => setOpen((v) => !v)}
         className="fixed bottom-24 right-4 z-50 w-14 h-14 rounded-2xl glass-strong neon-border flex items-center justify-center shadow-2xl hover:scale-110 transition"
-        aria-label="실시간 채팅"
+        aria-label="AI 황제 자문관"
       >
-        <MessageCircle className="w-6 h-6 text-secondary" />
+        <MessageCircle className="w-6 h-6 text-gold" />
         {isEmpire && (
           <span className="absolute -top-1 -right-1 w-5 h-5 bg-gold rounded-full flex items-center justify-center text-[10px] font-black text-black animate-pulse">👑</span>
         )}
@@ -80,14 +80,29 @@ export default function FloatingChat() {
       {open && (
         <div className="fixed bottom-44 right-4 z-[9999] w-[min(92vw,380px)] h-[480px] glass-strong rounded-3xl flex flex-col shadow-2xl overflow-hidden border border-border">
           <div className={`px-5 py-3 flex items-center gap-3 border-b border-border ${isEmpire ? "bg-gradient-gold/10" : ""}`}>
-            <div className={`w-2.5 h-2.5 rounded-full animate-pulse ${isEmpire ? "bg-gold" : "bg-secondary"}`} />
-            <h2 className={`font-bold flex-1 text-sm ${isEmpire ? "text-gold" : "text-foreground"}`}>
-              {isEmpire ? "👑 Empire 라운지" : "💬 실시간 채팅"}
+            <div className={`w-2.5 h-2.5 rounded-full animate-pulse ${isEmpire ? "bg-gold" : "bg-gold"}`} />
+            <h2 className="font-bold flex-1 text-sm text-gold">
+              👑 AI 황제 자문관
             </h2>
             <button onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground">
               <X className="w-4 h-4" />
             </button>
           </div>
+
+          {/* Phase 4 — 첫 진입 프리셋 3버튼 */}
+          {messages.length === 0 && (
+            <div className="mx-3 mt-3 grid grid-cols-1 gap-1.5">
+              {["내 등급은?", "지금 뭐 해야 돼?", "출금 언제 가능?"].map((q) => (
+                <button
+                  key={q}
+                  onClick={() => setText(q)}
+                  className="press text-left text-xs font-bold px-3 py-2 rounded-xl glass border border-gold/30 hover:border-gold/60 transition break-keep"
+                >
+                  💬 {q}
+                </button>
+              ))}
+            </div>
+          )}
 
           {isEmpire && (
             <Link

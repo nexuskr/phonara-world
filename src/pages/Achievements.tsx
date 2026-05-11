@@ -6,6 +6,7 @@ import { useDB, formatKRW } from "@/lib/store";
 import { Trophy, Lock, Crown } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import PaymentStickyCTA from "@/components/missions/PaymentStickyCTA";
 
 type Ach = {
   key: string; name: string; description: string; category: string;
@@ -125,6 +126,7 @@ export default function Achievements() {
           })}
         </div>
       </div>
+      <PaymentStickyCTA />
     </Layout>
   );
 }

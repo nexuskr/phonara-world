@@ -43,6 +43,7 @@ export default function PayoutTicker() {
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-secondary animate-pulse" />
           <span className="text-xs font-display font-black tracking-widest break-keep">{t("payoutTitle")}</span>
+          <span className="text-[9px] tracking-widest font-black border border-border/60 text-muted-foreground px-1.5 py-0.5 rounded">SIM</span>
         </div>
         <span className="text-[10px] text-muted-foreground break-keep">{t("payoutSub")}</span>
       </div>

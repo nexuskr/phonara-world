@@ -10,6 +10,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { notify } from "@/lib/notify";
 import { markLandingStart } from "@/lib/funnel";
 import ThreeSecondHero from "@/components/landing/ThreeSecondHero";
+import FomoScrollHero from "@/components/guide/FomoScrollHero";
+import { SceneProblem, SceneSolution, SceneProof, ScenePersona, ScenePackage } from "@/components/guide/FomoScrollScenes";
+import FomoFinalCTA from "@/components/guide/FomoFinalCTA";
 
 /**
  * 풀스크린 스토리텔링 가이드 — 7씬
@@ -31,6 +34,10 @@ export default function Guide() {
     try { return localStorage.getItem("guide_large_text") === "1"; } catch { return false; }
   });
   const reduce = useReducedMotion();
+
+  // Phase 4 — ?tab=starter (기본): 7씬 FOMO 풀스크롤, ?tab=detail: 기존 디테일 가이드
+  const tab = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("tab") : null;
+  const isStarter = tab !== "detail";
 
   const sceneCount = 7;
 
@@ -70,14 +77,28 @@ export default function Guide() {
         className={`snap-y snap-mandatory overflow-y-auto h-[calc(100vh-56px)] scroll-smooth ${largeText ? "text-[112%]" : ""}`}
         style={{ scrollbarWidth: "thin" }}
       >
-        <SceneTrust reduce={!!reduce} />
-        <SceneHook reduce={!!reduce} />
-        <SceneLiveProof reduce={!!reduce} />
-        <SceneSimulator />
-        <SceneKakao reduce={!!reduce} />
-        <SceneTiers />
-        <SceneTestimonials />
-        <SceneFinalCTA isLoggedIn={isLoggedIn} />
+        {isStarter ? (
+          <>
+            <FomoScrollHero isLoggedIn={isLoggedIn} />
+            <SceneProblem />
+            <SceneSolution />
+            <SceneProof />
+            <ScenePersona />
+            <ScenePackage />
+            <FomoFinalCTA />
+          </>
+        ) : (
+          <>
+            <SceneTrust reduce={!!reduce} />
+            <SceneHook reduce={!!reduce} />
+            <SceneLiveProof reduce={!!reduce} />
+            <SceneSimulator />
+            <SceneKakao reduce={!!reduce} />
+            <SceneTiers />
+            <SceneTestimonials />
+            <SceneFinalCTA isLoggedIn={isLoggedIn} />
+          </>
+        )}
       </div>
 
       {/* 진행률 도트 (우측 고정) */}

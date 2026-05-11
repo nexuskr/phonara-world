@@ -17,6 +17,7 @@ import ArmyHeroExplain from "@/components/arena/ArmyHeroExplain";
 import TrustComparisonWall from "@/components/arena/TrustComparisonWall";
 import PersonaPicker from "@/components/arena/PersonaPicker";
 import SeniorModeToggle from "@/components/arena/SeniorModeToggle";
+import PaymentStickyCTA from "@/components/missions/PaymentStickyCTA";
 
 const BattleResultOverlay = lazy(() => import("@/components/arena/BattleResultOverlay"));
 
@@ -209,6 +210,7 @@ export default function TradingArenaWithArmy() {
           onRecovery={battle.result === "near_miss" ? triggerRecovery : undefined}
         />
       </Suspense>
+      <PaymentStickyCTA />
     </Layout>
   );
 }

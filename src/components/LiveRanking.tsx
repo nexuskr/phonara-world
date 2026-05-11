@@ -115,6 +115,7 @@ export default function LiveRanking() {
         <span className="text-[10px] text-secondary flex items-center gap-1">
           <span className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse" />{" "}
           LIVE
+          <span className="ml-1 text-[9px] tracking-widest font-black border border-border/60 text-muted-foreground px-1 py-0.5 rounded">SIM</span>
         </span>
       </div>
 
