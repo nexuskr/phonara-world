@@ -12,6 +12,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { notify } from "@/lib/notify";
 import Layout from "@/components/Layout";
 import GuildLiveFeed from "@/components/lounge/GuildLiveFeed";
+import SeasonPrizePool from "@/components/lounge/SeasonPrizePool";
 
 type Guild = {
   id: string;
@@ -403,6 +404,7 @@ export default function Lounge() {
 
             {/* Leaderboard */}
             <div className="space-y-4">
+              <SeasonPrizePool />
               <Card className="p-4">
                 <h3 className="font-semibold mb-3 flex items-center gap-2">
                   <Trophy className="h-4 w-4 text-primary" /> 명예의 전당

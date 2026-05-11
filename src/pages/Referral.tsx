@@ -9,6 +9,7 @@ import {
   Trophy, ChevronDown, MessageCircle, Instagram, Music2, Youtube, Globe, Send,
 } from "lucide-react";
 import DMComposer from "@/components/guide/DMComposer";
+import EmpireTreePreview from "@/components/referral/EmpireTreePreview";
 
 type Stats = {
   code: string | null;
@@ -107,6 +108,8 @@ export default function Referral() {
     <Layout>
       <HubTabs hub="legacy" />
       <div className="container pt-4 pb-12 animate-liquid-in space-y-6">
+
+        <EmpireTreePreview />
 
         {/* HERO */}
         <section className="relative glass-strong rounded-3xl p-6 md:p-8 neon-border overflow-hidden">
