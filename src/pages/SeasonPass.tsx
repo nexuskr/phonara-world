@@ -36,6 +36,8 @@ export default function SeasonPass() {
   useEffect(() => { load(); }, [db.user]);
 
   async function claim(level: number, track: "free" | "premium") {
+    try { await assertRateLimit(RL_WALLET.scope, RL_WALLET.max); }
+    catch (e: any) { return toast({ title: t("claimFail"), description: e?.message, variant: "destructive" }); }
     const { data, error } = await supabase.rpc("claim_season_reward" as any, { _level: level, _track: track });
     if (error) return toast({ title: t("claimFail"), description: error.message, variant: "destructive" });
     const r = data as any;
