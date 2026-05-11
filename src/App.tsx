@@ -145,8 +145,8 @@ const App = () => (
               <Route path="/security/totp" element={<SecurityTotp />} />
               <Route path="/security/passkey" element={<SecurityPasskey />} />
               <Route path="/achievements" element={<Achievements />} />
-              <Route path="/season-pass" element={<SeasonPass />} />
-              <Route path="/quests" element={<Quests />} />
+              <Route path="/season-pass" element={<Navigate to="/missions?tab=daily" replace />} />
+              <Route path="/quests" element={<Navigate to="/missions?tab=daily" replace />} />
               <Route path="/unsubscribe" element={<Unsubscribe />} />
               <Route path="/trust" element={<Navigate to="/status" replace />} />
               <Route path="/status" element={<Status />} />
