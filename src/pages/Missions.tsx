@@ -313,11 +313,10 @@ export default function Missions() {
         {/* Category sub-tabs — 5종 (전체·게임·UGC·매일·수익형) */}
         <div className="flex gap-2 mb-5 overflow-x-auto pb-1 -mx-1 px-1">
           {([
-            { key: "all",   label: "전체",  icon: null },
-            { key: "game",  label: "게임",  icon: "🎮" },
-            { key: "ugc",   label: "UGC",   icon: "📸" },
-            { key: "daily", label: "매일",  icon: "📅" },
-            { key: "earn",  label: "수익형", icon: "💰" },
+            { key: "daily",   label: "⏰ 매일",       icon: null },
+            { key: "battle",  label: "⚔️ 전투",       icon: null },
+            { key: "rewards", label: "🎁 보상받기",  icon: null },
+            { key: "senior",  label: "🏆 시니어 안전", icon: null },
           ] as const).map((c) => (
             <button
               key={c.key}
