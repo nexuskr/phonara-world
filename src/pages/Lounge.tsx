@@ -384,7 +384,7 @@ export default function Lounge() {
                       <Plus className="h-4 w-4 mr-1" /> 길드 창설하기
                     </Button>
                   </Card>
-                  <GuildActivityTicker />
+                  <GuildLiveFeed />
                 </>
               )}
             </div>
