@@ -63,7 +63,7 @@ const resources = {
       treasury: { title: "황실 금고", tagline: "잔고 · 입출금 · 내역",
         wallet: "지갑", deposit: "입금", withdraw: "출금", history: "내역", settlements: "정산내역" },
       legacy: { title: "유산 허브", tagline: "당신이 쌓은 것 — 영원히 남는다",
-        ranking: "랭킹", achievements: "업적", referral: "레퍼럴", ugc: "UGC 성과" },
+        ranking: "랭킹", achievements: "업적", referral: "레퍼럴", ugc: "UGC 성과", whales: "고래 랭킹" },
     },
     auth: {
       secureV3: "SECURE • V3",
