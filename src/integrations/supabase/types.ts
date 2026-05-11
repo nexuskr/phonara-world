@@ -5389,6 +5389,7 @@ export type Database = {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
       }
+      delete_guild: { Args: never; Returns: boolean }
       deposit_bonus_pct: {
         Args: { _method: Database["public"]["Enums"]["deposit_method"] }
         Returns: number
