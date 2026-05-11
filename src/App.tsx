@@ -13,6 +13,7 @@ import { installGlobalErrorLogging } from "./lib/error-logger";
 import { installFetchInstrument, installWebVitals, recordRouteChange } from "./lib/spans";
 import { ReviewerGuard } from "./components/ReviewerGuard";
 import { ReviewerMaskRoot } from "./components/ReviewerMaskRoot";
+import ReviewerBadge from "./components/ReviewerBadge";
 import { AdultGate } from "./components/AdultGate";
 
 installGlobalErrorLogging();
