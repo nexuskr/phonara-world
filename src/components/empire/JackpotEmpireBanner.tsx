@@ -194,17 +194,17 @@ export function JackpotEmpireBanner() {
           <Sparkles className="w-3 h-3 text-gold animate-pulse" />
           실시간 스피너
         </div>
-        <div className="space-y-1.5 min-h-[120px]">
+        <div className="h-[228px] overflow-hidden relative">
           <AnimatePresence initial={false}>
-            {feed.map((f) => (
+            {feed.map((f, idx) => (
               <motion.div
                 key={f.id}
-                layout
-                initial={{ opacity: 0, x: -20, height: 0 }}
-                animate={{ opacity: 1, x: 0, height: "auto" }}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0, y: idx * 36 }}
                 exit={{ opacity: 0, x: 30 }}
                 transition={{ type: "spring", stiffness: 320, damping: 28 }}
-                className="flex items-center justify-between glass rounded-lg px-2.5 py-1.5"
+                className="absolute left-0 right-0 flex items-center justify-between glass rounded-lg px-2.5 py-1.5"
+                style={{ top: 0 }}
               >
                 <div className="flex items-center gap-2 min-w-0">
                   <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-primary/20 text-primary">

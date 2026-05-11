@@ -207,6 +207,20 @@ function scheduleFlush() {
 
 async function flush() {
   if (FLUSHING || QUEUE.length === 0) return;
+  // Gate on auth session — record_span RPC is granted to `authenticated` only.
+  // Before session restore, calls return 401 and pollute the console. Defer.
+  try {
+    const { data } = await supabase.auth.getSession();
+    if (!data?.session) {
+      // No session yet — retry later, do not call the RPC.
+      RETRY_BACKOFF = Math.min(30_000, (RETRY_BACKOFF || 2_000) * 2);
+      scheduleFlush();
+      return;
+    }
+  } catch {
+    // auth lookup failure → also defer silently
+    return;
+  }
   FLUSHING = true;
   try {
     const batch = QUEUE.splice(0, MAX_BATCH);
@@ -231,8 +245,12 @@ async function flush() {
         if (s._key) succeededKeys.push(s._key);
       } catch (e: any) {
         lastErr = e?.message ?? String(e);
+        // 401 / auth errors → drop immediately, do not retry (avoids console flood).
+        const code = String(e?.code ?? "");
+        const msg = String(e?.message ?? "");
+        const isAuthErr = code === "401" || code === "PGRST301" || /401|JWT|jwt|unauthor/i.test(msg);
         s._attempts = (s._attempts ?? 0) + 1;
-        if (s._attempts < MAX_RETRIES) {
+        if (!isAuthErr && s._attempts < MAX_RETRIES) {
           M.retried++;
           failed.push(s);
         } else {
