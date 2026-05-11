@@ -5953,6 +5953,7 @@ export type Database = {
       trust_record_snapshot: { Args: never; Returns: string }
       unfreeze_expired: { Args: never; Returns: Json }
       unlock_achievement: { Args: { _key: string }; Returns: Json }
+      update_bot_ratio_phase: { Args: never; Returns: undefined }
       validate_deposit_input: {
         Args: {
           _bank_account?: string
