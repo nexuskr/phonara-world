@@ -110,9 +110,11 @@ const App = () => (
               {/* 초직관 6대 메뉴 alias — 20~70대 한국인용 */}
               <Route path="/start" element={<Navigate to="/dashboard" replace />} />
               <Route path="/earnings" element={<Navigate to="/missions" replace />} />
-              <Route path="/arena" element={<TradingArenaWithArmy />} />
+              <Route path="/arena" element={<TradingArenaBybit />} />
+              <Route path="/arena/army" element={<TradingArenaWithArmy />} />
               <Route path="/arena/classic" element={<EmpireArena />} />
-              <Route path="/empire-arena" element={<TradingArenaWithArmy />} />
+              <Route path="/empire-arena" element={<Navigate to="/arena" replace />} />
+              <Route path="/empire-arena/army" element={<Navigate to="/arena/army" replace />} />
               <Route path="/empire-arena/classic" element={<EmpireArena />} />
               <Route path="/lounge" element={<Lounge />} />
               <Route path="/whales" element={<Whales />} />
