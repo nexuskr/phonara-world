@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useSyncExternalStore, useCallback, useRef, lazy, Suspense } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore, useCallback, lazy, Suspense } from "react";
 import { NavLink } from "react-router-dom";
 import { Swords, Flame, Wallet as WalletIcon, Crown } from "lucide-react";
 import Layout from "@/components/Layout";
