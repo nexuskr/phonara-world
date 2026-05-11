@@ -34,6 +34,8 @@ export default defineConfig(({ mode }) => ({
           "supabase": ["@supabase/supabase-js"],
           "query": ["@tanstack/react-query"],
           "charts": ["recharts"],
+          "three": ["three", "@react-three/fiber", "@react-three/drei"],
+          "motion": ["framer-motion"],
         },
       },
     },
