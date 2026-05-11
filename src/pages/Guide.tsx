@@ -111,7 +111,7 @@ export default function Guide() {
 
       {/* 진행률 도트 (우측 고정) */}
       <div className="fixed right-3 top-1/2 -translate-y-1/2 z-30 flex flex-col gap-2 pointer-events-auto">
-        {Array.from({ length: sceneCount + 1 }).map((_, i) => (
+        {Array.from({ length: isStarter ? sceneCount : sceneCount + 1 }).map((_, i) => (
           <button
             key={i}
             onClick={() => jumpTo(i)}
