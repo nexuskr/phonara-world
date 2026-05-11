@@ -165,7 +165,7 @@ export default function TradingArenaBybit() {
           notify.success(`REAL ${args.side.toUpperCase()} ${args.leverage}× 체결`, {
             description: `${symbol} @ ${price.toFixed(4)}`,
           });
-          triggerFx({ kind: "open", pnl: 0, roi: 0, symbol, unit: "KRW" });
+          
         }
       }
     } finally {
