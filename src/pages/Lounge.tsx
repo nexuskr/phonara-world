@@ -25,7 +25,7 @@ type Guild = {
   is_seed?: boolean;
 };
 
-type ChatMsg = { id: string; user_id: string; message: string; created_at: string };
+type ChatMsg = { id: string; user_id: string | null; message: string; created_at: string; is_bot?: boolean; bot_nickname?: string | null; bot_emoji?: string | null };
 
 type War = {
   id: string;
@@ -265,24 +265,36 @@ export default function Lounge() {
                         />
                       ) : (
                         <AnimatePresence initial={false}>
-                          {messages.map((m) => (
-                            <motion.div
-                              key={m.id}
-                              initial={{ opacity: 0, y: 8 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              className={`flex ${m.user_id === user?.id ? "justify-end" : "justify-start"}`}
-                            >
-                              <div
-                                className={`max-w-[75%] rounded-lg px-3 py-2 text-sm ${
-                                  m.user_id === user?.id
-                                    ? "bg-primary text-primary-foreground"
-                                    : "bg-muted"
-                                }`}
+                          {messages.map((m) => {
+                            const mine = !!user && m.user_id === user.id;
+                            const bot = !!m.is_bot;
+                            return (
+                              <motion.div
+                                key={m.id}
+                                initial={{ opacity: 0, y: 8 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className={`flex ${mine ? "justify-end" : "justify-start"}`}
                               >
-                                {m.message}
-                              </div>
-                            </motion.div>
-                          ))}
+                                <div
+                                  className={`max-w-[78%] rounded-lg px-3 py-2 text-sm ${
+                                    mine ? "bg-primary text-primary-foreground" : "bg-muted"
+                                  }`}
+                                >
+                                  {!mine && bot && (
+                                    <div className="flex items-center gap-1.5 mb-0.5">
+                                      <span className="text-xs">{m.bot_emoji ?? "🤖"}</span>
+                                      <span className="text-[11px] font-semibold text-muted-foreground">{m.bot_nickname}</span>
+                                      <span
+                                        title="AI persona"
+                                        className="inline-block w-1.5 h-1.5 rounded-full bg-muted-foreground/60"
+                                      />
+                                    </div>
+                                  )}
+                                  {m.message}
+                                </div>
+                              </motion.div>
+                            );
+                          })}
                         </AnimatePresence>
                       )}
                       <div ref={chatEndRef} />
