@@ -309,7 +309,7 @@ export default function TradingArenaBybit() {
 
       {/* Global FX layers */}
       <Suspense fallback={null}><DopamineLayer /></Suspense>
-      <Suspense fallback={null}><ComboStreakHUD /></Suspense>
+      <Suspense fallback={null}><ComboStreakHUD wins={mode === "paper" ? usePaperStore.getState().comboWins : useRealStore.getState().comboWins} /></Suspense>
     </Layout>
   );
 }
