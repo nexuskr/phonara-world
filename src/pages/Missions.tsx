@@ -14,6 +14,7 @@ import {
   randomFakeNick,
   DAILY_PLAY_LIMITS,
   todayStr,
+  missionBucket,
   type Mission,
   type Tier,
 } from "@/lib/store";
