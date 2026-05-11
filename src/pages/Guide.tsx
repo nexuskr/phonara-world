@@ -144,6 +144,7 @@ function StarterGuide({ t }: any) {
         setBonusPaid(true);
         setConfetti(true);
         window.setTimeout(() => setConfetti(false), 2400);
+        import("@/lib/walletRefresh").then(m => m.refreshWallet());
         toast({ title: t("starter.bonusPaidTitle"), description: t("starter.bonusPaidDesc") });
       } else if (!silent) {
         toast({ title: r.error ?? "error", variant: "destructive" });
