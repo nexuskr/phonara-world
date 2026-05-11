@@ -13,6 +13,9 @@ import ThreeSecondHero from "@/components/landing/ThreeSecondHero";
 import FomoScrollHero from "@/components/guide/FomoScrollHero";
 import { SceneProblem, SceneSolution, SceneProof, ScenePersona, ScenePackage } from "@/components/guide/FomoScrollScenes";
 import FomoFinalCTA from "@/components/guide/FomoFinalCTA";
+import { SceneNetworkEffect } from "@/components/guide/SceneNetworkEffect";
+import { SceneGuildWar } from "@/components/guide/SceneGuildWar";
+import { SceneEmpireMap } from "@/components/guide/SceneEmpireMap";
 
 /**
  * 풀스크린 스토리텔링 가이드 — 7씬
@@ -39,7 +42,7 @@ export default function Guide() {
   const tab = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("tab") : null;
   const isStarter = tab !== "detail";
 
-  const sceneCount = 7;
+  const sceneCount = isStarter ? 10 : 7;
 
   useEffect(() => { markLandingStart(); }, []);
 
@@ -86,6 +89,9 @@ export default function Guide() {
             <SceneSolution large={largeText} />
             <SceneProof large={largeText} />
             <ScenePersona large={largeText} />
+            <SceneNetworkEffect large={largeText} isLoggedIn={isLoggedIn} />
+            <SceneGuildWar large={largeText} />
+            <SceneEmpireMap large={largeText} />
             <ScenePackage large={largeText} />
             <FomoFinalCTA large={largeText} />
           </>
