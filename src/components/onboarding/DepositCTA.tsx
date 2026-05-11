@@ -32,19 +32,21 @@ export default function DepositCTA({
 
   useEffect(() => {
     if (!isLoggedIn) { setHasDeposited(false); return; }
+    // local store first (instant)
+    if ((db.deposits?.length ?? 0) > 0) { setHasDeposited(true); return; }
     let alive = true;
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { if (alive) setHasDeposited(false); return; }
-      const { data } = await supabase
-        .from("profiles")
-        .select("first_deposit_bonus_paid")
-        .eq("id", user.id)
-        .maybeSingle();
-      if (alive) setHasDeposited(!!data?.first_deposit_bonus_paid);
+      const { count } = await supabase
+        .from("transactions")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .eq("kind", "deposit");
+      if (alive) setHasDeposited((count ?? 0) > 0);
     })();
     return () => { alive = false; };
-  }, [isLoggedIn]);
+  }, [isLoggedIn, db.deposits?.length]);
 
   let href = "/auth?next=" + encodeURIComponent("/wallet?intent=first-deposit&tab=deposit");
   let label = loggedOutLabel;
