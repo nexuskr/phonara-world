@@ -180,6 +180,7 @@ export default function Profile() {
         <div className="mt-5 space-y-4">
           <NotificationPrefsCard />
           <PushNotificationCard />
+          <LineConnectCard />
           <Link
             to="/security"
             className="flex items-center justify-between glass-strong rounded-2xl p-4 neon-border hover:scale-[1.01] transition"
