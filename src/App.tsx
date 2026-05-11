@@ -59,6 +59,7 @@ const Status = lazy(() => import("./pages/Status.tsx"));
 const Referral = lazy(() => import("./pages/Referral.tsx"));
 const UgcDashboard = lazy(() => import("./pages/UgcDashboard.tsx"));
 const CampaignRedirect = lazy(() => import("./pages/CampaignRedirect.tsx"));
+const Whales = lazy(() => import("./pages/Whales.tsx"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -113,6 +114,7 @@ const App = () => (
               <Route path="/empire-arena" element={<TradingArenaWithArmy />} />
               <Route path="/empire-arena/classic" element={<EmpireArena />} />
               <Route path="/lounge" element={<Lounge />} />
+              <Route path="/whales" element={<Whales />} />
               <Route path="/jackpot" element={<Navigate to="/roulette" replace />} />
               {/* /wallet 는 이미 존재 */}
 

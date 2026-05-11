@@ -10,6 +10,7 @@ import { LuxButton } from "@/components/ui/lux";
 import ReferralLeaderboard from "@/components/ReferralLeaderboard";
 import AIMissionCard from "@/components/AIMissionCard";
 import WeeklyPassSection from "@/components/WeeklyPassSection";
+import BoosterPill from "@/components/imperial/BoosterPill";
 
 type Q = {
   key: string; name: string; description: string; period: "daily" | "weekly";
@@ -50,9 +51,12 @@ export default function Quests() {
     <Layout>
       <div className="space-y-6 pb-24">
         <header className="rounded-3xl bg-gradient-to-br from-amber-500/15 via-background to-background border border-amber-500/20 p-6">
-          <div className="flex items-center gap-3">
-            <Zap className="text-amber-500" />
-            <h1 className="font-imperial text-2xl font-black tracking-tight break-keep">{t("title")}</h1>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <Zap className="text-amber-500" />
+              <h1 className="font-imperial text-2xl font-black tracking-tight break-keep">{t("title")}</h1>
+            </div>
+            <BoosterPill />
           </div>
           <p className="text-sm text-muted-foreground mt-1 break-keep">{t("subtitle")}</p>
         </header>

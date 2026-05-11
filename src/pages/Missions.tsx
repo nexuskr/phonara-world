@@ -27,6 +27,7 @@ import AIBotCards from "@/components/AIBotCards";
 import { usePersonaMissions, PERSONA_LABEL } from "@/hooks/use-persona-missions";
 import { Sparkle } from "lucide-react";
 import MissionDailyCapCard from "@/components/missions/MissionDailyCapCard";
+import BoosterPill from "@/components/imperial/BoosterPill";
 
 const tierFilters: { key: Tier; tk: string; color: string }[] = [
   { key: "NORMAL", tk: "tierNormal", color: "text-secondary" },
@@ -213,11 +214,14 @@ export default function Missions() {
     <Layout>
       <HubTabs hub="earn" />
       <div className="container pt-6 pb-10 animate-liquid-in">
-        <div className="mb-4">
-          <h1 className="font-imperial text-2xl sm:text-3xl tracking-[0.18em] text-gradient-imperial flex items-center gap-2 break-keep">
-            <Sparkles className="w-5 h-5 text-primary" /> {t("title")}
-          </h1>
-          <p className="text-xs text-muted-foreground mt-1 break-keep">{t("subtitle")}</p>
+        <div className="mb-4 flex items-start justify-between gap-3">
+          <div>
+            <h1 className="font-imperial text-2xl sm:text-3xl tracking-[0.18em] text-gradient-imperial flex items-center gap-2 break-keep">
+              <Sparkles className="w-5 h-5 text-primary" /> {t("title")}
+            </h1>
+            <p className="text-xs text-muted-foreground mt-1 break-keep">{t("subtitle")}</p>
+          </div>
+          <BoosterPill />
         </div>
 
         {/* 일일 한도 카드 (시니어 친화 — 풀폭 진행바 + 카운트다운) */}
