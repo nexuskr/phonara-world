@@ -37,6 +37,8 @@ export default function Quests() {
     const { data, error } = await supabase.rpc("claim_quest" as any, { _quest_key: key });
     if (error) return toast({ title: t("claimFail"), description: error.message, variant: "destructive" });
     const r = data as any;
+    const { refreshWallet } = await import("@/lib/walletRefresh");
+    refreshWallet();
     toast({ title: t("claimed"), description: t("reward", { xp: r.xp, credit: formatKRW(r.credit) }) });
     load();
   }
