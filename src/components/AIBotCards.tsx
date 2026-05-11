@@ -173,6 +173,8 @@ async function claimRun(runId: string) {
     if (m.includes("already_claimed")) throw new Error(botT("err.already"));
     throw new Error(m);
   }
+  const { refreshWallet } = await import("@/lib/walletRefresh");
+  refreshWallet();
   return data as { ok: boolean; reward: number; pnl_pct: number | null };
 }
 
