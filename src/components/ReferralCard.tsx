@@ -124,15 +124,20 @@ export default function ReferralCard() {
               <Copy className="w-4 h-4 text-gold" />
             </button>
           </div>
-          <div className="mt-3 flex gap-2">
+          <div className="mt-3 grid grid-cols-3 gap-2">
             <button onClick={() => copy(link, t("labelLink"))}
-              className="flex-1 min-h-[44px] py-2 rounded-xl glass text-xs font-bold flex items-center justify-center gap-1.5 hover:bg-primary/10 transition break-keep">
+              className="min-h-[44px] py-2 rounded-xl glass text-xs font-bold flex items-center justify-center gap-1.5 hover:bg-primary/10 transition break-keep">
               <Copy className="w-3.5 h-3.5" /> {t("copyLink")}
             </button>
             <button onClick={share}
-              className="flex-1 min-h-[44px] py-2 rounded-xl bg-gradient-primary text-primary-foreground text-xs font-black flex items-center justify-center gap-1.5 glow-primary hover:scale-[1.02] transition break-keep">
+              className="min-h-[44px] py-2 rounded-xl bg-gradient-primary text-primary-foreground text-xs font-black flex items-center justify-center gap-1.5 glow-primary hover:scale-[1.02] transition break-keep">
               <Share2 className="w-3.5 h-3.5" /> {t("shareFriend")}
             </button>
+            <LineShareButton
+              url={link}
+              text={t("shareText", { code: stats?.code })}
+              className="w-full"
+            />
           </div>
         </div>
 
