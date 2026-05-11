@@ -2,7 +2,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { AlertTriangle, ArrowUp, ArrowDown, ShieldCheck, Clock, Crown, Sparkles, Swords } from "lucide-react";
 import LivePayoutSlaBadge from "@/components/landing/LivePayoutSlaBadge";
 import PayoutTicker from "@/components/PayoutTicker";
-import { GoldNebulaBg, ParticleField, AnimatedCounter, GoldDivider, senior } from "./EmpireFX";
+import { GoldNebulaBg, ParticleField, AnimatedCounter, GoldDivider, ImperialSeal, senior } from "./EmpireFX";
 
 /**
  * Phase 4 / 영화급 — 씬2~6.
