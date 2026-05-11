@@ -1394,25 +1394,34 @@ export type Database = {
       }
       guild_chat_messages: {
         Row: {
+          bot_emoji: string | null
+          bot_nickname: string | null
           created_at: string
           guild_id: string
           id: string
+          is_bot: boolean
           message: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
+          bot_emoji?: string | null
+          bot_nickname?: string | null
           created_at?: string
           guild_id: string
           id?: string
+          is_bot?: boolean
           message: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
+          bot_emoji?: string | null
+          bot_nickname?: string | null
           created_at?: string
           guild_id?: string
           id?: string
+          is_bot?: boolean
           message?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
