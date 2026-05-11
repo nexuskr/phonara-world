@@ -174,8 +174,8 @@ export default function Index() {
         {/* CTA — single button, Musk tone */}
         <div className="mt-12 flex flex-col items-center justify-center gap-3 animate-fade-up" style={{ animationDelay: "0.3s" }}>
           <Link
-            to={hasSession ? "/dashboard" : "/secure-auth?signup=1"}
-            onClick={() => { onCta("hero_primary"); track("cta_click", { surface: "hero_primary" }); }}
+            to={hasSession ? "/wallet?intent=first-deposit&tab=deposit&amount=50000" : "/secure-auth?signup=1&next=" + encodeURIComponent("/wallet?intent=first-deposit&tab=deposit&amount=50000")}
+            onClick={() => { onCta("hero_primary"); track("cta_click", { surface: "hero_primary" }); import("@/lib/funnel").then(m => m.markDepositIntent("hero_primary", { logged_in: hasSession })); }}
             className="group relative px-10 py-4 rounded-2xl font-display font-black text-lg sm:text-xl bg-gradient-imperial text-primary-foreground glow-imperial animate-pulse-glow hover:scale-105 transition inline-flex items-center gap-2"
           >
             지금 참여하기
