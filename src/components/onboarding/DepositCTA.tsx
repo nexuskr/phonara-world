@@ -63,9 +63,15 @@ export default function DepositCTA({
 
   const padding = size === "lg" ? "min-h-[64px] text-lg" : "min-h-[52px] text-base";
 
+  const state = !isLoggedIn ? "logged_out" : hasDeposited ? "deposited" : "un_deposited";
+
   return (
     <Link
       to={href}
+      onClick={() => {
+        // dynamic import to keep cold-start small
+        import("@/lib/analytics").then(({ track }) => track("cta_click", { surface: "deposit_cta", state, size }));
+      }}
       className={`press sheen w-full ${padding} rounded-2xl bg-gradient-gold text-gold-foreground font-display font-black flex items-center justify-center gap-2 glow-gold ${className}`}
     >
       <Flame className="w-5 h-5" />
