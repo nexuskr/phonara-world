@@ -34,6 +34,7 @@ import OperatorAccounting from "@/components/admin/OperatorAccounting";
 import BotStrengthAdmin from "@/components/admin/BotStrengthAdmin";
 import EvHealthAdmin from "@/components/admin/EvHealthAdmin";
 import AbExperimentsAdmin from "@/components/admin/AbExperimentsAdmin";
+import CoinAddressAdmin from "@/components/admin/CoinAddressAdmin";
 
 const SENSITIVE_ADMIN_TABS = [
   "server_wd", "server_dep", "users", "packages", "coin",
@@ -333,14 +334,7 @@ function ChatAdmin() {
 }
 
 function CoinAdmin() {
-  const { t } = useTranslation("admin");
-  return (
-    <div className="glass-strong rounded-2xl p-6 neon-border text-center">
-      <Coins className="w-8 h-8 text-secondary mx-auto" />
-      <h3 className="font-imperial font-bold text-sm mt-2 break-keep">{t("coinTitle")}</h3>
-      <p className="text-xs text-muted-foreground mt-2 break-keep">{t("coinDesc")}</p>
-    </div>
-  );
+  return <CoinAddressAdmin />;
 }
 
 function KPI({ icon: Icon, label, v, hot, money }: any) {

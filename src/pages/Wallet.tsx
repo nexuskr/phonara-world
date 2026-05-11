@@ -78,6 +78,22 @@ export default function Wallet() {
   const [amlOpen, setAmlOpen] = useState(false);
   const [amlLevel, setAmlLevel] = useState<1 | 2 | 3>(2);
   const [receiptPath, setReceiptPath] = useState<string | null>(null);
+  // 어드민에서 관리하는 코인 입금 주소 목록
+  const [coinAddrs, setCoinAddrs] = useState<Array<{ network: string; address: string; label: string | null; memo: string | null }>>([]);
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const { data } = await supabase
+        .from("coin_deposit_addresses")
+        .select("network,address,label,memo,sort_order")
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true });
+      if (!alive) return;
+      setCoinAddrs((data ?? []) as any);
+    })();
+    return () => { alive = false; };
+  }, []);
+  const activeCoinAddr = coinAddrs.find(a => a.network === network) ?? coinAddrs[0] ?? null;
 
   if (!user) return null;
   const u = user;
@@ -516,19 +532,25 @@ export default function Wallet() {
                 <div className="glass rounded-xl p-4 text-xs space-y-2 border border-primary/30">
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">{t("network")}</span>
-                    <span className="font-bold">TRC20</span>
+                    <span className="font-bold">{activeCoinAddr?.network ?? "TRC20"}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">{t("channelCoin")}</span>
                     <span className="text-primary font-black">{t("channelCoinBonus")}</span>
                   </div>
                   <div className="flex flex-col gap-1.5 pt-1">
-                    <span className="text-muted-foreground">{t("adminAddr")}</span>
-                    <code className="font-mono text-[10px] break-all bg-muted/40 p-2.5 rounded-lg border border-border/40">TXyz1234567890ABCDEF1234567890ABCDEF12</code>
-                    <button onClick={() => { navigator.clipboard.writeText("TXyz1234567890ABCDEF1234567890ABCDEF12"); toast({ title: "✓" }); }}
-                      className="text-[11px] text-primary inline-flex items-center gap-1 self-start min-h-[32px]"><Copy className="w-3 h-3" /> {t("copyAddr")}</button>
+                    <span className="text-muted-foreground">{activeCoinAddr?.label ?? t("adminAddr")}</span>
+                    {activeCoinAddr ? (
+                      <>
+                        <code className="font-mono text-[10px] break-all bg-muted/40 p-2.5 rounded-lg border border-border/40">{activeCoinAddr.address}</code>
+                        <button onClick={() => { navigator.clipboard.writeText(activeCoinAddr.address); toast({ title: "✓" }); }}
+                          className="text-[11px] text-primary inline-flex items-center gap-1 self-start min-h-[32px]"><Copy className="w-3 h-3" /> {t("copyAddr")}</button>
+                      </>
+                    ) : (
+                      <div className="text-[11px] text-muted-foreground py-2">입금 주소가 아직 설정되지 않았습니다. 운영팀이 곧 등록할 예정입니다.</div>
+                    )}
                   </div>
-                  <p className="text-[10px] text-muted-foreground pt-2 border-t border-border/40">{t("coinDepositMemo")}</p>
+                  <p className="text-[10px] text-muted-foreground pt-2 border-t border-border/40">{activeCoinAddr?.memo ?? t("coinDepositMemo")}</p>
                   <p className="text-[10px] text-primary/80 font-bold">★ {t("coinMasterTeaser")}</p>
                 </div>
 

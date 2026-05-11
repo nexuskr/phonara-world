@@ -724,6 +724,42 @@ export type Database = {
         }
         Relationships: []
       }
+      coin_deposit_addresses: {
+        Row: {
+          address: string
+          created_at: string
+          id: string
+          is_active: boolean
+          label: string | null
+          memo: string | null
+          network: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string | null
+          memo?: string | null
+          network: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string | null
+          memo?: string | null
+          network?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       coin_trade_coupons: {
         Row: {
           code: string
