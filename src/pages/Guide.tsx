@@ -86,14 +86,23 @@ export default function Guide() {
         {isStarter ? (
           <>
             <FomoScrollHero isLoggedIn={isLoggedIn} large={largeText} />
+            <CinemaTransition />
             <SceneProblem large={largeText} />
+            <CinemaTransition />
             <SceneSolution large={largeText} />
+            <CinemaTransition />
             <SceneProof large={largeText} />
+            <CinemaTransition />
             <ScenePersona large={largeText} />
+            <CinemaTransition />
             <SceneNetworkEffect large={largeText} isLoggedIn={isLoggedIn} />
+            <CinemaTransition />
             <SceneGuildWar large={largeText} />
+            <CinemaTransition />
             <SceneEmpireMap large={largeText} />
+            <CinemaTransition />
             <ScenePackage large={largeText} />
+            <CinemaTransition />
             <FomoFinalCTA large={largeText} />
           </>
         ) : (
