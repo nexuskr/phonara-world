@@ -23,6 +23,10 @@ project_id = "ketlqzfaplppmupaiwft"
     verify_jwt = true
   [functions.send-push]
     verify_jwt = true
+  [functions.send-line]
+    verify_jwt = true
+  [functions.line-webhook]
+    verify_jwt = false
   [functions.dm-composer]
     verify_jwt = true
   [functions.verify-submission]
