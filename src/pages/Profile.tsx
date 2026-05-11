@@ -24,6 +24,7 @@ type BadgeDef = {
 import ReferralCard from "@/components/ReferralCard";
 import NotificationPrefsCard from "@/components/profile/NotificationPrefsCard";
 import PushNotificationCard from "@/components/settings/PushNotificationCard";
+import LineConnectCard from "@/components/settings/LineConnectCard";
 import CoinMasterLounge from "@/components/CoinMasterLounge";
 
 export default function Profile() {
@@ -179,6 +180,7 @@ export default function Profile() {
         <div className="mt-5 space-y-4">
           <NotificationPrefsCard />
           <PushNotificationCard />
+          <LineConnectCard />
           <Link
             to="/security"
             className="flex items-center justify-between glass-strong rounded-2xl p-4 neon-border hover:scale-[1.01] transition"
