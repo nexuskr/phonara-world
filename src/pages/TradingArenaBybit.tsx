@@ -185,11 +185,6 @@ export default function TradingArenaBybit() {
   const history = mode === "paper" ? paperLiveHistory : realHistory.slice(0, 50);
   const unit = mode === "paper" ? "USDT" : "KRW";
 
-  // Haptic helper (mobile only, opt-in)
-  const haptic = useCallback((pattern: number | number[] = 15) => {
-    try { navigator.vibrate?.(pattern); } catch { /* noop */ }
-  }, []);
-
   // Desktop keyboard shortcuts: B=long focus, S=short focus, Esc=close all
   const longBtnRef = useRef<HTMLDivElement>(null);
   const shortBtnRef = useRef<HTMLDivElement>(null);
