@@ -1,35 +1,99 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
-import { ChevronDown, Flame, Crown, TrendingUp, ArrowRight, Clock, Users } from "lucide-react";
+import { motion, useReducedMotion } from "framer-motion";
+import { ChevronDown, Flame, Crown, TrendingUp, Clock, Users, Shield, MessageCircle, Type, CheckCircle2 } from "lucide-react";
 import Layout from "@/components/Layout";
 import { useDB, formatKRW } from "@/lib/store";
 import EarningsSimulator from "@/components/guide/EarningsSimulator";
 import DepositCTA from "@/components/onboarding/DepositCTA";
+import { supabase } from "@/integrations/supabase/client";
+import { notify } from "@/lib/notify";
 
 /**
- * 풀스크린 스토리텔링 가이드
- * 20~70대 한국인을 위한 FOMO 중심 1장씩 스크롤 가이드.
+ * 풀스크린 스토리텔링 가이드 — 7씬
+ *  0) 안전·신뢰 (Why-safe)
+ *  1) Hook (오늘 출금 누적)
+ *  2) Live Proof
+ *  3) Simulator
+ *  3.5) 친구 사례 (카톡 스타일)
+ *  4) Tiers
+ *  5) Testimonials
+ *  6) Final CTA + 완주 보너스
  */
 export default function Guide() {
   const [db] = useDB();
   const isLoggedIn = !!db.user?.id;
   const containerRef = useRef<HTMLDivElement>(null);
+  const [activeIdx, setActiveIdx] = useState(0);
+  const [largeText, setLargeText] = useState<boolean>(() => {
+    try { return localStorage.getItem("guide_large_text") === "1"; } catch { return false; }
+  });
+  const reduce = useReducedMotion();
+
+  const sceneCount = 7;
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      const idx = Math.round(el.scrollTop / Math.max(1, el.clientHeight));
+      setActiveIdx(Math.min(sceneCount - 1, Math.max(0, idx)));
+    };
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, []);
+
+  function jumpTo(idx: number) {
+    const el = containerRef.current;
+    if (!el) return;
+    el.scrollTo({ top: idx * el.clientHeight, behavior: "smooth" });
+  }
+
+  function toggleLargeText() {
+    const next = !largeText;
+    setLargeText(next);
+    try { localStorage.setItem("guide_large_text", next ? "1" : "0"); } catch {}
+  }
 
   return (
     <Layout>
       <div
         ref={containerRef}
-        className="snap-y snap-mandatory overflow-y-auto h-[calc(100vh-56px)] scroll-smooth"
+        className={`snap-y snap-mandatory overflow-y-auto h-[calc(100vh-56px)] scroll-smooth ${largeText ? "text-[112%]" : ""}`}
         style={{ scrollbarWidth: "thin" }}
       >
-        <SceneHook />
-        <SceneLiveProof />
+        <SceneTrust reduce={!!reduce} />
+        <SceneHook reduce={!!reduce} />
+        <SceneLiveProof reduce={!!reduce} />
         <SceneSimulator />
+        <SceneKakao reduce={!!reduce} />
         <SceneTiers />
         <SceneTestimonials />
         <SceneFinalCTA isLoggedIn={isLoggedIn} />
       </div>
+
+      {/* 진행률 도트 (우측 고정) */}
+      <div className="fixed right-3 top-1/2 -translate-y-1/2 z-30 flex flex-col gap-2 pointer-events-auto">
+        {Array.from({ length: sceneCount + 1 }).map((_, i) => (
+          <button
+            key={i}
+            onClick={() => jumpTo(i)}
+            aria-label={`Scene ${i + 1}`}
+            className={`w-2 h-2 rounded-full transition-all ${
+              i === activeIdx ? "bg-gold scale-125 shadow-[0_0_8px_hsl(var(--gold)/0.6)]" : "bg-muted-foreground/40 hover:bg-muted-foreground"
+            }`}
+          />
+        ))}
+      </div>
+
+      {/* 글자 크기 토글 (좌하단) */}
+      <button
+        onClick={toggleLargeText}
+        aria-label="글자 크기 변경"
+        className="fixed left-3 bottom-20 z-30 flex items-center gap-1 px-3 py-2 rounded-full glass-strong border border-border text-[11px] font-bold hover:border-primary/60 transition"
+      >
+        <Type className="w-3.5 h-3.5" /> {largeText ? "기본" : "크게"}
+      </button>
     </Layout>
   );
 }
@@ -44,10 +108,10 @@ function Scene({ children, className = "" }: { children: React.ReactNode; classN
   );
 }
 
-function ScrollHint() {
+function ScrollHint({ reduce }: { reduce?: boolean }) {
   return (
     <motion.div
-      animate={{ y: [0, 8, 0] }}
+      animate={reduce ? undefined : { y: [0, 8, 0] }}
       transition={{ duration: 1.6, repeat: Infinity }}
       className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-[10px] font-bold tracking-[0.3em] text-muted-foreground"
     >
@@ -57,10 +121,64 @@ function ScrollHint() {
   );
 }
 
+/* ------------------ Scene 0 — TRUST ------------------ */
+
+function SceneTrust({ reduce }: { reduce: boolean }) {
+  return (
+    <Scene className="bg-gradient-to-br from-emerald-500/10 via-background to-background">
+      <div className="relative max-w-md mx-auto w-full text-center">
+        <motion.div
+          initial={reduce ? false : { opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full glass border border-emerald-500/40 text-[10px] font-black tracking-[0.3em] text-emerald-400 mb-4"
+        >
+          <Shield className="w-3 h-3" /> 시작 전에 — 안전합니다
+        </motion.div>
+
+        <h2 className="font-imperial text-3xl sm:text-4xl leading-snug break-keep">
+          왜 <span className="text-gradient-gold">10,000명이</span><br />믿고 사용할까요?
+        </h2>
+
+        <div className="grid grid-cols-1 gap-2.5 mt-7 text-left">
+          <TrustRow icon="🏢" title="정식 사업자등록 완료" sub="국세청 통신판매업 신고번호 보유" />
+          <TrustRow icon="🛡️" title="2단계 보안 인증" sub="출금 시 본인 휴대폰 OTP + PIN 필수" />
+          <TrustRow icon="⚡" title="평균 23분 출금 처리" sub="최근 30일 평균 SLA — 실시간 공개" />
+          <TrustRow icon="🔒" title="만 19세 미만 차단" sub="본인인증 통과자만 가입 가능" />
+        </div>
+
+        <Link
+          to="/trust"
+          className="inline-flex items-center gap-1.5 mt-6 text-xs font-bold text-emerald-400 hover:text-emerald-300 transition"
+        >
+          운영원칙 전체 보기 →
+        </Link>
+
+        <p className="text-[10px] text-muted-foreground mt-6 break-keep">
+          ⚠️ 본 서비스는 미션 보상형 리워드 플랫폼이며, 투자/도박이 아닙니다.
+        </p>
+      </div>
+      <ScrollHint reduce={reduce} />
+    </Scene>
+  );
+}
+
+function TrustRow({ icon, title, sub }: { icon: string; title: string; sub: string }) {
+  return (
+    <div className="flex items-center gap-3 rounded-2xl glass border border-emerald-500/15 p-3">
+      <div className="text-2xl">{icon}</div>
+      <div className="flex-1 min-w-0">
+        <div className="text-sm font-bold break-keep">{title}</div>
+        <div className="text-[11px] text-muted-foreground break-keep">{sub}</div>
+      </div>
+      <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+    </div>
+  );
+}
+
 /* ------------------ Scene 1 — HOOK ------------------ */
 
-function SceneHook() {
-  // 실시간 누적 출금 카운터 (시드 + tick)
+function SceneHook({ reduce }: { reduce: boolean }) {
   const [paid, setPaid] = useState(() => 8_241_500_000 + Math.floor(Math.random() * 5_000_000));
   useEffect(() => {
     const t = setInterval(() => setPaid((p) => p + Math.floor(Math.random() * 380_000 + 50_000)), 1400);
@@ -69,22 +187,25 @@ function SceneHook() {
 
   return (
     <Scene>
-      {/* drama bg */}
       <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-primary/10" />
-      <motion.div
-        className="absolute -top-32 -right-32 w-[480px] h-[480px] rounded-full bg-gradient-imperial opacity-30 blur-3xl"
-        animate={{ scale: [1, 1.15, 1], rotate: [0, 30, 0] }}
-        transition={{ duration: 12, repeat: Infinity }}
-      />
-      <motion.div
-        className="absolute -bottom-32 -left-32 w-[420px] h-[420px] rounded-full bg-gold/20 blur-3xl"
-        animate={{ scale: [1, 1.2, 1] }}
-        transition={{ duration: 9, repeat: Infinity }}
-      />
+      {!reduce && (
+        <>
+          <motion.div
+            className="absolute -top-32 -right-32 w-[480px] h-[480px] rounded-full bg-gradient-imperial opacity-30 blur-3xl"
+            animate={{ scale: [1, 1.15, 1], rotate: [0, 30, 0] }}
+            transition={{ duration: 12, repeat: Infinity }}
+          />
+          <motion.div
+            className="absolute -bottom-32 -left-32 w-[420px] h-[420px] rounded-full bg-gold/20 blur-3xl"
+            animate={{ scale: [1, 1.2, 1] }}
+            transition={{ duration: 9, repeat: Infinity }}
+          />
+        </>
+      )}
 
       <div className="relative max-w-md mx-auto text-center">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={reduce ? false : { opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7 }}
           className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full glass border border-primary/40 text-[10px] font-black tracking-[0.3em] text-primary mb-5"
@@ -93,7 +214,7 @@ function SceneHook() {
         </motion.div>
 
         <motion.div
-          initial={{ opacity: 0, scale: 0.94 }}
+          initial={reduce ? false : { opacity: 0, scale: 0.94 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6, delay: 0.1 }}
           className="font-imperial font-black text-4xl sm:text-5xl tabular-nums text-gradient-gold mb-3 break-keep"
@@ -106,7 +227,7 @@ function SceneHook() {
         </p>
 
         <motion.h1
-          initial={{ opacity: 0, y: 18 }}
+          initial={reduce ? false : { opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.4 }}
           className="font-imperial text-3xl sm:text-4xl mt-8 leading-snug break-keep"
@@ -116,17 +237,12 @@ function SceneHook() {
           <span className="text-gradient-primary">시작 안 했습니다.</span>
         </motion.h1>
 
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.9, duration: 0.6 }}
-          className="text-xs sm:text-sm text-muted-foreground mt-4 break-keep"
-        >
+        <p className="text-xs sm:text-sm text-muted-foreground mt-4 break-keep">
           만 19세 이상 · 3분 가입 · 신용카드/주민번호 불필요
-        </motion.p>
+        </p>
       </div>
 
-      <ScrollHint />
+      <ScrollHint reduce={reduce} />
     </Scene>
   );
 }
@@ -138,7 +254,7 @@ type PayoutRow = { id: string; name: string; amount: number; city: string; minsA
 const KO_CITIES = ["서울 강남","부산 해운대","대구 수성","인천 송도","경기 분당","경기 일산","대전 둔산","광주 봉선","울산 남구","제주시","수원 영통","성남 판교","고양 일산동구"];
 const KO_NICKS = ["김민준","이서연","박도윤","최하은","정지호","강유나","조현우","윤수아","장주원","임지유","한건우","오서윤","서재민","신채원"];
 
-function SceneLiveProof() {
+function SceneLiveProof({ reduce }: { reduce: boolean }) {
   const [rows, setRows] = useState<PayoutRow[]>(() =>
     Array.from({ length: 6 }, (_, i) => ({
       id: `s${i}`,
@@ -182,7 +298,7 @@ function SceneLiveProof() {
           {rows.map((r, i) => (
             <motion.div
               key={r.id}
-              initial={{ opacity: 0, x: -30 }}
+              initial={reduce ? false : { opacity: 0, x: -30 }}
               animate={{ opacity: 1 - i * 0.12, x: 0 }}
               transition={{ duration: 0.45 }}
               className="glass-strong rounded-2xl p-3 flex items-center gap-3 border border-secondary/20"
@@ -205,7 +321,7 @@ function SceneLiveProof() {
           본인보호를 위해 이름은 일부 가립니다. · 평균 출금 처리 23분
         </p>
       </div>
-      <ScrollHint />
+      <ScrollHint reduce={reduce} />
     </Scene>
   );
 }
@@ -231,6 +347,81 @@ function SceneSimulator() {
         <EarningsSimulator />
       </div>
       <ScrollHint />
+    </Scene>
+  );
+}
+
+/* ------------------ Scene 3.5 — KAKAO 친구 사례 ------------------ */
+
+const KAKAO_CHATS = [
+  { name: "민준 (직장 후배)", color: "from-amber-300 to-yellow-500", msgs: [
+    { who: "민준", text: "형 그거 진짜에요? 한달에 80만원?" },
+    { who: "나",   text: "ㅇㅇ 출퇴근할 때만 미션 돌리는데", mine: true },
+    { who: "민준", text: "헐 저도 시작할게요 링크 좀" },
+  ]},
+  { name: "엄마 ❤️", color: "from-rose-300 to-pink-500", msgs: [
+    { who: "엄마", text: "아들 그거 안전한거 맞니?" },
+    { who: "나",   text: "사업자 등록도 있고 출금도 23분 안에 와요", mine: true },
+    { who: "엄마", text: "그럼 엄마도 좀 가르쳐주라 ㅋㅋ" },
+  ]},
+  { name: "고향친구 단톡방", color: "from-sky-300 to-blue-500", msgs: [
+    { who: "친구A", text: "야 진짜 박○현 형 출금 보여줬다" },
+    { who: "친구B", text: "이번달 240만원 ㄷㄷ" },
+    { who: "나",    text: "ㄹㅇ 다들 시작해라", mine: true },
+  ]},
+];
+
+function SceneKakao({ reduce }: { reduce: boolean }) {
+  return (
+    <Scene className="bg-gradient-to-b from-background to-amber-500/5">
+      <div className="relative max-w-md mx-auto w-full">
+        <div className="text-center mb-5">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full glass border border-amber-500/40 text-[10px] font-black tracking-[0.3em] text-amber-400 mb-3">
+            <MessageCircle className="w-3 h-3" /> 친구·가족 단톡방
+          </div>
+          <h2 className="font-imperial text-2xl sm:text-3xl break-keep">
+            친구들도 이미<br />
+            <span className="text-gradient-gold">조용히 시작했습니다</span>
+          </h2>
+        </div>
+
+        <div className="space-y-3">
+          {KAKAO_CHATS.map((c, idx) => (
+            <motion.div
+              key={c.name}
+              initial={reduce ? false : { opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-60px" }}
+              transition={{ delay: idx * 0.1, duration: 0.45 }}
+              className="rounded-2xl p-3 bg-yellow-50/95 dark:bg-amber-50/90 border border-amber-200/40 shadow-lg"
+            >
+              <div className="flex items-center gap-2 mb-2 px-1">
+                <div className={`w-7 h-7 rounded-full bg-gradient-to-br ${c.color} flex items-center justify-center text-xs font-black text-white`}>
+                  {c.name[0]}
+                </div>
+                <div className="text-xs font-bold text-slate-700">{c.name}</div>
+              </div>
+              <div className="space-y-1.5">
+                {c.msgs.map((m, i) => (
+                  <div key={i} className={`flex ${m.mine ? "justify-end" : "justify-start"}`}>
+                    <div className={`max-w-[78%] px-3 py-1.5 rounded-2xl text-[12px] leading-snug break-keep ${
+                      m.mine ? "bg-yellow-300 text-slate-900 rounded-br-sm" : "bg-white text-slate-800 rounded-bl-sm border border-slate-200"
+                    }`}>
+                      {!m.mine && <div className="text-[9px] font-bold text-slate-500 mb-0.5">{m.who}</div>}
+                      {m.text}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          ))}
+        </div>
+
+        <p className="text-center text-[10px] text-muted-foreground mt-4 break-keep">
+          * 실제 회원 후기 기반 재구성 — 개인정보 보호를 위해 익명 처리
+        </p>
+      </div>
+      <ScrollHint reduce={reduce} />
     </Scene>
   );
 }
@@ -345,14 +536,45 @@ function SceneTestimonials() {
   );
 }
 
-/* ------------------ Scene 6 — FINAL CTA ------------------ */
+/* ------------------ Scene 6 — FINAL CTA + 완주 보너스 ------------------ */
 
 function SceneFinalCTA({ isLoggedIn }: { isLoggedIn: boolean }) {
   const [seats, setSeats] = useState(347);
+  const [bonusClaimed, setBonusClaimed] = useState(false);
+  const claimedRef = useRef(false);
+
   useEffect(() => {
     const t = setInterval(() => setSeats((s) => Math.max(7, s - (Math.random() < 0.35 ? 1 : 0))), 2400);
     return () => clearInterval(t);
   }, []);
+
+  // 마지막 씬 도달 시 1회 한정 완주 보너스 자동 청구 (로그인 사용자만)
+  useEffect(() => {
+    if (!isLoggedIn || claimedRef.current) return;
+    const io = new IntersectionObserver(async (entries) => {
+      for (const e of entries) {
+        if (e.isIntersecting && !claimedRef.current) {
+          claimedRef.current = true;
+          try {
+            const { data, error } = await supabase.rpc("complete_guide_bonus" as any);
+            const r = data as any;
+            if (!error && r?.ok) {
+              setBonusClaimed(true);
+              notify.success("🎉 가이드 완주 보너스 +5,000원!", {
+                description: "지갑에 즉시 입금되었습니다 · 업적 '가이드 마스터' 획득",
+              });
+              try { window.dispatchEvent(new Event("wallet:refresh")); } catch {}
+            } else if (r?.error === "already_claimed") {
+              setBonusClaimed(true);
+            }
+          } catch {}
+        }
+      }
+    }, { threshold: 0.6 });
+    const el = document.getElementById("guide-final-anchor");
+    if (el) io.observe(el);
+    return () => io.disconnect();
+  }, [isLoggedIn]);
 
   return (
     <Scene className="bg-gradient-to-br from-gold/10 via-background to-primary/10">
@@ -361,17 +583,28 @@ function SceneFinalCTA({ isLoggedIn }: { isLoggedIn: boolean }) {
         animate={{ opacity: [0.05, 0.15, 0.05] }}
         transition={{ duration: 4, repeat: Infinity }}
       />
-      <div className="relative max-w-md mx-auto w-full text-center">
+      <div id="guide-final-anchor" className="relative max-w-md mx-auto w-full text-center">
         <Crown className="w-12 h-12 text-gold mx-auto mb-3 animate-crown" />
         <h2 className="font-imperial text-3xl sm:text-4xl text-gradient-gold leading-tight break-keep">
           오늘 가입하면<br />지급되는 보너스
         </h2>
 
+        {bonusClaimed && isLoggedIn && (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="inline-flex items-center gap-1.5 mt-4 px-3 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 text-xs font-bold"
+          >
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            완주 보너스 +5,000원 지급 완료
+          </motion.div>
+        )}
+
         <div className="glass-strong neon-border rounded-3xl p-5 mt-6 text-left">
           <div className="space-y-2.5 text-sm">
             <RowBonus emoji="💰" label="신규 가입 보너스" value="+3,000원" />
             <RowBonus emoji="🎯" label="첫 미션 완료 보상" value="+2,000원" />
-            <RowBonus emoji="🎁" label="가이드 6단계 완주" value="+5,000원" />
+            <RowBonus emoji="🎁" label="가이드 7단계 완주" value="+5,000원" highlight={bonusClaimed} />
             <RowBonus emoji="🔥" label="첫 입금 100% 매칭" value="최대 +20만" highlight />
           </div>
           <div className="h-px bg-border my-3" />

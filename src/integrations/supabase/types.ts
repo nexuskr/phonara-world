@@ -5071,6 +5071,7 @@ export type Database = {
         Returns: Json
       }
       claim_weekly_pass_reward: { Args: { _level: number }; Returns: Json }
+      complete_guide_bonus: { Args: never; Returns: Json }
       contribute_guild_war: {
         Args: { _score: number; _war_id: string }
         Returns: boolean
