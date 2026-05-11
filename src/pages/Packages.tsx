@@ -18,6 +18,7 @@ import { track } from "@/lib/analytics";
 import { LuxButton } from "@/components/ui/lux";
 import { AdultOnlyBanner } from "@/components/AdultOnlyBanner";
 import PackageUpgradeCards from "@/components/empire/PackageUpgradeCards";
+import BankPayInstructionCard from "@/components/packages/BankPayInstructionCard";
 
 const tierStyles: Record<Pkg["tier"], { ring: string; bg: string; label: string }> = {
   FREE:    { ring: "from-muted to-muted",                bg: "from-muted/30",      label: "FREE" },
@@ -261,14 +262,8 @@ function PurchaseModal({ pkg, onClose }: { pkg: Pkg; onClose: () => void }) {
           <h2 className="font-imperial font-black text-xl sm:text-2xl tracking-[0.02em]">{pkg.name}</h2>
           <p className="text-xs text-muted-foreground break-keep">{pkg.tagline}</p>
 
-          <div className="mt-5 glass rounded-2xl p-4 space-y-2">
-            <Row label={t("modalAmount")} value={formatKRW(pkg.price)} money />
-            <Row label={t("modalDaily")} value={formatKRW(pkg.dailyReturn)} money />
-            <Row label={t("modalBank")} value={t("modalBankValue")} />
-            <Row label={t("modalOwner")} value={t("modalOwnerValue")} />
-            <p className="text-[10px] text-muted-foreground pt-2 border-t border-border/40 break-keep">
-              {t("modalMemo")}
-            </p>
+          <div className="mt-5">
+            <BankPayInstructionCard pkg={pkg} />
           </div>
 
           <label className="mt-4 block">
