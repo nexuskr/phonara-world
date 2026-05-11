@@ -24,6 +24,7 @@ export default function AttendanceCard() {
     if (claimed || busy) return;
     setBusy(true);
     try {
+      await assertRateLimit(RL_MISSION.scope, RL_MISSION.max);
       // Server-authoritative attendance claim
       const { data, error } = await supabase.rpc("claim_daily_attendance", { user_id: u.id });
       if (error) throw error;
