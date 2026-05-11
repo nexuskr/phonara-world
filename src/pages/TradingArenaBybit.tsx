@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useSyncExternalStore, useCallback, lazy, Suspense } from "react";
 import { NavLink } from "react-router-dom";
-import { Swords, Flame, Wallet as WalletIcon } from "lucide-react";
+import { Swords, Flame, Wallet as WalletIcon, Crown } from "lucide-react";
 import Layout from "@/components/Layout";
 import HubTabs from "@/components/HubTabs";
 import { useRequireAuth } from "@/hooks/use-require-auth";
@@ -136,11 +136,12 @@ export default function TradingArenaBybit() {
         const pos = openPaper({ symbol, side: args.side, leverage: args.leverage, margin: args.margin, entry });
         if (!pos) {
           notify.error("주문 실패", { description: "Paper 잔액 부족" });
+          try { navigator.vibrate?.([10, 40, 10]); } catch { /* noop */ }
         } else {
           notify.success(`${args.side.toUpperCase()} ${args.leverage}× 개시`, {
             description: `${symbol} @ ${entry.toFixed(4)} · ${args.margin} USDT`,
           });
-          
+          try { navigator.vibrate?.(15); } catch { /* noop */ }
         }
       } else {
         if (realAvailable <= 0) {
@@ -164,11 +165,12 @@ export default function TradingArenaBybit() {
         });
         if ("error" in r) {
           notify.error("주문 실패", { description: r.error });
+          try { navigator.vibrate?.([10, 40, 10]); } catch { /* noop */ }
         } else {
           notify.success(`REAL ${args.side.toUpperCase()} ${args.leverage}× 체결`, {
             description: `${symbol} @ ${price.toFixed(4)}`,
           });
-          
+          try { navigator.vibrate?.(15); } catch { /* noop */ }
         }
       }
     } finally {
@@ -177,9 +179,26 @@ export default function TradingArenaBybit() {
   }, [mode, price, symbol, openPaper, openReal, realAvailable]);
 
   // OpenPositionsLive adapters
-  const positions = mode === "paper" ? adaptPaperToLive(paperPositions) : realPositions;
-  const history = mode === "paper" ? adaptPaperHistory(paperHistory.slice(0, 50)) : realHistory.slice(0, 50);
+  const paperLivePositions = useMemo(() => adaptPaperToLive(paperPositions), [paperPositions]);
+  const paperLiveHistory = useMemo(() => adaptPaperHistory(paperHistory.slice(0, 50)), [paperHistory]);
+  const positions = mode === "paper" ? paperLivePositions : realPositions;
+  const history = mode === "paper" ? paperLiveHistory : realHistory.slice(0, 50);
   const unit = mode === "paper" ? "USDT" : "KRW";
+
+  // Desktop keyboard shortcut: Esc = close all open positions (confirm).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const tgt = e.target as HTMLElement | null;
+      if (tgt && (tgt.tagName === "INPUT" || tgt.tagName === "TEXTAREA" || tgt.isContentEditable)) return;
+      if (e.key === "Escape" && positions.length > 0) {
+        if (window.confirm(`모든 포지션(${positions.length}건)을 청산합니다.`)) {
+          positions.forEach((p) => { void handleClose(p.id, prices[p.symbol] ?? p.entry); });
+        }
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [positions, prices]);
 
   const handleClose = useCallback(async (id: string, mark: number) => {
     if (mode === "paper") {
@@ -225,8 +244,17 @@ export default function TradingArenaBybit() {
     <Layout>
       <HubTabs hub="earn" />
       <div className="container pt-3 pb-10 animate-fade-in space-y-3">
-        {/* Top: Mode switcher between bybit-grade vs army */}
-        <div className="flex items-center justify-between gap-2 flex-wrap">
+        {/* Title — matches ArenaHeader typography for design consistency */}
+        <header className="flex items-end justify-between gap-3 flex-wrap">
+          <div>
+            <h1 className="font-imperial text-2xl sm:text-3xl tracking-[0.18em] text-gradient-imperial flex items-center gap-2">
+              <Crown className="w-5 h-5 text-gold" /> 실전 트레이딩 아레나
+            </h1>
+            <p className="text-[11px] text-muted-foreground mt-0.5 tracking-wide">
+              바이비트급 차트 · 25 페어 · 최대 100× · Paper ↔ Real
+              <span className="hidden md:inline text-muted-foreground/60"> · Esc로 전체 청산</span>
+            </p>
+          </div>
           <div className="inline-flex gap-1.5 glass rounded-full p-1 border border-primary/30">
             <button
               type="button"
@@ -242,26 +270,37 @@ export default function TradingArenaBybit() {
               <Swords className="w-3.5 h-3.5" /> 군대 배틀
             </NavLink>
           </div>
-          {mode === "real" && realAvailable <= 0 && (
-            <NavLink
-              to="/wallet?tab=deposit"
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-black bg-gradient-imperial text-primary-foreground glow-imperial press"
-            >
-              <WalletIcon className="w-3.5 h-3.5" /> 지금 충전하기
-            </NavLink>
-          )}
-        </div>
+        </header>
 
         {/* Disclaimer banner (REAL only) */}
         {mode === "real" && <RedDisclaimerBanner />}
 
-        {/* Mode toggle paper ↔ real */}
-        <ModeToggle
-          mode={mode}
-          onChange={setMode}
-          paperBalance={paperCredit}
-          realAvailable={realAvailable}
-        />
+        {/* Account mode label + toggle (paper ↔ real) */}
+        <div className="space-y-1.5">
+          <div className="px-1 text-[10px] font-black tracking-[0.2em] text-muted-foreground">
+            계좌 모드 · ACCOUNT
+          </div>
+          <ModeToggle
+            mode={mode}
+            onChange={setMode}
+            paperBalance={paperCredit}
+            realAvailable={realAvailable}
+          />
+        </div>
+
+        {/* Full-width deposit CTA when REAL balance is empty */}
+        {mode === "real" && realAvailable <= 0 && (
+          <NavLink
+            to="/wallet?tab=deposit"
+            className="flex items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-gradient-imperial text-primary-foreground glow-imperial press border border-primary/40"
+          >
+            <span className="inline-flex items-center gap-2 font-black tracking-wide text-sm">
+              <WalletIcon className="w-4 h-4" /> REAL 잔액이 0입니다 · 지금 충전하세요
+            </span>
+            <span className="text-xs font-bold opacity-90">충전하기 →</span>
+          </NavLink>
+        )}
+
 
         {/* Chart + Order grid */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-3">
