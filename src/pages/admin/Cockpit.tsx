@@ -4,6 +4,7 @@ import Layout from "@/components/Layout";
 import { useRequireAdmin } from "@/hooks/use-require-auth";
 import { LoadingList } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
+import CronJobsCard from "@/components/admin/CronJobsCard";
 import { Link } from "react-router-dom";
 import {
   Users, TrendingUp, ShieldCheck, AlertTriangle, Crown,
@@ -244,8 +245,9 @@ export default function AdminCockpit() {
                 </Link>
               ))}
             </section>
-          </>
-        )}
+
+            <CronJobsCard />
+
       </div>
     </Layout>
   );
