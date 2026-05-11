@@ -24,6 +24,7 @@ type BadgeDef = {
 import ReferralCard from "@/components/ReferralCard";
 import NotificationPrefsCard from "@/components/profile/NotificationPrefsCard";
 import PushNotificationCard from "@/components/settings/PushNotificationCard";
+import LineConnectCard from "@/components/settings/LineConnectCard";
 import CoinMasterLounge from "@/components/CoinMasterLounge";
 
 export default function Profile() {
