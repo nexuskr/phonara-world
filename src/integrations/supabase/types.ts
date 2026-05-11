@@ -1493,6 +1493,7 @@ export type Database = {
           description: string | null
           emblem: string
           id: string
+          is_seed: boolean
           leader_id: string
           max_members: number
           member_count: number
@@ -1505,6 +1506,7 @@ export type Database = {
           description?: string | null
           emblem?: string
           id?: string
+          is_seed?: boolean
           leader_id: string
           max_members?: number
           member_count?: number
@@ -1517,6 +1519,7 @@ export type Database = {
           description?: string | null
           emblem?: string
           id?: string
+          is_seed?: boolean
           leader_id?: string
           max_members?: number
           member_count?: number

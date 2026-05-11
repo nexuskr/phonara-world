@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Crown, Sword, Shield, Users, Send, Plus, Trophy, Flame } from "lucide-react";
+import { Crown, Sword, Shield, Users, Send, Plus, Trophy, Flame, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { Card } from "@/components/ui/card";
@@ -11,6 +11,7 @@ import { LoadingList } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
 import { notify } from "@/lib/notify";
 import Layout from "@/components/Layout";
+import GuildActivityTicker from "@/components/lounge/GuildActivityTicker";
 
 type Guild = {
   id: string;
@@ -21,6 +22,7 @@ type Guild = {
   max_members: number;
   description: string | null;
   leader_id: string;
+  is_seed?: boolean;
 };
 
 type ChatMsg = { id: string; user_id: string; message: string; created_at: string };
@@ -57,16 +59,21 @@ export default function Lounge() {
   async function loadAll() {
     setLoading(true);
     try {
-      const { data: lb } = await supabase.rpc("get_guild_leaderboard", { _limit: 20 });
-      const lbList: Guild[] = (lb ?? []).map((r: any) => ({
-        id: r.guild_id,
+      const { data: lb } = await supabase
+        .from("guilds")
+        .select("id, name, emblem, total_power, member_count, max_members, description, leader_id, is_seed")
+        .order("total_power", { ascending: false })
+        .limit(30);
+      const lbList: Guild[] = ((lb ?? []) as any[]).map((r) => ({
+        id: r.id,
         name: r.name,
         emblem: r.emblem,
         total_power: Number(r.total_power),
         member_count: r.member_count,
-        max_members: 30,
-        description: null,
-        leader_id: "",
+        max_members: r.max_members,
+        description: r.description,
+        leader_id: r.leader_id,
+        is_seed: !!r.is_seed,
       }));
       setLeaderboard(lbList);
 
@@ -349,29 +356,36 @@ export default function Lounge() {
                   )}
                 </>
               ) : (
-                <Card className="p-8 border-primary/30">
-                  <h3 className="text-xl font-bold mb-2">🏰 새 길드 창설</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    당신만의 제국을 시작하세요. 30명까지 입성 가능.
-                  </p>
-                  <div className="flex gap-2 mb-3">
-                    <Input
-                      placeholder="이모지"
-                      value={newEmblem}
-                      onChange={(e) => setNewEmblem(e.target.value.slice(0, 2))}
-                      className="w-20 text-center text-2xl"
-                    />
-                    <Input
-                      placeholder="길드 이름 (2-30자)"
-                      value={newName}
-                      onChange={(e) => setNewName(e.target.value)}
-                      maxLength={30}
-                    />
-                  </div>
-                  <Button onClick={handleCreate} className="w-full">
-                    <Plus className="h-4 w-4 mr-1" /> 창설하기
-                  </Button>
-                </Card>
+                <>
+                  <Card className="p-6 border-primary/30 bg-gradient-to-br from-card to-primary/5">
+                    <div className="flex items-center gap-2 text-[10px] font-black tracking-[0.3em] text-primary mb-2">
+                      <Flame className="h-3 w-3 animate-pulse" /> 지금 1만 명+ 활동 중
+                    </div>
+                    <h3 className="text-xl font-bold mb-2">🏰 당신만의 길드를 창설하세요</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      이미 50개 길드가 한반도를 분할 점령했습니다.<br />
+                      늦기 전에 깃발을 꽂으세요. 길드장은 매주 분배금 +30%.
+                    </p>
+                    <div className="flex gap-2 mb-3">
+                      <Input
+                        placeholder="이모지"
+                        value={newEmblem}
+                        onChange={(e) => setNewEmblem(e.target.value.slice(0, 2))}
+                        className="w-20 text-center text-2xl"
+                      />
+                      <Input
+                        placeholder="길드 이름 (예: 서초빅스타)"
+                        value={newName}
+                        onChange={(e) => setNewName(e.target.value)}
+                        maxLength={30}
+                      />
+                    </div>
+                    <Button onClick={handleCreate} className="w-full">
+                      <Plus className="h-4 w-4 mr-1" /> 길드 창설하기
+                    </Button>
+                  </Card>
+                  <GuildActivityTicker />
+                </>
               )}
             </div>
 
@@ -415,12 +429,17 @@ export default function Lounge() {
                             ⚔️ {g.total_power.toLocaleString()} · {g.member_count}명
                           </div>
                         </div>
-                        {!myGuild && g.member_count < g.max_members && (
+                        {!myGuild && !g.is_seed && g.member_count < g.max_members && (
                           <Button size="sm" variant="ghost" onClick={() => handleJoin(g.id)}>
                             가입
                           </Button>
                         )}
-                        {myGuild && myGuild.id !== g.id && (
+                        {!myGuild && g.is_seed && (
+                          <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground px-2 py-1 rounded-md bg-muted/50">
+                            <Eye className="h-3 w-3" /> 관전
+                          </span>
+                        )}
+                        {myGuild && myGuild.id !== g.id && !g.is_seed && (
                           <Button
                             size="sm"
                             variant="ghost"
