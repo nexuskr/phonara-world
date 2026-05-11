@@ -1,9 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { motion, useScroll, useTransform } from "framer-motion";
-import { ChevronDown, Flame, Crown, ShieldCheck, TrendingUp, Sparkles, ArrowRight, Wallet as WalletIcon, Clock, Users } from "lucide-react";
+import { motion } from "framer-motion";
+import { ChevronDown, Flame, Crown, TrendingUp, ArrowRight, Clock, Users } from "lucide-react";
 import Layout from "@/components/Layout";
-import { supabase } from "@/integrations/supabase/client";
 import { useDB, formatKRW } from "@/lib/store";
 import EarningsSimulator from "@/components/guide/EarningsSimulator";
 
