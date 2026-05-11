@@ -5910,6 +5910,7 @@ export type Database = {
           read_ct: number
         }[]
       }
+      recompute_daily_whale_leaderboard: { Args: never; Returns: undefined }
       record_chaos_run:
         | {
             Args: {
