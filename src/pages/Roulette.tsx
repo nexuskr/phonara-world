@@ -84,6 +84,7 @@ export default function Roulette() {
         toast({ title: t("tryAgain"), description: res.label });
       }
       loadAll();
+      import("@/lib/walletRefresh").then(m => m.refreshWallet());
     }, 4200);
   }
 
