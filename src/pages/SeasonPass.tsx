@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Layout from "@/components/Layout";
 import { supabase } from "@/integrations/supabase/client";
+import { assertRateLimit, RL_WALLET } from "@/lib/rateLimit";
 import { useDB, formatKRW } from "@/lib/store";
 import { toast } from "@/hooks/use-toast";
 import { Crown, Gift, Lock, Sparkles } from "lucide-react";
