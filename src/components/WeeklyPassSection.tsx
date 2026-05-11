@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { assertRateLimit, RL_WALLET } from "@/lib/rateLimit";
 import { Star, Crown, Zap, Lock, CheckCircle2, Loader2 } from "lucide-react";
 import { notify } from "@/lib/notify";
 import { LoadingCard } from "@/components/ui/loading-state";
