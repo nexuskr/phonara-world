@@ -2789,7 +2789,7 @@ const syncDocument = (lng: string) => {
   setMeta('meta[name="description"]', "content", m.description);
   setMeta('link[rel="manifest"]', "href", m.manifest);
   setMeta('meta[name="apple-mobile-web-app-title"]', "content", m.appleTitle);
-  setMeta('meta[property="og:locale"]', "content", code === "en" ? "en_US" : "ko_KR");
+  setMeta('meta[property="og:locale"]', "content", code === "en" ? "en_US" : code === "ja" ? "ja_JP" : "ko_KR");
   setMeta('meta[property="og:title"]', "content", m.title);
   setMeta('meta[property="og:description"]', "content", m.description);
   setMeta('meta[name="twitter:title"]', "content", m.title);
