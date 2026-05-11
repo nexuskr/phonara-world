@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Flame, Zap, Coins, Timer, CheckCircle2, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { assertRateLimit, RL_WALLET } from "@/lib/rateLimit";
 import { notify } from "@/lib/notify";
 import { formatKRW } from "@/lib/store";
 
