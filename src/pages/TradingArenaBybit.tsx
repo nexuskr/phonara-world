@@ -177,9 +177,39 @@ export default function TradingArenaBybit() {
   }, [mode, price, symbol, openPaper, openReal, realAvailable]);
 
   // OpenPositionsLive adapters
-  const positions = mode === "paper" ? adaptPaperToLive(paperPositions) : realPositions;
-  const history = mode === "paper" ? adaptPaperHistory(paperHistory.slice(0, 50)) : realHistory.slice(0, 50);
+  const paperLivePositions = useMemo(() => adaptPaperToLive(paperPositions), [paperPositions]);
+  const paperLiveHistory = useMemo(() => adaptPaperHistory(paperHistory.slice(0, 50)), [paperHistory]);
+  const positions = mode === "paper" ? paperLivePositions : realPositions;
+  const history = mode === "paper" ? paperLiveHistory : realHistory.slice(0, 50);
   const unit = mode === "paper" ? "USDT" : "KRW";
+
+  // Haptic helper (mobile only, opt-in)
+  const haptic = useCallback((pattern: number | number[] = 15) => {
+    try { navigator.vibrate?.(pattern); } catch { /* noop */ }
+  }, []);
+
+  // Desktop keyboard shortcuts: B=long focus, S=short focus, Esc=close all
+  const longBtnRef = useRef<HTMLDivElement>(null);
+  const shortBtnRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const tgt = e.target as HTMLElement | null;
+      if (tgt && (tgt.tagName === "INPUT" || tgt.tagName === "TEXTAREA" || (tgt as HTMLElement).isContentEditable)) return;
+      if (e.key === "b" || e.key === "B") {
+        const btn = longBtnRef.current?.querySelector<HTMLButtonElement>("button");
+        btn?.focus();
+      } else if (e.key === "s" || e.key === "S") {
+        const btn = shortBtnRef.current?.querySelector<HTMLButtonElement>("button");
+        btn?.focus();
+      } else if (e.key === "Escape" && positions.length > 0) {
+        if (window.confirm(`모든 포지션(${positions.length}건)을 청산합니다.`)) {
+          positions.forEach((p) => { void handleClose(p.id, prices[p.symbol] ?? p.entry); });
+        }
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [positions, prices]);
 
   const handleClose = useCallback(async (id: string, mark: number) => {
     if (mode === "paper") {
