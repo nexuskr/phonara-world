@@ -2738,8 +2738,8 @@ i18n
   .use(initReactI18next)
   .init({
     resources,
-    fallbackLng: "ko",
-    supportedLngs: ["ko", "en"],
+    fallbackLng: { ja: ["en", "ko"], default: ["ko"] },
+    supportedLngs: ["ko", "en", "ja"],
     ns: ["common", "nav", "topbar", "hubs", "auth", "onboarding", "landing", "wallet", "walletToast", "referral", "referralPage", "dmComposer", "ugc", "withdrawQueue", "live", "jackpot", "faq", "convert", "dashboard", "missions", "admin", "support", "secureWallet", "offline", "forgot", "reset", "completeProfile", "unsubscribe", "status", "packages", "profile", "trust", "settlements", "lang", "guide", "roulette", "seasonPass", "quests", "achievements", "hof", "empire", "aibot"],
     defaultNS: "common",
     interpolation: { escapeValue: false },
@@ -2766,6 +2766,12 @@ const META = {
     manifest: "/manifest.en.webmanifest",
     appleTitle: "Phonara",
   },
+  ja: {
+    title: "Phonara — 王座はワンクリックから始まる",
+    description: "PHONARA Empire — 帝国ゴールド精算プラットフォーム。創設メンバー限定、長期ゴールド階層。",
+    manifest: "/manifest.en.webmanifest",
+    appleTitle: "Phonara",
+  },
 } as const;
 
 const setMeta = (sel: string, attr: string, val: string) => {
@@ -2775,7 +2781,8 @@ const setMeta = (sel: string, attr: string, val: string) => {
 
 const syncDocument = (lng: string) => {
   if (typeof document === "undefined") return;
-  const code = (lng || "ko").split("-")[0] === "en" ? "en" : "ko";
+  const base = (lng || "ko").split("-")[0];
+  const code: "ko" | "en" | "ja" = base === "en" ? "en" : base === "ja" ? "ja" : "ko";
   const m = META[code];
   document.documentElement.lang = code;
   document.title = m.title;
