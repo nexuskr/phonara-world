@@ -162,10 +162,44 @@ export default function Lounge() {
   }
 
   async function handleLeave() {
-    if (!confirm("길드를 떠나시겠어요?")) return;
+    const isLeader = myGuild?.leader_id === user?.id;
+    const msg = isLeader
+      ? "길드 마스터가 떠나면 기여도 1위 멤버에게 리더십이 승계됩니다.\n(혼자라면 길드가 해체됩니다)\n\n정말 떠나시겠어요?"
+      : "길드를 떠나시겠어요?";
+    if (!confirm(msg)) return;
     const { error } = await supabase.rpc("leave_guild");
-    if (error) return notify.error(`탈퇴 실패: ${error.message}`);
-    notify.success("길드를 떠났습니다");
+    if (error) {
+      const map: Record<string, string> = {
+        not_in_guild: "가입한 길드가 없습니다",
+        auth_required: "로그인이 필요합니다",
+      };
+      return notify.error(map[error.message] ?? `탈퇴 실패: ${error.message}`);
+    }
+    notify.success(isLeader ? "길드를 떠났습니다 (리더십 승계 완료)" : "길드를 떠났습니다");
+    setMyGuild(null);
+    loadAll();
+  }
+
+  async function handleDeleteGuild() {
+    if (!myGuild) return;
+    const confirmName = window.prompt(
+      `⚠️ 길드를 완전히 해체합니다.\n\n채팅, 멤버, 전쟁 기록이 모두 삭제됩니다.\n되돌릴 수 없습니다.\n\n확인을 위해 길드명을 입력하세요:\n"${myGuild.name}"`,
+    );
+    if (confirmName === null) return;
+    if (confirmName.trim() !== myGuild.name) {
+      return notify.error("길드명이 일치하지 않아 해체가 취소되었습니다");
+    }
+    const { error } = await supabase.rpc("delete_guild");
+    if (error) {
+      const map: Record<string, string> = {
+        not_leader: "길드 마스터만 해체할 수 있습니다",
+        active_war_in_progress: "진행 중인 전쟁이 끝난 뒤 해체할 수 있습니다",
+        auth_required: "로그인이 필요합니다",
+      };
+      return notify.error(map[error.message] ?? `해체 실패: ${error.message}`);
+    }
+    notify.success("길드가 해체되었습니다");
+    setMyGuild(null);
     loadAll();
   }
 
