@@ -49,11 +49,15 @@ export default function CompleteProfile() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error(t("noSession"));
+      const rawProvider = user.app_metadata?.provider as string | undefined;
+      // 매직링크 사용자는 supabase provider가 "email"로 표시되지만 비밀번호 회원가입과
+      // 구분이 필요하므로 별도 라벨("magic")을 저장한다.
+      const provider = rawProvider === "email" ? "magic" : (rawProvider || "social");
       const { error } = await supabase.from("profiles").update({
         real_name: form.realName, phone: form.phone, birth_date: form.birth,
         terms_agreed_at: new Date().toISOString(), age_confirmed: true,
         profile_completed: true,
-        auth_provider: user.app_metadata?.provider || "social",
+        auth_provider: provider,
       }).eq("id", user.id);
       if (error) throw error;
       toast({ title: t("doneTitle"), description: t("doneDesc") });
