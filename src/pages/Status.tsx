@@ -81,7 +81,7 @@ export default function Status() {
         )}
 
         <div className="mt-10 text-center text-xs text-muted-foreground break-keep">
-          {t("detailHint1")} <Link to="/trust" className="text-primary underline">/trust</Link>{t("detailHint2")}
+          {t("detailHint1")}{t("detailHint2")}
         </div>
       </main>
     </div>
