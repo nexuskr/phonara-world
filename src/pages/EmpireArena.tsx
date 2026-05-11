@@ -130,18 +130,29 @@ export default function EmpireArena() {
   }, []);
 
   if (!user) return null;
+  const { prices } = useBybitTicker();
+  const btcPrice = prices["BTCUSDT"] ?? 0;
 
   return (
     <Layout>
       <HubTabs hub="empire" />
+      <ArenaTutorialOverlay />
       <div className="container pt-6 pb-10 animate-fade-in">
-        <div className="mb-4">
-          <h1 className="font-imperial text-2xl sm:text-3xl tracking-[0.18em] text-gradient-imperial flex items-center gap-2 break-keep">
-            <Crown className="w-5 h-5 text-gold" /> 제국 전투 아레나
-          </h1>
-          <p className="text-xs text-muted-foreground mt-1 break-keep">
-            Long = 영토 정복 · Short = 적국 약탈 · 매 전투가 한반도 영토를 바꿉니다
-          </p>
+        <div className="mb-4 flex items-start justify-between gap-3">
+          <div>
+            <h1 className="font-imperial text-2xl sm:text-3xl tracking-[0.18em] text-gradient-imperial flex items-center gap-2 break-keep">
+              <Crown className="w-5 h-5 text-gold" /> 제국 전투 아레나
+            </h1>
+            <p className="text-xs text-muted-foreground mt-1 break-keep">
+              비트코인이 오르면 정복, 내리면 약탈 — 매 전투가 한반도 영토를 바꿉니다.
+            </p>
+          </div>
+          {btcPrice > 0 && (
+            <div className="shrink-0 glass rounded-xl px-3 py-2 text-right">
+              <div className="text-[9px] text-muted-foreground font-bold tracking-widest">BTC LIVE</div>
+              <div className="font-mono tabular-nums font-black text-sm">${btcPrice.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
+            </div>
+          )}
         </div>
 
         {/* KPI */}
