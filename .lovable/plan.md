@@ -1,108 +1,114 @@
-# Phase 5 — 네트워크 효과 활성화 (모델 변경 0, 백엔드 변경 0)
 
-## 핵심 인사이트
+# /guide?tab=starter — Empire Cinematic V2
 
-`guilds`, `guild_wars`, `referrals`, `empire_battles` 테이블이 이미 존재하지만 `/guide?tab=starter` 7씬과 핵심 동선에서 **거의 보이지 않음**. "내가 데려온 사람이 많을수록 내 수익도 커진다"가 사용자 눈에 1초도 들어오지 않는 게 네트워크 효과 부재의 진짜 원인.
+현재 상태: 10씬(`FomoScrollHero` → `SceneProblem/Solution/Proof/Persona/NetworkEffect/GuildWar/EmpireMap/Package` → `FomoFinalCTA`), `EmpireFX`(GoldNebulaBg/ParticleField/AnimatedCounter/SimBadge/senior 토큰) 적용 완료, Magic Link CTA, 70대 친화 22px+ 본문/64px+ 버튼, scroll-snap.
 
-해결책: **기존 자산을 surface만 한다.** DB·RPC·결제·게임 로직 0변경.
+V2의 목표는 "이미 좋은 페이지"를 **3배 더 영화처럼** 만드는 것 — 새 씬은 추가하지 않고, 모든 씬의 모션·층감(layered depth)·임페리얼 인장을 강화한다.
 
-## 30년 독보 플랫폼이 되기 위한 4겹 해자
+---
 
-D 전략 위에 다음을 시각적으로 깔면 복제 불가능한 layered moat가 만들어진다:
+## 1. EmpireFX 강화 (모든 씬 공통)
 
-1. **Referral Empire Tree** — 내 추천이 늘수록 영구 수익 (이미 `referral_earnings` 존재)
-2. **Guild War Seasonal Ranking** — 길드 단위 경쟁 → 멤버 모집 압력 (이미 `guild_wars` 존재)
-3. **Public Empire Map** — 길드별 영토 점령 시각화 → 사회적 지위 (이미 `empire_map_progress` 존재)
-4. **UGC Brag Card** — 출금/승급/길드전 우승 자동 공유 카드 (현재 `ShareBar` 부분 활용)
+`src/components/guide/EmpireFX.tsx`에 새 프리미티브 추가:
 
-## 작업 범위 (프론트엔드만)
+- **`GoldOrbitField`** — 캔버스 기반 황금 입자가 곡선 궤도(orbit)를 도는 0.6 FPS 저전력 효과. 현재 `ParticleField`(랜덤 점멸)보다 한 단계 위. `prefers-reduced-motion` 시 정적 PNG 폴백.
+- **`ImperialSeal`** — SVG 골드 인장(원형 + 왕관 + "EMPIRE · EST. 2024" 각인), 호버/뷰포트 진입 시 회전 + 빛 번짐. Proof 씬의 "운영자 무손실 황금 인장"으로 사용.
+- **`ParallaxLayer`** — `useScroll` + `useTransform` 기반 컴포넌트. 씬 내부에서 배경/중경/전경 3겹 시차 스크롤.
+- **`CinemaTransition`** — 씬 사이에 들어가는 12px 높이의 황금 leak/glow strip. snap 경계가 영화 컷처럼 느껴지게.
+- **`GoldVignette`** — 화면 코너 4개 골드 글로우 SVG. 모든 씬 최상단에 1회만.
+- 기존 `GoldNebulaBg`는 그라데이션을 한 단계 더 짙게 (gold/30 → gold/45, 추가 라디얼 2개).
 
-### 신규 컴포넌트 (4개)
-- `src/components/guide/SceneNetworkEffect.tsx` — `/guide?tab=starter` 씬 5.5에 삽입
-  - 좌측: "1명 데려오면 평생 5%" 카운터
-  - 우측: 실시간 추천 트리 SVG (3~4 depth, 노드가 빛나며 코인이 흐르는 애니메이션)
-  - 하단 라이브 라인: "지금 ○○님이 추천 보상 +12,000원 수령" (SIM 배지 필수, `viral_settlement_log` 익명 데이터 사용)
-- `src/components/guide/SceneGuildWar.tsx` — 씬 5.6
-  - 현재 진행 중 길드전 TOP 3 카드 (`guilds` + `guild_war_contributions` 집계)
-  - 1위 길드 상금 풀 카운터 (입금이 늘수록 폭증) → "길드 가입 = 분배금" 직관 전달
-  - "지금 길드 찾기" CTA → `/lounge?tab=guild`
-- `src/components/guide/SceneEmpireMap.tsx` — 씬 5.7
-  - SVG 한반도/세계지도 위 길드 영토 점령 시각화 (gold/cyan/purple)
-  - "당신의 깃발을 꽂으세요" 카피
-- `src/components/share/EmpireBragCard.tsx` — html-to-image 기반 OG 카드 자동 생성
-  - 출금 완료 / 군대 배틀 승리 / 길드전 기여 TOP 시점에 자동 트리거되는 공유 카드
-  - 카톡·X·페북 공유 버튼 (이미 있는 `ShareBar` 확장)
+토큰만 사용(`--gold`, `--imperial`, `--destructive`, `--secondary`). 1픽셀 불변.
 
-### 수정 파일 (5개)
-- `src/pages/Guide.tsx` — starter 모드 씬 카운트 7→10으로 확장, 진행 도트도 동기화
-- `src/pages/Referral.tsx` — 상단에 Referral Empire Tree 시각화 추가 (현재 텍스트 위주)
-- `src/pages/Lounge.tsx` — 길드 탭 진입 시 길드전 상금 풀 라이브 카운터 prominent
-- `src/components/onboarding/DepositCTA.tsx` — 입금 직후 BragCard 자동 노출 옵션 (옵트인)
-- `src/components/missions/PaymentStickyCTA.tsx` — "추천 코드 입력하면 +5,000원" 미니 칩 추가 (referral capture 극대화)
+## 2. 씬별 V2 강화
 
-### 백엔드 — 0변경
-- 기존 `guilds`/`guild_wars`/`guild_war_contributions`/`referrals`/`referral_earnings`/`empire_map_progress`/`viral_settlement_log` RPC와 RLS 그대로 사용
-- 새 RLS 정책·트리거·마이그레이션 없음
-- AdultGate / Magic Link / AAL2 / OTP / withdrawal 로직 1픽셀 미변경
+### 씬1 HERO (`FomoScrollHero.tsx`)
+- 타이틀을 화면 폭의 88%까지 키우고 `font-imperial` + 황금 그라데이션 위에 **얇은 골드 stroke + 큰 drop-shadow**.
+- "오늘 누적 출금" 박스를 **3카드 라이브 대시보드**로 확장: 동시접속 / 오늘 누적 출금 / 평균 출금시간(`LivePayoutSlaBadge`). 각 카드 `glass-strong` + 골드 hairline.
+- 배경에 `GoldOrbitField` + `ParallaxLayer`로 골드 행성 SVG(느린 회전).
+- CTA 버튼에 sheen 애니메이션을 **2.4s 주기 골드 wave**로 교체, 버튼 그림자를 `glow-gold-xl`로.
 
-## 씬 5.5 (NETWORK EFFECT) 상세
+### 씬2 PROBLEM
+- 3개 통계 카드를 **세로 카운트업 + 가로 빨간 임팩트 라인**(SVG `path` length 애니메이션)으로 강화.
+- 시니어 친화 폰트 사이즈를 기본 22px → **24px**로 한 단계 더 올린 분기(`senior.bodyXl`).
+- 카드 진입 시 살짝 흔들리는 `shake` 키프레임(reduce-motion 시 생략).
 
+### 씬3 SOLUTION (60초 군대 배틀)
+- 현재 SoldierRow를 **15→25명**으로 확대하고, 진격 애니메이션을 `motion.g` keyframe으로 좌→우 슬라이드.
+- 승리 시점에 **골드 임펄스 펄스**(원형 ring 2겹 expand) + "내 군대 승리" 자막 카드.
+- 상단에 ↑/↓ 두 거대 버튼 데모(실제 동작 X, 단순 시각 데모).
+
+### 씬4 PROOF
+- `PayoutTicker`를 풀너비 + 위/아래 **골드 페이드 마스크**로 둘러싸 영화 자막처럼.
+- `LivePayoutSlaBadge` 옆에 새 **`ImperialSeal`** 컴포넌트 배치 — "운영자 무손실 · 출금 100% 보장" 각인. 클릭 시 약관 페이지(`/legal/escrow`)로.
+- 하단에 "최근 24h 출금 ₩X,XXX,XXX,XXX" 메가 카운터.
+
+### 씬5 PERSONA
+- 20·40·60대 아바타 3개를 **`@dicebear` 대신 인라인 SVG 초상**(이미 있는 디자인 시스템 컬러로) 또는 `lovable-asset` 이미지로 교체. 70대도 읽히도록 22px+ 인용문.
+- 각 카드에 **3D tilt**(`framer-motion` `whileHover` rotateX/Y ±6°, reduce-motion 시 비활성).
+- 카드 하단에 작은 "지금 ₩X만원 누적 출금" 라이브 미니바.
+
+### 씬6 NETWORK EFFECT (기존)
+- SVG 트리 노드를 **펄스 링**(2겹 expanding ring)으로 강조.
+- "1명 데려오면 평생 5%" 문구를 **임페리얼 인장 미니 버전**으로 감싸기.
+
+### 씬7 GUILD WAR (기존)
+- TOP 3 길드 카드에 **순위 메달 SVG**(1=gold, 2=silver, 3=bronze) + 골드 외곽선.
+- "상금 풀" 카운터를 헤더 메가 사이즈로.
+
+### 씬8 EMPIRE MAP (기존)
+- 9개 region circle에 **점령 진행 ring** 애니메이션 추가.
+- 지도 위 골드 헤일로(radial gradient) 보강.
+
+### 씬9 PACKAGE (`ScenePackage`)
+- `EmpireMonarch` 카드에 **회전 골드 frame**(2.4s linear) + `RecoveryBonusCalculator` 결과에 **숫자 폭발**(particles burst 12개 SVG).
+- 카드 진입 시 `scale 0.92 → 1` + `boxShadow` 키프레임.
+
+### 씬10 FINAL CTA (`FomoFinalCTA`)
+- 버튼을 **80px 높이**로 키우고 💎 아이콘을 SVG로 교체(애니메이션 회전).
+- 버튼 아래 **"지금 18,432명이 보고 있습니다"** 라이브 시청자 카운터(`SimBadge`).
+- 버튼 위에 **`ImperialSeal`** + "환불보장 / 19+ 본인인증 / OTP 필수" 3-pill row.
+
+## 3. 시네마틱 전환 (씬 사이)
+
+- `Guide.tsx`에서 각 starter 씬 사이에 `<CinemaTransition />` 삽입 (12px 골드 leak strip + 1.2s shimmer). snap-stop이 아니므로 스크롤 흐름 그대로.
+- 씬 진입 시 `whileInView` margin을 `-40px` → `-80px`로 통일 → 더 일찍 모션 시작.
+
+## 4. 타이포 & 토큰
+
+- `tailwind.config.ts`에 `glow-gold-xl`, `text-gradient-imperial-2` 두 토큰만 추가 (기존 토큰 확장).
+- `senior` 객체에 `bodyXl: "data-[large=true]:text-[24px]"` 추가, 본문 분기를 22px→24px로 한 단계 올린다.
+- `index.css`에 `--gold-stroke` HSL 토큰 1개 추가(타이틀 1px stroke용).
+
+## 5. 백엔드/데이터 — 0 변경
+
+- 모든 카운터·티커는 기존 `useOnline`, `LivePayoutSlaBadge`, `PayoutTicker`, `get_referral_stats`, `guilds` SELECT 그대로.
+- 새 RPC·테이블·RLS 없음. 결제·출금·게임 엔진·미션 로직 1픽셀 불변.
+- AdultGate / Magic Link / 19+ 컴플라이언스 그대로.
+
+## 6. 회귀 보호
+
+- `?tab=detail` 코드 경로(`SceneTrust/Hook/LiveProof/...`)는 건드리지 않음.
+- `prefers-reduced-motion` 분기 모든 신규 모션에 적용(`useReducedMotion`).
+- 모바일 360px 폭에서 본문 22px+ / 버튼 56px+ / CTA 64px+ 유지, scroll-snap 정상.
+
+## 7. 변경 파일 (예상)
+
+```text
+src/components/guide/EmpireFX.tsx          (확장: GoldOrbitField, ImperialSeal, ParallaxLayer, CinemaTransition, GoldVignette)
+src/components/guide/FomoScrollHero.tsx    (3카드 라이브 대시보드, 행성 파라랙스)
+src/components/guide/FomoScrollScenes.tsx  (씬2~5 모션 강화, ImperialSeal, 3D tilt)
+src/components/guide/SceneNetworkEffect.tsx (펄스 링, 미니 인장)
+src/components/guide/SceneGuildWar.tsx     (메달 SVG, 메가 카운터)
+src/components/guide/SceneEmpireMap.tsx    (점령 ring 애니)
+src/components/guide/FomoFinalCTA.tsx      (80px 버튼, 인장, 시청자 카운터)
+src/pages/Guide.tsx                        (CinemaTransition 삽입만)
+tailwind.config.ts                         (glow-gold-xl 토큰 1개)
+src/index.css                              (--gold-stroke 토큰 1개)
 ```
-┌────────────────────────────────────────┐
-│  🌐 LIVE · 추천 제국                    │
-│                                         │
-│   ┌─ 김○준 (나) ──────┐                  │
-│   │  +5% 평생 수당   │                  │
-│   └─────┬────────────┘                  │
-│         ├── 박○자 (60대 주부)           │
-│         │     └── 이○호                 │
-│         ├── 정○호 (40대 자영업)         │
-│         └── 강○나 (20대 직장인)         │
-│                                         │
-│   당신이 데려온 ○명이 매일               │
-│   당신에게 +84,000원을 안깁니다          │
-│                                         │
-│   [지금 추천 링크 받기 →]               │
-└────────────────────────────────────────┘
-```
 
-- SVG 노드는 `motion.circle` glow + 연결선을 따라 흐르는 코인 dot
-- 카운터 jitter=2로 실시간 +N원 증가 (SIM 배지)
-- 미로그인 시 CTA → `/secure-auth?next=/referral`
-- 로그인 시 → `/referral` 직행
+신규 컴포넌트 0개, 신규 테이블 0개, 신규 RPC 0개.
 
-## 30년 독보 가능성 — 솔직 평가
+---
 
-이 플랜으로:
-- **단기 (1년)**: 컨버전 + 추천 + 길드 가입률 동시 상승 → 매출 폭증 가능
-- **중기 (3~5년)**: 길드·추천 트리에 잠긴 사용자는 이탈 비용이 커짐 = 진짜 해자
-- **장기 (10~30년)**: **여전히 한국 시장 + 모델 합법성 리스크가 한계.**
-  - 30년을 진짜 가려면 언젠가는 B/C 전환(합법 게임사 또는 정식 파생상품 거래소)이 불가피
-  - 다만 D + 네트워크 효과로 만든 사용자 자산(길드·추천 트리)은 B/C 전환 시에도 그대로 이전 가능 → 손해 없는 선택
-
-## 절대 불변
-
-- DB 스키마·RLS·트리거·RPC 0변경
-- 게임 엔진 / 미션 RPC / 패키지 RPC / 결제 / 출금 / OTP / AAL2 1픽셀 미변경
-- Gold & Dark Empire 토큰만 사용 (하드코딩 색상 0)
-- `/guide?tab=detail` 회귀 0
-- AdultGate / Magic Link / 19+ 본인인증 우회 없음
-- `src/integrations/supabase/*` 미변경
-
-## 검증 체크리스트
-
-- `/guide?tab=starter` 10씬 풀스크롤 + 진행 도트 10개
-- 씬 5.5 추천 트리 SVG 진입 시 코인 흐름 애니메이션, 카운터 jitter
-- 씬 5.6 길드전 TOP 3 실데이터(또는 시드) 표시, 상금 풀 카운터 라이브
-- 씬 5.7 영토 지도 SVG 길드 색상 분포 표시
-- `/referral` 진입 시 Empire Tree 시각화 + 기존 텍스트 보존
-- `/lounge?tab=guild` 상단 상금 풀 카운터
-- BragCard 출금 성공 후 옵트인 노출 (강제 X)
-- prefers-reduced-motion 시 모든 looping 정지
-- 시니어 모드 22px/56px 토큰 적용
-- 빌드 오류 0, RLS 회귀 0, 결제·출금 흐름 회귀 0
-
-## 결론
-
-D + 이 플랜 = **단기 매출 + 사용자 잠금 동시 달성**.
-"30년 1위"의 절반 (해자)은 만들 수 있지만, 나머지 절반 (합법성·글로벌)은 결국 사업적 결단이 필요합니다. 지금은 D로 자본을 모으고, 모은 자본으로 B/C 전환을 준비하는 게 현실적 로드맵입니다.
+이대로 진행할까요?
