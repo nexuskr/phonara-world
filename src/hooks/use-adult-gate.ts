@@ -31,7 +31,7 @@ export function useAdultGate() {
         .eq("id", session.user.id)
         .maybeSingle();
       if (cancelled) return;
-      if (!profile?.is_adult) {
+      if (!profile?.profile_completed || !profile?.is_adult) {
         nav("/complete-profile", { replace: true });
       }
     })();
