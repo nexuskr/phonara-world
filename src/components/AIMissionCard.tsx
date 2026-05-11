@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { assertRateLimit, RL_MISSION } from "@/lib/rateLimit";
 import { Sparkles, Zap, Loader2, Bot, Clock, Inbox } from "lucide-react";
 import { notify } from "@/lib/notify";
 import { LoadingList } from "@/components/ui/loading-state";
