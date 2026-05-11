@@ -152,7 +152,7 @@ const App = () => (
               <Route path="/status" element={<Status />} />
               <Route path="/hall-of-fame" element={<Navigate to="/legacy" replace />} />
               <Route path="/referral" element={<Referral />} />
-              <Route path="/ugc" element={<UgcDashboard />} />
+              <Route path="/ugc" element={<Navigate to="/missions?tab=rewards" replace />} />
               <Route path="/c/:slug" element={<CampaignRedirect />} />
               <Route path="/global-intelligence" element={<Navigate to="/" replace />} />
               <Route path="/infrastructure" element={<Navigate to="/" replace />} />
