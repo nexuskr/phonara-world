@@ -58,7 +58,7 @@ export default function Missions() {
   // 페르소나가 60s/70s+ 이거나 시니어 모드 ON 이면 시니어 탭 강제
   const isSenior = typeof window !== "undefined" && (
     document.documentElement.classList.contains("senior-mode") ||
-    persona === "60s" || persona === "70s+"
+    persona === "gen5060" || persona === "gen6070"
   );
   if (isSenior && catTab !== "senior") {
     setTimeout(() => setCatTab("senior"), 0);
