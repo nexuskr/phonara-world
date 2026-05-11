@@ -17,6 +17,7 @@ import WithdrawIntentInterceptor from "@/components/conversion/WithdrawIntentInt
 import AMLGate from "@/components/wallet/AMLGate";
 import WithdrawQueueStatus from "@/components/wallet/WithdrawQueueStatus";
 import WithdrawReceiptUpload from "@/components/wallet/WithdrawReceiptUpload";
+import DepositReceiptUpload from "@/components/wallet/DepositReceiptUpload";
 import WithdrawETABadge from "@/components/wallet/WithdrawETABadge";
 import NotificationPreferencesPanel from "@/components/wallet/NotificationPreferencesPanel";
 import RiskLimitsPanel from "@/components/wallet/RiskLimitsPanel";
@@ -87,6 +88,7 @@ export default function Wallet() {
   const [amlOpen, setAmlOpen] = useState(false);
   const [amlLevel, setAmlLevel] = useState<1 | 2 | 3>(2);
   const [receiptPath, setReceiptPath] = useState<string | null>(null);
+  const [depositReceiptUrl, setDepositReceiptUrl] = useState<string | null>(null);
   // 어드민에서 관리하는 코인 입금 주소 목록
   const [coinAddrs, setCoinAddrs] = useState<Array<{ network: string; address: string; label: string | null; memo: string | null }>>([]);
   useEffect(() => {
@@ -297,7 +299,7 @@ export default function Wallet() {
         packageName: channel === "voucher"
           ? t(`voucher${voucherBrand === "culture" ? "Culture" : voucherBrand === "happy" ? "Happy" : "Cultureland"}`) as string
           : channel === "bank" ? tw("bankDeposit") : tw("coinDeposit"),
-        receiptUrl: null,
+        receiptUrl: channel === "bank" ? depositReceiptUrl : null,
         memo: null,
         voucherBrand: channel === "voucher" ? voucherBrand : null,
         voucherPin: channel === "voucher" ? voucherPin : null,
@@ -313,7 +315,7 @@ export default function Wallet() {
         }, ...d.deposits],
       }));
       setResultCode(txCode);
-      setAmount(""); setVoucherPin(""); setSentCode(null); setAuthCode(""); setWithdrawPw("");
+      setAmount(""); setVoucherPin(""); setSentCode(null); setAuthCode(""); setWithdrawPw(""); setDepositReceiptUrl(null);
       const bonusMsg = r.bonus_amount > 0 ? ` +${formatKRW(r.bonus_amount)} 보너스` : "";
       toast({ title: tw("depositDone"), description: tw("depositDoneDesc") + bonusMsg });
     } catch (e: any) {
@@ -486,6 +488,10 @@ export default function Wallet() {
                     <div className="flex justify-between"><span className="text-muted-foreground">{t("depositOwner")}</span><span className="font-bold">{lng === "en" ? "Phonara Inc." : "(주)Phonara"}</span></div>
                     <p className="text-[10px] text-muted-foreground pt-2 border-t border-border/40">{t("depositMemo")}</p>
                   </div>
+                )}
+
+                {depositChannel === "bank" && (
+                  <DepositReceiptUpload onUploaded={setDepositReceiptUrl} />
                 )}
 
                 {depositChannel === "voucher" && (
