@@ -20,7 +20,8 @@ type QuickItem = {
 const ITEMS: QuickItem[] = [
   { to: "/start",    emoji: "💰", label: "지금 제국 시작하기", matches: ["/start", "/dashboard"] },
   { to: "/earnings", emoji: "📈", label: "내 수익 확인",         matches: ["/earnings", "/missions"] },
-  { to: "/arena",    emoji: "🔥", label: "실전 아레나",          matches: ["/arena", "/global-intelligence"] },
+  { to: "/arena",     emoji: "🔥", label: "실전 트레이딩",         matches: ["/arena"] },
+  { to: "/arena/army",emoji: "⚔️", label: "군대 배틀",              matches: ["/arena/army"] },
   { to: "/lounge",   emoji: "💎", label: "제국 라운지",          matches: ["/lounge", "/empire"] },
   { to: "/jackpot",  emoji: "🎖️", label: "제국 대박 보상",       matches: ["/jackpot", "/roulette"] },
   { to: "/wallet",   emoji: "🛡️", label: "내 지갑",              matches: ["/wallet", "/treasury", "/secure-wallet"] },

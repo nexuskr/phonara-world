@@ -15,6 +15,7 @@ const HUBS: Record<HubKey, { tabs: Tab[] }> = {
   },
   earn: {
     tabs: [
+      { to: "/arena",      tKey: "earn.tradingArena", icon: TrendingUp },
       { to: "/missions",   tKey: "earn.missions",    icon: Target },
       { to: "/quests",     tKey: "earn.quests",      icon: Sparkles },
       { to: "/roulette",   tKey: "earn.roulette",    icon: Gamepad2 },
