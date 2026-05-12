@@ -5672,6 +5672,19 @@ export type Database = {
         }[]
       }
       admin_get_user_email: { Args: { _user_id: string }; Returns: string }
+      admin_list_beta_invites: {
+        Args: never
+        Returns: {
+          code: string
+          created_at: string
+          created_by: string
+          expires_at: string
+          id: string
+          max_uses: number
+          note: string
+          uses: number
+        }[]
+      }
       admin_operator_pnl: {
         Args: { p_from?: string; p_to?: string }
         Returns: Json
@@ -5992,6 +6005,15 @@ export type Database = {
       gc_rate_limit_buckets: { Args: never; Returns: number }
       gen_referral_code: { Args: never; Returns: string }
       gen_seed_activity: { Args: never; Returns: undefined }
+      generate_beta_invite: {
+        Args: {
+          _expires_in_days?: number
+          _max_uses?: number
+          _note?: string
+          _prefix?: string
+        }
+        Returns: Json
+      }
       get_ab_variant: { Args: { p_experiment_key: string }; Returns: string }
       get_active_boost_count: { Args: never; Returns: number }
       get_admin_audit_recent: {

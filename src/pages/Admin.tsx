@@ -33,6 +33,7 @@ import AdminAal2Gate from "@/components/admin/AdminAal2Gate";
 import OperatorAccounting from "@/components/admin/OperatorAccounting";
 import BotStrengthAdmin from "@/components/admin/BotStrengthAdmin";
 import BotMixMonitor from "@/components/admin/BotMixMonitor";
+import BetaInvitesAdmin from "@/components/admin/BetaInvitesAdmin";
 import EvHealthAdmin from "@/components/admin/EvHealthAdmin";
 import AbExperimentsAdmin from "@/components/admin/AbExperimentsAdmin";
 import CoinAddressAdmin from "@/components/admin/CoinAddressAdmin";
@@ -42,9 +43,9 @@ const SENSITIVE_ADMIN_TABS = [
   "perms", "aml", "payout_audit", "security", "ops", "viral_forensics",
   "accounting", "bot_mix",
 ];
-import { Activity, Lock, Bot, Flame, FlaskConical, HeartPulse, Gauge } from "lucide-react";
+import { Activity, Lock, Bot, Flame, FlaskConical, HeartPulse, Gauge, KeyRound } from "lucide-react";
 
-type Tab = "dashboard" | "funnel" | "analytics" | "errors" | "security" | "ops" | "perms" | "viral_forensics" | "aml" | "ai_missions" | "payout_audit" | "referrals" | "server_dep" | "server_wd" | "packages" | "users" | "missions" | "chats" | "coin" | "ugc" | "insurance" | "accounting" | "bots" | "bot_mix" | "ev_health" | "ab_experiments";
+type Tab = "dashboard" | "funnel" | "analytics" | "errors" | "security" | "ops" | "perms" | "viral_forensics" | "aml" | "ai_missions" | "payout_audit" | "referrals" | "server_dep" | "server_wd" | "packages" | "users" | "missions" | "chats" | "coin" | "ugc" | "insurance" | "accounting" | "bots" | "bot_mix" | "ev_health" | "ab_experiments" | "beta";
 
 export default function Admin() {
   const [db, setDb] = useDB();
@@ -128,6 +129,7 @@ export default function Admin() {
     { id: "bot_mix", label: "봇 비율 모니터", icon: Gauge },
     { id: "ev_health", label: "EV 건전성", icon: HeartPulse },
     { id: "ab_experiments", label: "A/B 실험", icon: FlaskConical },
+    { id: "beta", label: "베타 코드", icon: KeyRound },
   ];
 
   return (
@@ -187,6 +189,7 @@ export default function Admin() {
           {tab === "bot_mix" && <BotMixMonitor />}
           {tab === "ev_health" && <EvHealthAdmin />}
           {tab === "ab_experiments" && <AbExperimentsAdmin />}
+          {tab === "beta" && <BetaInvitesAdmin />}
         </AdminAal2Gate>
       </div>
     </Layout>
