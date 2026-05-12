@@ -6266,6 +6266,7 @@ export type Database = {
       }
       get_bot_mix_metrics: { Args: never; Returns: Json }
       get_bot_online_count: { Args: never; Returns: number }
+      get_cockpit_snapshot: { Args: never; Returns: Json }
       get_crown_war_snapshot: { Args: never; Returns: Json }
       get_empire_seats_remaining: { Args: never; Returns: number }
       get_error_stats: {
