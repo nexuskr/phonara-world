@@ -1359,6 +1359,42 @@ export type Database = {
         }
         Relationships: []
       }
+      empire_boosters: {
+        Row: {
+          crown_multiplier: number
+          expires_at: string
+          fee_discount: number
+          granted_at: string
+          id: number
+          kind: string
+          leverage: number
+          source: string
+          user_id: string
+        }
+        Insert: {
+          crown_multiplier?: number
+          expires_at: string
+          fee_discount?: number
+          granted_at?: string
+          id?: number
+          kind?: string
+          leverage?: number
+          source?: string
+          user_id: string
+        }
+        Update: {
+          crown_multiplier?: number
+          expires_at?: string
+          fee_discount?: number
+          granted_at?: string
+          id?: number
+          kind?: string
+          leverage?: number
+          source?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       empire_founding_seats: {
         Row: {
           claimed_at: string | null
@@ -6016,6 +6052,18 @@ export type Database = {
       }
       get_ab_variant: { Args: { p_experiment_key: string }; Returns: string }
       get_active_boost_count: { Args: never; Returns: number }
+      get_active_empire_booster: {
+        Args: never
+        Returns: {
+          crown_multiplier: number
+          expires_at: string
+          fee_discount: number
+          granted_at: string
+          id: number
+          kind: string
+          leverage: number
+        }[]
+      }
       get_admin_audit_recent: {
         Args: { _limit?: number }
         Returns: {
