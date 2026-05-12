@@ -31,6 +31,7 @@ import { useTranslation } from "react-i18next";
 import HubTabs from "@/components/HubTabs";
 import Disclaimer from "@/components/Disclaimer";
 import PersonalizedFeedRail from "@/components/feed/PersonalizedFeedRail";
+import RevenueWidget from "@/components/feed/RevenueWidget";
 
 export default function Dashboard() {
   const [db] = useDB();
@@ -99,9 +100,10 @@ export default function Dashboard() {
             <BoostHeroCard />
           </div>
 
-          {/* V17 — 개인화 추천 피드 */}
-          <div className="mt-4">
+          {/* V17 — 개인화 추천 피드 + 24h 매출 위젯 */}
+          <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_280px] items-start">
             <PersonalizedFeedRail />
+            <RevenueWidget />
           </div>
 
           {/* Balance hero */}

@@ -64,7 +64,7 @@ export default function PersonalizedFeedRail({ limit = 12 }: { limit?: number })
       <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 snap-x snap-mandatory">
         {items.map((it) => (
           <div key={it.video_id} className="snap-start">
-            <FeedCard videoId={it.video_id} />
+            <FeedCard videoId={it.video_id} viralScore={(it as any).score ?? null} />
           </div>
         ))}
       </div>

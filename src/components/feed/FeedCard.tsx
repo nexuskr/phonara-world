@@ -5,15 +5,17 @@ import { useEffect, useRef, useState } from "react";
 import { Play, Heart, Share2 } from "lucide-react";
 import { recordFeedEvent } from "@/lib/feed-rpc";
 import { Button } from "@/components/ui/button";
+import ViralScoreBadge from "@/components/feed/ViralScoreBadge";
 
 export interface FeedCardProps {
   videoId: string;
   title?: string;
   thumbnail?: string;
   region?: string;
+  viralScore?: number | null;
 }
 
-export default function FeedCard({ videoId, title, thumbnail, region }: FeedCardProps) {
+export default function FeedCard({ videoId, title, thumbnail, region, viralScore }: FeedCardProps) {
   const ref = useRef<HTMLDivElement | null>(null);
   const enteredAt = useRef<number | null>(null);
   const firedView = useRef(false);
@@ -75,6 +77,11 @@ export default function FeedCard({ videoId, title, thumbnail, region }: FeedCard
         <span className="absolute top-2 left-2 text-[9px] font-bold tracking-widest uppercase bg-background/70 text-foreground px-1.5 py-0.5 rounded">
           {region ?? "GLOBAL"}
         </span>
+        {typeof viralScore === "number" && (
+          <span className="absolute top-2 right-2">
+            <ViralScoreBadge score={viralScore} />
+          </span>
+        )}
       </div>
       <div className="p-3 flex flex-col gap-2">
         <div className="text-xs font-bold line-clamp-2 min-h-[2rem]">
