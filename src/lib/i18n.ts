@@ -1,11 +1,13 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
+import jaPartial from "@/locales/ja";
+import viPartial from "@/locales/vi";
 
 /**
- * Phonara i18n — Phase A (ko + en)
- * Translations are bundled inline (no network round-trip).
- * Add new languages by extending `resources` and `supportedLngs`.
+ * Phonara i18n — Phase B (ko + en + ja + vi)
+ * ko/en are full bundles. ja/vi are partial overrides that fall back to en → ko
+ * via i18next fallbackLng. Translations are bundled inline (no network round-trip).
  */
 
 const resources = {
