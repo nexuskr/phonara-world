@@ -30,6 +30,7 @@ import { useWinback } from "@/hooks/use-winback";
 import { useTranslation } from "react-i18next";
 import HubTabs from "@/components/HubTabs";
 import Disclaimer from "@/components/Disclaimer";
+import PersonalizedFeedRail from "@/components/feed/PersonalizedFeedRail";
 
 export default function Dashboard() {
   const [db] = useDB();
