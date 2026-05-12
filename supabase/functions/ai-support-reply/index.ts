@@ -203,7 +203,7 @@ Deno.serve(async (req) => {
     });
   } catch (e: any) {
     console.error("[ai-support-reply]", e);
-    return json({ error: String(e?.message ?? e) }, 500);
+    return json({ error: "internal_error" }, 500);
   }
 });
 
