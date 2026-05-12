@@ -6,6 +6,8 @@ import { track } from "@/lib/analytics";
 const LANGS = [
   { code: "ko", flag: "🇰🇷", name: "한국어" },
   { code: "en", flag: "🇺🇸", name: "English" },
+  { code: "ja", flag: "🇯🇵", name: "日本語" },
+  { code: "vi", flag: "🇻🇳", name: "Tiếng Việt" },
 ] as const;
 
 export default function LanguageSwitcher({

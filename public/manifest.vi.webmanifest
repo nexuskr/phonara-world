@@ -1,0 +1,20 @@
+{
+  "name": "Phonara — Imperial Empire",
+  "short_name": "Phonara",
+  "description": "Phonara — Empire OS hoàng kim. Nền tảng thu nhập toàn cầu chỉ bằng điện thoại.",
+  "start_url": "/dashboard?lang=vi",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#08070f",
+  "theme_color": "#d4af37",
+  "lang": "vi",
+  "dir": "ltr",
+  "categories": ["finance", "productivity", "lifestyle"],
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

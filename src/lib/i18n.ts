@@ -1,11 +1,13 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
+import jaPartial from "@/locales/ja";
+import viPartial from "@/locales/vi";
 
 /**
- * Phonara i18n — Phase A (ko + en)
- * Translations are bundled inline (no network round-trip).
- * Add new languages by extending `resources` and `supportedLngs`.
+ * Phonara i18n — Phase B (ko + en + ja + vi)
+ * ko/en are full bundles. ja/vi are partial overrides that fall back to en → ko
+ * via i18next fallbackLng. Translations are bundled inline (no network round-trip).
  */
 
 const resources = {
@@ -2737,11 +2739,16 @@ i18n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
-    resources,
-    fallbackLng: { ja: ["en", "ko"], default: ["ko"] },
-    supportedLngs: ["ko", "en", "ja"],
+    resources: {
+      ...(resources as Record<string, unknown>),
+      ja: jaPartial,
+      vi: viPartial,
+    } as Record<string, Record<string, Record<string, unknown>>>,
+    fallbackLng: { ja: ["en", "ko"], vi: ["en", "ko"], default: ["ko"] },
+    supportedLngs: ["ko", "en", "ja", "vi"],
     ns: ["common", "nav", "topbar", "hubs", "auth", "onboarding", "landing", "wallet", "walletToast", "referral", "referralPage", "dmComposer", "ugc", "withdrawQueue", "live", "jackpot", "faq", "convert", "dashboard", "missions", "admin", "support", "secureWallet", "offline", "forgot", "reset", "completeProfile", "unsubscribe", "status", "packages", "profile", "trust", "settlements", "lang", "guide", "roulette", "seasonPass", "quests", "achievements", "hof", "empire", "aibot"],
     defaultNS: "common",
+    partialBundledLanguages: true,
     interpolation: { escapeValue: false },
     detection: {
       order: ["querystring", "localStorage", "navigator"],
@@ -2769,7 +2776,13 @@ const META = {
   ja: {
     title: "Phonara — 王座はワンクリックから始まる",
     description: "PHONARA Empire — 帝国ゴールド精算プラットフォーム。創設メンバー限定、長期ゴールド階層。",
-    manifest: "/manifest.en.webmanifest",
+    manifest: "/manifest.ja.webmanifest",
+    appleTitle: "Phonara",
+  },
+  vi: {
+    title: "Phonara — Ngai vàng bắt đầu chỉ bằng một cú nhấp",
+    description: "PHONARA Empire — Nền tảng thanh toán hoàng kim Imperial. Chỉ thành viên sáng lập, hạng vàng dài hạn.",
+    manifest: "/manifest.vi.webmanifest",
     appleTitle: "Phonara",
   },
 } as const;
@@ -2779,17 +2792,22 @@ const setMeta = (sel: string, attr: string, val: string) => {
   if (el) el.setAttribute(attr, val);
 };
 
+const OG_LOCALE: Record<"ko" | "en" | "ja" | "vi", string> = {
+  ko: "ko_KR", en: "en_US", ja: "ja_JP", vi: "vi_VN",
+};
+
 const syncDocument = (lng: string) => {
   if (typeof document === "undefined") return;
   const base = (lng || "ko").split("-")[0];
-  const code: "ko" | "en" | "ja" = base === "en" ? "en" : base === "ja" ? "ja" : "ko";
+  const code: "ko" | "en" | "ja" | "vi" =
+    base === "en" ? "en" : base === "ja" ? "ja" : base === "vi" ? "vi" : "ko";
   const m = META[code];
   document.documentElement.lang = code;
   document.title = m.title;
   setMeta('meta[name="description"]', "content", m.description);
   setMeta('link[rel="manifest"]', "href", m.manifest);
   setMeta('meta[name="apple-mobile-web-app-title"]', "content", m.appleTitle);
-  setMeta('meta[property="og:locale"]', "content", code === "en" ? "en_US" : code === "ja" ? "ja_JP" : "ko_KR");
+  setMeta('meta[property="og:locale"]', "content", OG_LOCALE[code]);
   setMeta('meta[property="og:title"]', "content", m.title);
   setMeta('meta[property="og:description"]', "content", m.description);
   setMeta('meta[name="twitter:title"]', "content", m.title);

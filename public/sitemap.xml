@@ -5,16 +5,20 @@
     <loc>https://phonara.world/</loc>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
-    <xhtml:link rel="alternate" hreflang="ko" href="https://phonara.world/?lng=ko"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://phonara.world/?lng=en"/>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://phonara.world/?lang=ko"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://phonara.world/?lang=en"/>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://phonara.world/?lang=ja"/>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://phonara.world/?lang=vi"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://phonara.world/"/>
   </url>
   <url>
     <loc>https://phonara.world/trust</loc>
     <changefreq>hourly</changefreq>
     <priority>0.95</priority>
-    <xhtml:link rel="alternate" hreflang="ko" href="https://phonara.world/trust?lng=ko"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://phonara.world/trust?lng=en"/>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://phonara.world/trust?lang=ko"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://phonara.world/trust?lang=en"/>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://phonara.world/trust?lang=ja"/>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://phonara.world/trust?lang=vi"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://phonara.world/trust"/>
   </url>
   <url>
@@ -26,8 +30,10 @@
     <loc>https://phonara.world/guide</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="ko" href="https://phonara.world/guide?lng=ko"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://phonara.world/guide?lng=en"/>
+    <xhtml:link rel="alternate" hreflang="ko" href="https://phonara.world/guide?lang=ko"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://phonara.world/guide?lang=en"/>
+    <xhtml:link rel="alternate" hreflang="ja" href="https://phonara.world/guide?lang=ja"/>
+    <xhtml:link rel="alternate" hreflang="vi" href="https://phonara.world/guide?lang=vi"/>
   </url>
   <url>
     <loc>https://phonara.world/packages</loc>
