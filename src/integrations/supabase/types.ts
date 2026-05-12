@@ -1836,6 +1836,83 @@ export type Database = {
           },
         ]
       }
+      guild_weekly_payouts: {
+        Row: {
+          contribution: number
+          guild_id: string
+          id: number
+          paid_at: string
+          payout_crown: number
+          rank: number
+          user_id: string
+          week_start: string
+        }
+        Insert: {
+          contribution: number
+          guild_id: string
+          id?: number
+          paid_at?: string
+          payout_crown: number
+          rank: number
+          user_id: string
+          week_start: string
+        }
+        Update: {
+          contribution?: number
+          guild_id?: string
+          id?: number
+          paid_at?: string
+          payout_crown?: number
+          rank?: number
+          user_id?: string
+          week_start?: string
+        }
+        Relationships: []
+      }
+      guild_weekly_rankings: {
+        Row: {
+          badge: string | null
+          guild_id: string
+          id: number
+          member_count: number
+          rank: number
+          reward_pool: number
+          settled_at: string
+          total_contribution: number
+          week_start: string
+        }
+        Insert: {
+          badge?: string | null
+          guild_id: string
+          id?: number
+          member_count: number
+          rank: number
+          reward_pool: number
+          settled_at?: string
+          total_contribution: number
+          week_start: string
+        }
+        Update: {
+          badge?: string | null
+          guild_id?: string
+          id?: number
+          member_count?: number
+          rank?: number
+          reward_pool?: number
+          settled_at?: string
+          total_contribution?: number
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guild_weekly_rankings_guild_id_fkey"
+            columns: ["guild_id"]
+            isOneToOne: false
+            referencedRelation: "guilds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       guilds: {
         Row: {
           created_at: string
@@ -5408,6 +5485,15 @@ export type Database = {
       _cron_security_self_audit: { Args: never; Returns: undefined }
       _cron_settle_package_daily: { Args: never; Returns: Json }
       _edge_internal_auth_header: { Args: never; Returns: Json }
+      _grant_guild_crown: {
+        Args: {
+          _amount: number
+          _dedupe_key: string
+          _meta: Json
+          _user_id: string
+        }
+        Returns: undefined
+      }
       _period_key: { Args: { _period: string }; Returns: string }
       accrue_jackpot: { Args: { p_deposit_amount: number }; Returns: Json }
       acknowledge_anomaly: {
@@ -5856,6 +5942,19 @@ export type Database = {
           name: string
           rank: number
           total_power: number
+        }[]
+      }
+      get_guild_rankings: {
+        Args: { _week_start?: string }
+        Returns: {
+          badge: string
+          emblem: string
+          guild_id: string
+          member_count: number
+          name: string
+          rank: number
+          reward_pool: number
+          total_contribution: number
         }[]
       }
       get_my_dashboard_state: { Args: never; Returns: Json }
@@ -6394,6 +6493,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      settle_guild_weekly: { Args: { _target_week?: string }; Returns: Json }
       settle_jackpot: {
         Args: { p_nickname?: string; p_winner_id: string }
         Returns: Json
