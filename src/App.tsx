@@ -61,6 +61,10 @@ const CampaignRedirect = lazy(() => import("./pages/CampaignRedirect.tsx"));
 const Trust = lazy(() => import("./pages/Trust.tsx"));
 const LegalDoc = lazy(() => import("./pages/LegalDoc.tsx"));
 import { LegalConsentGate } from "./components/legal/LegalConsentGate";
+import { PracticeModeBanner } from "./components/practice/PracticeModeBanner";
+import { PracticeModeGate } from "./components/practice/PracticeModeGate";
+import { OnboardingV2 } from "./components/onboarding/OnboardingV2";
+import { useAuth } from "./hooks/use-auth";
 
 const queryClient = new QueryClient({
   defaultOptions: {
