@@ -31,6 +31,7 @@ const FloatingChat = lazy(() => import("./FloatingChat"));
 const NeonNotificationFeed = lazy(() => import("./NeonNotificationFeed"));
 const BaronPromotionDialog = lazy(() => import("./empire/BaronPromotionDialog"));
 const EmpireBoosterTimer = lazy(() => import("./empire/EmpireBoosterTimer"));
+const EmpireConcierge = lazy(() => import("./empire/EmpireConcierge"));
 
 function useIdleMount(delayMs = 1500) {
   const [ready, setReady] = useStateIdle(false);
@@ -283,6 +284,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <NeonNotificationFeed />
           <BaronPromotionDialog />
           <EmpireBoosterTimer />
+          <EmpireConcierge />
         </Suspense>
       )}
 
