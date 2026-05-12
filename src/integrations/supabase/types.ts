@@ -1065,6 +1065,83 @@ export type Database = {
         }
         Relationships: []
       }
+      crown_war_participants: {
+        Row: {
+          last_event_at: string
+          score: number
+          user_id: string
+          war_id: number
+        }
+        Insert: {
+          last_event_at?: string
+          score?: number
+          user_id: string
+          war_id: number
+        }
+        Update: {
+          last_event_at?: string
+          score?: number
+          user_id?: string
+          war_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crown_war_participants_war_id_fkey"
+            columns: ["war_id"]
+            isOneToOne: false
+            referencedRelation: "crown_wars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crown_wars: {
+        Row: {
+          created_at: string
+          ends_at: string
+          id: number
+          settled_at: string | null
+          started_at: string
+          status: string
+          top1_score: number | null
+          top1_user_id: string | null
+          top2_score: number | null
+          top2_user_id: string | null
+          top3_score: number | null
+          top3_user_id: string | null
+          total_participants: number
+        }
+        Insert: {
+          created_at?: string
+          ends_at: string
+          id?: number
+          settled_at?: string | null
+          started_at: string
+          status?: string
+          top1_score?: number | null
+          top1_user_id?: string | null
+          top2_score?: number | null
+          top2_user_id?: string | null
+          top3_score?: number | null
+          top3_user_id?: string | null
+          total_participants?: number
+        }
+        Update: {
+          created_at?: string
+          ends_at?: string
+          id?: number
+          settled_at?: string | null
+          started_at?: string
+          status?: string
+          top1_score?: number | null
+          top1_user_id?: string | null
+          top2_score?: number | null
+          top2_user_id?: string | null
+          top3_score?: number | null
+          top3_user_id?: string | null
+          total_participants?: number
+        }
+        Relationships: []
+      }
       daily_combo_progress: {
         Row: {
           date: string
@@ -5997,6 +6074,39 @@ export type Database = {
       }
       cron_run_finalize_weekly_pass: { Args: never; Returns: Json }
       cron_run_pay_weekly_leaderboard: { Args: never; Returns: Json }
+      crown_war_award_direct: {
+        Args: {
+          _rank: number
+          _score: number
+          _user_id: string
+          _war_id: number
+        }
+        Returns: Json
+      }
+      crown_war_ensure_active: {
+        Args: never
+        Returns: {
+          created_at: string
+          ends_at: string
+          id: number
+          settled_at: string | null
+          started_at: string
+          status: string
+          top1_score: number | null
+          top1_user_id: string | null
+          top2_score: number | null
+          top2_user_id: string | null
+          top3_score: number | null
+          top3_user_id: string | null
+          total_participants: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "crown_wars"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       current_season_id: { Args: never; Returns: string }
       current_tos_version: { Args: never; Returns: string }
       declare_guild_war: {
@@ -6156,6 +6266,7 @@ export type Database = {
       }
       get_bot_mix_metrics: { Args: never; Returns: Json }
       get_bot_online_count: { Args: never; Returns: number }
+      get_crown_war_snapshot: { Args: never; Returns: Json }
       get_empire_seats_remaining: { Args: never; Returns: number }
       get_error_stats: {
         Args: { _hours?: number }
@@ -6747,6 +6858,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      settle_crown_war: { Args: never; Returns: Json }
       settle_guild_weekly: { Args: { _target_week?: string }; Returns: Json }
       settle_jackpot: {
         Args: { p_nickname?: string; p_winner_id: string }
