@@ -127,7 +127,7 @@ Deno.serve(async (req) => {
     return json({ ok: true, verified: true });
   } catch (e) {
     console.error("passkey-verify error:", e);
-    return json({ error: (e as Error).message }, 500);
+    return json({ error: "internal_error" }, 500);
   }
 });
 
