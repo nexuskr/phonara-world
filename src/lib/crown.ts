@@ -25,6 +25,7 @@ export type AwardResult = {
   level: number;
   level_up?: boolean;
   duplicate?: boolean;
+  event_id?: string;
 };
 
 export async function awardCrown(
@@ -61,6 +62,38 @@ export async function awardCrown(
       ? `🎉 Empire Level ${r.level} 승급!`
       : `예측 ${r.expected.toLocaleString()} · 실제 ${r.awarded.toLocaleString()} (RPE ${(ratio * 100).toFixed(0)}%)`,
   });
+
+  // PR-F Viral Loop v2 — auto-mint replay for variance >= 2.0
+  if ((r.variance ?? 0) >= 2.0) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: ev } = await supabase
+          .from("crown_events")
+          .select("id")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        const eventId = (ev as any)?.id as string | undefined;
+        if (eventId) {
+          const { data: rep } = await supabase.rpc("create_crown_replay", { _event_id: eventId });
+          const token = (rep as any)?.token as string | undefined;
+          if (token) {
+            notify.success("👑 제국에 자랑할 시간!", {
+              description: `×${(r.variance ?? 0).toFixed(2)} Crown 폭발 — 공유하면 더 많은 Crown을 노립니다.`,
+              action: {
+                label: "공유",
+                onClick: () => {
+                  window.dispatchEvent(new CustomEvent("phonara:share-replay", { detail: { token } }));
+                },
+              },
+            });
+          }
+        }
+      }
+    } catch { /* non-fatal */ }
+  }
 
   return r;
 }

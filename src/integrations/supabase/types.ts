@@ -1065,6 +1065,51 @@ export type Database = {
         }
         Relationships: []
       }
+      crown_replays: {
+        Row: {
+          awarded_amount: number
+          created_at: string
+          empire_level: number
+          event_id: string | null
+          expires_at: string
+          id: string
+          nickname_masked: string | null
+          public_token: string
+          share_count: number
+          user_id: string
+          variance: number
+          view_count: number
+        }
+        Insert: {
+          awarded_amount: number
+          created_at?: string
+          empire_level?: number
+          event_id?: string | null
+          expires_at?: string
+          id?: string
+          nickname_masked?: string | null
+          public_token: string
+          share_count?: number
+          user_id: string
+          variance: number
+          view_count?: number
+        }
+        Update: {
+          awarded_amount?: number
+          created_at?: string
+          empire_level?: number
+          event_id?: string | null
+          expires_at?: string
+          id?: string
+          nickname_masked?: string | null
+          public_token?: string
+          share_count?: number
+          user_id?: string
+          variance?: number
+          view_count?: number
+        }
+        Relationships: []
+      }
       crown_war_participants: {
         Row: {
           last_event_at: string
@@ -6032,6 +6077,7 @@ export type Database = {
         Args: { _ids: string[]; _note?: string }
         Returns: number
       }
+      bump_crown_replay_view: { Args: { _token: string }; Returns: undefined }
       bump_jackpot: { Args: { _amount: number }; Returns: Json }
       bump_quest_metric: {
         Args: { _delta?: number; _metric: string }
@@ -6068,6 +6114,7 @@ export type Database = {
         Args: { _score: number; _war_id: string }
         Returns: boolean
       }
+      create_crown_replay: { Args: { _event_id: string }; Returns: Json }
       create_guild: {
         Args: { _description?: string; _emblem?: string; _name: string }
         Returns: string
@@ -6374,6 +6421,7 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_public_crown_replay: { Args: { _token: string }; Returns: Json }
       get_recent_errors: {
         Args: { _limit?: number }
         Returns: {
@@ -6608,6 +6656,7 @@ export type Database = {
       }
       mark_fomo_notification_read: { Args: { _id: string }; Returns: boolean }
       mark_handbook_step: { Args: { _step: string }; Returns: Json }
+      mask_nickname: { Args: { _nick: string }; Returns: string }
       move_to_dlq: {
         Args: {
           dlq_name: string
@@ -6716,6 +6765,10 @@ export type Database = {
             }
             Returns: string
           }
+      record_crown_replay_share: {
+        Args: { _channel: string; _token: string }
+        Returns: undefined
+      }
       record_empire_battle: {
         Args: { _mode?: string; _pnl: number; _result: string; _side: string }
         Returns: Json

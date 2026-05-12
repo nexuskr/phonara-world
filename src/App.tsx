@@ -59,6 +59,7 @@ const Settlements = lazy(() => import("./pages/Settlements.tsx"));
 const Status = lazy(() => import("./pages/Status.tsx"));
 const Referral = lazy(() => import("./pages/Referral.tsx"));
 const CampaignRedirect = lazy(() => import("./pages/CampaignRedirect.tsx"));
+const ReplayLanding = lazy(() => import("./pages/ReplayLanding.tsx"));
 const Trust = lazy(() => import("./pages/Trust.tsx"));
 const LegalDoc = lazy(() => import("./pages/LegalDoc.tsx"));
 import { LegalConsentGate } from "./components/legal/LegalConsentGate";
@@ -163,6 +164,7 @@ const App = () => (
               <Route path="/referral" element={<Referral />} />
               <Route path="/ugc" element={<Navigate to="/missions?tab=rewards" replace />} />
               <Route path="/c/:slug" element={<CampaignRedirect />} />
+              <Route path="/r/:token" element={<ReplayLanding />} />
               <Route path="/global-intelligence" element={<Navigate to="/" replace />} />
               <Route path="/infrastructure" element={<Navigate to="/" replace />} />
               <Route path="/intelligence-loop" element={<Navigate to="/" replace />} />
