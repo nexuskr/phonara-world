@@ -29,6 +29,7 @@ import { useAchievementWatcher } from "@/hooks/use-achievement-watcher";
 // Heavy/non-critical UI deferred to idle to reduce TTI on mobile
 const FloatingChat = lazy(() => import("./FloatingChat"));
 const NeonNotificationFeed = lazy(() => import("./NeonNotificationFeed"));
+const BaronPromotionDialog = lazy(() => import("./empire/BaronPromotionDialog"));
 
 function useIdleMount(delayMs = 1500) {
   const [ready, setReady] = useStateIdle(false);
