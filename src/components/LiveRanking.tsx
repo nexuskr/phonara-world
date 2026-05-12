@@ -70,7 +70,8 @@ export default function LiveRanking() {
       myIdRef.current = data.user?.id ?? null;
     });
     void load();
-    const i = setInterval(load, 8000);
+    // Realtime-only refresh (polling removed for perf). Fallback: 60s safety net.
+    const safety = setInterval(load, 60000);
     const ch = supabase
       .channel("leaderboard")
       .on(
@@ -80,7 +81,7 @@ export default function LiveRanking() {
       )
       .subscribe();
     return () => {
-      clearInterval(i);
+      clearInterval(safety);
       supabase.removeChannel(ch);
     };
   }, []);

@@ -58,10 +58,21 @@ export function GoldVignette() {
   );
 }
 
+/** Detect coarse-pointer / mobile to halve particle counts. */
+function useIsLowEndDevice() {
+  if (typeof window === "undefined") return false;
+  const coarse = window.matchMedia?.("(pointer: coarse)").matches ?? false;
+  const cores = (navigator as any).hardwareConcurrency ?? 4;
+  const mem = (navigator as any).deviceMemory ?? 4;
+  return coarse || cores <= 4 || mem <= 4;
+}
+
 export function ParticleField({ density = 14 }: { density?: number }) {
   const reduce = useReducedMotion();
+  const low = useIsLowEndDevice();
   if (reduce) return null;
-  const dots = Array.from({ length: density });
+  const effective = low ? Math.max(4, Math.floor(density / 2)) : density;
+  const dots = Array.from({ length: effective });
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
       {dots.map((_, i) => {
@@ -93,10 +104,12 @@ export function ParticleField({ density = 14 }: { density?: number }) {
 /** 곡선 궤도를 도는 골드 입자 — ParticleField 상위 호환 */
 export function GoldOrbitField({ count = 10 }: { count?: number }) {
   const reduce = useReducedMotion();
+  const low = useIsLowEndDevice();
   if (reduce) return null;
+  const effective = low ? Math.max(3, Math.floor(count / 2)) : count;
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {Array.from({ length: count }).map((_, i) => {
+      {Array.from({ length: effective }).map((_, i) => {
         const r = 110 + (i % 4) * 60;
         const dur = 18 + (i % 5) * 4;
         const delay = (i * 0.6) % dur;
