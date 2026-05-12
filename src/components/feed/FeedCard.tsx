@@ -77,6 +77,11 @@ export default function FeedCard({ videoId, title, thumbnail, region, viralScore
         <span className="absolute top-2 left-2 text-[9px] font-bold tracking-widest uppercase bg-background/70 text-foreground px-1.5 py-0.5 rounded">
           {region ?? "GLOBAL"}
         </span>
+        {typeof viralScore === "number" && (
+          <span className="absolute top-2 right-2">
+            <ViralScoreBadge score={viralScore} />
+          </span>
+        )}
       </div>
       <div className="p-3 flex flex-col gap-2">
         <div className="text-xs font-bold line-clamp-2 min-h-[2rem]">
