@@ -78,6 +78,7 @@ function Gauge({ pct }: { pct: number }) {
 }
 
 export default function Cockpit() {
+  useEffect(() => { document.title = "Empire Cockpit · Phonara"; }, []);
   const user = useRequireAdmin();
   const [snap, setSnap] = useState<Snapshot | null>(null);
   const [loading, setLoading] = useState(true);
