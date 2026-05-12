@@ -54,6 +54,7 @@ const SecurityOverview = lazy(() => import("./pages/security/Overview.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 const Achievements = lazy(() => import("./pages/Achievements.tsx"));
 const Empire = lazy(() => import("./pages/Empire.tsx"));
+const EmpireHall = lazy(() => import("./pages/EmpireHall.tsx"));
 const Unsubscribe = lazy(() => import("./pages/Unsubscribe.tsx"));
 const Settlements = lazy(() => import("./pages/Settlements.tsx"));
 const Status = lazy(() => import("./pages/Status.tsx"));
@@ -109,6 +110,7 @@ const App = () => (
               <Route path="/command" element={<Dashboard />} />
               <Route path="/earn" element={<Navigate to="/missions" replace />} />
               <Route path="/empire" element={<Empire />} />
+              <Route path="/empire/hall" element={<EmpireHall />} />
               <Route path="/treasury" element={<Navigate to="/wallet" replace />} />
               <Route path="/treasury/settlements" element={<Settlements />} />
               <Route path="/legacy" element={<Navigate to="/achievements" replace />} />
