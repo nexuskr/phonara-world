@@ -601,6 +601,39 @@ export type Database = {
           },
         ]
       }
+      bot_mix_log: {
+        Row: {
+          changed_by: string | null
+          id: number
+          metrics: Json
+          new_strength_pct: number
+          occurred_at: string
+          prev_strength_pct: number
+          reason: string
+          source: string
+        }
+        Insert: {
+          changed_by?: string | null
+          id?: number
+          metrics?: Json
+          new_strength_pct: number
+          occurred_at?: string
+          prev_strength_pct: number
+          reason: string
+          source?: string
+        }
+        Update: {
+          changed_by?: string | null
+          id?: number
+          metrics?: Json
+          new_strength_pct?: number
+          occurred_at?: string
+          prev_strength_pct?: number
+          reason?: string
+          source?: string
+        }
+        Relationships: []
+      }
       bot_personas: {
         Row: {
           avatar_emoji: string
@@ -5507,6 +5540,7 @@ export type Database = {
         Returns: undefined
       }
       assign_persona: { Args: never; Returns: string }
+      auto_adjust_bot_strength: { Args: never; Returns: Json }
       auto_freeze_critical_anomalies: { Args: never; Returns: Json }
       award_imperial_score: {
         Args: { _base: number; _meta?: Json; _source: string; _user_id: string }
@@ -5694,6 +5728,7 @@ export type Database = {
           reward_amount: number
         }[]
       }
+      get_bot_mix_metrics: { Args: never; Returns: Json }
       get_bot_online_count: { Args: never; Returns: number }
       get_empire_seats_remaining: { Args: never; Returns: number }
       get_error_stats: {

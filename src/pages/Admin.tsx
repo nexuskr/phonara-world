@@ -32,6 +32,7 @@ import AdminAal2Banner from "@/components/admin/AdminAal2Banner";
 import AdminAal2Gate from "@/components/admin/AdminAal2Gate";
 import OperatorAccounting from "@/components/admin/OperatorAccounting";
 import BotStrengthAdmin from "@/components/admin/BotStrengthAdmin";
+import BotMixMonitor from "@/components/admin/BotMixMonitor";
 import EvHealthAdmin from "@/components/admin/EvHealthAdmin";
 import AbExperimentsAdmin from "@/components/admin/AbExperimentsAdmin";
 import CoinAddressAdmin from "@/components/admin/CoinAddressAdmin";
@@ -39,11 +40,11 @@ import CoinAddressAdmin from "@/components/admin/CoinAddressAdmin";
 const SENSITIVE_ADMIN_TABS = [
   "server_wd", "server_dep", "users", "packages", "coin",
   "perms", "aml", "payout_audit", "security", "ops", "viral_forensics",
-  "accounting",
+  "accounting", "bot_mix",
 ];
-import { Activity, Lock, Bot, Flame, FlaskConical, HeartPulse } from "lucide-react";
+import { Activity, Lock, Bot, Flame, FlaskConical, HeartPulse, Gauge } from "lucide-react";
 
-type Tab = "dashboard" | "funnel" | "analytics" | "errors" | "security" | "ops" | "perms" | "viral_forensics" | "aml" | "ai_missions" | "payout_audit" | "referrals" | "server_dep" | "server_wd" | "packages" | "users" | "missions" | "chats" | "coin" | "ugc" | "insurance" | "accounting" | "bots" | "ev_health" | "ab_experiments";
+type Tab = "dashboard" | "funnel" | "analytics" | "errors" | "security" | "ops" | "perms" | "viral_forensics" | "aml" | "ai_missions" | "payout_audit" | "referrals" | "server_dep" | "server_wd" | "packages" | "users" | "missions" | "chats" | "coin" | "ugc" | "insurance" | "accounting" | "bots" | "bot_mix" | "ev_health" | "ab_experiments";
 
 export default function Admin() {
   const [db, setDb] = useDB();
@@ -124,6 +125,7 @@ export default function Admin() {
     { id: "insurance", label: "보험펀드", icon: ShieldCheck },
     { id: "accounting", label: "회계 (Zero-Loss)", icon: Coins },
     { id: "bots", label: "봇 시딩 (FOMO 엔진)", icon: Bot },
+    { id: "bot_mix", label: "봇 비율 모니터", icon: Gauge },
     { id: "ev_health", label: "EV 건전성", icon: HeartPulse },
     { id: "ab_experiments", label: "A/B 실험", icon: FlaskConical },
   ];
@@ -182,6 +184,7 @@ export default function Admin() {
           {tab === "insurance" && <InsuranceFundDashboard variant="admin" />}
           {tab === "accounting" && <OperatorAccounting />}
           {tab === "bots" && <BotStrengthAdmin />}
+          {tab === "bot_mix" && <BotMixMonitor />}
           {tab === "ev_health" && <EvHealthAdmin />}
           {tab === "ab_experiments" && <AbExperimentsAdmin />}
         </AdminAal2Gate>
