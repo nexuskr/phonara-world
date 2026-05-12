@@ -32,6 +32,7 @@ const NeonNotificationFeed = lazy(() => import("./NeonNotificationFeed"));
 const BaronPromotionDialog = lazy(() => import("./empire/BaronPromotionDialog"));
 const EmpireBoosterTimer = lazy(() => import("./empire/EmpireBoosterTimer"));
 const EmpireConcierge = lazy(() => import("./empire/EmpireConcierge"));
+const ReplayShareGlobal = lazy(() => import("./empire/ReplayShareGlobal"));
 const CrownWarFinaleModal = lazy(() => import("./empire/CrownWarFinaleModal"));
 
 function useIdleMount(delayMs = 1500) {
