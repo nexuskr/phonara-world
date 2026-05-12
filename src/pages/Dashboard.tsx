@@ -99,6 +99,11 @@ export default function Dashboard() {
             <BoostHeroCard />
           </div>
 
+          {/* V17 — 개인화 추천 피드 */}
+          <div className="mt-4">
+            <PersonalizedFeedRail />
+          </div>
+
           {/* Balance hero */}
           <div className="relative animate-fade-up mt-4">
             <div className="absolute inset-0 bg-gradient-cyber blur-3xl opacity-50 -z-10" />
