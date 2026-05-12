@@ -1,0 +1,14 @@
+{
+  "name": "@phonara/api",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "node --watch src/main.js",
+    "start": "node src/main.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0",
+    "fastify": "^4.28.0",
+    "ioredis": "^5.4.1"
+  }
+}

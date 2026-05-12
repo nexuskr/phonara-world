@@ -1,0 +1,31 @@
+name: phonara-unicorn-ci
+
+on:
+  push:
+    branches: [main]
+    paths: ["phonara-unicorn/**"]
+  pull_request:
+    paths: ["phonara-unicorn/**"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        app: [api, worker-render, worker-upload]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build ${{ matrix.app }}
+        run: docker build -t phonara-${{ matrix.app }}:ci ./phonara-unicorn/apps/${{ matrix.app }}
+
+  terraform-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - name: Validate
+        working-directory: phonara-unicorn/infra/terraform
+        run: |
+          terraform init -backend=false
+          terraform validate
