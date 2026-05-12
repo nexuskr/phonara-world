@@ -1,27 +1,31 @@
 import { useEffect, useState } from "react";
 import { CheckCircle2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { SimChip } from "@/components/sim/SimChip";
 
-const NAMES_KO = ["민지", "현우", "수아", "재훈", "지원", "태리", "다은", "성훈", "유나", "지민", "도윤", "서아", "예린", "준호", "하린"];
-const NAMES_EN = ["Min", "Jay", "Sue", "Ron", "Will", "Terry", "Dan", "Sung", "Yuna", "Jimin", "Doyun", "Seo", "Erin", "Jun", "Harin"];
-const REGIONS_KO = ["서울", "부산", "대전", "인천", "광주", "대구", "수원", "일산", "제주", "성남"];
-const REGIONS_EN = ["Seoul", "Busan", "Daejeon", "Incheon", "Gwangju", "Daegu", "Suwon", "Ilsan", "Jeju", "Seongnam"];
-const TIERS = ["FREE", "STARTER", "PRO", "VIP", "GOD MODE", "EMPIRE"];
+// PR-1: KRW + masked Korean names removed (Hard Constraint C3/C4).
+// Bot/SIM ticker now uses Empire Coin (₡) + abstract guild handles only.
 
-function rand<T>(a: T[]) { return a[Math.floor(Math.random() * a.length)]; }
+const TIERS = ["FREE", "STARTER", "PRO", "VIP", "GOD MODE", "EMPIRE"] as const;
+const REGIONS_KO = ["서부 길드", "동부 길드", "남부 길드", "북부 길드", "중앙 길드", "수도 길드"];
+const REGIONS_EN = ["West Guild", "East Guild", "South Guild", "North Guild", "Capital Guild", "Royal Guild"];
+
+function rand<T>(a: readonly T[]): T { return a[Math.floor(Math.random() * a.length)]; }
 function genReceipt(lng: string) {
   const tier = rand(TIERS);
-  const range = tier === "FREE" ? [8000, 45000]
-    : tier === "STARTER" ? [30000, 110000]
-    : tier === "PRO" ? [80000, 380000]
-    : tier === "VIP" ? [200000, 1200000]
-    : tier === "GOD MODE" ? [500000, 4800000]
-    : [1500000, 18000000];
+  const range = tier === "FREE" ? [80, 450]
+    : tier === "STARTER" ? [300, 1100]
+    : tier === "PRO" ? [800, 3800]
+    : tier === "VIP" ? [2000, 12000]
+    : tier === "GOD MODE" ? [5000, 48000]
+    : [15000, 180000];
   const amt = Math.floor(Math.random() * (range[1] - range[0])) + range[0];
   const isEn = lng.startsWith("en");
+  // Anonymous empire-citizen handle — no person names, no masking.
+  const handle = (isEn ? "Empire #" : "제국민 #") + String(Math.floor(Math.random() * 9000) + 1000);
   return {
     id: Math.random().toString(36).slice(2),
-    name: rand(isEn ? NAMES_EN : NAMES_KO) + "**",
+    name: handle,
     region: rand(isEn ? REGIONS_EN : REGIONS_KO),
     tier,
     amt,
@@ -43,7 +47,7 @@ export default function PayoutTicker() {
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-secondary animate-pulse" />
           <span className="text-xs font-display font-black tracking-widest break-keep">{t("payoutTitle")}</span>
-          <span className="text-[9px] tracking-widest font-black border border-border/60 text-muted-foreground px-1.5 py-0.5 rounded">SIM</span>
+          <SimChip />
         </div>
         <span className="text-[10px] text-muted-foreground break-keep">{t("payoutSub")}</span>
       </div>
@@ -58,7 +62,7 @@ export default function PayoutTicker() {
               </div>
             </div>
             <div className="text-right">
-              <div className="font-display font-black text-sm text-money-strong text-gradient-gold tabular-nums">+₩{it.amt.toLocaleString()}</div>
+              <div className="font-display font-black text-sm text-sim-gold tabular-nums">+{it.amt.toLocaleString()} ₡</div>
               <div className="text-[9px] text-secondary">{t("approved")}</div>
             </div>
           </div>

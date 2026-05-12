@@ -321,7 +321,7 @@ export default function Index() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
             {[
               { v: members.toLocaleString(), k: t("statsMembers") },
-              { v: "₩ 128억+", k: t("statsTotal") },
+              { v: "12.8M+ ₡", k: t("statsTotal") },
               { v: "99.97%", k: t("statsRate") },
               { v: "4.9/5", k: t("statsScore") },
             ].map((s, i) => (

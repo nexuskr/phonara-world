@@ -37,6 +37,16 @@ export default {
           dark: "#A87E18",
           foreground: "hsl(var(--primary-foreground))",
         },
+        // SIM (시뮬레이션) — gold-saturated, never used for Real money
+        "sim-gold": {
+          DEFAULT: "hsl(var(--sim-gold))",
+          foreground: "hsl(var(--sim-gold-foreground))",
+        },
+        // Real money / live trading — Electric cyan
+        "real-cyan": {
+          DEFAULT: "hsl(var(--real-cyan))",
+          foreground: "hsl(var(--real-cyan-foreground))",
+        },
 
         primary: {
           DEFAULT: "hsl(var(--primary))",

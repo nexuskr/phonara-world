@@ -22,6 +22,8 @@ jobs:
         run: bun install --frozen-lockfile
       - name: Forbidden phrase check (i18n)
         run: node scripts/check-forbidden-phrases.mjs
+      - name: SIM badge / KRW guard (PR-1)
+        run: node scripts/check-sim-badge.mjs
       - name: Run RLS + permission baseline tests
         run: bunx vitest run src/test/rls-integrity.test.ts src/test/db-permissions.test.ts src/test/referral-window.test.ts
       - name: Supabase CLI linter

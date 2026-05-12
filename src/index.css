@@ -27,6 +27,12 @@
     /* Gold = primary alias kept for legacy classes */
     --gold: 44 80% 53%;
     --gold-foreground: 240 28% 3%;
+    /* SIM (시뮬레이션) — gold-saturated, distinct from Real (cyan) */
+    --sim-gold: 44 95% 60%;
+    --sim-gold-foreground: 240 28% 3%;
+    /* Real money / live trading — Electric cyan */
+    --real-cyan: 188 100% 55%;
+    --real-cyan-foreground: 240 28% 3%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 42 30% 96%;
     --border: 240 25% 15%;
