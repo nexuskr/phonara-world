@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useRequireAdmin } from "@/hooks/use-require-auth";
 import { LoadingList } from "@/components/ui/loading-state";
 import FeedDiagnosticsPanel from "@/components/feed/FeedDiagnosticsPanel";
+import BetaFunnelPanel from "@/components/admin/BetaFunnelPanel";
 
 type Kpi = {
   mau: number;
@@ -131,6 +132,7 @@ export default function AdminKpi() {
               <Stat icon={TrendingUp} label="총 매출 (7d)" value={fmtKRW(k.revenue7d)} tone="text-money-strong" />
               <Stat icon={Flame} label="평균 Viral Score" value={k.viralAvg.toFixed(3)} hint="최근 500개 영상" />
             </div>
+            <BetaFunnelPanel />
             <FeedDiagnosticsPanel />
             <div className="glass rounded-2xl p-4 text-xs text-muted-foreground border border-border/40">
               데이터 출처: feed_events / revenue_events / profiles.referred_by / viral_metrics / user_feed_profile / posting_schedule_queue. 60초마다 자동 갱신.
