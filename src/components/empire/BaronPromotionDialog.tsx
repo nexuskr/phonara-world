@@ -44,7 +44,7 @@ export default function BaronPromotionDialog() {
 
   async function dismiss() {
     if (!row) return;
-    await supabase.from("fomo_notifications").update({ read_at: new Date().toISOString() }).eq("id", row.id);
+    await (supabase.from("fomo_notifications") as any).update({ read_at: new Date().toISOString() }).eq("id", row.id);
     setRow(null);
   }
 
