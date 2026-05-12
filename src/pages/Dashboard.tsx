@@ -21,6 +21,7 @@ import CommandHero from "@/components/CommandHero";
 import EmpireP2EDashboard from "@/components/empire/EmpireP2EDashboard";
 import { FomoNotificationStrip } from "@/components/empire/FomoNotificationStrip";
 import WhaleStrikeRail from "@/components/empire/WhaleStrikeRail";
+import CrownWarHUD from "@/components/empire/CrownWarHUD";
 import SixtySecondFlow from "@/components/onboarding/SixtySecondFlow";
 import EarnedToast from "@/components/onboarding/EarnedToast";
 import FirstDepositTopBanner from "@/components/onboarding/FirstDepositTopBanner";
@@ -70,6 +71,7 @@ export default function Dashboard() {
         <div className="container relative pt-2 pb-10">
           {/* P5 — Recovery FOMO cascade */}
           <FomoNotificationStrip />
+          <div className="mb-3"><CrownWarHUD /></div>
           <div className="mb-4"><WhaleStrikeRail /></div>
           {/* 🏛️ Command Hero — 영웅 카드 (잔고 + 추천 미션 + 100석) */}
           <CommandHero />
