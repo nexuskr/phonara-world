@@ -1,112 +1,208 @@
 
-# 🔥 Phonara 플랫폼 현황 분석 — 멸망급 진단
+# 🚀 Phonara.world V17 — Mars Empire × Real Unicorn (최종 통합 청사진)
 
-## 1. 요청 항목별 적용 현황 (코드/DB 실측)
-
-| # | 요청 | 상태 | 근거 |
-|---|------|------|------|
-| 1 | AI mission_templates 30개 시드 | ✅ **완료** | DB에 35개 존재 (`SELECT count(*) FROM mission_templates = 35`) |
-| 2 | 입금(계좌이체+영수증) RPC | ✅ **완료** | `submit_deposit` RPC + `uploadReceipt`(receipts bucket) + `DepositRequestsAdmin.tsx` |
-| 3 | 출금 요청 RPC | ✅ **완료** | `request_withdrawal` (AAL2/OTP 강제, 속도이상 자동동결까지) + `WithdrawRequestsAdmin.tsx` |
-| 4 | 관리자 승인/거절 화면 | ✅ **완료** | `AdminReviewModal` + 포렌식 체크리스트 + 타임라인 |
-| 5 | 서버 기준 실시간 랭킹 + 축하 애니 | ✅ **완료** | `LiveRanking.tsx` — `leaderboard_today` view + Realtime channel + 셀프 RANK UP 모션/토스트 |
-| 6 | PWA 매니페스트 | ✅ **완료** | `/manifest.webmanifest`(+ko/en) + icon-192/512 + maskable + offline.html |
-| 7 | 푸시 서비스워커 | ✅ **완료** | `public/sw-push.js` + `src/lib/push.ts`(`subscribePush`) + `send-push` edge fn (web-push + VAPID) |
-| 8 | VIP 패키지 구매 흐름 | ✅ **완료** | `Packages.tsx`(304줄) + `submit_package_purchase` RPC + `PackagePurchasesAdmin` |
-| 9 | `/forgot-password` + 이메일 재전송 | ✅ **완료** | `ForgotPassword.tsx` + `ResetPassword.tsx` 둘 다 존재 |
-| 10 | 매직링크 만료/재사용 에러+재발송 | ⚠️ **부분** | `AuthCallback.tsx`는 있으나 만료 전용 화면+원클릭 재발송 UX 미확인 → 보강 필요 |
-| 11 | 로그인 후 패키지 상태 분기 라우팅 | ⚠️ **부분** | `useAuthBridge`/`CompleteProfile` 존재하나 패키지 미보유→/packages, 보유→/dashboard 분기 명시 코드 미확인 → 보강 필요 |
-| 12 | 실명/생년월일/휴대폰 검증 + 서버 체크 | ⚠️ **부분** | 클라 zod는 있음. 서버 트리거(`guard_profile_sensitive_columns`)도 있음. 다만 휴대폰 형식·생년월일 19+ 서버 검증 RPC 단일 진입점 없음 → 보강 필요 |
-| 13 | 미션 보상/승인 알림 푸시 연동 | ⚠️ **부분** | `send-push` 인프라는 있으나 미션 승인/보상 이벤트→push 호출 트리거 연결 여부 추가 검증 필요 |
-| 14 | 번들/이미지/애니 최적화 + A11y 감사 | ❌ **미흡** | 아래 §3 참고 |
-
-**결론:** 14개 중 9개 완료, 4개 부분 보강, 1개(성능/A11y) 본격 작업 필요.
+> **One-Liner:** "폰을 켜는 순간 = 제국 입성. 추천 피드는 나만을 위해 살아 있고, /arena를 시작하지 않으면 손해 본다는 확신이 3초 안에 든다. AI가 24시간 글로벌 SNS에 제국을 자동 전파하고, 모든 클릭이 매출이 된다."
+>
+> **포지셔닝:** 행동 금융 시뮬레이션 OS + AI 콘텐츠 SaaS + 추천 엔진 + 바이럴 옵티마이저 + 실전 수익화 엔진 + AWS 유니콘 인프라
+>
+> **해자:** 폐쇄형 5중 플라이휠 — Feed → Engagement → Ritual → Revenue → AI Retrain. 동시 보유한 경쟁자 0.
 
 ---
 
-## 2. 미완료/보강 작업 (우선순위 순)
+## 0. 8-Gate Merge Rule (모든 PR 강제)
 
-### P0 — 사용자 영향 큰 것
-1. **로그인 후 분기 라우팅** — `useAuthBridge`에 `profile.tier`/`active_package` 조회 후 `/wallet?intent=first-deposit` ↔ `/dashboard` 분기 추가
-2. **매직링크 에러 화면** — `/auth/callback`에서 `otp_expired`/`access_denied` 감지 시 전용 카드 + "5초 후 재발송" 버튼
-3. **미션 승인 → 푸시** — `admin_resolve_mission` 트리거에서 `pg_net`으로 `send-push` 호출 (보상 지급/승인 모두)
+PR은 8개 모두 YES 여야 머지:
+1. KPI 1개 이상 직접 기여? (전환·ARPU·K·MAU·CTR·Viral·Watch3s)
+2. 봇/시뮬 데이터 SIM 배지 + 툴팁?
+3. 제국 입성 의식 시퀀스 통과?
+4. `/arena` 트레이딩 1:1 연동?
+5. A/B 변형 등록 (`useABVariant`)?
+6. Content OS 피드백 루프 hook?
+7. Recommendation/Revenue/Viral hook?
+8. **🆕 Revenue Event 등록 + Attribution 정의?**
 
-### P1
-4. **서버 입력 검증 통합 RPC** — `validate_profile_input(name, dob, phone)` 추가 + `BEFORE INSERT/UPDATE` 트리거
-5. **A11y 감사** — `aria-label` 누락 버튼 자동 lint, focus-visible 링, 컬러 대비 4.5:1 확인 (현재 guide/secure-auth에 3건만 검색됨)
-
----
-
-## 3. 🐌 렉(성능) 원인 분석 — 끝판왕 진단
-
-### 🔴 치명적 (즉시 수정 권장)
-
-#### A. **Three.js 31MB가 메인 번들에 포함될 가능성**
-- `node_modules/three`: **31MB**, `@react-three`: 2.8MB
-- 사용처는 `src/components/arena/EmpireArmy3D.tsx` **단 1곳**
-- `vite.config.ts`에서 `manualChunks.three`로 분리는 되어 있음 ✅
-- **문제:** 해당 컴포넌트가 lazy import 되는지 확인 필요. 만약 Arena 페이지 진입 시 일반 import면 초기 로드는 OK지만 페이지 진입 시 31MB 다운로드 → 모바일 4G에서 5~10초 멈춤
-- **조치:** `EmpireArmy3D`는 반드시 `React.lazy()` + `<Suspense>` + IntersectionObserver로 화면 진입시에만 로드
-
-#### B. **realtime 채널 8개 동시 구독**
-- `use-wallet`, `Admin`(2), `SupportTickets`, `Support`, `admin/Support`, `AIBotCards`, `trading/real-store` + LiveRanking 등
-- `LiveRanking`은 8초마다 polling **+** realtime 동시 = 중복 트래픽
-- **조치:** polling 제거하고 realtime 단독 사용. 채널 수 줄이려면 단일 `app:events` 채널로 통합
-
-#### C. **AnimatePresence + framer-motion 과다**
-- LiveRanking에서 매 8초마다 layout 애니메이션 트리거 → low-end 안드로이드 reflow 폭증
-- **조치:** `prefers-reduced-motion` 체크 강제, `layout` prop을 enter/exit만 사용
-
-### 🟠 심각
-
-#### D. **App.tsx — 18개 import vs 34개 lazy**
-- 라우트 lazy는 잘 되어 있음 ✅
-- 다만 `Layout.tsx`/`TopHUD`/`FloatingChat` 등 전역 컴포넌트가 무거우면 모든 페이지 영향
-- **조치:** `FloatingChat`, `NeonNotificationFeed` 같은 위젯 `LazyMount` 적용 (이미 util 존재)
-
-#### E. **이미지 최적화 미흡**
-- `og-image.jpg`, hero 이미지들 WebP/AVIF 변환 + `loading="lazy"` + `decoding="async"` + `fetchpriority` 일괄 점검 필요
-
-#### F. **Gold particle / Orbit / Nebula FX 동시 렌더**
-- Guide V2 / SecureAuth V2에 `GoldOrbitField + ParticleField + ParallaxLayer` 동시 사용 → 60fps 어려움
-- **조치:** 모바일에서는 particle count 50% 감축 + `will-change` 제거 + `transform: translateZ(0)`만 유지
-
-### 🟡 중간
-
-- **Supabase types.ts 비대화** — RPC가 늘면서 자동 생성 타입이 커지는 중. tree-shake에는 영향 없지만 dev HMR 느려짐
-- **i18next 초기 번들** — ko/en 동시 로드 중이면 분할 필요
-- **react-three/drei**: tree-shaking 안 되는 import 있는지 확인
+미달 변형 = 7일 후 자동 롤백.
 
 ---
 
-## 4. 권장 작업 순서 (다음 빌드 모드에서 실행)
+## 1. KPI 매트릭스 (현실 화성 1위)
+
+| 지표 | 1M | 3M | 6M | 12M |
+|---|---|---|---|---|
+| MAU | 5만 | 50만 | 300만 | 1,000만 |
+| 첫입금 전환율 | 25% | 35% | 45% | 55% |
+| ARPU/월 | ₩30k | ₩50k | ₩80k | ₩120k |
+| K-Factor | 1.2 | 2.0 | 2.8 | 3.5 |
+| **월 순수익** | ₩50억 | ₩500억 | ₩2,500억 | ₩5,000억 |
+| 상위 제국민 월 수익 | 50~500억 | 100~1,000억 | — | — |
+| AI 콘텐츠/일 | 100 | 1,000 | 5,000 | **10,000** |
+| 콘텐츠→가입 | 0.5% | 1.5% | 3% | 5% |
+| Feed CTR | 8% | 15% | 22% | 30% |
+| Viral Score 평균 | 0.35 | 0.50 | 0.65 | 0.78 |
+| Watch 3s Rate | 40% | 55% | 68% | 80% |
+
+---
+
+## 2. 페르소나 6종 × Adaptive Mode × Feed Mode
+
+`birth_date → lib/persona.ts → <PersonaAdaptiveLayout>` + `personalizeFeed(user)`.
+
+| 세대 | UX Mode | Feed Mode | /arena 추천 |
+|---|---|---|---|
+| 20대 대학생 | Game | high-viral | BTC 5x |
+| 30대 직장인 | Performance | performance | ETH 10x |
+| 40대 사업자 | Strategy | performance | BTC/ETH 20x + AI |
+| 50대 가장 | Safety | stable-income | BTC 3x |
+| 60-70대 시니어 | Simplified+Voice | stable-income | Paper 우선 |
+| 주부/육아맘 | Game(Soft) | high-viral | DOGE/PEPE 5x |
+
+---
+
+## 3~9. 제국 코어 (V10 그대로 · 변경 없음)
+Empire Pulse(DBS/RAF/SPA/AI EA Pulse) ↔ /arena 1:1 · 입성 의식 + 3채널 + DepositRitualWizard 5단계 + 첫 ₩10k 100% 매칭 · 4대 바이럴 미션 + OG 4종 + 인플루언서 3등급 · AI 차별화(Empire Advisor / 60s PRO / Autonomous LSTM+XGBoost+RL) · empire_units / map_progress / app:jackpot · Adaptive UX · i18n 8개국 · Trust & Legal · Gold&Dark UI · AAL2 · 보안 메모리 100%.
+
+---
+
+## 10. 🔥 V17 신규 — 5대 엔진
+
+### 10.1 Recommendation Engine (TikTok FYP급)
+```ts
+score = watch_time*0.4 + share_rate*0.3 + like_rate*0.2 + recent_boost*0.1
+personalizeFeed = age<25 ? 'high-viral' : age<40 ? 'performance' : 'stable-income'
+```
+- DB: `feed_events`, `feed_recommendations`, `user_feed_profile(embedding vector(768))`
+- RPC: `rank_feed_for_user`, `record_feed_event`
+- Edge: `feed-personalize` (Lovable AI Gemini), `feed-retrain` (15분 cron)
+- UI: `<PersonalizedFeedRail>`, `<FeedCard>` (3s autoplay + dwell tracker)
+
+### 10.2 Viral Optimizer (TikTok 역설계)
+```ts
+viralScore = watch_3s*0.3 + completion*0.4 + share*0.3
+bestPostTime = {KR:18, US:19, JP:20, VN:19.5, AR:21}[region]
+```
+- DB: `viral_metrics`, `posting_schedule_queue`
+- Edge: `viral-score-compute` (5분 cron) → Optimizer 피드백, `posting-scheduler` (1분 cron) → SQS
+
+### 10.3 Revenue Engine (3-Layer)
+| 모델 | 구현 |
+|---|---|
+| Subscription | PRO ₩39k / ₩99k |
+| Ads | Feed in-stream + jackpot sponsor |
+| Tx Fee | /arena 0.05% + 출금 ₩2k |
+
+- DB: `revenue_events`, `revenue_daily_rollup`(mv)
+- RPC: `record_revenue_event`, `award_content_referral`
+- UI: `<RevenueWidget>` + `/admin/revenue`
+
+### 10.4 AI Content Autopilot (10,000/day)
+```text
+Trend → Script(Gemini-3-flash, Hook/Problem/Solution/CTA)
+   → Render(FFmpeg + avatar + TTS)
+   → Multi-Upload(TikTok/IG/YT/X)
+   → /c/{video_id} UTM landing
+   → Metrics → Optimizer
+   → Revenue Attribution → Recommendation Retrain
+```
+
+### 10.5 AWS Unicorn Infra (`phonara-unicorn/` 별도 repo)
+```text
+phonara-unicorn/
+├── apps/{api,worker,web,admin}/
+├── services/{auth,video,ai,feed}/
+├── packages/{shared-types,utils,ai-prompts,platform-adapters}/
+├── infra/terraform/{ecs,sqs,s3,rds,cloudfront,autoscaling}.tf
+├── pipelines/{video,recommendation,tiktok_optimizer}.ts
+├── docker/  └─ .github/workflows/
+```
+**230 ECS task** = Trend 10 + Script 30 + Render 100 + Upload 50 + Analytics 20 + Reco 20 (auto-scale 10→200).
+
+스택 통합: Supabase(auth/realtime/PG) + Vercel(Next.js) + Docker Compose + GitHub Actions.
+
+---
+
+## 11. 실행 로드맵 (10 Phase / 9~11주)
 
 ```text
-PHASE A (성능 응급처치, 1턴)
-  1. EmpireArmy3D React.lazy + Suspense 강제
-  2. LiveRanking polling 제거 (realtime only)
-  3. 모바일에서 particle/orbit count 50% 감축 + reduced-motion 강제
-  4. FloatingChat / NeonNotificationFeed LazyMount 래핑
+PHASE 0  Pre-Launch Quick Win                          [3일]
+  Pulse + 100만 SIM + AI EA 온보딩 + 성능 응급처치(3D lazy/polling 제거)
 
-PHASE B (UX 보강, 1턴)
-  5. AuthCallback 만료/재사용 전용 에러 카드 + 재발송 버튼
-  6. useAuthBridge 패키지 보유 여부 분기 라우팅
-  7. validate_profile_input RPC + 트리거
+PHASE A  매출 직격탄 + /arena 자금 전환                [턴 1]
+  Migration: deposits/giftcard/first_deposit/ab_test/pulse_mv
+  <DepositRitualWizard> 5단계 + PTC live
+  → KPI: 첫입금 25%↑
 
-PHASE C (알림 연결, 1턴)
-  8. admin_resolve_mission 성공 시 pg_net → send-push 호출
-  9. 입금/출금 승인 시에도 동일 푸시 트리거
+PHASE B  Empire Pulse 완성                             [턴 2]
+PHASE C  바이럴 4미션 + OG 카드 4종                    [턴 3]
+PHASE D  AI 차별화 + /arena AI 오버레이                [턴 4]
+PHASE E  잭팟 + Adaptive UI + Voice                    [턴 5]
 
-PHASE D (A11y 감사, 1턴)
-  10. 모든 icon-only 버튼 aria-label 추가
-  11. focus-visible:ring-2 ring-gold/70 전역 적용
-  12. 컬러 대비 자동 검사 스크립트 추가
+🆕 PHASE R  Recommendation + Revenue                   [턴 6]
+  feed_events/recommendations/revenue_events 마이그레이션
+  rank_feed_for_user RPC + <PersonalizedFeedRail>
+  /admin/revenue 대시보드
+  → KPI: Feed CTR 15%↑ / ARPU ₩50k
+
+🆕 PHASE V  Viral Optimizer (TikTok 역설계)            [턴 7]
+  viral_metrics + posting_schedule_queue
+  viral-score-compute / posting-scheduler crons
+  → KPI: Viral Score 0.50↑ / Watch 3s 55%↑
+
+PHASE F  AI Autonomous + i18n 8개국                    [턴 8]
+
+═════════════════════════════════════════════════════════════
+🆕 PHASE U  AWS Unicorn Infra (별도 repo · 병렬)        [턴 7~11]
+  U.1  phonara-unicorn/ 모노레포 + Terraform → AWS
+  U.2  feed/video/ai/auth-service 분리
+  U.3  ECS auto-scale 10→200 + SQS 3큐 + S3
+  U.4  제국 ↔ unicorn 양방향 webhook + /admin/kpi 통합
+  U.5  스케일 100→1k→5k→10k/day
+  → KPI: 일 1,000 콘텐츠 + 콘텐츠→가입 1.5%↑
 ```
 
 ---
 
-## 5. 한줄 요약
+## 12. 기술 실행 지침
 
-> **이미 70% 완성된 제국이지만, 31MB Three.js 즉시 로드 + 8개 realtime 채널 + 풀 particle FX 3중첩이 모바일 렉의 90% 원인이다.** Phase A만 끝내도 체감 속도 2~3배 상승 예상.
+- **신규 DB:** `feed_events`, `feed_recommendations`, `user_feed_profile`, `viral_metrics`, `posting_schedule_queue`, `revenue_events`, `revenue_daily_rollup`(mv) — 모두 RLS + admin/owner 분리.
+- **신규 RPC (SECURITY DEFINER + permission baseline):** `rank_feed_for_user`, `record_feed_event`, `compute_viral_score`, `record_revenue_event`, `award_content_referral`, `schedule_post_at_best_time`.
+- **신규 Edge Functions:** `feed-personalize`, `feed-retrain`(15m cron), `viral-score-compute`(5m cron), `posting-scheduler`(1m cron), `revenue-attribution`.
+- **신규 컴포넌트:** `<PersonalizedFeedRail>`, `<FeedCard>`, `<ViralScoreBadge>`, `<RevenueWidget>`, `<FeedDiagnosticsPanel>`.
+- **보안/성능 (V15 그대로):** AAL2 출금 / `guard_profile_sensitive_columns` / `function_permissions_baseline` / `check-forbidden-phrases.mjs` / 3D lazy / polling 제거 / `prefers-reduced-motion` / particle 50%↓.
+- **콘텐츠 안전:** 권역별 50개/일 상한 + TikTok/IG/YT 정책 lint + "수익 보장" 금지 phrase 강제.
 
-승인하시면 **Phase A부터 순차 실행**하겠습니다.
+---
+
+## 13. A/B + KPI 모니터링 (18종)
+
+`conversion_events` 18종:
+- **V15 14종:** signup / deposit / share / pro / withdraw / arena_open / arena_close / ai_hit / voice_on / term_tooltip / content_view / content_signup / ritual_complete / jackpot_view
+- **🆕 V17 4종:** `feed_impression`, `feed_click`, `revenue_collected`, `viral_milestone`
+
+`/admin/kpi` = 제국 + Content OS + Recommendation + Revenue + Viral 통합 뷰.
+
+---
+
+## 14. 다음 행동 (승인 명령)
+
+```text
+옵션 1 — "V17 시작" / "Phase 0+A 진행"
+  → 제국 Phase 0 + Phase A 단일 턴 즉시 실행 (성능 응급처치 + Wizard + Migration)
+
+옵션 2 — "Phase R 먼저" (추천+매출 우선)
+  → feed_events/recommendations/revenue_events + rank_feed_for_user
+  → <PersonalizedFeedRail> + /admin/revenue
+
+옵션 3 — "Phase V 먼저" (바이럴 옵티마이저)
+  → viral_metrics + posting_schedule_queue + 2 crons
+
+옵션 4 — "phonara-unicorn 스캐폴드" (별도 repo)
+  → Terraform infra + NestJS apps + Docker + Vercel + GH Actions 초안
+
+옵션 5 — "둘 다 병렬"
+  → Phase 0+A (제국) + Phase R 또는 U.1 동시
+
+부분 승인 — "성능 응급처치만" / "Wizard만" / "추천만" / "매출만" / "바이럴만"
+```
+
+**최종 한 줄:**
+> Phonara V17 = 제국(전환·바이럴·트레이딩·AI Autonomous) × Recommendation(개인화 FYP) × Viral(TikTok 역설계) × Revenue(Sub+Ads+Fee) × AI Content Autopilot(10k/day) × AWS 유니콘 인프라 — 5중 폐쇄형 플라이휠. **Phonara Empire, Rise to Mars. 🔥**
