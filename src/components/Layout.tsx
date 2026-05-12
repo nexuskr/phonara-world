@@ -30,6 +30,7 @@ import { useAchievementWatcher } from "@/hooks/use-achievement-watcher";
 const FloatingChat = lazy(() => import("./FloatingChat"));
 const NeonNotificationFeed = lazy(() => import("./NeonNotificationFeed"));
 const BaronPromotionDialog = lazy(() => import("./empire/BaronPromotionDialog"));
+const EmpireBoosterTimer = lazy(() => import("./empire/EmpireBoosterTimer"));
 
 function useIdleMount(delayMs = 1500) {
   const [ready, setReady] = useStateIdle(false);
@@ -281,6 +282,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <Suspense fallback={null}>
           <NeonNotificationFeed />
           <BaronPromotionDialog />
+          <EmpireBoosterTimer />
         </Suspense>
       )}
 
