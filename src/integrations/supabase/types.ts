@@ -2231,6 +2231,42 @@ export type Database = {
         }
         Relationships: []
       }
+      legal_documents: {
+        Row: {
+          body_md: string
+          created_at: string
+          doc_key: string
+          effective_at: string
+          id: string
+          is_current: boolean
+          locale: string
+          title: string
+          version: string
+        }
+        Insert: {
+          body_md: string
+          created_at?: string
+          doc_key: string
+          effective_at?: string
+          id?: string
+          is_current?: boolean
+          locale?: string
+          title: string
+          version: string
+        }
+        Update: {
+          body_md?: string
+          created_at?: string
+          doc_key?: string
+          effective_at?: string
+          id?: string
+          is_current?: boolean
+          locale?: string
+          title?: string
+          version?: string
+        }
+        Relationships: []
+      }
       line_link_tokens: {
         Row: {
           consumed_at: string | null
@@ -4352,6 +4388,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_legal_consents: {
+        Row: {
+          consented_at: string
+          doc_key: string
+          id: string
+          ip_hash: string | null
+          locale: string
+          user_agent: string | null
+          user_id: string
+          version: string
+        }
+        Insert: {
+          consented_at?: string
+          doc_key: string
+          id?: string
+          ip_hash?: string | null
+          locale?: string
+          user_agent?: string | null
+          user_id: string
+          version: string
+        }
+        Update: {
+          consented_at?: string
+          doc_key?: string
+          id?: string
+          ip_hash?: string | null
+          locale?: string
+          user_agent?: string | null
+          user_id?: string
+          version?: string
+        }
+        Relationships: []
+      }
       user_onboarding_progress: {
         Row: {
           completed_at: string | null
@@ -5983,6 +6052,7 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_my_legal_consent_status: { Args: never; Returns: Json }
       get_my_quests: { Args: never; Returns: Json }
       get_my_security_events: {
         Args: { _limit?: number }
@@ -5997,6 +6067,7 @@ export type Database = {
       }
       get_my_weekly_referral_rank: { Args: never; Returns: Json }
       get_next_empire_day: { Args: never; Returns: string }
+      get_payout_ops_stats_24h: { Args: never; Returns: Json }
       get_permission_change_log: {
         Args: { _limit?: number }
         Returns: {
@@ -6367,6 +6438,10 @@ export type Database = {
           _video_id: string
         }
         Returns: number
+      }
+      record_legal_consent: {
+        Args: { _doc_keys: string[]; _user_agent?: string }
+        Returns: Json
       }
       record_paper_trade_outcome: {
         Args: {
