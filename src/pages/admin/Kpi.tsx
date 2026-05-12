@@ -6,6 +6,7 @@ import Layout from "@/components/Layout";
 import { supabase } from "@/integrations/supabase/client";
 import { useRequireAdmin } from "@/hooks/use-require-auth";
 import { LoadingList } from "@/components/ui/loading-state";
+import FeedDiagnosticsPanel from "@/components/feed/FeedDiagnosticsPanel";
 
 type Kpi = {
   mau: number;
