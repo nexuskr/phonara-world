@@ -40,7 +40,7 @@ import CoinAddressAdmin from "@/components/admin/CoinAddressAdmin";
 const SENSITIVE_ADMIN_TABS = [
   "server_wd", "server_dep", "users", "packages", "coin",
   "perms", "aml", "payout_audit", "security", "ops", "viral_forensics",
-  "accounting",
+  "accounting", "bot_mix",
 ];
 import { Activity, Lock, Bot, Flame, FlaskConical, HeartPulse, Gauge } from "lucide-react";
 
