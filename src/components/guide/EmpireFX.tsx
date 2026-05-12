@@ -58,10 +58,21 @@ export function GoldVignette() {
   );
 }
 
+/** Detect coarse-pointer / mobile to halve particle counts. */
+function useIsLowEndDevice() {
+  if (typeof window === "undefined") return false;
+  const coarse = window.matchMedia?.("(pointer: coarse)").matches ?? false;
+  const cores = (navigator as any).hardwareConcurrency ?? 4;
+  const mem = (navigator as any).deviceMemory ?? 4;
+  return coarse || cores <= 4 || mem <= 4;
+}
+
 export function ParticleField({ density = 14 }: { density?: number }) {
   const reduce = useReducedMotion();
+  const low = useIsLowEndDevice();
   if (reduce) return null;
-  const dots = Array.from({ length: density });
+  const effective = low ? Math.max(4, Math.floor(density / 2)) : density;
+  const dots = Array.from({ length: effective });
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
       {dots.map((_, i) => {
