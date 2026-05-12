@@ -98,7 +98,7 @@ const ALLOW_FILES = [
 ];
 
 const files = execSync(
-  "git ls-files 'src/**/*.tsx' 'src/**/*.ts' 'src/lib/i18n.ts'",
+  "find src -type f \\( -name '*.tsx' -o -name '*.ts' \\) -not -path '*/node_modules/*'",
   { encoding: "utf8" },
 ).split("\n").filter(Boolean);
 
