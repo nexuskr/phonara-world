@@ -118,7 +118,7 @@ export default function Cockpit() {
   if (!user) return null;
   if (loading) return (
     <div className="min-h-screen bg-background p-4">
-      <LoadingList lines={6} />
+      <LoadingList rows={6} />
     </div>
   );
 
