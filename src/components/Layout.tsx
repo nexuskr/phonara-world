@@ -279,6 +279,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {idleReady && (
         <Suspense fallback={null}>
           <NeonNotificationFeed />
+          <BaronPromotionDialog />
         </Suspense>
       )}
 
