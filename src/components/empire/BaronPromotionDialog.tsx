@@ -21,8 +21,8 @@ export default function BaronPromotionDialog() {
   async function loadLatest() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-    const { data } = await supabase
-      .from("fomo_notifications")
+    const { data } = await (supabase
+      .from("fomo_notifications") as any)
       .select("id, kind, level, payload, created_at")
       .eq("user_id", user.id)
       .eq("kind", "baron_promotion")
