@@ -110,6 +110,7 @@ const App = () => (
               <Route path="/command" element={<Dashboard />} />
               <Route path="/earn" element={<Navigate to="/missions" replace />} />
               <Route path="/empire" element={<Empire />} />
+              <Route path="/empire/hall" element={<EmpireHall />} />
               <Route path="/treasury" element={<Navigate to="/wallet" replace />} />
               <Route path="/treasury/settlements" element={<Settlements />} />
               <Route path="/legacy" element={<Navigate to="/achievements" replace />} />
