@@ -64,20 +64,33 @@ export async function awardCrown(
   });
 
   // PR-F Viral Loop v2 — auto-mint replay for variance >= 2.0
-  if ((r.variance ?? 0) >= 2.0 && r.event_id) {
+  if ((r.variance ?? 0) >= 2.0) {
     try {
-      const { data: rep } = await supabase.rpc("create_crown_replay", { _event_id: r.event_id });
-      const token = (rep as any)?.token as string | undefined;
-      if (token) {
-        notify.success("👑 제국에 자랑할 시간!", {
-          description: `×${(r.variance ?? 0).toFixed(2)} Crown 폭발 — 공유하면 더 많은 Crown을 노릴 수 있습니다.`,
-          action: {
-            label: "Replay 공유",
-            onClick: () => {
-              window.dispatchEvent(new CustomEvent("phonara:share-replay", { detail: { token } }));
-            },
-          },
-        });
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: ev } = await supabase
+          .from("crown_events")
+          .select("id")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        const eventId = (ev as any)?.id as string | undefined;
+        if (eventId) {
+          const { data: rep } = await supabase.rpc("create_crown_replay", { _event_id: eventId });
+          const token = (rep as any)?.token as string | undefined;
+          if (token) {
+            notify.success("👑 제국에 자랑할 시간!", {
+              description: `×${(r.variance ?? 0).toFixed(2)} Crown 폭발 — 공유하면 더 많은 Crown을 노립니다.`,
+              action: {
+                label: "공유",
+                onClick: () => {
+                  window.dispatchEvent(new CustomEvent("phonara:share-replay", { detail: { token } }));
+                },
+              },
+            });
+          }
+        }
       }
     } catch { /* non-fatal */ }
   }
