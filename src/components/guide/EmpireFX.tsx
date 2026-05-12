@@ -104,10 +104,12 @@ export function ParticleField({ density = 14 }: { density?: number }) {
 /** 곡선 궤도를 도는 골드 입자 — ParticleField 상위 호환 */
 export function GoldOrbitField({ count = 10 }: { count?: number }) {
   const reduce = useReducedMotion();
+  const low = useIsLowEndDevice();
   if (reduce) return null;
+  const effective = low ? Math.max(3, Math.floor(count / 2)) : count;
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {Array.from({ length: count }).map((_, i) => {
+      {Array.from({ length: effective }).map((_, i) => {
         const r = 110 + (i % 4) * 60;
         const dur = 18 + (i % 5) * 4;
         const delay = (i * 0.6) % dur;
