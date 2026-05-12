@@ -335,7 +335,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </nav>
       )}
 
-      {user && <FloatingChat />}
+      {user && idleReady && (
+        <Suspense fallback={null}>
+          <FloatingChat />
+        </Suspense>
+      )}
     </div>
   );
 }
