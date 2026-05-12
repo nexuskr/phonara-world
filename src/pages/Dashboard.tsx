@@ -100,9 +100,10 @@ export default function Dashboard() {
             <BoostHeroCard />
           </div>
 
-          {/* V17 — 개인화 추천 피드 */}
-          <div className="mt-4">
+          {/* V17 — 개인화 추천 피드 + 24h 매출 위젯 */}
+          <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_280px] items-start">
             <PersonalizedFeedRail />
+            <RevenueWidget />
           </div>
 
           {/* Balance hero */}
