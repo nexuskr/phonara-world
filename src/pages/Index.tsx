@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import Particles from "@/components/Particles";
 import PayoutTicker from "@/components/PayoutTicker";
+import WhaleStrikeRail from "@/components/empire/WhaleStrikeRail";
 import { useOnline, useTotalPayout, useTodayPayout, useMembers } from "@/components/LiveStats.tsx";
 import { useAuthReady } from "@/hooks/use-auth-ready";
 import EmpireFoundingCounter from "@/components/EmpireFoundingCounter";
@@ -243,6 +244,7 @@ export default function Index() {
 
       {/* Live payout ticker + Council */}
       <section className="relative z-10 container py-12">
+        <div className="mb-5"><WhaleStrikeRail /></div>
         <div className="grid md:grid-cols-2 gap-5">
           <PayoutTicker />
           <div className="relative rounded-3xl overflow-hidden border border-primary/40 glow-imperial">
