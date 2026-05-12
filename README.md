@@ -37,3 +37,25 @@ GET https://<project>.supabase.co/functions/v1/public-status?format=shield
 ```
 
 CORS 허용·apikey 헤더만 있으면 누구나 호출 가능합니다.
+
+---
+
+## 독립 운영 (Lovable 비의존 로드맵)
+
+이 repository는 Lovable 없이도 단독으로 빌드/배포할 수 있는 표준 Vite + React + Supabase 스택입니다.
+
+- **Phase 1 (완료)** — 코드 GitHub 독립. 양방향 동기화 활성.
+- **Phase 2** — 백엔드(Supabase) 자체 계정으로 이전. 가이드: [`docs/independence/PHASE_2_SUPABASE_MIGRATION.md`](docs/independence/PHASE_2_SUPABASE_MIGRATION.md)
+- **Phase 3** — 도메인(phonara.net / phonara.world) 외부 레지스트라 이전 (구매 60일 이후 가능).
+
+### 로컬 개발
+```bash
+cp .env.example .env   # 값 채우기
+bun install
+bun run dev
+```
+
+### 자체 빌드 / 배포
+```bash
+bun run build          # dist/ 생성 — 정적 호스팅 어디든 배포 가능 (Vercel / Cloudflare Pages / Netlify)
+```
