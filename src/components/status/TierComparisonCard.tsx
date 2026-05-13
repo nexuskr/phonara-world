@@ -3,11 +3,16 @@ import { TrendingUp, ChevronRight } from "lucide-react";
 import { useDB, formatKRW, type Tier } from "@/lib/store";
 import TierBadge from "./TierBadge";
 
+// P2-1 — 패키지 카탈로그(PACKAGES)의 dailyReturn 기준으로 정렬:
+//   NORMAL(FREE): 출석/미션 기본 수익 (Easy Starter 1,800 미만)
+//   VIP(Easy 50):    24,000원/일
+//   GOD(Easy 150):   70,000원/일
+//   EMPIRE:        500,000원/일
 const TIER_AVG_DAILY: Record<Tier, number> = {
-  NORMAL: 1_200,
-  VIP: 14_000,
-  GOD: 47_000,
-  EMPIRE: 280_000,
+  NORMAL: 1_800,
+  VIP: 24_000,
+  GOD: 70_000,
+  EMPIRE: 500_000,
 };
 
 /** "FREE 평균 ₩X / VIP ₩XX / 당신은 ₩X" 비교 카드. */
