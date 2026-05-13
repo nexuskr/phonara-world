@@ -237,6 +237,12 @@ const DashboardBetPanel = forwardRef<BetPanelHandle>(function DashboardBetPanel(
               {lockedGateForCurrent.x}× 해금까지 PHON {(lockedGateForCurrent.phon - phon).toLocaleString()} 더 필요
             </div>
           )}
+          {serverMaxLev > 0 && leverage > serverMaxLev && (
+            <div className="mt-1 text-[10px] text-rose-400 flex items-center gap-1">
+              <Lock className="w-2.5 h-2.5" />
+              현재 최대 {serverMaxLev}× — NFT 부스트 시 더 높은 배율 해금
+            </div>
+          )}
         </div>
 
         {/* B1 — first-trade bonus banner */}
