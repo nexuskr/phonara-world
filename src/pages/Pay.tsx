@@ -1,16 +1,22 @@
 /**
  * /pay — Phonara Pay 단독 페이지.
- * 운영자 TRON 입금 주소는 추후 admin_settings 테이블에서 로드하거나 secret로 주입.
- * 임시로 환경변수 VITE_PHONARA_TRON_ADDRESS 사용.
+ * 입금 주소는 get_pay_receive_address RPC로 로드 (admin이 pay_config 테이블에 설정).
  */
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import PhonaraPayPanel from "@/components/empire/PhonaraPayPanel";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function PayPage() {
   const nav = useNavigate();
-  // Vite는 VITE_ 접두사 환경변수만 노출. 운영자가 .env에 채우거나 추후 admin_settings 테이블로 이전.
-  const addr = (import.meta.env.VITE_PHONARA_TRON_ADDRESS as string | undefined) || "";
+  const [addr, setAddr] = useState<string>("");
+
+  useEffect(() => {
+    supabase.rpc("get_pay_receive_address").then(({ data }) => {
+      if (data) setAddr(String(data));
+    });
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
