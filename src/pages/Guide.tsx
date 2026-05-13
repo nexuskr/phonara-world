@@ -11,6 +11,7 @@ import { notify } from "@/lib/notify";
 import { markLandingStart } from "@/lib/funnel";
 import ThreeSecondHero from "@/components/landing/ThreeSecondHero";
 import FomoScrollHero from "@/components/guide/FomoScrollHero";
+import StarterFunnelV3 from "@/components/guide/StarterFunnelV3";
 import { SceneProblem, SceneSolution, SceneProof, ScenePersona, ScenePackage } from "@/components/guide/FomoScrollScenes";
 import FomoFinalCTA from "@/components/guide/FomoFinalCTA";
 import { SceneNetworkEffect } from "@/components/guide/SceneNetworkEffect";
@@ -126,58 +127,34 @@ export default function Guide() {
     try { localStorage.setItem("guide_large_text", next ? "1" : "0"); } catch {}
   }
 
+  // ── Phase V3: starter는 3단 심리 압축 엔진(StarterFunnelV3) — 자체 게이트/완주 마킹/스크롤 차단
+  if (isStarter) {
+    return <StarterFunnelV3 />;
+  }
+
   return (
     <Layout>
-      {/* detail 모드에서만 sticky 3초 히어로 — starter는 풀스크린 몰입 */}
-      {!isStarter && (
-        <div className="sticky top-0 z-30 px-3 pt-2 pb-1 bg-background/85 backdrop-blur-md">
-          <ThreeSecondHero />
-        </div>
-      )}
+      <div className="sticky top-0 z-30 px-3 pt-2 pb-1 bg-background/85 backdrop-blur-md">
+        <ThreeSecondHero />
+      </div>
       <div
         ref={containerRef}
-        className={`snap-y snap-mandatory overflow-y-auto ${isStarter ? "h-[100dvh]" : "h-[calc(100vh-56px)]"} scroll-smooth ${largeText && !isStarter ? "text-[112%]" : ""}`}
+        className={`snap-y snap-mandatory overflow-y-auto h-[calc(100vh-56px)] scroll-smooth ${largeText ? "text-[112%]" : ""}`}
         style={{ scrollbarWidth: "thin" }}
       >
-        {isStarter ? (
-          <>
-            <LazyScene><FomoScrollHero isLoggedIn={isLoggedIn} large={largeText} /></LazyScene>
-            <CinemaTransition />
-            <LazyScene><SceneProblem large={largeText} /></LazyScene>
-            <CinemaTransition />
-            <LazyScene><SceneSolution large={largeText} /></LazyScene>
-            <CinemaTransition />
-            <LazyScene><SceneProof large={largeText} /></LazyScene>
-            <CinemaTransition />
-            <LazyScene><ScenePersona large={largeText} /></LazyScene>
-            <CinemaTransition />
-            <LazyScene><SceneNetworkEffect large={largeText} isLoggedIn={isLoggedIn} /></LazyScene>
-            <CinemaTransition />
-            <LazyScene><SceneGuildWar large={largeText} /></LazyScene>
-            <CinemaTransition />
-            <LazyScene><SceneEmpireMap large={largeText} /></LazyScene>
-            <CinemaTransition />
-            <LazyScene><ScenePackage large={largeText} /></LazyScene>
-            <CinemaTransition />
-            <LazyScene><FomoFinalCTA large={largeText} /></LazyScene>
-          </>
-        ) : (
-          <>
-            <SceneTrust reduce={!!reduce} />
-            <SceneHook reduce={!!reduce} />
-            <SceneLiveProof reduce={!!reduce} />
-            <SceneSimulator />
-            <SceneKakao reduce={!!reduce} />
-            <SceneTiers />
-            <SceneTestimonials />
-            <SceneFinalCTA isLoggedIn={isLoggedIn} />
-          </>
-        )}
+        <SceneTrust reduce={!!reduce} />
+        <SceneHook reduce={!!reduce} />
+        <SceneLiveProof reduce={!!reduce} />
+        <SceneSimulator />
+        <SceneKakao reduce={!!reduce} />
+        <SceneTiers />
+        <SceneTestimonials />
+        <SceneFinalCTA isLoggedIn={isLoggedIn} />
       </div>
 
       {/* 진행률 도트 (우측 고정) */}
       <div className="fixed right-3 top-1/2 -translate-y-1/2 z-30 flex flex-col gap-2 pointer-events-auto">
-        {Array.from({ length: isStarter ? sceneCount : sceneCount + 1 }).map((_, i) => (
+        {Array.from({ length: sceneCount + 1 }).map((_, i) => (
           <button
             key={i}
             onClick={() => jumpTo(i)}
