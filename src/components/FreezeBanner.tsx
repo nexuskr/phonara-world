@@ -23,7 +23,7 @@ export default function FreezeBanner() {
       setF((data && data[0]) || null);
     }
     load();
-    const t = setInterval(() => setNow(Date.now()), 1000);
+    const t = setInterval(() => setNow(Date.now()), 2000);
     const ch = supabase
       .channel("freeze:self")
       .on("postgres_changes", { event: "*", schema: "public", table: "account_freezes" }, load)

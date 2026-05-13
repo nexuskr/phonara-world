@@ -31,7 +31,7 @@ export function useEmpireBooster() {
   // 1s tick for countdown UI
   useEffect(() => {
     if (!booster) return;
-    const t = setInterval(() => setNow(Date.now()), 1000);
+    const t = setInterval(() => setNow(Date.now()), 2000);
     return () => clearInterval(t);
   }, [booster]);
 
