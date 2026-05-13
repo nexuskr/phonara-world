@@ -131,6 +131,7 @@ export default function Admin() {
     { id: "ev_health", label: "EV 건전성", icon: HeartPulse },
     { id: "ab_experiments", label: "A/B 실험", icon: FlaskConical },
     { id: "beta", label: "베타 코드", icon: KeyRound },
+    { id: "trust_v2", label: "Trust v2 (환불·손실보호)", icon: HeartHandshake },
   ];
 
   return (
