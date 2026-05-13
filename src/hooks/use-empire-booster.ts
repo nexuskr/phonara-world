@@ -16,7 +16,7 @@ export type EmpireBooster = {
 export function useEmpireBooster() {
   const [booster, setBooster] = useState<EmpireBooster | null>(null);
   const [loading, setLoading] = useState(true);
-  const [now, setNow] = useState<number>(() => Date.now());
+  const now = useNowTick(2000);
 
   const load = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -28,13 +28,6 @@ export function useEmpireBooster() {
   }, []);
 
   useEffect(() => { void load(); }, [load]);
-
-  // 1s tick for countdown UI
-  useEffect(() => {
-    if (!booster) return;
-    const t = setInterval(() => setNow(Date.now()), 2000);
-    return () => clearInterval(t);
-  }, [booster]);
 
   // Realtime: re-load when a new booster row is inserted for the user
   useEffect(() => {
