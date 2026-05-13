@@ -55,8 +55,7 @@ export default function MyFoundingSeat() {
           <EmptyState
             title="아직 좌석 없음"
             description={data.season ? `${data.season.title} 시즌이 진행 중입니다. 첫 입금 GOD MODE로 좌석을 확보해보세요.` : "현재 진행 중인 Founding 시즌이 없습니다."}
-            actionLabel="제국 페이지로"
-            onAction={() => nav("/empire")}
+            action={<button onClick={() => nav("/empire")} className="text-xs text-gold underline min-h-[44px] px-4">제국 페이지로</button>}
           />
         )}
 
