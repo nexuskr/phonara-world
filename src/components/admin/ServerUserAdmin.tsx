@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { adminSetTier, adminAdjustBalance } from "@/lib/deposits-rpc";
 import { formatKRW } from "@/lib/store";
