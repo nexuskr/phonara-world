@@ -1,0 +1,1 @@
+GRANT EXECUTE ON FUNCTION public.get_empire_seats_remaining() TO anon;
