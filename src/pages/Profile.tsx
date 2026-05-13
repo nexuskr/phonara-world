@@ -25,6 +25,7 @@ import ReferralCard from "@/components/ReferralCard";
 import NotificationPrefsCard from "@/components/profile/NotificationPrefsCard";
 import PushNotificationCard from "@/components/settings/PushNotificationCard";
 import LineConnectCard from "@/components/settings/LineConnectCard";
+import AppSettingsCard from "@/components/settings/AppSettingsCard";
 import CoinMasterLounge from "@/components/CoinMasterLounge";
 
 export default function Profile() {

@@ -435,7 +435,7 @@ input, select, textarea { font-size: 16px; } /* prevents iOS auto-zoom on focus 
 }
 .animate-confetti { animation: confetti-fall linear forwards; }
 
-/* ===== A11y: prefers-reduced-motion global guard ===== */
+/* ===== A11y: prefers-reduced-motion + user opt-in via .reduce-motion ===== */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.001ms !important;
@@ -449,6 +449,20 @@ input, select, textarea { font-size: 16px; } /* prevents iOS auto-zoom on focus 
   .animate-spin {
     animation: none !important;
   }
+}
+html.reduce-motion *,
+html.reduce-motion *::before,
+html.reduce-motion *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+html.reduce-motion .animate-confetti,
+html.reduce-motion .animate-pulse,
+html.reduce-motion .animate-bounce,
+html.reduce-motion .animate-spin {
+  animation: none !important;
 }
 
 /* ===== Senior mode (큰 글씨 / 큰 버튼 / 채도 완화) — Phase 4 강화 ===== */
