@@ -9,6 +9,7 @@ import AdminAal2Chip from "./_AdminAal2Chip";
 import AdminCommandTrigger from "./_AdminCommandTrigger";
 import AdminAal2Gate from "@/components/admin/AdminAal2Gate";
 import { isAal2Path, ADMIN_NAV_FLAT } from "./_nav";
+import { schedulePrefetch } from "@/lib/route-prefetch";
 import { Crown } from "lucide-react";
 
 /**
@@ -43,6 +44,16 @@ export default function AdminLayout() {
       document.title = "Phonara";
     };
   }, [active, totalPending]);
+
+  // Idle-prefetch the hottest admin queues once after entering Mission Control.
+  useEffect(() => {
+    schedulePrefetch([
+      "/admin/treasury/deposits",
+      "/admin/treasury/withdrawals",
+      "/admin/compliance/aml",
+      "/admin/ops/errors",
+    ]);
+  }, []);
 
   return (
     <SidebarProvider>
