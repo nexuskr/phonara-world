@@ -1,5 +1,6 @@
 import { usePracticeMode } from "@/lib/practiceMode";
 import { Sparkles, X } from "lucide-react";
+import { notify } from "@/lib/notify";
 
 /**
  * 화면 상단 고정 배너 — Practice Mode가 켜져 있을 때만 표시.
@@ -16,7 +17,10 @@ export function PracticeModeBanner() {
           <span className="text-muted-foreground hidden sm:inline">— 실거래 비활성. 모든 보상은 시뮬레이션 표기입니다.</span>
         </div>
         <button
-          onClick={() => setOn(false)}
+          onClick={() => {
+            setOn(false);
+            notify.success("실거래 모드 활성화", { description: "출금/입금이 활성화되었습니다." });
+          }}
           className="text-[11px] text-foreground/80 hover:text-foreground inline-flex items-center gap-1 min-h-[32px] px-2 rounded-lg hover:bg-background/40"
           aria-label="Practice Mode 종료"
         >

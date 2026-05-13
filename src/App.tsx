@@ -65,7 +65,6 @@ const CampaignRedirect = lazy(() => import("./pages/CampaignRedirect.tsx"));
 const ReplayLanding = lazy(() => import("./pages/ReplayLanding.tsx"));
 const Trust = lazy(() => import("./pages/Trust.tsx"));
 const LegalDoc = lazy(() => import("./pages/LegalDoc.tsx"));
-import { LegalConsentGate } from "./components/legal/LegalConsentGate";
 import { PracticeModeBanner } from "./components/practice/PracticeModeBanner";
 import { PracticeModeGate } from "./components/practice/PracticeModeGate";
 import SimGlobalBadge from "./components/SimGlobalBadge";
@@ -105,7 +104,6 @@ const App = () => (
           <SessionWatcher />
           <ReviewerMaskRoot />
           <ReviewerBadge />
-          <LegalConsentGate />
           <PracticeModeBanner />
           <SimGlobalBadge />
           <Suspense fallback={null}><EmpireMomentToast /></Suspense>
