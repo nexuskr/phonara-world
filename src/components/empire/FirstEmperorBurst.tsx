@@ -9,10 +9,11 @@
  */
 import { create } from "zustand";
 import { motion, AnimatePresence } from "framer-motion";
-import { Crown, Sparkles, Zap, Rocket, X } from "lucide-react";
+import { Crown, Sparkles, Zap, Rocket, X, ArrowUp } from "lucide-react";
 import { useEffect } from "react";
 import CrownAura from "@/components/empire/CrownAura";
 import { Button } from "@/components/ui/button";
+import { useMyPower } from "@/hooks/use-my-power";
 
 interface BurstPayload {
   nft_level?: "bronze" | "gold" | "diamond" | null;
@@ -20,6 +21,8 @@ interface BurstPayload {
   max_leverage?: number;
   phon_bonus?: number;
   first_bonus?: boolean;
+  /** 이번 입금 금액 (USDT) — 진행률 계산에 사용 */
+  deposit_usdt?: number;
 }
 interface BurstStore {
   open: boolean;
