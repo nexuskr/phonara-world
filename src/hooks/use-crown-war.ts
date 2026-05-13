@@ -31,10 +31,14 @@ export function useCrownWar(pollMs = 15000) {
 
   const load = useCallback(async () => {
     lastFetch.current = Date.now();
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) { setSnap(null); setLoading(false); return; }
-    const { data, error } = await (supabase.rpc as any)("get_crown_war_snapshot");
-    if (!error && data && !data.error) setSnap(data as CrownWarSnapshot);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { setSnap(null); setLoading(false); return; }
+      const { data, error } = await (supabase.rpc as any)("get_crown_war_snapshot");
+      if (!error && data && !data.error) setSnap(data as CrownWarSnapshot);
+    } catch {
+      /* backend unreachable — keep prior snap so UI renders fallback */
+    }
     setLoading(false);
   }, []);
 
@@ -50,11 +54,14 @@ export function useCrownWar(pollMs = 15000) {
 
   // Realtime: refresh on any war state change
   useEffect(() => {
-    const ch = supabase
-      .channel("crown-wars-live")
-      .on("postgres_changes", { event: "*", schema: "public", table: "crown_wars" }, () => void load())
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    let ch: ReturnType<typeof supabase.channel> | null = null;
+    try {
+      ch = supabase
+        .channel("crown-wars-live")
+        .on("postgres_changes", { event: "*", schema: "public", table: "crown_wars" }, () => void load())
+        .subscribe((_status: string, err?: unknown) => { if (err) { /* swallow */ } });
+    } catch { /* realtime endpoint unreachable */ }
+    return () => { if (ch) { try { supabase.removeChannel(ch); } catch { /* swallow */ } } };
   }, [load]);
 
   const endsAt = snap?.war ? new Date(snap.war.ends_at).getTime() : 0;
