@@ -6355,6 +6355,7 @@ export type Database = {
           severity: string
         }[]
       }
+      admin_get_trust_v2_stats: { Args: never; Returns: Json }
       admin_get_user_email: { Args: { _user_id: string }; Returns: string }
       admin_list_beta_invites: {
         Args: never
@@ -6367,6 +6368,20 @@ export type Database = {
           max_uses: number
           note: string
           uses: number
+        }[]
+      }
+      admin_list_refund_requests: {
+        Args: { _limit?: number; _offset?: number; _status?: string }
+        Returns: {
+          admin_memo: string
+          amount_krw: number
+          created_at: string
+          id: string
+          nickname: string
+          reason: string
+          resolved_at: string
+          status: string
+          user_id: string
         }[]
       }
       admin_operator_pnl: {
