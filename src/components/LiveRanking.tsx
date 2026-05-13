@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { AnimatePresence, motion } from "framer-motion";
 import { formatKRW } from "@/lib/store";
 import { supabase } from "@/integrations/supabase/client";
+import { subscribePostgres } from "@/lib/realtime-bus";
 import { notify } from "@/lib/notify";
 
 type Row = {
@@ -86,19 +87,21 @@ export default function LiveRanking() {
       myIdRef.current = data.user?.id ?? null;
     });
     void load();
-    // Realtime-only refresh (polling removed for perf). Fallback: 60s safety net.
-    const safety = setInterval(load, 60000);
-    const ch = supabase
-      .channel("leaderboard")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "daily_stats" },
-        () => void load(),
-      )
-      .subscribe();
+    // Auto-refresh every 30s + on tab visibility resume + realtime push.
+    const safety = setInterval(load, 30000);
+    const onVis = () => { if (document.visibilityState === "visible") void load(); };
+    const onOnline = () => void load();
+    document.addEventListener("visibilitychange", onVis);
+    window.addEventListener("online", onOnline);
+    const off = subscribePostgres(
+      { key: "leaderboard-live", table: "daily_stats", event: "*" },
+      () => void load(),
+    );
     return () => {
       clearInterval(safety);
-      supabase.removeChannel(ch);
+      document.removeEventListener("visibilitychange", onVis);
+      window.removeEventListener("online", onOnline);
+      off();
     };
   }, []);
 
