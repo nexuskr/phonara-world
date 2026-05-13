@@ -35,7 +35,7 @@ export default function CrownWarFinaleModal() {
   const go = () => {
     track("crown_war_finale_cta", { war_id: snap.war?.id });
     setOpen(false);
-    nav("/practice");
+    nav("/dashboard");
   };
 
   return (
