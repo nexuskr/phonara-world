@@ -146,7 +146,7 @@ export default function AdminRoutes() {
 
         {/* OPERATIONS */}
         <Route path="ops/observability" element={<Section title="Observability"><ObservabilityCockpit /></Section>} />
-        <Route path="ops/errors"        element={<Section title="Errors / Anomalies"><ErrorMonitorAdmin /></Section>} />
+        <Route path="ops/errors"        element={<Section title="Errors / Anomalies"><AnomalyAckQueue /><div className="h-2" /><ErrorMonitorAdmin /></Section>} />
         <Route path="ops/security"      element={<Section title="Security Audit"><SecurityAuditAdmin /></Section>} />
         <Route path="ops/cron"          element={<CronCombined />} />
         <Route path="ops/report"        element={<Suspense fallback={<LoadingList rows={4} />}><OpsReport /></Suspense>} />
