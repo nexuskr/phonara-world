@@ -18,6 +18,8 @@ import { useWinback } from "@/hooks/use-winback";
 import { useTranslation } from "react-i18next";
 import HubTabs from "@/components/HubTabs";
 import Disclaimer from "@/components/Disclaimer";
+import { isFlagOn } from "@/lib/conversion-flags";
+import { SIXTY_SECOND_FLOW_KEY } from "@/components/onboarding/SixtySecondFlow";
 
 // Below-the-fold + overlay components — code-split so first paint is fast.
 const LiveRanking = lazy(() => import("@/components/LiveRanking"));
@@ -41,13 +43,26 @@ const RevenueWidget = lazy(() => import("@/components/feed/RevenueWidget"));
 export default function Dashboard() {
   const [db] = useDB();
   const { t } = useTranslation("dashboard");
-  const user = useRequireAuth() ?? db.user;
+  const user = useRequireAuth();
   const [burst, setBurst] = useState(false);
+  const [allowOnboardingV2, setAllowOnboardingV2] = useState(false);
   const online = useOnline();
   const today = useTodayPayout();
 
   useEffect(() => { void refreshWallet(); }, []);
   useWinback();
+
+  useEffect(() => {
+    if (!user || typeof window === "undefined") {
+      setAllowOnboardingV2(false);
+      return;
+    }
+    try {
+      setAllowOnboardingV2(!isFlagOn("sixtySecondFlow") || !!localStorage.getItem(SIXTY_SECOND_FLOW_KEY));
+    } catch {
+      setAllowOnboardingV2(!isFlagOn("sixtySecondFlow"));
+    }
+  }, [user]);
 
   if (!user) return null;
   const featured = DEFAULT_MISSIONS.slice(0, 5);
@@ -60,13 +75,13 @@ export default function Dashboard() {
     <Layout>
       <Suspense fallback={null}>
         <FirstDepositTopBanner />
-        <SixtySecondFlow enabled={!!user} />
+        <SixtySecondFlow enabled={!!user} onClosed={() => setAllowOnboardingV2(true)} />
         <EarnedToast />
       </Suspense>
       <EmpireSignature />
       <Suspense fallback={null}>
         <LivePurchaseTicker />
-        <OnboardingV2 enabled={!!user} />
+        <OnboardingV2 enabled={!!user && allowOnboardingV2} />
         <FirstMissionCard />
       </Suspense>
       <div className="relative animate-liquid-in">
