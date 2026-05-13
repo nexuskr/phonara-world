@@ -76,6 +76,7 @@ export const ADMIN_NAV: AdminNavSection[] = [
       { id: "payout",  name: "Payout Audit",     to: "/admin/compliance/payout",  icon: ScrollText },
       { id: "viral",   name: "Viral Forensics",  to: "/admin/compliance/viral",   icon: Flame },
       { id: "perms",   name: "Permissions",      to: "/admin/compliance/perms",   icon: Lock },
+      { id: "rules",   name: "Auto-Rules",       to: "/admin/compliance/rules",   icon: Zap },
     ],
   },
   {

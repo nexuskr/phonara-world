@@ -182,6 +182,27 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
       ai_bot_runs: {
         Row: {
           claimed_at: string | null
@@ -1370,6 +1391,57 @@ export type Database = {
           rank?: number | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      deposit_auto_rules: {
+        Row: {
+          action: string
+          amount_max: number | null
+          amount_min: number | null
+          created_at: string
+          description: string | null
+          enabled: boolean
+          id: string
+          method: string | null
+          min_prior_approved: number | null
+          name: string
+          priority: number
+          risk_score_max: number | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          action: string
+          amount_max?: number | null
+          amount_min?: number | null
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          method?: string | null
+          min_prior_approved?: number | null
+          name: string
+          priority?: number
+          risk_score_max?: number | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          action?: string
+          amount_max?: number | null
+          amount_min?: number | null
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          method?: string | null
+          min_prior_approved?: number | null
+          name?: string
+          priority?: number
+          risk_score_max?: number | null
+          updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
@@ -6437,6 +6509,10 @@ export type Database = {
         Args: { _id: string; _note?: string }
         Returns: Json
       }
+      admin_ack_anomaly: {
+        Args: { _ids: string[]; _note?: string }
+        Returns: number
+      }
       admin_adjust_balance: {
         Args: { _delta: number; _reason: string; _target: string }
         Returns: Json
@@ -6638,6 +6714,16 @@ export type Database = {
             Returns: Json
           }
       admin_run_ev_health_now: { Args: never; Returns: Json }
+      admin_search_users: {
+        Args: { _limit?: number; _q: string }
+        Returns: {
+          created_at: string
+          email: string
+          tier: string
+          user_id: string
+          username: string
+        }[]
+      }
       admin_set_ab_active: {
         Args: { _active: boolean; _key: string }
         Returns: {
@@ -6645,6 +6731,10 @@ export type Database = {
           is_active: boolean
           updated_at: string
         }[]
+      }
+      admin_set_auto_rule_enabled: {
+        Args: { _enabled: boolean; _id: string }
+        Returns: undefined
       }
       admin_set_bot_strength: {
         Args: {
@@ -6681,6 +6771,11 @@ export type Database = {
           _target: string
           _tier: Database["public"]["Enums"]["user_tier"]
         }
+        Returns: Json
+      }
+      admin_settings_get: { Args: { _key: string }; Returns: Json }
+      admin_settings_set: {
+        Args: { _key: string; _value: Json }
         Returns: Json
       }
       admin_update_founding_season: {

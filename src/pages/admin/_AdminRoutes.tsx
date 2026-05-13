@@ -34,9 +34,12 @@ const PermissionsAudit       = lazy(() => import("@/components/admin/Permissions
 // Operations
 const ObservabilityCockpit = lazy(() => import("@/components/admin/ObservabilityCockpit"));
 const ErrorMonitorAdmin    = lazy(() => import("@/components/admin/ErrorMonitorAdmin"));
+const AnomalyAckQueue      = lazy(() => import("@/components/admin/AnomalyAckQueue"));
 const SecurityAuditAdmin   = lazy(() => import("@/components/admin/SecurityAuditAdmin"));
 const CronJobsCard         = lazy(() => import("@/components/admin/CronJobsCard"));
 const OpsReport            = lazy(() => import("./OpsReport"));
+const PayConsole           = lazy(() => import("@/components/admin/PayConsole"));
+const AutoRulesAdmin       = lazy(() => import("@/components/admin/AutoRulesAdmin"));
 
 // Growth
 const AbExperimentsAdmin   = lazy(() => import("@/components/admin/AbExperimentsAdmin"));
@@ -134,7 +137,7 @@ export default function AdminRoutes() {
         <Route path="treasury/coin"        element={<Section title="Coin Addresses"><CoinAddressAdmin /></Section>} />
         <Route path="treasury/accounting"  element={<Section title="Accounting (Zero-Loss)"><OperatorAccounting /></Section>} />
         <Route path="treasury/insurance"   element={<Section title="Insurance Fund"><InsuranceFundDashboard /></Section>} />
-        <Route path="treasury/pay"         element={<PayPlaceholder />} />
+        <Route path="treasury/pay"         element={<Section><PayConsole /></Section>} />
 
         {/* COMPLIANCE */}
         <Route path="compliance/aml"    element={<Section title="AML Queue"><AMLAdmin /></Section>} />
@@ -142,10 +145,11 @@ export default function AdminRoutes() {
         <Route path="compliance/payout" element={<Section title="Payout Audit"><LeaderboardPayoutAudit /></Section>} />
         <Route path="compliance/viral"  element={<Section title="Viral Forensics"><ViralForensics /></Section>} />
         <Route path="compliance/perms"  element={<Section title="Permissions"><PermissionsAudit /></Section>} />
+        <Route path="compliance/rules"  element={<Section><AutoRulesAdmin /></Section>} />
 
         {/* OPERATIONS */}
         <Route path="ops/observability" element={<Section title="Observability"><ObservabilityCockpit /></Section>} />
-        <Route path="ops/errors"        element={<Section title="Errors / Anomalies"><ErrorMonitorAdmin /></Section>} />
+        <Route path="ops/errors"        element={<Section title="Errors / Anomalies"><AnomalyAckQueue /><div className="h-2" /><ErrorMonitorAdmin /></Section>} />
         <Route path="ops/security"      element={<Section title="Security Audit"><SecurityAuditAdmin /></Section>} />
         <Route path="ops/cron"          element={<CronCombined />} />
         <Route path="ops/report"        element={<Suspense fallback={<LoadingList rows={4} />}><OpsReport /></Suspense>} />
