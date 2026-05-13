@@ -1894,6 +1894,105 @@ export type Database = {
         }
         Relationships: []
       }
+      ghost_moments: {
+        Row: {
+          amount: number | null
+          created_at: string
+          expires_at: string
+          id: string
+          is_simulated: boolean
+          kind: string
+          message: string
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          is_simulated?: boolean
+          kind?: string
+          message: string
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          is_simulated?: boolean
+          kind?: string
+          message?: string
+        }
+        Relationships: []
+      }
+      ghost_pulse_state: {
+        Row: {
+          active_now: number
+          id: number
+          last_moment_at: string | null
+          last_whale_at: string | null
+          live_users: number
+          region_pulses: Json
+          today_withdrawals: number
+          updated_at: string
+        }
+        Insert: {
+          active_now?: number
+          id?: number
+          last_moment_at?: string | null
+          last_whale_at?: string | null
+          live_users?: number
+          region_pulses?: Json
+          today_withdrawals?: number
+          updated_at?: string
+        }
+        Update: {
+          active_now?: number
+          id?: number
+          last_moment_at?: string | null
+          last_whale_at?: string | null
+          live_users?: number
+          region_pulses?: Json
+          today_withdrawals?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ghost_strikes: {
+        Row: {
+          amount: number
+          created_at: string
+          expires_at: string
+          id: string
+          is_simulated: boolean
+          kind: string
+          label: string
+          nick: string
+          region: string | null
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          expires_at?: string
+          id?: string
+          is_simulated?: boolean
+          kind: string
+          label?: string
+          nick?: string
+          region?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          expires_at?: string
+          id?: string
+          is_simulated?: boolean
+          kind?: string
+          label?: string
+          nick?: string
+          region?: string | null
+        }
+        Relationships: []
+      }
       guild_activity_feed: {
         Row: {
           action: string
@@ -6358,6 +6457,8 @@ export type Database = {
           observed_roles: string[]
         }[]
       }
+      get_ghost_pulse: { Args: never; Returns: Json }
+      get_ghost_strikes: { Args: { _limit?: number }; Returns: Json }
       get_guild_leaderboard: {
         Args: { _limit?: number }
         Returns: {
@@ -6527,6 +6628,18 @@ export type Database = {
       }
       get_whale_strike_funnel: { Args: never; Returns: Json }
       get_whale_strikes_24h: { Args: { _limit?: number }; Returns: Json }
+      ghost_cleanup_expired: { Args: never; Returns: undefined }
+      ghost_pulse_run: { Args: never; Returns: undefined }
+      ghost_reset_daily: { Args: never; Returns: undefined }
+      ghost_tick: {
+        Args: {
+          _active_now: number
+          _live_delta: number
+          _region_inc: Json
+          _wd_delta: number
+        }
+        Returns: undefined
+      }
       grant_recovery_bonus: {
         Args: { p_amount: number; p_source?: string }
         Returns: Json

@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { useTranslation } from "react-i18next";
 import {
   ShieldCheck,
@@ -16,6 +16,9 @@ import {
 import Particles from "@/components/Particles";
 import PayoutTicker from "@/components/PayoutTicker";
 import WhaleStrikeRail from "@/components/empire/WhaleStrikeRail";
+const WhaleStrikeRailV3 = lazy(() => import("@/components/empire/WhaleStrikeRailV3"));
+const LiveCounterStrip = lazy(() => import("@/components/empire/LiveCounterStrip"));
+const GhostPulseGlobe = lazy(() => import("@/components/empire/GhostPulseGlobe"));
 import { useOnline, useTotalPayout, useTodayPayout, useTotalUsers } from "@/components/LiveStats.tsx";
 import { useAuthReady } from "@/hooks/use-auth-ready";
 import EmpireFoundingCounter from "@/components/EmpireFoundingCounter";
@@ -118,8 +121,10 @@ export default function Index() {
       </header>
 
       {/* 3초 입금 히어로 — 최상단 고정 */}
-      <section className="relative z-20 container pt-4">
+      <section className="relative z-20 container pt-4 space-y-3">
         <ThreeSecondHero />
+        <Suspense fallback={null}><LiveCounterStrip /></Suspense>
+        <Suspense fallback={null}><GhostPulseGlobe /></Suspense>
       </section>
 
       {/* Hero */}
@@ -244,7 +249,7 @@ export default function Index() {
 
       {/* Live payout ticker + Council */}
       <section className="relative z-10 container py-12">
-        <div className="mb-5"><WhaleStrikeRail /></div>
+        <div className="mb-5"><Suspense fallback={null}><WhaleStrikeRailV3 /></Suspense></div>
         <div className="grid md:grid-cols-2 gap-5">
           <PayoutTicker />
           <div className="relative rounded-3xl overflow-hidden border border-primary/40 glow-imperial">
