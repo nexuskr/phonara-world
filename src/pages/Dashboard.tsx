@@ -58,13 +58,17 @@ export default function Dashboard() {
 
   return (
     <Layout>
-      <FirstDepositTopBanner />
-      <SixtySecondFlow enabled={!!user} />
-      <EarnedToast />
+      <Suspense fallback={null}>
+        <FirstDepositTopBanner />
+        <SixtySecondFlow enabled={!!user} />
+        <EarnedToast />
+      </Suspense>
       <EmpireSignature />
-      <LivePurchaseTicker />
-      <OnboardingV2 enabled={!!user} />
-      <FirstMissionCard />
+      <Suspense fallback={null}>
+        <LivePurchaseTicker />
+        <OnboardingV2 enabled={!!user} />
+        <FirstMissionCard />
+      </Suspense>
       <div className="relative animate-liquid-in">
         <div className="absolute inset-0 bg-grid opacity-20 pointer-events-none" />
         <Particles density={particleDensity} />
@@ -80,9 +84,11 @@ export default function Dashboard() {
           <CommandHero />
 
           {/* P2 — Empire P2E (Daily Combo + Idle Growth + Tap-to-Reinforce) */}
-          <div className="mt-4">
-            <EmpireP2EDashboard />
-          </div>
+          <LazyMount minHeight={320} rootMargin="400px 0px">
+            <div className="mt-4">
+              <Suspense fallback={null}><EmpireP2EDashboard /></Suspense>
+            </div>
+          </LazyMount>
 
           {/* Live ticker (compact, beneath hero) */}
           <div className="grid grid-cols-2 gap-2 mt-4 mb-4">
@@ -108,10 +114,12 @@ export default function Dashboard() {
           </div>
 
           {/* V17 — 개인화 추천 피드 + 24h 매출 위젯 */}
-          <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_280px] items-start">
-            <PersonalizedFeedRail />
-            <RevenueWidget />
-          </div>
+          <LazyMount minHeight={280} rootMargin="400px 0px">
+            <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_280px] items-start">
+              <Suspense fallback={null}><PersonalizedFeedRail /></Suspense>
+              <Suspense fallback={null}><RevenueWidget /></Suspense>
+            </div>
+          </LazyMount>
 
           {/* Balance hero */}
           <div className="relative animate-fade-up mt-4">
