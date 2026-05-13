@@ -2,6 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 const STORAGE_KEY = "phonara.device.fp.v1";
 const SESSION_FLAG = "phonara.device.registered";
+const DISABLED_FLAG = "phonara_disable_register_device_rpc";
 
 async function sha256Hex(input: string): Promise<string> {
   const buf = new TextEncoder().encode(input);
@@ -50,14 +51,19 @@ export async function getFingerprint(): Promise<string> {
  */
 export async function registerCurrentDevice(): Promise<void> {
   try {
+    if (sessionStorage.getItem(DISABLED_FLAG) === "1") return;
     if (sessionStorage.getItem(SESSION_FLAG) === "1") return;
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) return;
     const fp = await getFingerprint();
-    await (supabase as any).rpc("register_device", {
+    const { error } = await (supabase as any).rpc("register_device", {
       _fp: fp,
       _ua: (navigator.userAgent ?? "").slice(0, 256),
     });
+    if (error && ((error as { code?: string }).code === "PGRST301" || /401|400|unauthorized|bad request/i.test(error.message ?? ""))) {
+      sessionStorage.setItem(DISABLED_FLAG, "1");
+      return;
+    }
     sessionStorage.setItem(SESSION_FLAG, "1");
   } catch (err) {
     // Silent — device registration must never break the app.
