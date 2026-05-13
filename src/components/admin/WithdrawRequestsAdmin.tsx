@@ -7,6 +7,8 @@ import RequestTimeline from "@/components/RequestTimeline";
 import { LoadingList } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
 import WithdrawSlaCard from "@/components/admin/WithdrawSlaCard";
+import { useDeepLinkHighlight } from "@/hooks/use-deep-link-highlight";
+import { cn } from "@/lib/utils";
 
 type WR = {
   id: string;
