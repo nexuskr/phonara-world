@@ -19,9 +19,13 @@ export default function TrustCounter() {
     let mounted = true;
     let timer: number | undefined;
     const load = async () => {
-      const { data } = await supabase.rpc("get_starter_trust_stats");
-      if (!mounted) return;
-      if (data && typeof data === "object") setStats(data as unknown as Stats);
+      try {
+        const { data } = await supabase.rpc("get_starter_trust_stats");
+        if (!mounted) return;
+        if (data && typeof data === "object") setStats(data as unknown as Stats);
+      } catch {
+        /* backend unreachable — keep null so i18n fallback strings render */
+      }
     };
     void load();
     timer = window.setInterval(load, 30_000);
