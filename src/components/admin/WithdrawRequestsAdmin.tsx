@@ -7,6 +7,8 @@ import RequestTimeline from "@/components/RequestTimeline";
 import { LoadingList } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
 import WithdrawSlaCard from "@/components/admin/WithdrawSlaCard";
+import { useDeepLinkHighlight } from "@/hooks/use-deep-link-highlight";
+import { cn } from "@/lib/utils";
 
 type WR = {
   id: string;
@@ -36,6 +38,7 @@ export default function WithdrawRequestsAdmin() {
   const [filter, setFilter] = useState<"pending" | "all">("pending");
   const [modal, setModal] = useState<{ id: string; action: Action } | null>(null);
   const [openTimeline, setOpenTimeline] = useState<string | null>(null);
+  const highlightId = useDeepLinkHighlight();
 
   async function load() {
     setLoading(true);
@@ -81,7 +84,14 @@ export default function WithdrawRequestsAdmin() {
       )}
 
       {list.map((w) => (
-        <div key={w.id} className="glass-strong rounded-2xl p-4 neon-border">
+        <div
+          key={w.id}
+          data-row-id={w.id}
+          className={cn(
+            "glass-strong rounded-2xl p-4 neon-border transition-all",
+            highlightId === w.id && "ring-2 ring-primary shadow-lg shadow-primary/20",
+          )}
+        >
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
               <div className="text-[10px] text-muted-foreground flex items-center gap-2">

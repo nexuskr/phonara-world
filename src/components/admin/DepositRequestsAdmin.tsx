@@ -6,6 +6,8 @@ import { Check, X, Clock, Inbox } from "lucide-react";
 import AdminReviewModal from "@/components/admin/AdminReviewModal";
 import RequestTimeline from "@/components/RequestTimeline";
 import { EmptyState } from "@/components/ui/empty-state";
+import { useDeepLinkHighlight } from "@/hooks/use-deep-link-highlight";
+import { cn } from "@/lib/utils";
 
 type Row = {
   id: string;
@@ -25,6 +27,7 @@ export default function DepositRequestsAdmin() {
   const [rows, setRows] = useState<Row[]>([]);
   const [modal, setModal] = useState<{ id: string; action: "approve" | "reject" } | null>(null);
   const [openTimeline, setOpenTimeline] = useState<string | null>(null);
+  const highlightId = useDeepLinkHighlight();
 
   async function load() {
     const { data, error } = await supabase
@@ -58,7 +61,14 @@ export default function DepositRequestsAdmin() {
         />
       )}
       {rows.map(r => (
-        <div key={r.id} className="glass rounded-2xl p-3">
+        <div
+          key={r.id}
+          data-row-id={r.id}
+          className={cn(
+            "glass rounded-2xl p-3 transition-all",
+            highlightId === r.id && "ring-2 ring-primary shadow-lg shadow-primary/20",
+          )}
+        >
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <div className="min-w-0">
               <div className="font-display font-bold text-sm truncate">
