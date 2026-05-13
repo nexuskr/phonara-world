@@ -157,22 +157,35 @@ export default function Dashboard() {
             </div>
           </LazyMount>
 
-          {/* Live ticker (compact, beneath hero) */}
+          {/* Live ticker — luxury imperial frame */}
           <div className="grid grid-cols-2 gap-2 mt-4 mb-4">
-            <div className="glass rounded-2xl p-3 flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-secondary/20 flex items-center justify-center"><Users className="w-4 h-4 text-secondary" /></div>
-              <div>
-                <div className="text-[10px] text-muted-foreground flex items-center gap-1 break-keep"><span className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse" /> {t("online")}</div>
-                <div className="font-display font-black text-sm tabular-nums">{t("onlineUnit", { n: online.toLocaleString() })}</div>
-              </div>
-            </div>
-            <div className="glass rounded-2xl p-3 flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center"><Activity className="w-4 h-4 text-primary" /></div>
-              <div>
-                <div className="text-[10px] text-muted-foreground flex items-center gap-1 break-keep"><span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" /> {t("todaySettled")}</div>
-                <div className="font-display font-black text-sm tabular-nums text-money-strong">{formatKRW(today)}</div>
-              </div>
-            </div>
+            {[
+              { icon: Users, micro: "LIVE", label: t("online"), value: t("onlineUnit", { n: online.toLocaleString() }), strong: false },
+              { icon: Activity, micro: "TODAY", label: t("todaySettled"), value: formatKRW(today), strong: true },
+            ].map((c, i) => {
+              const Icon = c.icon;
+              return (
+                <div
+                  key={i}
+                  className="relative glass rounded-2xl p-3 flex items-center gap-3 border border-gold/30 overflow-hidden"
+                  style={{ boxShadow: "inset 0 1px 0 hsl(var(--gold)/0.18), 0 0 22px -8px hsl(var(--gold)/0.5)" }}
+                >
+                  <span aria-hidden className="absolute inset-x-3 top-0 h-[2px] bg-gradient-to-r from-transparent via-gold/70 to-transparent" />
+                  <div className="w-8 h-8 rounded-lg bg-gold/15 border border-gold/30 flex items-center justify-center">
+                    <Icon className="w-4 h-4 text-gold" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-[8px] tracking-[0.4em] text-gold/70 font-black">{c.micro}</div>
+                    <div className="text-[10px] text-muted-foreground flex items-center gap-1 break-keep">
+                      <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" /> {c.label}
+                    </div>
+                    <div className={`font-display font-black text-sm tabular-nums ${c.strong ? "text-money-strong" : ""}`}>
+                      {c.value}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
           {/* 🔥 메인 훅: BoostHero — 첫 0.5초 노출 사수 */}
