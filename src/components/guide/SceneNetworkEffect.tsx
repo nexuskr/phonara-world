@@ -48,21 +48,26 @@ export function SceneNetworkEffect({ large = false, isLoggedIn = false }: { larg
           <svg viewBox="0 0 320 220" className="w-full h-56">
             {/* edges */}
             {edges.map(([a, b], i) => {
-              const A = map[a], B = map[b];
+              const A = map[a] ?? { x: 0, y: 0 };
+              const B = map[b] ?? { x: 0, y: 0 };
+              const ax = Number.isFinite(A.x) ? A.x : 0;
+              const ay = Number.isFinite(A.y) ? A.y : 0;
+              const bx = Number.isFinite(B.x) ? B.x : 0;
+              const by = Number.isFinite(B.y) ? B.y : 0;
               return (
                 <g key={`${a}-${b}`}>
-                  <line x1={A.x} y1={A.y} x2={B.x} y2={B.y} stroke="hsl(var(--gold)/0.4)" strokeWidth="1.5" />
+                  <line x1={ax} y1={ay} x2={bx} y2={by} stroke="hsl(var(--gold)/0.4)" strokeWidth="1.5" />
                   {!reduce && (
                     <motion.circle
                       r={3}
-                      cx={A.x}
-                      cy={A.y}
+                      cx={ax}
+                      cy={ay}
                       fill="hsl(var(--gold))"
                       style={{ filter: "drop-shadow(0 0 6px hsl(var(--gold)))" }}
-                      initial={{ cx: A.x, cy: A.y, opacity: 0 }}
+                      initial={{ cx: ax, cy: ay, opacity: 0 }}
                       animate={{
-                        cx: [A.x, B.x],
-                        cy: [A.y, B.y],
+                        cx: [ax, bx],
+                        cy: [ay, by],
                         opacity: [0, 1, 1, 0],
                       }}
                       transition={{ duration: 2.4, repeat: Infinity, delay: i * 0.4, ease: "easeInOut" }}
