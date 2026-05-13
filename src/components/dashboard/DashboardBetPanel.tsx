@@ -187,6 +187,7 @@ const DashboardBetPanel = forwardRef<BetPanelHandle>(function DashboardBetPanel(
             type="number"
             inputMode="decimal"
             min={0}
+            ref={amountInputRef}
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             className="mt-1 bg-background/60 text-lg font-bold tabular-nums h-12"
