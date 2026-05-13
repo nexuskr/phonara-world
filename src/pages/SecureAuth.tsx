@@ -486,16 +486,10 @@ export default function SecureAuth() {
               </motion.div>
             )}
           </AnimatePresence>
-        </motion.div>
+        </div>
 
         {/* === Trust footer pills === */}
-        <motion.div
-          initial={reduce ? false : { opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.7, delay: 0.5 }}
-          className="mt-7 flex flex-wrap items-center justify-center gap-2"
-        >
+        <div className="mt-7 flex flex-wrap items-center justify-center gap-2">
           {[
             { icon: <ShieldCheck className="w-3.5 h-3.5" />, label: "19+ AdultGate" },
             { icon: <Clock className="w-3.5 h-3.5" />, label: "Magic Link 5분 유효" },
@@ -504,13 +498,13 @@ export default function SecureAuth() {
           ].map((p, i) => (
             <span
               key={i}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gold/30 bg-background/60 backdrop-blur text-xs text-foreground/80"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gold/30 bg-background/60 text-xs text-foreground/80"
             >
               <span className="text-gold">{p.icon}</span>
               {p.label}
             </span>
           ))}
-        </motion.div>
+        </div>
 
         <p className="mt-6 text-center text-[11px] text-muted-foreground/80 max-w-sm break-keep">
           PHONARA EMPIRE는 만 19세 이상 성인만 이용 가능합니다.
