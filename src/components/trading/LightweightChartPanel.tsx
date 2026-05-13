@@ -1,7 +1,7 @@
 import { memo, useEffect, useRef } from "react";
 import {
-  createChart, CandlestickSeries, type IChartApi, type ISeriesApi,
-  type IPriceLine, LineStyle, type CandlestickData, type UTCTimestamp,
+  createChart, CandlestickSeries, LineSeries, type IChartApi, type ISeriesApi,
+  type IPriceLine, LineStyle, type CandlestickData, type LineData, type UTCTimestamp,
 } from "lightweight-charts";
 import { getFeed, fetchKlineHistory, type KlineBar, type KlineInterval } from "@/lib/paper-trading/bybit-feed";
 
@@ -14,6 +14,8 @@ interface Props {
   overlays?: OverlayLine[];
   height?: number;
   interval?: KlineInterval;
+  /** Render mode — "candle" (default) or "line" (lighter, mobile-friendly). */
+  mode?: "candle" | "line";
 }
 
 const INTERVAL_SECONDS: Record<KlineInterval, number> = {
@@ -23,15 +25,16 @@ const INTERVAL_SECONDS: Record<KlineInterval, number> = {
 
 function bucket(ts: number, sec: number) { return Math.floor(ts / sec) * sec; }
 
-function LightweightChartPanelImpl({ symbol, price, overlays = [], height = 320, interval = "1" }: Props) {
+function LightweightChartPanelImpl({ symbol, price, overlays = [], height = 320, interval = "1", mode = "candle" }: Props) {
   const ref = useRef<HTMLDivElement | null>(null);
   const chartRef = useRef<IChartApi | null>(null);
-  const seriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
+  const seriesRef = useRef<ISeriesApi<"Candlestick"> | ISeriesApi<"Line"> | null>(null);
   const candlesRef = useRef<CandlestickData[]>([]);
   const linesRef = useRef<IPriceLine[]>([]);
   const overlaysSigRef = useRef<string>("");
   const klineActiveRef = useRef(false);
   const lastDevLogRef = useRef(0);
+  const modeRef = useRef(mode);
 
   useEffect(() => {
     if (!ref.current) return;
@@ -51,19 +54,28 @@ function LightweightChartPanelImpl({ symbol, price, overlays = [], height = 320,
       width: ref.current.clientWidth,
       height,
     });
-    const series = chart.addSeries(CandlestickSeries, {
-      upColor: "#34d399",
-      downColor: "#f43f5e",
-      borderUpColor: "#34d399",
-      borderDownColor: "#f43f5e",
-      wickUpColor: "rgba(52,211,153,0.8)",
-      wickDownColor: "rgba(244,63,94,0.8)",
-      priceLineVisible: true,
-      priceLineColor: "rgba(244,180,55,0.7)",
-      priceLineStyle: LineStyle.Dotted,
-    });
+    modeRef.current = mode;
+    const series = mode === "line"
+      ? chart.addSeries(LineSeries, {
+          color: "#f4b437",
+          lineWidth: 2,
+          priceLineVisible: true,
+          priceLineColor: "rgba(244,180,55,0.7)",
+          priceLineStyle: LineStyle.Dotted,
+        })
+      : chart.addSeries(CandlestickSeries, {
+          upColor: "#34d399",
+          downColor: "#f43f5e",
+          borderUpColor: "#34d399",
+          borderDownColor: "#f43f5e",
+          wickUpColor: "rgba(52,211,153,0.8)",
+          wickDownColor: "rgba(244,63,94,0.8)",
+          priceLineVisible: true,
+          priceLineColor: "rgba(244,180,55,0.7)",
+          priceLineStyle: LineStyle.Dotted,
+        });
     chartRef.current = chart;
-    seriesRef.current = series;
+    seriesRef.current = series as any;
 
     const ro = new ResizeObserver(() => {
       if (ref.current && chartRef.current) chartRef.current.applyOptions({ width: ref.current.clientWidth });
@@ -71,7 +83,7 @@ function LightweightChartPanelImpl({ symbol, price, overlays = [], height = 320,
     ro.observe(ref.current);
 
     return () => { ro.disconnect(); chart.remove(); chartRef.current = null; seriesRef.current = null; };
-  }, [height]);
+  }, [height, mode]);
 
   // Symbol/interval load: REST history + kline subscribe
   useEffect(() => {
@@ -84,6 +96,8 @@ function LightweightChartPanelImpl({ symbol, price, overlays = [], height = 320,
     candlesRef.current = [];
     series.setData([]);
 
+    const toLine = (b: { time: number; close: number }): LineData => ({ time: b.time as UTCTimestamp, value: b.close });
+
     (async () => {
       const history = await fetchKlineHistory(symbol, interval, 1000);
       if (cancelled || !seriesRef.current) return;
@@ -92,7 +106,11 @@ function LightweightChartPanelImpl({ symbol, price, overlays = [], height = 320,
         open: b.open, high: b.high, low: b.low, close: b.close,
       }));
       candlesRef.current = data;
-      seriesRef.current.setData(data);
+      if (mode === "line") {
+        (seriesRef.current as ISeriesApi<"Line">).setData(data.map((b) => ({ time: b.time, value: b.close })));
+      } else {
+        (seriesRef.current as ISeriesApi<"Candlestick">).setData(data);
+      }
       try { chartRef.current?.timeScale().fitContent(); } catch {}
     })();
 
@@ -112,7 +130,11 @@ function LightweightChartPanelImpl({ symbol, price, overlays = [], height = 320,
       } else if ((last.time as number) === bar.time) {
         last.open = bar.open; last.high = bar.high; last.low = bar.low; last.close = bar.close;
       }
-      seriesRef.current.update(candle);
+      if (mode === "line") {
+        (seriesRef.current as ISeriesApi<"Line">).update(toLine(candle as any));
+      } else {
+        (seriesRef.current as ISeriesApi<"Candlestick">).update(candle);
+      }
       try { chartRef.current?.timeScale().scrollToRealTime(); } catch {}
 
       if (import.meta.env.DEV) {
@@ -126,7 +148,7 @@ function LightweightChartPanelImpl({ symbol, price, overlays = [], height = 320,
     });
 
     return () => { cancelled = true; off(); };
-  }, [symbol, interval]);
+  }, [symbol, interval, mode]);
 
   // Tick fallback: only used if kline events are NOT flowing yet.
   useEffect(() => {
@@ -142,14 +164,16 @@ function LightweightChartPanelImpl({ symbol, price, overlays = [], height = 320,
       const candle: CandlestickData = { time: t, open, high: Math.max(open, price), low: Math.min(open, price), close: price };
       arr.push(candle);
       if (arr.length > 800) arr.shift();
-      series.update(candle);
+      if (mode === "line") (series as ISeriesApi<"Line">).update({ time: t, value: price });
+      else (series as ISeriesApi<"Candlestick">).update(candle);
     } else {
       last.high = Math.max(last.high, price);
       last.low = Math.min(last.low, price);
       last.close = price;
-      series.update(last);
+      if (mode === "line") (series as ISeriesApi<"Line">).update({ time: last.time, value: price });
+      else (series as ISeriesApi<"Candlestick">).update(last);
     }
-  }, [price, interval]);
+  }, [price, interval, mode]);
 
   useEffect(() => {
     const s = seriesRef.current; if (!s) return;

@@ -140,7 +140,7 @@ const DashboardBetPanel = forwardRef<BetPanelHandle>(function DashboardBetPanel(
 
       {/* Mini chart */}
       <div className="rounded-2xl overflow-hidden border border-border/40 bg-background/40">
-        <LightweightChartPanel symbol={SYMBOL} price={price} height={isMobile ? 140 : 220} />
+        <LightweightChartPanel symbol={SYMBOL} price={price} height={isMobile ? 140 : 220} mode={isMobile ? "line" : "candle"} />
       </div>
 
       {/* Mobile: buttons FIRST (above amount/leverage), Desktop: traditional flow */}

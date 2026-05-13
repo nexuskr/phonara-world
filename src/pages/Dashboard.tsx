@@ -173,7 +173,7 @@ export default function Dashboard() {
           {/* P5 — Recovery FOMO cascade */}
           <FomoNotificationStrip />
           <div className="mb-3"><CrownWarHUD /></div>
-          <div className="mb-3"><WhaleStrikeRail /></div>
+          <div className="mb-3"><WhaleStrikeRail compact /></div>
 
           {/* 🚀 Cosmic Emperor V3 — 베팅 패널 (PHON·차트·금액·배율·LONG/SHORT) + 복구·연승 */}
           <div className="mb-4 flex items-center justify-between gap-2">

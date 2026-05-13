@@ -1,5 +1,5 @@
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { lazy, Suspense, useEffect as useEffectIdle, useState as useStateIdle } from "react";
+import { lazy, Suspense, useEffect as useEffectIdle, useState as useStateIdle, useMemo, useState } from "react";
 import {
   LayoutDashboard,
   Zap,
@@ -11,9 +11,11 @@ import {
   MessageSquare,
   User as UserIcon,
   ChevronRight,
-  Network,
-  Eye,
   TrendingUp,
+  Menu,
+  Sparkles,
+  Coins,
+  Lock,
 } from "lucide-react";
 import { useDB } from "@/lib/store";
 import React from "react";
@@ -25,6 +27,10 @@ import TopHUD, { TopHUDCompact } from "./TopHUD";
 import LanguageSwitcher from "./LanguageSwitcher";
 import FreezeBanner from "./FreezeBanner";
 import { useAchievementWatcher } from "@/hooks/use-achievement-watcher";
+import {
+  Accordion, AccordionContent, AccordionItem, AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 // Heavy/non-critical UI deferred to idle to reduce TTI on mobile
 const FloatingChat = lazy(() => import("./FloatingChat"));
@@ -55,41 +61,182 @@ const EmpirePopulationPulse = lazy(() => import("./EmpirePopulationPulse"));
 const ImperialHud = lazy(() => import("./imperial/ImperialHud"));
 
 /**
- * Phonara — Empire 5축 IA
- *
- *  Command  ▶ /command
- *  Earn     ▶ /earn   (mobile: 가운데 골드 FAB)
- *  Empire   ▶ /empire
- *  Treasury ▶ /treasury
- *  Legacy   ▶ /legacy
+ * Phonara — Cosmic Emperor V3 Grouped Navigation
+ * Single source of truth for desktop sidebar, mobile sheet, and bottom-nav routing.
  */
 
-type NavItem = {
-  to: string;
-  matches: string[];
-  icon: typeof LayoutDashboard;
-  label: string;
-  fab?: boolean;
-  desktopOnly?: boolean;
-};
+type NavLeaf = { to: string; label: string; icon: typeof LayoutDashboard };
+type NavGroup = { id: string; label: string; icon: typeof LayoutDashboard; children: NavLeaf[] };
 
-const NAV: NavItem[] = [
-  { to: "/command",  matches: ["/command", "/dashboard"],                                icon: LayoutDashboard, label: "제국 대시보드" },
-  { to: "/arena",    matches: ["/arena", "/trading-arena"],                              icon: TrendingUp,      label: "Long/Short 트레이딩" },
-  { to: "/roulette", matches: ["/roulette"],                                             icon: Zap,             label: "Imperial Zeus 슬롯", fab: true },
-  { to: "/empire",   matches: ["/empire", "/packages"],                                  icon: Crown,           label: "제국 광장" },
-  { to: "/missions", matches: ["/missions", "/quests", "/season-pass"],                  icon: Trophy,          label: "황제 미션", desktopOnly: true },
-  { to: "/profile",  matches: ["/profile", "/treasury", "/wallet", "/secure-wallet"],    icon: UserIcon,        label: "내 제국" },
+const GROUPS: NavGroup[] = [
+  {
+    id: "trading",
+    label: "트레이딩",
+    icon: TrendingUp,
+    children: [
+      { to: "/arena", label: "Long/Short Arena", icon: TrendingUp },
+      { to: "/roulette", label: "Imperial Zeus 슬롯", icon: Zap },
+    ],
+  },
+  {
+    id: "empire",
+    label: "제국 광장",
+    icon: Crown,
+    children: [
+      { to: "/empire", label: "제국 홀", icon: Crown },
+      { to: "/packages", label: "황실 패키지", icon: Sparkles },
+      { to: "/empire/my-seat", label: "내 좌석", icon: Crown },
+    ],
+  },
+  {
+    id: "missions",
+    label: "황제 미션",
+    icon: Trophy,
+    children: [
+      { to: "/missions", label: "데일리 미션", icon: Trophy },
+      { to: "/quests", label: "퀘스트", icon: Trophy },
+      { to: "/season-pass", label: "시즌 패스", icon: Sparkles },
+    ],
+  },
+  {
+    id: "treasury",
+    label: "내 제국",
+    icon: UserIcon,
+    children: [
+      { to: "/profile", label: "프로필", icon: UserIcon },
+      { to: "/wallet", label: "지갑", icon: Wallet },
+      { to: "/secure-wallet", label: "보안 금고", icon: Lock },
+      { to: "/treasury", label: "Treasury", icon: Coins },
+    ],
+  },
 ];
 
-const SIDE_EXTRA: Array<{ to: string; icon: typeof MessageSquare; labelKey: any; gold?: boolean }> = [
-  { to: "/arena", icon: TrendingUp, labelKey: "tradingArena", gold: true },
-  { to: "/support", icon: MessageSquare, labelKey: "support" },
-  { to: "/profile", icon: UserIcon, labelKey: "my" },
+// Bottom nav for mobile (5 tabs, center FAB = slot)
+type BottomItem = { to: string; matches: string[]; icon: typeof LayoutDashboard; label: string; fab?: boolean };
+const BOTTOM_NAV: BottomItem[] = [
+  { to: "/command",  matches: ["/command", "/dashboard"], icon: LayoutDashboard, label: "대시보드" },
+  { to: "/arena",    matches: ["/arena"],                 icon: TrendingUp,      label: "트레이딩" },
+  { to: "/roulette", matches: ["/roulette"],              icon: Zap,             label: "슬롯", fab: true },
+  { to: "/empire",   matches: ["/empire", "/packages"],   icon: Crown,           label: "광장" },
+  { to: "/profile",  matches: ["/profile", "/wallet"],    icon: UserIcon,        label: "내 제국" },
 ];
 
-function isActive(item: NavItem, pathname: string) {
-  return item.matches.some((m) => pathname === m || pathname.startsWith(m + "/"));
+function isLeafActive(leaf: NavLeaf, pathname: string) {
+  return pathname === leaf.to || pathname.startsWith(leaf.to + "/");
+}
+function isGroupActive(g: NavGroup, pathname: string) {
+  return g.children.some((c) => isLeafActive(c, pathname));
+}
+function isBottomActive(b: BottomItem, pathname: string) {
+  return b.matches.some((m) => pathname === m || pathname.startsWith(m + "/"));
+}
+
+function GroupedMenu({
+  pathname,
+  isAdmin,
+  onNavigate,
+}: {
+  pathname: string;
+  isAdmin: boolean;
+  onNavigate?: () => void;
+}) {
+  const activeGroupIds = useMemo(
+    () => GROUPS.filter((g) => isGroupActive(g, pathname)).map((g) => g.id),
+    [pathname]
+  );
+
+  return (
+    <div className="space-y-1">
+      {/* Single dashboard link (no group) */}
+      <NavLink
+        to="/command"
+        onClick={onNavigate}
+        className={({ isActive }) =>
+          `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition press ${
+            isActive || pathname.startsWith("/command")
+              ? "bg-gradient-imperial text-primary-foreground glow-imperial"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
+          }`
+        }
+      >
+        <LayoutDashboard className="w-4 h-4" />
+        <span>제국 대시보드</span>
+      </NavLink>
+
+      <Accordion type="multiple" defaultValue={activeGroupIds} className="space-y-1">
+        {GROUPS.map((g) => {
+          const Icon = g.icon;
+          const groupActive = isGroupActive(g, pathname);
+          return (
+            <AccordionItem
+              key={g.id}
+              value={g.id}
+              className={`border-0 rounded-xl ${groupActive ? "bg-primary/10 ring-1 ring-primary/30" : ""}`}
+            >
+              <AccordionTrigger
+                className={`px-3 py-2.5 rounded-xl text-sm font-semibold hover:no-underline hover:bg-muted/40 [&[data-state=open]>svg]:rotate-180 ${
+                  groupActive ? "text-primary" : "text-foreground/90"
+                }`}
+              >
+                <span className="flex items-center gap-3">
+                  <Icon className="w-4 h-4" />
+                  {g.label}
+                </span>
+              </AccordionTrigger>
+              <AccordionContent className="pb-1 pt-0">
+                <div className="ml-4 pl-3 border-l border-border/40 space-y-0.5">
+                  {g.children.map((leaf) => {
+                    const LIcon = leaf.icon;
+                    const active = isLeafActive(leaf, pathname);
+                    return (
+                      <NavLink
+                        key={leaf.to}
+                        to={leaf.to}
+                        onClick={onNavigate}
+                        className={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-medium transition ${
+                          active
+                            ? "bg-gradient-imperial text-primary-foreground glow-imperial"
+                            : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
+                        }`}
+                      >
+                        <LIcon className="w-3.5 h-3.5" />
+                        <span>{leaf.label}</span>
+                        {active && <ChevronRight className="w-3 h-3 ml-auto" />}
+                      </NavLink>
+                    );
+                  })}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          );
+        })}
+      </Accordion>
+
+      <div className="my-2 border-t border-border/40" />
+      <NavLink
+        to="/support"
+        onClick={onNavigate}
+        className={({ isActive }) =>
+          `flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition ${
+            isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
+          }`
+        }
+      >
+        <MessageSquare className="w-4 h-4" />
+        <span>지원</span>
+      </NavLink>
+      {isAdmin && (
+        <NavLink
+          to="/admin"
+          onClick={onNavigate}
+          className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold text-primary hover:bg-primary/10"
+        >
+          <ShieldCheck className="w-4 h-4" />
+          <span>Admin</span>
+        </NavLink>
+      )}
+    </div>
+  );
 }
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -103,11 +250,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   useUserNotifications(user?.id);
   useAdminNotifications(!!user?.isAdmin);
   const idleReady = useIdleMount(1500);
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   return (
     <div className="min-h-screen md:pl-60 pb-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom)+0.75rem)] md:pb-6">
       <FreezeBanner />
-      {/* Desktop sidebar */}
+
+      {/* Desktop sidebar — grouped accordion */}
       {user && (
         <aside className="hidden md:flex fixed inset-y-0 left-0 z-30 w-60 flex-col glass-strong border-r border-primary/10">
           <div className="px-5 py-5 border-b border-border/40">
@@ -120,58 +269,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               </span>
             </Link>
           </div>
-          <nav className="flex-1 p-3 space-y-1">
-            {NAV.map((item) => {
-              const Icon = item.icon;
-              const active = isActive(item, loc.pathname);
-              return (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition press ${
-                    active
-                      ? "bg-gradient-imperial text-primary-foreground glow-imperial"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
-                  }`}
-                >
-                  <Icon className="w-4 h-4" />
-                  <span>{item.label}</span>
-                  {active && <ChevronRight className="w-3 h-3 ml-auto" />}
-                </NavLink>
-              );
-            })}
-            <div className="my-3 border-t border-border/40" />
-            {SIDE_EXTRA.map((item) => {
-              const active = loc.pathname.startsWith(item.to);
-              const Icon = item.icon;
-              return (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition ${
-                    item.gold
-                      ? active
-                        ? "bg-gradient-imperial text-primary-foreground glow-imperial"
-                        : "border border-primary/40 text-primary hover:bg-primary/10"
-                      : active
-                        ? "text-primary"
-                        : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  <Icon className="w-4 h-4" />
-                  <span>{t(item.labelKey)}</span>
-                </NavLink>
-              );
-            })}
-            {user.isAdmin && (
-              <NavLink
-                to="/admin"
-                className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold text-primary hover:bg-primary/10"
-              >
-                <ShieldCheck className="w-4 h-4" />
-                <span>{t("admin")}</span>
-              </NavLink>
-            )}
+          <nav className="flex-1 p-3 overflow-y-auto">
+            <GroupedMenu pathname={loc.pathname} isAdmin={!!user.isAdmin} />
           </nav>
           <button
             onClick={async () => {
@@ -186,19 +285,59 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </aside>
       )}
 
-      {/* Top bar (mobile + desktop HUD) */}
+      {/* Top bar */}
       <header className="sticky top-0 z-40 glass border-b border-border/40">
         <div className="container flex items-center justify-between h-14 md:h-16">
-          {/* Mobile brand */}
-          <Link to={user ? "/command" : "/"} className="md:hidden flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-imperial flex items-center justify-center font-imperial font-black text-primary-foreground text-sm">
-              P
-            </div>
-            <span className="font-imperial text-sm text-gradient-imperial tracking-[0.18em]">
-              PHONARA
-            </span>
-          </Link>
-          {/* Desktop: page title spacer */}
+          {/* Mobile hamburger + brand */}
+          <div className="flex items-center gap-2 md:hidden">
+            {user && (
+              <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+                <SheetTrigger asChild>
+                  <button
+                    aria-label="메뉴 열기"
+                    className="inline-flex items-center justify-center w-9 h-9 rounded-full glass border border-border/50 text-foreground hover:border-primary/50 transition press"
+                  >
+                    <Menu className="w-4 h-4" />
+                  </button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-72 p-0 bg-background/95 backdrop-blur-xl">
+                  <div className="px-5 py-5 border-b border-border/40">
+                    <Link to="/command" onClick={() => setSheetOpen(false)} className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-xl bg-gradient-imperial glow-imperial flex items-center justify-center font-imperial font-black text-primary-foreground text-base">
+                        P
+                      </div>
+                      <span className="font-imperial text-base text-gradient-imperial tracking-[0.22em]">
+                        PHONARA
+                      </span>
+                    </Link>
+                  </div>
+                  <div className="p-3 overflow-y-auto h-[calc(100%-180px)]">
+                    <GroupedMenu pathname={loc.pathname} isAdmin={!!user.isAdmin} onNavigate={() => setSheetOpen(false)} />
+                  </div>
+                  <button
+                    onClick={async () => {
+                      setSheetOpen(false);
+                      await supabase.auth.signOut();
+                      setDb((d) => ({ ...d, user: null }));
+                      nav("/");
+                    }}
+                    className="m-3 flex items-center gap-2 px-3 py-2 rounded-xl text-xs glass hover:bg-muted/40 transition w-[calc(100%-1.5rem)]"
+                  >
+                    <LogOut className="w-3.5 h-3.5" /> {t("logout")}
+                  </button>
+                </SheetContent>
+              </Sheet>
+            )}
+            <Link to={user ? "/command" : "/"} className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-gradient-imperial flex items-center justify-center font-imperial font-black text-primary-foreground text-sm">
+                P
+              </div>
+              <span className="font-imperial text-sm text-gradient-imperial tracking-[0.18em]">
+                PHONARA
+              </span>
+            </Link>
+          </div>
+          {/* Desktop spacer */}
           <div className="hidden md:block" />
 
           <div className="flex items-center gap-2">
@@ -228,58 +367,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      {/* Live population pulse strip — visible to everyone (idle-mounted) */}
+      {/* Live population pulse strip */}
       {idleReady && (
         <Suspense fallback={null}>
           <EmpirePopulationPulse />
           {user && <ImperialHud />}
           {user && <QuickAccessStrip />}
         </Suspense>
-      )}
-
-      {/* Mobile secondary nav — extra destinations not in bottom 5-tab bar */}
-      {user && (
-        <div className="md:hidden sticky top-14 z-30 glass border-b border-border/40">
-          <div className="container py-2">
-            <div className="flex gap-1.5 overflow-x-auto no-scrollbar -mx-1 px-1">
-              {SIDE_EXTRA.map((item) => {
-                const Icon = item.icon;
-                const active = loc.pathname.startsWith(item.to);
-                return (
-                  <NavLink
-                    key={item.to}
-                    to={item.to}
-                    className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold transition press ${
-                      item.gold
-                        ? active
-                          ? "bg-gradient-imperial text-primary-foreground glow-imperial"
-                          : "border border-primary/40 text-primary"
-                        : active
-                          ? "bg-primary/15 text-primary border border-primary/30"
-                          : "glass text-muted-foreground border border-border/40"
-                    }`}
-                  >
-                    <Icon className="w-3.5 h-3.5" />
-                    <span>{t(item.labelKey)}</span>
-                  </NavLink>
-                );
-              })}
-              {user.isAdmin && (
-                <NavLink
-                  to="/admin"
-                  className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold transition press ${
-                    loc.pathname.startsWith("/admin")
-                      ? "bg-primary/15 text-primary border border-primary/30"
-                      : "glass text-primary border border-primary/40"
-                  }`}
-                >
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  <span>{t("admin")}</span>
-                </NavLink>
-              )}
-            </div>
-          </div>
-        </div>
       )}
 
       <main className="relative">{children}</main>
@@ -301,9 +395,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           style={{ bottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
         >
           <div className="glass-strong rounded-2xl px-2 py-2 flex items-end justify-between shadow-2xl neon-border relative overflow-visible">
-            {NAV.filter((n) => !n.desktopOnly).map((item) => {
+            {BOTTOM_NAV.map((item) => {
               const Icon = item.icon;
-              const active = isActive(item, loc.pathname);
+              const active = isBottomActive(item, loc.pathname);
 
               if (item.fab) {
                 return (
