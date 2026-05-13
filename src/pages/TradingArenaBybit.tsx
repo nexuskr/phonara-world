@@ -241,7 +241,7 @@ export default function TradingArenaBybit() {
       return { error: "no price" };
     }
     setBusy(true);
-    const tId = notify.loading?.("청산 진행 중…", { description: `${symbol} @ ${mark.toLocaleString()}` });
+    const tId = notify.loading("청산 진행 중…", { description: `${symbol} @ ${mark.toLocaleString()}` });
     try {
       const r = await closeReal(id, mark);
       if ("error" in r) {
@@ -270,7 +270,7 @@ export default function TradingArenaBybit() {
       return { error: "no price" };
     }
     setBusy(true);
-    const tId = notify.loading?.("강제청산 진행 중…");
+    const tId = notify.loading("강제청산 진행 중…");
     try {
       const r = await liquidateReal(id, mark);
       if ("error" in r) notify.error("강제청산 실패", { id: tId, description: r.error });
