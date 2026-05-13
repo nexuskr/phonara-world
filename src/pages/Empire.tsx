@@ -164,6 +164,11 @@ export default function Empire() {
           })}
         </div>
 
+        {/* Founding Season Hall (시즌 좌석/홀) */}
+        <div className="mb-6">
+          <FoundingSeasonHall />
+        </div>
+
         {/* 좌석 / Founding 영역 */}
         {loading ? null : !me ? (
           <div className="glass-strong rounded-3xl p-6 sm:p-8 text-center neon-border relative overflow-hidden">
