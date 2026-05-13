@@ -34,11 +34,28 @@ export default function LiveRanking() {
       .from("leaderboard_today")
       .select("user_id, nickname, tier, earned, rank")
       .limit(8);
-    if (!data) return;
-    const next = data as Row[];
-    const prev = prevRanksRef.current;
+    let next = (data ?? []) as Row[];
 
-    // Compute deltas vs previous snapshot
+    // Pad with bot ranking when real leaderboard has fewer than 8 rows
+    if (next.length < 8) {
+      try {
+        const { data: bots } = await supabase.rpc("get_bot_live_ranking" as any, { _limit: 8 });
+        const botRows: Row[] = (((bots as any[]) ?? []) as any[]).map((b) => ({
+          user_id: `bot:${b.rank}`,
+          nickname: b.nickname,
+          tier: String(b.tier ?? "NORMAL").toLowerCase(),
+          earned: Number(b.amount ?? 0),
+          rank: 0,
+        }));
+        const merged = [...next, ...botRows.filter((b) => !next.some((r) => r.nickname === b.nickname))]
+          .sort((a, b) => b.earned - a.earned)
+          .slice(0, 8)
+          .map((r, i) => ({ ...r, rank: i + 1 }));
+        next = merged;
+      } catch { /* silent */ }
+    }
+
+    const prev = prevRanksRef.current;
     const d = new Map<string, "up" | "down" | "same" | "new">();
     for (const r of next) {
       const before = prev.get(r.user_id);
@@ -48,7 +65,6 @@ export default function LiveRanking() {
       else d.set(r.user_id, "same");
     }
 
-    // Self celebration
     const myId = myIdRef.current;
     if (myId) {
       const before = prev.get(myId);
