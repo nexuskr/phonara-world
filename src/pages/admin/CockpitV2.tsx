@@ -6,6 +6,7 @@ import { useRequireAdmin } from "@/hooks/use-require-auth";
 import { LoadingList } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
 import TodayKpiCards from "@/components/admin/TodayKpiCards";
+import PredictiveSlaPanel from "@/components/admin/PredictiveSlaPanel";
 import {
   ArrowDownToLine, ArrowUpFromLine, AlertTriangle, HeartHandshake,
   ShieldAlert, ChevronRight, Flame, Activity, Snowflake, RefreshCw, Crown,
