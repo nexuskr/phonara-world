@@ -1,8 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, ShieldCheck, Banknote, Activity, FileText, Scale, AlertTriangle } from "lucide-react";
+import { ArrowLeft, ShieldCheck, Banknote, Activity, FileText, Scale, AlertTriangle, Radio } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { LoadingList } from "@/components/ui/loading-state";
+import LiveWithdrawalsTable from "@/components/empire/LiveWithdrawalsTable";
+import TrustGuaranteeBadges from "@/components/empire/TrustGuaranteeBadges";
+import RefundRequestPanel from "@/components/empire/RefundRequestPanel";
+import LossProtectionGate from "@/components/empire/LossProtectionGate";
 
 type PayoutStats = {
   window: string;
