@@ -42,13 +42,8 @@ const Profile = lazy(() => import("./pages/Profile.tsx"));
 const Support = lazy(() => import("./pages/Support.tsx"));
 const SupportTickets = lazy(() => import("./pages/SupportTickets.tsx"));
 const Guide = lazy(() => import("./pages/Guide.tsx"));
-const Admin = lazy(() => import("./pages/Admin.tsx"));
-const AdminCockpit = lazy(() => import("./pages/admin/Cockpit.tsx"));
+const AdminRoutes = lazy(() => import("./pages/admin/_AdminRoutes.tsx"));
 const FounderCockpit = lazy(() => import("./pages/Cockpit.tsx"));
-const AdminOpsReport = lazy(() => import("./pages/admin/OpsReport.tsx"));
-const AdminSupport = lazy(() => import("./pages/admin/Support.tsx"));
-const AdminRevenue = lazy(() => import("./pages/admin/Revenue.tsx"));
-const AdminKpi = lazy(() => import("./pages/admin/Kpi.tsx"));
 const SecureAuth = lazy(() => import("./pages/SecureAuth.tsx"));
 const SecureWallet = lazy(() => import("./pages/SecureWallet.tsx"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword.tsx"));
@@ -158,13 +153,8 @@ const App = () => (
               <Route path="/support" element={<Support />} />
               <Route path="/support/tickets" element={<SupportTickets />} />
               <Route path="/guide" element={<Guide />} />
-              <Route path="/admin" element={<Admin />} />
-              <Route path="/admin/cockpit" element={<AdminCockpit />} />
+              <Route path="/admin/*" element={<AdminRoutes />} />
               <Route path="/cockpit" element={<FounderCockpit />} />
-              <Route path="/admin/ops-report" element={<AdminOpsReport />} />
-              <Route path="/admin/support" element={<AdminSupport />} />
-              <Route path="/admin/revenue" element={<AdminRevenue />} />
-              <Route path="/admin/kpi" element={<AdminKpi />} />
               <Route path="/secure-auth" element={<SecureAuth />} />
               <Route path="/secure-wallet" element={<SecureWallet />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />

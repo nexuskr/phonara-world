@@ -2,7 +2,7 @@
 // Admin-only. Pulls from feed_events, revenue_events, profiles. Auto-refresh 60s.
 import { useEffect, useState } from "react";
 import { Activity, MousePointerClick, Users, TrendingUp, Flame, RefreshCw, Crown } from "lucide-react";
-import Layout from "@/components/Layout";
+
 import { supabase } from "@/integrations/supabase/client";
 import { useRequireAdmin } from "@/hooks/use-require-auth";
 import { LoadingList } from "@/components/ui/loading-state";
@@ -101,7 +101,7 @@ export default function AdminKpi() {
   if (!admin) return null;
 
   return (
-    <Layout>
+    <>
       <div className="container py-6 space-y-6">
         <header className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -142,7 +142,7 @@ export default function AdminKpi() {
           </>
         )}
       </div>
-    </Layout>
+    </>
   );
 }
 

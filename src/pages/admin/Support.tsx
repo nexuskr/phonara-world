@@ -1,6 +1,6 @@
 // 관리자 고객지원 허브: 에스컬레이션·미읽음 큐 + KB 업로드 + 라우팅 규칙.
 import { useEffect, useState } from "react";
-import Layout from "@/components/Layout";
+
 import { supabase } from "@/integrations/supabase/client";
 import { useRequireAdmin } from "@/hooks/use-require-auth";
 import { LoadingList } from "@/components/ui/loading-state";
@@ -113,7 +113,7 @@ export default function AdminSupport() {
   }
 
   return (
-    <Layout>
+    <>
       <div className="max-w-5xl mx-auto p-4 md:p-6 space-y-5">
         <header className="flex items-center justify-between gap-3 flex-wrap">
           <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
@@ -254,7 +254,7 @@ export default function AdminSupport() {
           </>
         )}
       </div>
-    </Layout>
+    </>
   );
 }
 

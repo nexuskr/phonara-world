@@ -1,7 +1,7 @@
 // V17 /admin/revenue — daily KPI roll-up of revenue_events (admin only).
 import { useEffect, useState } from "react";
 import { TrendingUp, RefreshCw, BadgeDollarSign, Megaphone, Coins, Sparkles } from "lucide-react";
-import Layout from "@/components/Layout";
+
 import { supabase } from "@/integrations/supabase/client";
 import { useRequireAdmin } from "@/hooks/use-require-auth";
 import { LoadingList } from "@/components/ui/loading-state";
@@ -54,11 +54,11 @@ export default function AdminRevenue() {
   if (!user) return null;
   if (!user.isAdmin) {
     return (
-      <Layout>
+      <>
         <div className="container py-12">
           <EmptyState title="권한 없음" description="관리자 전용 화면입니다." variant="error" />
         </div>
-      </Layout>
+      </>
     );
   }
 
@@ -74,7 +74,7 @@ export default function AdminRevenue() {
     .reduce((a, b) => a + Number(b.amount_krw), 0);
 
   return (
-    <Layout>
+    <>
       <div className="container py-6 space-y-6">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
@@ -164,7 +164,7 @@ export default function AdminRevenue() {
           </>
         )}
       </div>
-    </Layout>
+    </>
   );
 }
 
