@@ -5528,6 +5528,101 @@ export type Database = {
         }
         Relationships: []
       }
+      war_entries: {
+        Row: {
+          combo_max: number
+          display_name: string | null
+          id: string
+          is_simulated: boolean
+          joined_at: string
+          near_miss_count: number
+          prize_phon: number
+          session_id: string
+          settled_at: string | null
+          sim_pnl_pct: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          combo_max?: number
+          display_name?: string | null
+          id?: string
+          is_simulated?: boolean
+          joined_at?: string
+          near_miss_count?: number
+          prize_phon?: number
+          session_id: string
+          settled_at?: string | null
+          sim_pnl_pct?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          combo_max?: number
+          display_name?: string | null
+          id?: string
+          is_simulated?: boolean
+          joined_at?: string
+          near_miss_count?: number
+          prize_phon?: number
+          session_id?: string
+          settled_at?: string | null
+          sim_pnl_pct?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "war_entries_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "war_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      war_sessions: {
+        Row: {
+          created_at: string
+          id: string
+          is_simulated: boolean
+          participants: number
+          prize_phon: number
+          settled_at: string | null
+          slot_ends_at: string
+          slot_starts_at: string
+          status: string
+          winner_pnl_pct: number | null
+          winner_user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_simulated?: boolean
+          participants?: number
+          prize_phon?: number
+          settled_at?: string | null
+          slot_ends_at: string
+          slot_starts_at: string
+          status?: string
+          winner_pnl_pct?: number | null
+          winner_user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_simulated?: boolean
+          participants?: number
+          prize_phon?: number
+          settled_at?: string | null
+          slot_ends_at?: string
+          slot_starts_at?: string
+          status?: string
+          winner_pnl_pct?: number | null
+          winner_user_id?: string | null
+        }
+        Relationships: []
+      }
       webauthn_challenges: {
         Row: {
           challenge: string
@@ -7376,6 +7471,106 @@ export type Database = {
         Returns: Json
       }
       verify_withdraw_otp: { Args: { _code: string }; Returns: Json }
+      war_get_current_session: {
+        Args: never
+        Returns: {
+          created_at: string
+          id: string
+          is_simulated: boolean
+          participants: number
+          prize_phon: number
+          settled_at: string | null
+          slot_ends_at: string
+          slot_starts_at: string
+          status: string
+          winner_pnl_pct: number | null
+          winner_user_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "war_sessions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      war_get_leaderboard: {
+        Args: { _limit?: number; _session_id?: string }
+        Returns: {
+          combo_max: number
+          display_name: string
+          is_self: boolean
+          rank: number
+          sim_pnl_pct: number
+        }[]
+      }
+      war_join_session: {
+        Args: never
+        Returns: {
+          combo_max: number
+          display_name: string | null
+          id: string
+          is_simulated: boolean
+          joined_at: string
+          near_miss_count: number
+          prize_phon: number
+          session_id: string
+          settled_at: string | null
+          sim_pnl_pct: number
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "war_entries"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      war_record_pnl: {
+        Args: { _combo?: number; _near_miss?: number; _pnl_pct: number }
+        Returns: {
+          combo_max: number
+          display_name: string | null
+          id: string
+          is_simulated: boolean
+          joined_at: string
+          near_miss_count: number
+          prize_phon: number
+          session_id: string
+          settled_at: string | null
+          sim_pnl_pct: number
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "war_entries"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      war_settle_session: {
+        Args: { _session_id: string }
+        Returns: {
+          created_at: string
+          id: string
+          is_simulated: boolean
+          participants: number
+          prize_phon: number
+          settled_at: string | null
+          slot_ends_at: string
+          slot_starts_at: string
+          status: string
+          winner_pnl_pct: number | null
+          winner_user_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "war_sessions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       xp_for_level: { Args: { _level: number }; Returns: number }
     }
     Enums: {
