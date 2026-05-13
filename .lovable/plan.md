@@ -1,104 +1,91 @@
+# Phonara Admin — Mission Control (PR-1 ~ PR-10)
 
-# #1 — Super Aggressive Ghost Empire Simulation Engine
+> "보는 도구"에서 "돈과 리스크를 2클릭 안에 움직이는 콘솔"로 전환된 어드민 IA + Layout + Cleanup 통합 플랜의 실행 결과 및 다음 단계.
 
-목표: 유저 0명에서도 "이미 수백만 명의 제국이 폭발 중"으로 느껴지게 만든다. 5초마다 살아 움직이는 ghost 활동 + 우상단 SIM 배지 + `is_simulated=true` 강제로 100% 합법성 유지.
+## 🏗️ 아키텍처 개요
 
-기존 자산: `bot-seed-engine`(분당), `WhaleStrikeRail` v1, `get_whale_strikes_24h`, `fomo_notifications`, `SimGlobalBadge` 모두 가동 중. 위에 5초 cadence + 지구본 + 3단 분리 Rail을 얹는다.
+```
+/admin/*  ──▶  <AdminRoutes>  ──▶  <AdminLayout>
+                                   ├─ <AdminSidebar pending={…} />     # 6 섹션 IA
+                                   ├─ Sticky Header
+                                   │   ├─ <SidebarTrigger>
+                                   │   ├─ Breadcrumb + 활성 페이지 pending pill
+                                   │   ├─ <AdminCommandTrigger>        # ⌘K (cmdk)
+                                   │   ├─ <AdminAal2Chip>              # MFA 상태
+                                   │   └─ <AdminPendingBell>           # 큐 팝오버 + 사이렌
+                                   └─ <Outlet />
+                                        └─ AAL2 섹션이면 <AdminAal2Gate>로 감싸짐
+```
 
----
+## 📁 핵심 파일
 
-## 1) Database 변경 (migration)
+| 영역 | 파일 |
+|---|---|
+| IA / nav config | `src/pages/admin/_nav.ts` |
+| Layout shell | `src/pages/admin/_AdminLayout.tsx` |
+| Sidebar | `src/pages/admin/_AdminSidebar.tsx` |
+| Routes | `src/pages/admin/_AdminRoutes.tsx` |
+| ⌘K palette | `src/pages/admin/_AdminCommandTrigger.tsx` |
+| Pending bell + 사이렌 | `src/pages/admin/_AdminPendingBell.tsx` |
+| AAL2 chip | `src/pages/admin/_AdminAal2Chip.tsx` |
+| Cockpit V2 | `src/pages/admin/CockpitV2.tsx` |
+| 실시간 카운터 훅 | `src/hooks/use-admin-pending.ts` |
+| 사이렌 훅 | `src/hooks/use-admin-siren.ts` |
+| 딥링크 하이라이트 훅 | `src/hooks/use-deep-link-highlight.ts` |
+| ActionTable 재사용 | `src/components/admin/ActionTable.tsx` |
+| Route prefetch 레지스트리 | `src/lib/route-prefetch.ts` (admin 28개 추가) |
 
-**신규 테이블 `ghost_pulse_state`** (단일 row id=1)
-- `live_users INT`           — 1초마다 +47~312 (cap 1,234,567)
-- `today_withdrawals BIGINT` — 누적 출금액 (KRW)
-- `active_now INT`           — 현재 활성
-- `region_pulses JSONB`      — `{KR, US, JP, VN, BR, IN, ID, TH}` 카운트
-- `last_whale_at`, `last_moment_at`, `updated_at`
-- RLS: SELECT public(everyone), UPDATE/INSERT service_role only
+## 🗂️ IA — 6 섹션 Sidebar
 
-**신규 RPC `get_ghost_pulse()`**
-- SECURITY DEFINER, public 호출, 단일 row 반환
-- 클라이언트는 1초 setInterval + RAF로 부드럽게 보간
+| 섹션 | AAL2 | 페이지 |
+|---|---|---|
+| 🎯 COMMAND | — | Cockpit · Funnel · Revenue & Cohorts |
+| 💰 TREASURY | ✔ | Deposits · Withdrawals · Packages · Coin · Accounting · Insurance · Phonara Pay |
+| 🛡️ COMPLIANCE | ✔ | AML · Trust v2 · Payout Audit · Viral Forensics · Permissions |
+| ⚙️ OPERATIONS | ✔ | Observability · Errors · Security · Cron · Daily AI Report |
+| 🚀 GROWTH LAB | — | A/B · Bots · EV Health · UGC · Referrals · Whales |
+| 👥 PRODUCT | — | Users · Support · Missions · Founding · Beta |
 
-**기존 테이블에 `is_simulated BOOLEAN DEFAULT false` 보강**
-- `whale_strikes`, `fomo_notifications` (이미 봇 시드는 별도 테이블이지만 안전망)
-- ghost-pulse-tick이 insert하는 모든 행은 `is_simulated=true`
+## 🔌 데이터 흐름
 
-## 2) Edge Function `ghost-pulse-tick` (5초 cron)
+- **`useAdminPending(isAdmin)`** — 단일 `admin:pending` 채널 → `deposit_requests`, `withdrawal_requests`, `anomaly_events`, `refund_requests` 4테이블 INSERT/UPDATE 구독, 800ms debounce, `Partial<Record<AdminBadgeSource, number>>` 반환.
+- **`useAdminSiren(true)`** — `anomaly_events` INSERT severity=critical|high → WebAudio 2-tone 사이렌. 음소거는 `localStorage.admin_siren_muted_v1`.
+- **Document title** — `(N) {활성페이지} · Phonara Admin` 자동 동기화.
 
-- `BOT_CRON_SECRET` 헤더 검증 (기존 패턴 재사용)
-- KST 19~23시 ×2.5, 0~6시 ×0.4 시간대 가중치
-- 매 호출:
-  - `ghost_pulse_state` upsert: live_users 델타, today_withdrawals 가산, region_pulses 1~3개 +1~+8
-  - 8초 임계 경과 시 → `whale_strikes` 1행 (kind crown/baron/withdraw 가중랜덤, `is_simulated=true`)
-  - 15초 임계 경과 시 → `fomo_notifications` 1행 ("○○ 황제가 ₩87,420,000 출금!", `is_simulated=true`)
-- pg_cron: `*/5 * * * * seconds` 불가 → pg_cron 1분 + 함수 내부에서 12회 루프 (5초 sleep) 또는 5초 schedule 사용 (pg_cron 1.4+ 지원)
+## ⚡ 성능
 
-## 3) 프론트 컴포넌트 (모두 lazy + 60fps)
+- 단일 `/admin/*` 라우트 → `<AdminRoutes>` 1 lazy chunk.
+- 28개 admin 페이지 `route-prefetch.ts` 등록 → Sidebar `NavLink`가 hover/focus/touchstart 시 청크 prefetch.
+- Cockpit 진입 시 idle prefetch: deposits / withdrawals / aml / errors.
+- Sidebar/Bell/CommandTrigger 모두 `memo()`.
 
-**`src/components/empire/GhostPulseGlobe.tsx`** (신규, ~6KB)
-- 순수 2D Canvas. 세계지도 SVG 배경 + 8개 region 핀 + 펄스 링
-- region 카운트가 오를 때 핀이 0.3s 골드 플래시
-- requestAnimationFrame 단일 루프, 비활성 탭이면 정지
-- Three.js 절대 금지
+## 🔐 보안
 
-**`src/components/empire/WhaleStrikeRailV3.tsx`** (신규, 기존 v1 대체 옵션)
-- 3단 가로 마키: (1) Crown 폭발 (2) Baron 합류 (3) 대형 출금
-- 각 줄 다른 속도(20s/35s/50s), 다른 글로우 색
-- 데이터: 기존 `get_whale_strikes_24h(_limit=60)` → kind별 split
+- `AAL2_SECTIONS` (treasury / compliance / operations) → `<AdminAal2Gate>` 하드 차단.
+- `useRequireAdmin()` 게이트 통과 후에만 layout 렌더.
+- `permission_change_log` realtime → `/admin/compliance/perms` 탭.
 
-**`src/components/empire/EmpireMomentToast.tsx`** (신규)
-- `fomo_notifications` 신규 row Realtime 구독 → 풀폭 골드 토스트 8s
-- `is_simulated=true`인 행만 토스트, 우측 상단 SIM 칩 인라인 표시
+## 🔁 레거시 호환
 
-**`src/components/empire/LiveCounterStrip.tsx`** (신규)
-- `get_ghost_pulse` 1초 폴링 + RAF 보간
-- "👑 1,234,567명이 제국 건설 중 · 오늘 출금 ₩48억 · 지금 12,842명 활성"
-- Trump식 카피 회전 ("늦으면 Founding Seat 999 자리 사라집니다")
+`ADMIN_LEGACY_REDIRECTS` map으로 `/admin/cockpit` → `/admin`, `/admin/kpi` → `/admin/funnel`, `/admin/ops-report` → `/admin/ops/report`, `/admin/support` → `/admin/product/support` 자동 redirect. 단일페이지 레거시 admin은 `/admin/legacy`로 escape hatch.
 
-## 4) 통합 위치
+## ✅ 완료 PR
 
-- `src/pages/Index.tsx` 히어로 직하단: `LiveCounterStrip` + `GhostPulseGlobe`
-- `src/pages/Index.tsx` + `src/pages/Dashboard.tsx` 상단: `WhaleStrikeRailV3`로 교체 (v1 deprecated)
-- `src/App.tsx` 루트: `EmpireMomentToast` 마운트 (전역 1회)
-- 모든 컴포넌트 `lazy()` + `<Suspense>` — 초기 LCP 영향 0
+1. **PR-1 IA + Sidebar config** — `_nav.ts`, `_AdminSidebar.tsx`
+2. **PR-2 Layout + Header + Bell + AAL2 chip + ⌘K stub**
+3. **PR-3 Cockpit V2** — ActionTiles 5종 + 고위험 출금 TOP8 + 이상 이벤트 8개 + 45초 자동 갱신
+4. **PR-4 Routing + 레거시 redirect + Admin.tsx 슬림화**
+5. **PR-5 ⌘K Command Palette (cmdk 정식)**
+6. **PR-6 ActionTable 재사용 컴포넌트**
+7. **PR-7 ?id 딥링크 하이라이트** — Deposits / Withdrawals
+8. **PR-8 Sidebar 섹션 합계 카운터 + Breadcrumb pending pill + Tab title sync**
+9. **PR-9 Route prefetch 레지스트리에 admin 28개 추가 + idle prefetch**
+10. **PR-10 Pending Bell 업그레이드 + critical anomaly 사이렌 (mute 토글)**
 
-## 5) 합법성/SIM 가드
+## 🎯 다음 후보
 
-- `SimGlobalBadge` 그대로 유지 (이미 모든 화면 우상단)
-- ghost-pulse-tick이 insert하는 모든 행 `is_simulated=true`
-- `EmpireMomentToast`/`WhaleStrikeRailV3`/`GhostPulseGlobe` 각각 `<SimChip />` 인라인 표시
-- 푸터 "Real money 100% separated" (기존 유지 확인)
-- Real wallet/USDT 잔고 RLS와 완전 분리 (별도 테이블, ghost가 절대 건드리지 않음)
-
-## 6) 성능 가드
-
-- GhostPulseGlobe: Canvas 1개, 8 pin × 30fps cap, 비활성 탭 pause
-- LiveCounterStrip: setInterval 1s + RAF interp, document.hidden 시 정지
-- WhaleStrikeRailV3: framer-motion `animate` x-translate (CPU 0)
-- 신규 코드 총량 ≤ 18KB gzip 목표
-- pg_cron 5초 부하: insert ≤ 3행/호출, 24h 자동 cleanup (`expires_at < now()` delete)
-
-## 7) 검증 체크리스트 (구현 후)
-
-- [ ] `select get_ghost_pulse()` 1초 간격 갱신 확인
-- [ ] `whale_strikes` 8초 간격 신규 행 (`is_simulated=true`)
-- [ ] `fomo_notifications` 15초 간격 신규 행
-- [ ] Index 히어로 → 카운터 +47~312 부드럽게 증가
-- [ ] 우상단 SIM 배지 모든 화면 노출
-- [ ] Lighthouse 모바일 LCP < 2.5s, 초기 JS < 800KB
-- [ ] CPU idle 탭 전환 시 RAF 정지 확인
-
----
-
-## 실행 순서 (승인 후)
-
-1. migration: `ghost_pulse_state` + `get_ghost_pulse()` RPC + `is_simulated` 컬럼
-2. edge function `ghost-pulse-tick` + pg_cron 5초 스케줄
-3. `GhostPulseGlobe.tsx` + `LiveCounterStrip.tsx`
-4. `WhaleStrikeRailV3.tsx` (v1 교체) + `EmpireMomentToast.tsx`
-5. Index/Dashboard/App 마운트 + lazy
-6. 검증 → "✅ #1 완료. 다음 #2로 진행할까요?"
-
-승인하시면 1단계 migration부터 시작합니다.
+- **PR-11**: ActionTable을 신규 Refund/Anomaly 큐에 적용 (bulk 승인 / 일괄 ack)
+- **PR-12**: Phonara Pay (TRC20) 콘솔 실데이터 통합
+- **PR-13**: ⌘K palette를 user/거래/액션 검색까지 확장 (RPC `admin_search_*`)
+- **PR-14**: Cockpit V2 Action Tiles 임계치를 `admin_settings`로 동적화
+- **PR-15**: 자동 처리 룰 엔진 (소액 자동승인 80% / 중간 보류 15% / 고위험 사람 5%)
