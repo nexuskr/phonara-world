@@ -2,7 +2,7 @@
  * Admin Mission Control — child route tree.
  * Mounted at /admin/* via App.tsx. AdminLayout supplies sidebar + header + AAL2 gating.
  */
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, type ReactNode } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import AdminLayout from "./_AdminLayout";
 import { ADMIN_LEGACY_REDIRECTS } from "./_nav";
@@ -61,7 +61,7 @@ function Section({
 }: {
   title?: string;
   desc?: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <div className="space-y-4">
