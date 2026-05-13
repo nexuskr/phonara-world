@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion, useReducedMotion } from "framer-motion";
-import { Flame, Users, ChevronDown, Shield, Clock, Coins } from "lucide-react";
+import { Flame, Users, ChevronDown, Shield, Clock, Coins, Crown } from "lucide-react";
 import { useOnline } from "@/components/LiveStats";
 import {
   GoldNebulaBg,
@@ -46,13 +46,77 @@ export default function FomoScrollHero({
         />
       </ParallaxLayer>
 
+      {/* === Imperial overlay: 3겹 vignette + 2종 gold grid + grain === */}
+      <div aria-hidden className="absolute inset-0 pointer-events-none">
+        <div
+          className="absolute inset-0 opacity-[0.065]"
+          style={{
+            backgroundImage:
+              "linear-gradient(hsl(var(--gold)/0.7) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--gold)/0.7) 1px, transparent 1px)",
+            backgroundSize: "112px 112px",
+          }}
+        />
+        <div
+          className="absolute inset-0 opacity-[0.034]"
+          style={{
+            backgroundImage:
+              "linear-gradient(hsl(var(--gold)/0.6) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--gold)/0.6) 1px, transparent 1px)",
+            backgroundSize: "28px 28px",
+          }}
+        />
+        <div
+          className="absolute inset-0 opacity-[0.05] mix-blend-overlay"
+          style={{
+            backgroundImage:
+              "radial-gradient(hsl(var(--gold)/0.55) 0.5px, transparent 0.5px), radial-gradient(hsl(var(--gold)/0.35) 0.5px, transparent 0.5px)",
+            backgroundSize: "3px 3px, 7px 7px",
+            backgroundPosition: "0 0, 1px 2px",
+          }}
+        />
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(70% 55% at 50% 30%, transparent 0%, hsl(var(--background)/0.55) 70%, hsl(var(--background)/0.85) 100%)",
+          }}
+        />
+        <div
+          className="absolute inset-0"
+          style={{
+            background: "radial-gradient(45% 30% at 50% 45%, transparent 0%, hsl(var(--background)/0.7) 100%)",
+            mixBlendMode: "multiply",
+          }}
+        />
+      </div>
+
       <div className="relative max-w-md mx-auto w-full text-center">
+        {/* === PHONARA · EST. 2026 seal === */}
+        <div className="flex flex-col items-center select-none mb-3">
+          <div className="h-px w-44 bg-gradient-to-r from-transparent via-gold/55 to-transparent" />
+          <div
+            className="mt-1.5 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-gold/55 bg-background/70"
+            style={{
+              boxShadow:
+                "0 0 28px -6px hsl(var(--gold)/0.55), inset 0 1px 0 hsl(var(--gold)/0.45), inset 0 -1px 0 hsl(var(--gold)/0.18)",
+            }}
+          >
+            <Crown className="w-4 h-4 text-gold drop-shadow-[0_0_7px_hsl(var(--gold)/0.7)]" />
+            <span
+              className="text-[10px] tracking-[0.42em] text-gold font-black"
+              style={{ textShadow: "0 0 10px hsl(var(--gold)/0.45)" }}
+            >
+              PHONARA · EST. 2026
+            </span>
+          </div>
+          <div className="mt-1.5 h-px w-44 bg-gradient-to-r from-transparent via-gold/55 to-transparent" />
+        </div>
+
         {/* LIVE 칩 */}
         <motion.div
           initial={reduce ? false : { opacity: 0, y: -14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full glass border border-gold/60 text-[10px] font-black tracking-[0.3em] text-gold mb-5 shadow-[0_0_16px_hsl(var(--gold)/0.4)]"
+          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full glass border border-gold/60 text-[10px] font-black tracking-[0.3em] text-gold mb-5 shadow-[0_0_18px_hsl(var(--gold)/0.45)]"
         >
           <span className="relative flex w-2 h-2">
             <span className="absolute inset-0 rounded-full bg-gold animate-ping opacity-60" />
@@ -61,28 +125,51 @@ export default function FomoScrollHero({
           LIVE · 지금 이 순간
         </motion.div>
 
-        {/* MEGA 골드 타이틀 */}
-        <motion.h1
-          initial={reduce ? false : { opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.75, delay: 0.08 }}
-          className={`font-imperial leading-[1.05] break-keep ${senior.h1}`}
+        {/* === MEGA 골드 타이틀 — luxury watch frame === */}
+        <div
+          className="relative mx-auto rounded-3xl border-2 border-gold/50 bg-background/55 px-5 py-6 outline outline-1 outline-offset-[3px] outline-gold/20 overflow-hidden"
           style={{
-            fontSize: "clamp(38px, 12vw, 64px)",
-            textShadow:
-              "0 0 28px hsl(var(--gold)/0.55), 0 0 64px hsl(var(--gold)/0.25), 0 1px 0 hsl(var(--gold-stroke)/0.6)",
+            boxShadow:
+              "0 0 44px hsl(var(--gold)/0.28), 0 0 84px hsl(var(--gold)/0.14), inset 0 1px 0 hsl(var(--gold)/0.28), inset 0 -1px 0 hsl(var(--gold)/0.14)",
           }}
         >
-          <span className="text-foreground/85 block mb-2" style={{ fontSize: "clamp(22px, 6.5vw, 32px)" }}>
-            지금
-          </span>
-          <span className="text-gradient-gold drop-shadow-[0_0_28px_hsl(var(--gold)/0.65)]">
-            <AnimatedCounter to={seed} duration={2.2} jitter={3} />
-            <span style={{ fontSize: "clamp(28px, 8vw, 42px)" }}>명</span>
-          </span>
-          <br />
-          <span className="text-gradient-imperial">제국에 입성 중</span>
-        </motion.h1>
+          <span aria-hidden className="absolute top-0 inset-x-6 h-px bg-gradient-to-r from-transparent via-gold/65 to-transparent" />
+          <span aria-hidden className="absolute bottom-0 inset-x-6 h-px bg-gradient-to-r from-transparent via-gold/40 to-transparent" />
+          <span aria-hidden className="absolute top-2 left-2 w-3 h-3 border-t-2 border-l-2 border-gold/80 rounded-tl-md" />
+          <span aria-hidden className="absolute top-2 right-2 w-3 h-3 border-t-2 border-r-2 border-gold/80 rounded-tr-md" />
+          <span aria-hidden className="absolute bottom-2 left-2 w-3 h-3 border-b-2 border-l-2 border-gold/80 rounded-bl-md" />
+          <span aria-hidden className="absolute bottom-2 right-2 w-3 h-3 border-b-2 border-r-2 border-gold/80 rounded-br-md" />
+          <span
+            aria-hidden
+            className="absolute inset-0 pointer-events-none opacity-[0.09]"
+            style={{
+              background:
+                "conic-gradient(from 210deg at 50% 0%, transparent 0deg, hsl(var(--gold)) 60deg, transparent 140deg, transparent 360deg)",
+            }}
+          />
+
+          <motion.h1
+            initial={reduce ? false : { opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.75, delay: 0.08 }}
+            className={`relative font-imperial leading-[1.05] break-keep ${senior.h1}`}
+            style={{
+              fontSize: "clamp(38px, 12vw, 64px)",
+              textShadow:
+                "0 0 32px hsl(var(--gold)/0.6), 0 0 72px hsl(var(--gold)/0.28), 0 1px 0 hsl(var(--gold-stroke)/0.6)",
+            }}
+          >
+            <span className="text-foreground/85 block mb-2" style={{ fontSize: "clamp(22px, 6.5vw, 32px)" }}>
+              지금
+            </span>
+            <span className="text-gradient-gold drop-shadow-[0_0_30px_hsl(var(--gold)/0.7)]">
+              <AnimatedCounter to={seed} duration={2.2} jitter={3} />
+              <span style={{ fontSize: "clamp(28px, 8vw, 42px)" }}>명</span>
+            </span>
+            <br />
+            <span className="text-gradient-imperial">제국에 입성 중</span>
+          </motion.h1>
+        </div>
 
         {/* SIM 라벨 */}
         <motion.div
@@ -203,11 +290,12 @@ function DashCard({
   return (
     <div
       data-large={large}
-      className={`relative glass-strong rounded-xl px-2.5 py-3 border ${
-        highlight ? "border-gold/55 shadow-[0_0_18px_hsl(var(--gold)/0.32)]" : "border-gold/25"
+      className={`relative glass-strong rounded-xl px-2.5 py-3 border overflow-hidden ${
+        highlight ? "border-gold/60 shadow-[0_0_22px_hsl(var(--gold)/0.38)]" : "border-gold/30"
       }`}
     >
-      <div className="flex items-center justify-center gap-1 text-[9px] tracking-[0.18em] font-black text-gold/80 mb-1">
+      <span aria-hidden className="absolute inset-x-2 top-0 h-[2px] bg-gradient-to-r from-transparent via-gold/70 to-transparent" />
+      <div className="flex items-center justify-center gap-1 text-[9px] tracking-[0.2em] font-black text-gold/85 mb-1">
         {icon}
         <span className="break-keep">{label}</span>
       </div>

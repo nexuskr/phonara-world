@@ -71,11 +71,78 @@ export default function Dashboard() {
       </Suspense>
       <div className="relative animate-liquid-in">
         <div className="absolute inset-0 bg-grid opacity-20 pointer-events-none" />
+
+        {/* === Imperial overlay (static, no motion): grids + grain + 3-layer vignette + corner glows === */}
+        <div aria-hidden className="absolute inset-0 pointer-events-none">
+          <div
+            className="absolute inset-0 opacity-[0.065]"
+            style={{
+              backgroundImage:
+                "linear-gradient(hsl(var(--gold)/0.7) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--gold)/0.7) 1px, transparent 1px)",
+              backgroundSize: "112px 112px",
+            }}
+          />
+          <div
+            className="absolute inset-0 opacity-[0.034]"
+            style={{
+              backgroundImage:
+                "linear-gradient(hsl(var(--gold)/0.6) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--gold)/0.6) 1px, transparent 1px)",
+              backgroundSize: "28px 28px",
+            }}
+          />
+          <div
+            className="absolute inset-0 opacity-[0.05] mix-blend-overlay"
+            style={{
+              backgroundImage:
+                "radial-gradient(hsl(var(--gold)/0.55) 0.5px, transparent 0.5px), radial-gradient(hsl(var(--gold)/0.35) 0.5px, transparent 0.5px)",
+              backgroundSize: "3px 3px, 7px 7px",
+              backgroundPosition: "0 0, 1px 2px",
+            }}
+          />
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "radial-gradient(70% 55% at 50% 18%, transparent 0%, hsl(var(--background)/0.5) 70%, hsl(var(--background)/0.82) 100%)",
+            }}
+          />
+          <div
+            className="absolute inset-0"
+            style={{
+              background: "radial-gradient(45% 30% at 50% 35%, transparent 0%, hsl(var(--background)/0.65) 100%)",
+              mixBlendMode: "multiply",
+            }}
+          />
+          <div className="absolute -top-32 -left-32 w-[420px] h-[420px] rounded-full bg-gold/15 blur-3xl" />
+          <div className="absolute -bottom-32 -right-32 w-[420px] h-[420px] rounded-full bg-gold/10 blur-3xl" />
+        </div>
+
         <Particles density={particleDensity} />
 
         <HubTabs hub="command" />
 
         <div className="container relative pt-2 pb-10">
+          {/* === PHONARA · EST. 2026 seal + Crown 키커 === */}
+          <div className="flex flex-col items-center select-none mt-1 mb-3">
+            <div className="h-px w-44 bg-gradient-to-r from-transparent via-gold/55 to-transparent" />
+            <div
+              className="mt-1.5 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-gold/55 bg-background/70"
+              style={{
+                boxShadow:
+                  "0 0 28px -6px hsl(var(--gold)/0.55), inset 0 1px 0 hsl(var(--gold)/0.45), inset 0 -1px 0 hsl(var(--gold)/0.18)",
+              }}
+            >
+              <Crown className="w-4 h-4 text-gold drop-shadow-[0_0_7px_hsl(var(--gold)/0.7)]" />
+              <span
+                className="text-[10px] tracking-[0.42em] text-gold font-black"
+                style={{ textShadow: "0 0 10px hsl(var(--gold)/0.45)" }}
+              >
+                PHONARA · EST. 2026
+              </span>
+            </div>
+            <div className="mt-1.5 h-px w-44 bg-gradient-to-r from-transparent via-gold/55 to-transparent" />
+          </div>
+
           {/* P5 — Recovery FOMO cascade */}
           <FomoNotificationStrip />
           <div className="mb-3"><CrownWarHUD /></div>
@@ -90,22 +157,35 @@ export default function Dashboard() {
             </div>
           </LazyMount>
 
-          {/* Live ticker (compact, beneath hero) */}
+          {/* Live ticker — luxury imperial frame */}
           <div className="grid grid-cols-2 gap-2 mt-4 mb-4">
-            <div className="glass rounded-2xl p-3 flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-secondary/20 flex items-center justify-center"><Users className="w-4 h-4 text-secondary" /></div>
-              <div>
-                <div className="text-[10px] text-muted-foreground flex items-center gap-1 break-keep"><span className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse" /> {t("online")}</div>
-                <div className="font-display font-black text-sm tabular-nums">{t("onlineUnit", { n: online.toLocaleString() })}</div>
-              </div>
-            </div>
-            <div className="glass rounded-2xl p-3 flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center"><Activity className="w-4 h-4 text-primary" /></div>
-              <div>
-                <div className="text-[10px] text-muted-foreground flex items-center gap-1 break-keep"><span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" /> {t("todaySettled")}</div>
-                <div className="font-display font-black text-sm tabular-nums text-money-strong">{formatKRW(today)}</div>
-              </div>
-            </div>
+            {[
+              { icon: Users, micro: "LIVE", label: t("online"), value: t("onlineUnit", { n: online.toLocaleString() }), strong: false },
+              { icon: Activity, micro: "TODAY", label: t("todaySettled"), value: formatKRW(today), strong: true },
+            ].map((c, i) => {
+              const Icon = c.icon;
+              return (
+                <div
+                  key={i}
+                  className="relative glass rounded-2xl p-3 flex items-center gap-3 border border-gold/30 overflow-hidden"
+                  style={{ boxShadow: "inset 0 1px 0 hsl(var(--gold)/0.18), 0 0 22px -8px hsl(var(--gold)/0.5)" }}
+                >
+                  <span aria-hidden className="absolute inset-x-3 top-0 h-[2px] bg-gradient-to-r from-transparent via-gold/70 to-transparent" />
+                  <div className="w-8 h-8 rounded-lg bg-gold/15 border border-gold/30 flex items-center justify-center">
+                    <Icon className="w-4 h-4 text-gold" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-[8px] tracking-[0.4em] text-gold/70 font-black">{c.micro}</div>
+                    <div className="text-[10px] text-muted-foreground flex items-center gap-1 break-keep">
+                      <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" /> {c.label}
+                    </div>
+                    <div className={`font-display font-black text-sm tabular-nums ${c.strong ? "text-money-strong" : ""}`}>
+                      {c.value}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
           {/* 🔥 메인 훅: BoostHero — 첫 0.5초 노출 사수 */}
@@ -121,10 +201,33 @@ export default function Dashboard() {
             </div>
           </LazyMount>
 
-          {/* Balance hero */}
+          {/* Balance hero — luxury watch frame */}
           <div className="relative animate-fade-up mt-4">
             <div className="absolute inset-0 bg-gradient-cyber blur-3xl opacity-50 -z-10" />
-            <div className="glass-strong rounded-3xl p-7 neon-border relative overflow-hidden">
+            <div
+              className="glass-strong rounded-3xl p-6 sm:p-7 relative overflow-hidden border-2 border-gold/55 outline outline-1 outline-offset-[3px] outline-gold/22"
+              style={{
+                boxShadow:
+                  "0 0 44px hsl(var(--gold)/0.28), 0 0 84px hsl(var(--gold)/0.14), inset 0 1px 0 hsl(var(--gold)/0.28), inset 0 -1px 0 hsl(var(--gold)/0.14)",
+              }}
+            >
+              {/* inner hairlines */}
+              <span aria-hidden className="absolute top-0 inset-x-6 h-px bg-gradient-to-r from-transparent via-gold/65 to-transparent" />
+              <span aria-hidden className="absolute bottom-0 inset-x-6 h-px bg-gradient-to-r from-transparent via-gold/40 to-transparent" />
+              {/* 4 corner L-markers */}
+              <span aria-hidden className="absolute top-2 left-2 w-3 h-3 border-t-2 border-l-2 border-gold/80 rounded-tl-md" />
+              <span aria-hidden className="absolute top-2 right-2 w-3 h-3 border-t-2 border-r-2 border-gold/80 rounded-tr-md" />
+              <span aria-hidden className="absolute bottom-2 left-2 w-3 h-3 border-b-2 border-l-2 border-gold/80 rounded-bl-md" />
+              <span aria-hidden className="absolute bottom-2 right-2 w-3 h-3 border-b-2 border-r-2 border-gold/80 rounded-br-md" />
+              {/* static conic shine */}
+              <span
+                aria-hidden
+                className="absolute inset-0 pointer-events-none opacity-[0.09]"
+                style={{
+                  background:
+                    "conic-gradient(from 210deg at 50% 0%, transparent 0deg, hsl(var(--gold)) 60deg, transparent 140deg, transparent 360deg)",
+                }}
+              />
               <div className="absolute inset-0 bg-grid opacity-20" />
               <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-gradient-primary blur-3xl opacity-50 animate-float" />
               <div className="absolute -bottom-10 -left-10 w-40 h-40 rounded-full bg-accent/60 blur-3xl animate-float-slow" />
