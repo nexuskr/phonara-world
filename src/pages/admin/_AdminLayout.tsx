@@ -9,6 +9,7 @@ import AdminAal2Chip from "./_AdminAal2Chip";
 import AdminCommandTrigger from "./_AdminCommandTrigger";
 import AdminAal2Gate from "@/components/admin/AdminAal2Gate";
 import { isAal2Path, ADMIN_NAV_FLAT } from "./_nav";
+import { schedulePrefetch } from "@/lib/route-prefetch";
 import { Crown } from "lucide-react";
 
 /**
