@@ -133,6 +133,8 @@ const App = () => (
 
               {/* 기존 라우트 — 그대로 작동 (HubTabs 통해 통합 UX) */}
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/practice" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/pract" element={<Navigate to="/dashboard" replace />} />
               <Route path="/missions" element={<Missions />} />
               <Route path="/roulette" element={<Navigate to="/missions?tab=battle" replace />} />
               <Route path="/packages" element={<ReviewerGuard><AdultGate><PracticeModeGate label="패키지 구매"><Packages /></PracticeModeGate></AdultGate></ReviewerGuard>} />
