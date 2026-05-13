@@ -389,5 +389,33 @@ export default function AdminCockpitV2() {
         </section>
       </div>
     </div>
+
+    {/* PR-20 Mobile bottom action dock */}
+    <div className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-border/60 bg-background/95 backdrop-blur-xl">
+      <div className="grid grid-cols-5 text-[10px] font-black uppercase tracking-wider">
+        {[
+          { to: "/admin", label: "콕핏",  icon: Crown },
+          { to: "/admin/treasury/deposits", label: "충전", icon: ArrowUpFromLine, n: pending.deposits_pending },
+          { to: "/admin/treasury/withdrawals", label: "출금", icon: ArrowDownToLine, n: pending.withdrawals_pending },
+          { to: "/admin/ops/errors", label: "이상", icon: AlertTriangle, n: pending.anomalies_unack },
+          { to: "/admin/compliance/aml", label: "AML", icon: ShieldAlert, n: pending.aml_pending },
+        ].map(({ to, label, icon: I, n }) => (
+          <Link
+            key={to}
+            to={to}
+            className="flex flex-col items-center justify-center py-2 gap-0.5 hover:bg-muted/40 transition relative"
+          >
+            <I className="w-4 h-4" />
+            <span>{label}</span>
+            {n != null && n > 0 && (
+              <span className="absolute top-1 right-1/4 min-w-[14px] h-[14px] px-1 rounded-full bg-destructive text-destructive-foreground text-[8px] grid place-items-center tabular-nums font-black">
+                {n > 99 ? "99+" : n}
+              </span>
+            )}
+          </Link>
+        ))}
+      </div>
+    </div>
+    </>
   );
 }
