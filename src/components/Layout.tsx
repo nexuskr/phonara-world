@@ -50,9 +50,9 @@ function useIdleMount(delayMs = 1500) {
   }, [delayMs]);
   return ready;
 }
-import QuickAccessStrip from "./QuickAccessStrip";
-import EmpirePopulationPulse from "./EmpirePopulationPulse";
-import ImperialHud from "./imperial/ImperialHud";
+const QuickAccessStrip = lazy(() => import("./QuickAccessStrip"));
+const EmpirePopulationPulse = lazy(() => import("./EmpirePopulationPulse"));
+const ImperialHud = lazy(() => import("./imperial/ImperialHud"));
 
 /**
  * Phonara — Empire 5축 IA
