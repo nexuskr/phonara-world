@@ -23,8 +23,12 @@ export function useFomoNotifications() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const { data } = await supabase.rpc("get_my_fomo_notifications", { _limit: 10 });
-    setItems((data ?? []) as FomoNotification[]);
+    try {
+      const { data } = await supabase.rpc("get_my_fomo_notifications", { _limit: 10 });
+      setItems((data ?? []) as FomoNotification[]);
+    } catch {
+      setItems([]); // fallback when backend unreachable
+    }
     setLoading(false);
   }, []);
 
