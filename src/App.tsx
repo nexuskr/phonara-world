@@ -183,6 +183,7 @@ const App = () => (
               <Route path="/global/live" element={<Navigate to="/" replace />} />
               <Route path="/funnel" element={<Navigate to="/admin/funnel" replace />} />
               <Route path="/kpi" element={<Navigate to="/admin/kpi" replace />} />
+              <Route path="/revenue" element={<Navigate to="/admin/revenue" replace />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
