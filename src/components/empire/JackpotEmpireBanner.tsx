@@ -23,27 +23,26 @@ export function JackpotEmpireBanner() {
   const [feed, setFeed] = useState<FeedItem[]>([]);
   const [participantsToday, setParticipantsToday] = useState<number>(10247);
 
-  // Countdown loop + pool drift
+  // Countdown loop + pool drift — 2s tick (UI shows seconds anyway, halved cost)
   useEffect(() => {
     const t = setInterval(() => {
       setSecondsLeft((s) => {
-        if (s <= 1) {
+        if (s <= 2) {
           setPool((p) => p + 8_000_000 + Math.floor(Math.random() * 4_000_000));
           return 60 + Math.floor(Math.random() * 30);
         }
-        return s - 1;
+        return s - 2;
       });
-      // micro drift: pool grows steadily
-      setPool((p) => p + Math.floor(40_000 + Math.random() * 60_000));
-    }, 1000);
+      setPool((p) => p + Math.floor(80_000 + Math.random() * 120_000));
+    }, 2000);
     return () => clearInterval(t);
   }, []);
 
   // Live participants counter (real-ish drift)
   useEffect(() => {
     const t = setInterval(() => {
-      setParticipantsToday((n) => n + Math.floor(Math.random() * 5));
-    }, 4000);
+      setParticipantsToday((n) => n + Math.floor(Math.random() * 8));
+    }, 8000);
     return () => clearInterval(t);
   }, []);
 
@@ -74,7 +73,7 @@ export function JackpotEmpireBanner() {
       ].slice(0, 6));
     };
     tick();
-    const t = setInterval(tick, 1400 + Math.random() * 1400);
+    const t = setInterval(tick, 3500 + Math.random() * 2500);
     return () => clearInterval(t);
   }, []);
 
