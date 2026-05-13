@@ -1,3 +1,4 @@
+import { useEffect, useMemo } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { useRequireAdmin } from "@/hooks/use-require-auth";
@@ -28,6 +29,21 @@ export default function AdminLayout() {
     );
   const requiresAal2 = isAal2Path(pathname);
 
+  const totalPending = useMemo(
+    () => Object.values(pending).reduce((a, b) => a + (b ?? 0), 0),
+    [pending],
+  );
+  const activePending = active?.badge ? pending[active.badge] ?? 0 : 0;
+
+  // Tab title reflects total pending so admins notice while on other tabs.
+  useEffect(() => {
+    const base = active ? `${active.name} · Phonara Admin` : "Phonara Admin";
+    document.title = totalPending > 0 ? `(${totalPending}) ${base}` : base;
+    return () => {
+      document.title = "Phonara";
+    };
+  }, [active, totalPending]);
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
@@ -43,6 +59,11 @@ export default function AdminLayout() {
                 {active ? `${active.sectionLabel} · ` : ""}
                 <span className="text-foreground">{active?.name ?? "Admin"}</span>
               </span>
+              {activePending > 0 && (
+                <span className="ml-1 inline-flex items-center justify-center min-w-[20px] h-[18px] px-1.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-black tabular-nums animate-pulse">
+                  {activePending > 99 ? "99+" : activePending}
+                </span>
+              )}
             </div>
             <div className="flex-1" />
             <AdminCommandTrigger />

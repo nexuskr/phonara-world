@@ -61,11 +61,15 @@ function AdminSidebarBase({ pending = {} }: AdminSidebarProps) {
 
       <SidebarContent>
         {ADMIN_NAV.map((section) => {
+          const sectionTotal = section.items.reduce(
+            (sum, it) => sum + (it.badge ? pending[it.badge] ?? 0 : 0),
+            0,
+          );
           return (
             <SidebarGroup key={section.id}>
               <SidebarGroupLabel
                 className={cn(
-                  "text-[9px] tracking-[0.3em] font-black uppercase",
+                  "text-[9px] tracking-[0.3em] font-black uppercase flex items-center",
                   section.aal2 ? "text-destructive/80" : "text-muted-foreground",
                 )}
               >
@@ -76,6 +80,11 @@ function AdminSidebarBase({ pending = {} }: AdminSidebarProps) {
                     className="w-3 h-3 ml-1 inline opacity-70"
                     aria-label="AAL2 required"
                   />
+                )}
+                {!collapsed && sectionTotal > 0 && (
+                  <span className="ml-auto inline-flex items-center justify-center min-w-[18px] h-[16px] px-1 rounded-full bg-destructive/15 text-destructive text-[9px] font-black tabular-nums">
+                    {sectionTotal > 99 ? "99+" : sectionTotal}
+                  </span>
                 )}
               </SidebarGroupLabel>
               <SidebarGroupContent>
