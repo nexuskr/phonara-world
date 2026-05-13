@@ -51,6 +51,11 @@ export function useImperialState() {
       return;
     }
     try {
+      const { data: auth } = await supabase.auth.getSession();
+      if (!auth.session?.user) {
+        setLoading(false);
+        return;
+      }
       const { data, error } = await supabase.rpc("get_my_dashboard_state" as any);
       if (error) {
         if ((error as { code?: string }).code === "PGRST301" || /401|400|unauthorized|bad request/i.test(error.message ?? "")) {
