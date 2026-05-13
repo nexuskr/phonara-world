@@ -25,7 +25,7 @@ export default function FreezeBanner() {
     }
     load();
     const ch = supabase
-      .channel("freeze:self")
+      .channel(`freeze:self:${Math.random().toString(36).slice(2, 10)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "account_freezes" }, load)
       .subscribe();
     return () => { supabase.removeChannel(ch); };
