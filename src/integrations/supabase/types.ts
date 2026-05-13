@@ -6552,6 +6552,7 @@ export type Database = {
       is_passkey_verified: { Args: never; Returns: boolean }
       issue_line_link_token: { Args: never; Returns: string }
       join_guild: { Args: { _guild_id: string }; Returns: boolean }
+      jsonb_object_keys_count: { Args: { _obj: Json }; Returns: number }
       latest_chaos_run: { Args: never; Returns: Json }
       leave_guild: { Args: never; Returns: boolean }
       live_account_equity: { Args: { p_user_id: string }; Returns: Json }

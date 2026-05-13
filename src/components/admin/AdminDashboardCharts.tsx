@@ -1,10 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatKRW } from "@/lib/store";
-import {
-  ResponsiveContainer, AreaChart, Area, BarChart, Bar, LineChart, Line,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend,
-} from "recharts";
+import { LineMini, BarsMini, AreaMini } from "@/components/ui/mini-chart";
 import { TrendingUp, Users, Target, ArrowUpFromLine, ArrowDownToLine } from "lucide-react";
 import { LoadingPage } from "@/components/ui/loading-state";
 
@@ -57,6 +54,8 @@ export default function AdminDashboardCharts() {
     mr: sum("missions_reward"),
   };
 
+  const fmtMoney = (v: number) => v >= 1_000_000 ? `${(v / 1_000_000).toFixed(1)}M` : v >= 1000 ? `${(v / 1000).toFixed(0)}K` : String(v);
+
   return (
     <div className="space-y-4">
       {/* 기간 선택 */}
@@ -89,53 +88,36 @@ export default function AdminDashboardCharts() {
 
       {!loading && rows.length > 0 && (
         <>
-          {/* 충전/출금 라인 */}
           <ChartCard title="일별 충전 / 출금">
-            <ResponsiveContainer width="100%" height={220}>
-              <LineChart data={rows}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="day" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
-                <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
-                  tickFormatter={(v) => v >= 1_000_000 ? `${(v/1_000_000).toFixed(1)}M` : v >= 1000 ? `${(v/1000).toFixed(0)}K` : v} />
-                <Tooltip content={<CustomTip currency />} />
-                <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Line type="monotone" dataKey="deposits_total" name="충전" stroke="hsl(var(--secondary))" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="withdrawals_total" name="출금" stroke="hsl(var(--destructive))" strokeWidth={2} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
+            <LineMini
+              data={rows}
+              xKey="day"
+              height={220}
+              yFormatter={fmtMoney}
+              series={[
+                { key: "deposits_total", name: "충전", color: "hsl(var(--secondary))" },
+                { key: "withdrawals_total", name: "출금", color: "hsl(var(--destructive))" },
+              ]}
+            />
           </ChartCard>
 
-          {/* 신규 가입 바 */}
           <ChartCard title="일별 신규 가입">
-            <ResponsiveContainer width="100%" height={180}>
-              <BarChart data={rows}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="day" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
-                <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} allowDecimals={false} />
-                <Tooltip content={<CustomTip />} />
-                <Bar dataKey="new_users" name="신규 가입" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <BarsMini
+              data={rows}
+              xKey="day"
+              height={180}
+              series={[{ key: "new_users", name: "신규 가입", color: "hsl(var(--primary))" }]}
+            />
           </ChartCard>
 
-          {/* 미션 보상 영역 */}
           <ChartCard title="일별 미션 보상 누적">
-            <ResponsiveContainer width="100%" height={180}>
-              <AreaChart data={rows}>
-                <defs>
-                  <linearGradient id="grad-mr" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="hsl(var(--gold))" stopOpacity={0.6} />
-                    <stop offset="100%" stopColor="hsl(var(--gold))" stopOpacity={0.05} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="day" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
-                <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
-                  tickFormatter={(v) => v >= 1_000_000 ? `${(v/1_000_000).toFixed(1)}M` : v >= 1000 ? `${(v/1000).toFixed(0)}K` : v} />
-                <Tooltip content={<CustomTip currency />} />
-                <Area type="monotone" dataKey="missions_reward" name="미션 보상" stroke="hsl(var(--gold))" strokeWidth={2} fill="url(#grad-mr)" />
-              </AreaChart>
-            </ResponsiveContainer>
+            <AreaMini
+              data={rows}
+              xKey="day"
+              height={180}
+              yFormatter={fmtMoney}
+              series={[{ key: "missions_reward", name: "미션 보상", color: "hsl(var(--gold))" }]}
+            />
           </ChartCard>
         </>
       )}
@@ -158,22 +140,6 @@ function ChartCard({ title, children }: any) {
     <div className="glass-strong rounded-2xl p-4 neon-border">
       <div className="text-[11px] font-bold text-muted-foreground mb-2">{title}</div>
       {children}
-    </div>
-  );
-}
-
-function CustomTip({ active, payload, label, currency }: any) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="glass-strong rounded-lg p-2 text-[10px] border border-border">
-      <div className="font-bold mb-1">{label}</div>
-      {payload.map((p: any) => (
-        <div key={p.dataKey} className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full" style={{ background: p.color }} />
-          <span className="text-muted-foreground">{p.name}:</span>
-          <span className="font-bold">{currency ? formatKRW(p.value) : p.value.toLocaleString()}</span>
-        </div>
-      ))}
     </div>
   );
 }

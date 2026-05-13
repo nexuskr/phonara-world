@@ -4,10 +4,7 @@ import HubTabs from "@/components/HubTabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
-import {
-  ResponsiveContainer, BarChart, Bar, LineChart, Line,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend,
-} from "recharts";
+import { BarsMini, LineMini } from "@/components/ui/mini-chart";
 import { BarChart3, Plus, Trash2, Loader2, Download } from "lucide-react";
 import { toCSV, downloadCSV } from "@/lib/csv";
 import CampaignManager from "@/components/ugc/CampaignManager";
@@ -236,38 +233,30 @@ export default function UgcDashboard() {
         {/* Charts */}
         <section className="glass rounded-2xl p-3 border border-border">
           <h2 className="font-bold text-sm mb-2">{t("chart.byChannel")}</h2>
-          <div className="h-56">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={byChannel} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="channel" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
-                <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
-                <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", fontSize: 12 }} />
-                <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Bar dataKey="clicks" fill="hsl(var(--primary))" />
-                <Bar dataKey="signups" fill="hsl(var(--accent))" />
-                <Bar dataKey="conversions" fill="hsl(var(--gold))" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          <BarsMini
+            data={byChannel as any}
+            xKey="channel"
+            height={224}
+            series={[
+              { key: "clicks", name: "clicks", color: "hsl(var(--primary))" },
+              { key: "signups", name: "signups", color: "hsl(var(--accent))" },
+              { key: "conversions", name: "conv", color: "hsl(var(--gold))" },
+            ]}
+          />
         </section>
 
         <section className="glass rounded-2xl p-3 border border-border">
           <h2 className="font-bold text-sm mb-2">{t("chart.byDate")}</h2>
-          <div className="h-56">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={byDate} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="date" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
-                <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
-                <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", fontSize: 12 }} />
-                <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Line type="monotone" dataKey="clicks" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="signups" stroke="hsl(var(--accent))" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="conversions" stroke="hsl(var(--gold))" strokeWidth={2} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+          <LineMini
+            data={byDate as any}
+            xKey="date"
+            height={224}
+            series={[
+              { key: "clicks", name: "clicks", color: "hsl(var(--primary))" },
+              { key: "signups", name: "signups", color: "hsl(var(--accent))" },
+              { key: "conversions", name: "conv", color: "hsl(var(--gold))" },
+            ]}
+          />
         </section>
 
         {/* Form */}

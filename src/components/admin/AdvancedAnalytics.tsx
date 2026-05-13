@@ -1,10 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatKRW } from "@/lib/store";
-import {
-  ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell, LineChart, Line,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend,
-} from "recharts";
+import { LineMini, DonutMini } from "@/components/ui/mini-chart";
 import { Bot, Crown, Trophy, UserPlus, TrendingUp } from "lucide-react";
 import { LoadingPage } from "@/components/ui/loading-state";
 
@@ -121,30 +118,23 @@ export default function AdvancedAnalytics() {
           {/* 일별 봇 실행 추이 */}
           {daily.length > 0 && (
             <Card title="일별 AI 봇 실행 추이">
-              <ResponsiveContainer width="100%" height={180}>
-                <LineChart data={daily}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="day" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
-                  <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} allowDecimals={false} />
-                  <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", fontSize: 11 }} />
-                  <Line type="monotone" dataKey="runs" name="실행" stroke="hsl(var(--gold))" strokeWidth={2} dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
+              <LineMini
+                data={daily as any}
+                xKey="day"
+                height={180}
+                series={[{ key: "runs", name: "실행", color: "hsl(var(--gold))" }]}
+              />
             </Card>
           )}
 
           {/* 티어 분포 */}
           <Card title="👑 등급 분포">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
-              <ResponsiveContainer width="100%" height={180}>
-                <PieChart>
-                  <Pie data={tiers} dataKey="users" nameKey="tier" cx="50%" cy="50%" innerRadius={40} outerRadius={70} paddingAngle={2}>
-                    {tiers.map((t) => <Cell key={t.tier} fill={TIER_COLOR[t.tier] || "hsl(var(--muted))"} />)}
-                  </Pie>
-                  <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", fontSize: 11 }} />
-                  <Legend wrapperStyle={{ fontSize: 10 }} />
-                </PieChart>
-              </ResponsiveContainer>
+              <DonutMini
+                size={180}
+                inner={50}
+                data={tiers.map((t) => ({ name: t.tier, value: t.users, color: TIER_COLOR[t.tier] || "hsl(var(--muted))" }))}
+              />
               <div className="space-y-1.5">
                 {tiers.map((t) => (
                   <div key={t.tier} className="flex items-center justify-between glass rounded-lg px-3 py-2">

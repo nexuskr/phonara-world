@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Activity, MousePointerClick, Eye, X, CheckCircle2, Filter } from "lucide-react";
 import { LoadingList } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from "recharts";
+import { StackedBarsMini } from "@/components/ui/mini-chart";
 
 type EventRow = {
   id: string;
@@ -158,28 +158,17 @@ export default function FunnelAnalytics() {
         {bySurface.length === 0 ? (
           loading ? <LoadingList rows={3} rowHeight="sm" /> : <EmptyState title="아직 이벤트가 없습니다" variant="muted" size="sm" />
         ) : (
-          <div className="h-72">
-            <ResponsiveContainer>
-              <BarChart data={bySurface}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="surface" stroke="hsl(var(--muted-foreground))" fontSize={11} />
-                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} />
-                <Tooltip
-                  contentStyle={{
-                    background: "hsl(var(--card))",
-                    border: "1px solid hsl(var(--border))",
-                    borderRadius: 8,
-                    fontSize: 12,
-                  }}
-                />
-                <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Bar dataKey="view" stackId="a" fill="hsl(var(--muted-foreground))" />
-                <Bar dataKey="cta_click" stackId="a" fill="hsl(var(--primary))" />
-                <Bar dataKey="convert" stackId="a" fill="hsl(var(--gold))" />
-                <Bar dataKey="dismiss" stackId="a" fill="hsl(var(--destructive))" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          <StackedBarsMini
+            data={bySurface as any}
+            xKey="surface"
+            height={288}
+            series={[
+              { key: "view", name: "view", color: "hsl(var(--muted-foreground))" },
+              { key: "cta_click", name: "click", color: "hsl(var(--primary))" },
+              { key: "convert", name: "convert", color: "hsl(var(--gold))" },
+              { key: "dismiss", name: "dismiss", color: "hsl(var(--destructive))" },
+            ]}
+          />
         )}
       </div>
 
