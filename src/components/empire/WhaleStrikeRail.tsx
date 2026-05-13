@@ -27,7 +27,7 @@ const KIND_META: Record<Strike["kind"], { icon: React.ComponentType<{ className?
 /**
  * Whale Strike 라이브 피드 — 24h 고임팩트 이벤트 마키 + 클릭 시 합류 깔때기 추적.
  */
-export function WhaleStrikeRail() {
+export function WhaleStrikeRail({ compact = false }: { compact?: boolean } = {}) {
   const [items, setItems] = useState<Strike[]>([]);
   const [loaded, setLoaded] = useState(false);
   const navigate = useNavigate();
@@ -63,15 +63,17 @@ export function WhaleStrikeRail() {
   }
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-secondary/30 bg-gradient-to-r from-secondary/10 via-primary/10 to-accent/10 backdrop-blur-md">
-      <div className="absolute top-2 left-3 z-10 flex items-center gap-1.5 text-[10px] uppercase tracking-[0.2em] font-imperial text-secondary">
-        <Zap className="w-3 h-3 animate-pulse" /> Whale Strikes · 24h
-      </div>
-      <div className="absolute inset-y-0 left-0 w-12 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
-      <div className="absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
+    <div className={`relative overflow-hidden ${compact ? "rounded-xl border border-primary/20 bg-card/40" : "rounded-2xl border border-secondary/30 bg-gradient-to-r from-secondary/10 via-primary/10 to-accent/10"} backdrop-blur-md`}>
+      {!compact && (
+        <div className="absolute top-2 left-3 z-10 flex items-center gap-1.5 text-[10px] uppercase tracking-[0.2em] font-imperial text-secondary">
+          <Zap className="w-3 h-3 animate-pulse" /> Whale Strikes · 24h
+        </div>
+      )}
+      <div className="absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
+      <div className="absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
 
       <motion.div
-        className="flex gap-3 py-7 pl-3 will-change-transform"
+        className={`flex ${compact ? "gap-2 py-2 pl-2" : "gap-3 py-7 pl-3"} will-change-transform`}
         animate={{ x: ["0%", "-50%"] }}
         transition={{ duration: Math.max(20, items.length * 4), ease: "linear", repeat: Infinity }}
       >
@@ -83,22 +85,31 @@ export function WhaleStrikeRail() {
               key={`${s.kind}-${s.created_at}-${i}`}
               type="button"
               onClick={() => onStrikeClick(s)}
-              className="shrink-0 glass rounded-xl px-3 py-2 flex items-center gap-2 min-w-[200px] text-left hover:border-primary/50 hover:scale-[1.03] transition-all border border-transparent cursor-pointer"
+              className={`shrink-0 ${compact ? "h-8 px-2.5 rounded-lg flex items-center gap-1.5 text-[11px] bg-background/60 hover:bg-primary/10" : "glass rounded-xl px-3 py-2 flex items-center gap-2 min-w-[200px] hover:scale-[1.03]"} text-left hover:border-primary/50 transition-all border border-transparent cursor-pointer`}
               aria-label={`${s.nick} ${meta.verb} ${s.amount > 0 ? fmtKRW(s.amount) : ""} — 지금 합류`}
             >
-              <Icon className={`w-4 h-4 ${meta.tone}`} />
-              <div className="text-xs">
-                <div className="font-bold tracking-wide">
+              <Icon className={`${compact ? "w-3 h-3" : "w-4 h-4"} ${meta.tone}`} />
+              {compact ? (
+                <span className="whitespace-nowrap font-bold">
                   <span className="text-foreground/80">{s.nick}</span>
                   <span className="text-muted-foreground"> · </span>
                   <span className={meta.tone}>{meta.verb}</span>
-                </div>
-                {s.amount > 0 && (
-                  <div className={`text-[11px] tabular-nums font-imperial ${meta.tone}`}>
-                    {fmtKRW(s.amount)}
+                  {s.amount > 0 && <span className={`ml-1.5 tabular-nums ${meta.tone}`}>{fmtKRW(s.amount)}</span>}
+                </span>
+              ) : (
+                <div className="text-xs">
+                  <div className="font-bold tracking-wide">
+                    <span className="text-foreground/80">{s.nick}</span>
+                    <span className="text-muted-foreground"> · </span>
+                    <span className={meta.tone}>{meta.verb}</span>
                   </div>
-                )}
-              </div>
+                  {s.amount > 0 && (
+                    <div className={`text-[11px] tabular-nums font-imperial ${meta.tone}`}>
+                      {fmtKRW(s.amount)}
+                    </div>
+                  )}
+                </div>
+              )}
             </button>
           );
         })}

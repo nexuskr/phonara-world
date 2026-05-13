@@ -1,7 +1,7 @@
 import { memo, useEffect, useRef } from "react";
 import {
-  createChart, CandlestickSeries, type IChartApi, type ISeriesApi,
-  type IPriceLine, LineStyle, type CandlestickData, type UTCTimestamp,
+  createChart, CandlestickSeries, LineSeries, type IChartApi, type ISeriesApi,
+  type IPriceLine, LineStyle, type CandlestickData, type LineData, type UTCTimestamp,
 } from "lightweight-charts";
 import { getFeed, fetchKlineHistory, type KlineBar, type KlineInterval } from "@/lib/paper-trading/bybit-feed";
 
@@ -14,6 +14,8 @@ interface Props {
   overlays?: OverlayLine[];
   height?: number;
   interval?: KlineInterval;
+  /** Render mode — "candle" (default) or "line" (lighter, mobile-friendly). */
+  mode?: "candle" | "line";
 }
 
 const INTERVAL_SECONDS: Record<KlineInterval, number> = {
