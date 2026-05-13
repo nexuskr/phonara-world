@@ -79,7 +79,7 @@ function SessionWatcher() {
   useAuthBridge();
   useAdultGate();
   const loc = useLocation();
-  useEffect(() => { recordRouteChange(loc.pathname); }, [loc.pathname]);
+  useEffect(() => { recordRouteChange(loc.pathname); recordNavigation(loc.pathname); }, [loc.pathname]);
   useEffect(() => { schedulePrefetch(); }, []);
   if (typeof window !== "undefined") {
     const code = new URLSearchParams(window.location.search).get("ref");
