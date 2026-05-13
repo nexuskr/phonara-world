@@ -201,10 +201,33 @@ export default function Dashboard() {
             </div>
           </LazyMount>
 
-          {/* Balance hero */}
+          {/* Balance hero — luxury watch frame */}
           <div className="relative animate-fade-up mt-4">
             <div className="absolute inset-0 bg-gradient-cyber blur-3xl opacity-50 -z-10" />
-            <div className="glass-strong rounded-3xl p-7 neon-border relative overflow-hidden">
+            <div
+              className="glass-strong rounded-3xl p-6 sm:p-7 relative overflow-hidden border-2 border-gold/55 outline outline-1 outline-offset-[3px] outline-gold/22"
+              style={{
+                boxShadow:
+                  "0 0 44px hsl(var(--gold)/0.28), 0 0 84px hsl(var(--gold)/0.14), inset 0 1px 0 hsl(var(--gold)/0.28), inset 0 -1px 0 hsl(var(--gold)/0.14)",
+              }}
+            >
+              {/* inner hairlines */}
+              <span aria-hidden className="absolute top-0 inset-x-6 h-px bg-gradient-to-r from-transparent via-gold/65 to-transparent" />
+              <span aria-hidden className="absolute bottom-0 inset-x-6 h-px bg-gradient-to-r from-transparent via-gold/40 to-transparent" />
+              {/* 4 corner L-markers */}
+              <span aria-hidden className="absolute top-2 left-2 w-3 h-3 border-t-2 border-l-2 border-gold/80 rounded-tl-md" />
+              <span aria-hidden className="absolute top-2 right-2 w-3 h-3 border-t-2 border-r-2 border-gold/80 rounded-tr-md" />
+              <span aria-hidden className="absolute bottom-2 left-2 w-3 h-3 border-b-2 border-l-2 border-gold/80 rounded-bl-md" />
+              <span aria-hidden className="absolute bottom-2 right-2 w-3 h-3 border-b-2 border-r-2 border-gold/80 rounded-br-md" />
+              {/* static conic shine */}
+              <span
+                aria-hidden
+                className="absolute inset-0 pointer-events-none opacity-[0.09]"
+                style={{
+                  background:
+                    "conic-gradient(from 210deg at 50% 0%, transparent 0deg, hsl(var(--gold)) 60deg, transparent 140deg, transparent 360deg)",
+                }}
+              />
               <div className="absolute inset-0 bg-grid opacity-20" />
               <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-gradient-primary blur-3xl opacity-50 animate-float" />
               <div className="absolute -bottom-10 -left-10 w-40 h-40 rounded-full bg-accent/60 blur-3xl animate-float-slow" />
