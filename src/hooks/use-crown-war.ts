@@ -26,7 +26,7 @@ export type CrownWarSnapshot = {
 export function useCrownWar(pollMs = 15000) {
   const [snap, setSnap] = useState<CrownWarSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
-  const [now, setNow] = useState<number>(() => Date.now());
+  const now = useNowTick(2000);
   const lastFetch = useRef(0);
 
   const load = useCallback(async () => {
@@ -39,12 +39,6 @@ export function useCrownWar(pollMs = 15000) {
   }, []);
 
   useEffect(() => { void load(); }, [load]);
-
-  // 1s tick for countdown
-  useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 2000);
-    return () => clearInterval(t);
-  }, []);
 
   // Poll
   useEffect(() => {

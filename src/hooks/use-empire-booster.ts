@@ -1,6 +1,7 @@
 // PR-12: Empire Booster (Baron 24h) — current user's active booster + countdown.
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useNowTick } from "@/hooks/use-now-tick";
 
 export type EmpireBooster = {
   id: number;
