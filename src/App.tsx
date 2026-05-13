@@ -12,6 +12,7 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 import { RouteFallback } from "./components/RouteFallback";
 import { installGlobalErrorLogging } from "./lib/error-logger";
 import { installFetchInstrument, installWebVitals, recordRouteChange } from "./lib/spans";
+import { schedulePrefetch } from "./lib/route-prefetch";
 import { ReviewerGuard } from "./components/ReviewerGuard";
 import { ReviewerMaskRoot } from "./components/ReviewerMaskRoot";
 import ReviewerBadge from "./components/ReviewerBadge";
@@ -79,6 +80,7 @@ function SessionWatcher() {
   useAdultGate();
   const loc = useLocation();
   useEffect(() => { recordRouteChange(loc.pathname); }, [loc.pathname]);
+  useEffect(() => { schedulePrefetch(); }, []);
   if (typeof window !== "undefined") {
     const code = new URLSearchParams(window.location.search).get("ref");
     if (code && /^[A-Z0-9]{8}$/i.test(code)) {
