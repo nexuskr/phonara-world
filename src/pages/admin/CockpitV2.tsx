@@ -105,21 +105,29 @@ export default function AdminCockpitV2() {
   const [thresholds, setThresholds] = useState<Record<string, number>>({
     deposits_hot: 5, withdrawals_hot: 3, aml_hot: 1, refund_hot: 2, anomaly_hot: 5,
   });
+  const [sla, setSla] = useState<any>(null);
+  const [slaTargets, setSlaTargets] = useState<Record<string, number>>({
+    withdrawal_minutes: 30, deposit_minutes: 15, aml_minutes: 60,
+  });
 
   useEffect(() => {
     if (!user?.isAdmin) return;
     (async () => {
-      const { data } = await (supabase as any).rpc("admin_settings_get", {
-        _key: "cockpit.thresholds",
-      });
-      if (data && typeof data === "object") {
-        setThresholds((prev) => ({ ...prev, ...(data as Record<string, number>) }));
+      const [t, s] = await Promise.all([
+        (supabase as any).rpc("admin_settings_get", { _key: "cockpit.thresholds" }),
+        (supabase as any).rpc("admin_settings_get", { _key: "cockpit.sla" }),
+      ]);
+      if (t.data && typeof t.data === "object") {
+        setThresholds((prev) => ({ ...prev, ...(t.data as Record<string, number>) }));
+      }
+      if (s.data && typeof s.data === "object") {
+        setSlaTargets((prev) => ({ ...prev, ...(s.data as Record<string, number>) }));
       }
     })();
   }, [user?.isAdmin]);
 
   async function load() {
-    const [wd, an, fz] = await Promise.all([
+    const [wd, an, fz, slaRes] = await Promise.all([
       supabase
         .from("withdrawal_requests")
         .select("id, user_id, amount, created_at, status")
@@ -138,10 +146,12 @@ export default function AdminCockpitV2() {
         .select("id", { count: "exact", head: true })
         .is("released_at", null)
         .then((r: any) => r, () => ({ count: 0 })),
+      (supabase as any).rpc("get_queue_sla_stats").then((r: any) => r, () => ({ data: null })),
     ]);
     setRisks((wd.data ?? []) as RiskWd[]);
     setAnoms(((an as any).data ?? []) as Anom[]);
     setFreezes((fz as any).count ?? 0);
+    setSla((slaRes as any).data ?? null);
     setLoading(false);
     setRefreshedAt(new Date());
   }
