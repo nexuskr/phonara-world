@@ -23,6 +23,60 @@ const TIER_COLORS: Record<string, string> = {
   mythic: "from-rose-400 via-fuchsia-500 to-violet-600",
 };
 
+// Map an achievement to the page where the user can make progress on it.
+const CATEGORY_ROUTE: Record<string, string> = {
+  onboard: "/guide",
+  mission: "/missions",
+  wealth: "/wallet",
+  bot: "/missions?tab=bots",
+  luck: "/missions?tab=battle",
+  social: "/referral",
+  deposit: "/packages",
+  guild: "/lounge",
+  hold: "/wallet",
+  referral: "/referral",
+  arena: "/arena",
+  tier: "/empire",
+  attendance: "/missions?tab=daily",
+  season: "/missions?tab=daily",
+  trust: "/trust",
+  safety: "/security",
+  hidden: "/achievements",
+};
+
+const KEY_ROUTE: Record<string, string> = {
+  guide_master: "/guide",
+  handbook_master: "/guide",
+  speed_runner: "/guide",
+  empire_founder: "/empire",
+  guild_found: "/lounge",
+  guild_join: "/lounge",
+  coin_master: "/missions?tab=daily",
+  golden_jackpot: "/missions?tab=battle",
+  roulette_jackpot: "/missions?tab=battle",
+  jackpot_hunter: "/missions?tab=battle",
+  trust_kyc: "/security",
+  trust_2fa: "/security/totp",
+  trust_pin: "/security",
+  trust_tos_v2: "/legal/tos",
+  safety_email_verify: "/security",
+  safety_device_trust: "/security",
+  safety_recover: "/security",
+  season_pass_premium: "/missions?tab=daily",
+  arena_long_5: "/arena",
+  arena_short_5: "/arena",
+  arena_streak_5: "/arena",
+  arena_streak_10: "/arena",
+  arena_first_win: "/arena",
+  arena_daily_top: "/arena",
+  weekly_top1: "/referral",
+  legend_referrer: "/referral",
+};
+
+function routeFor(a: { key: string; category: string }): string {
+  return KEY_ROUTE[a.key] ?? CATEGORY_ROUTE[a.category] ?? "/dashboard";
+}
+
 export default function Achievements() {
   const [db] = useDB();
   const { t } = useTranslation("achievements");
