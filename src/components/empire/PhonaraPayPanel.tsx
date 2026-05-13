@@ -18,6 +18,7 @@ import {
   PHON_PER_USDT, type CryptoDepositIntent,
 } from "@/lib/phonaraPay";
 import { notify } from "@/lib/notify";
+import { useFirstEmperorBurst } from "@/components/empire/FirstEmperorBurst";
 import { cn } from "@/lib/utils";
 
 const PRESETS = [10, 50, 100, 500, 1000];
