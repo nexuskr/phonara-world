@@ -6,14 +6,14 @@ import { track } from "@/lib/analytics";
 import { isFlagOn } from "@/lib/conversion-flags";
 import { formatKRW } from "@/lib/store";
 
-const KEY = "phonara_60s_v1";
+export const SIXTY_SECOND_FLOW_KEY = "phonara_60s_v1";
 
 /**
  * 60초 골든타임 풀스크린 플로우.
  * - 이전 FirstTimeOnboarding을 대체하지 않고 자동 트리거.
  * - 신규 가입 후 1회 노출. localStorage(KEY)로 dedup.
  */
-export default function SixtySecondFlow({ enabled }: { enabled: boolean }) {
+export default function SixtySecondFlow({ enabled, onClosed }: { enabled: boolean; onClosed?: () => void }) {
   const nav = useNavigate();
   const [step, setStep] = useState(0);
   const [open, setOpen] = useState(false);
@@ -22,7 +22,7 @@ export default function SixtySecondFlow({ enabled }: { enabled: boolean }) {
   useEffect(() => {
     if (!enabled || !isFlagOn("sixtySecondFlow")) return;
     if (typeof window === "undefined") return;
-    if (localStorage.getItem(KEY)) return;
+    if (localStorage.getItem(SIXTY_SECOND_FLOW_KEY)) return;
     const ti = setTimeout(() => {
       setOpen(true);
       track("funnel_60s_intro_shown");
@@ -42,9 +42,10 @@ export default function SixtySecondFlow({ enabled }: { enabled: boolean }) {
   }, [tickNow, open]);
 
   function close(via: "skip" | "complete") {
-    localStorage.setItem(KEY, String(Date.now()));
+    localStorage.setItem(SIXTY_SECOND_FLOW_KEY, String(Date.now()));
     setOpen(false);
     track("funnel_60s_intro_closed", { via, seconds });
+    onClosed?.();
   }
 
   function goMissions() {
