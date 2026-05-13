@@ -13,19 +13,21 @@ export function useAchievementWatcher(trigger?: unknown) {
   useEffect(() => {
     let cancelled = false;
     async function check() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user || cancelled) return;
-      const { data, error } = await supabase.rpc("check_achievements", { _user_id: user.id });
-      if (error || !data) return;
-      const unlocked: string[] = ((data as any)?.unlocked ?? []).filter(Boolean);
-      for (const key of unlocked) {
-        if (seen.current.has(key)) continue;
-        seen.current.add(key);
-        notify.success("🏆 업적 달성!", {
-          description: key,
-          duration: 5000,
-        });
-      }
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user || cancelled) return;
+        const { data, error } = await supabase.rpc("check_achievements", { _user_id: user.id });
+        if (error || !data) return;
+        const unlocked: string[] = ((data as any)?.unlocked ?? []).filter(Boolean);
+        for (const key of unlocked) {
+          if (seen.current.has(key)) continue;
+          seen.current.add(key);
+          notify.success("🏆 업적 달성!", {
+            description: key,
+            duration: 5000,
+          });
+        }
+      } catch { /* silent — endpoint unreachable */ }
     }
     void check();
     const onFocus = () => { void check(); };

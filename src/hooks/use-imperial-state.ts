@@ -44,10 +44,12 @@ export function useImperialState() {
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
-    const { data } = await supabase.rpc("get_my_dashboard_state" as any);
-    if (data && typeof data === "object") {
-      setState({ ...EMPTY, ...(data as any) });
-    }
+    try {
+      const { data } = await supabase.rpc("get_my_dashboard_state" as any);
+      if (data && typeof data === "object") {
+        setState({ ...EMPTY, ...(data as any) });
+      }
+    } catch { /* silent — keep last state */ }
     setLoading(false);
   }, []);
 

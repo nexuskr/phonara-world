@@ -8,22 +8,27 @@ export default function EmpireFoundingCounter({ compact }: { compact?: boolean }
   useEffect(() => {
     let mounted = true;
     const load = async () => {
-      const { data } = await supabase.rpc("get_empire_seats_remaining");
-      if (mounted && typeof data === "number") setRemaining(data);
+      try {
+        const { data } = await supabase.rpc("get_empire_seats_remaining");
+        if (mounted && typeof data === "number") setRemaining(data);
+      } catch { /* silent — endpoint unreachable */ }
     };
     void load();
-    const ch = supabase
-      .channel(`empire-seats-${Math.random().toString(36).slice(2)}`)
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "empire_founding_seats" },
-        () => void load()
-      )
-      .subscribe();
+    let ch: any;
+    try {
+      ch = supabase
+        .channel(`empire-seats-${Math.random().toString(36).slice(2)}`)
+        .on(
+          "postgres_changes",
+          { event: "UPDATE", schema: "public", table: "empire_founding_seats" },
+          () => void load()
+        )
+        .subscribe((_s: string, err?: unknown) => { if (err) { /* swallow */ } });
+    } catch { /* realtime unreachable */ }
     const i = setInterval(load, 30_000);
     return () => {
       mounted = false;
-      supabase.removeChannel(ch);
+      try { if (ch) supabase.removeChannel(ch); } catch { /* noop */ }
       clearInterval(i);
     };
   }, []);

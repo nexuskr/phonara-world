@@ -20,23 +20,25 @@ export default function EmpireSignature() {
     setShow(true);
     localStorage.setItem(KEY, String(Date.now()));
     try { navigator.vibrate?.([30, 50, 80]); } catch { /* noop */ }
-    const t = setTimeout(() => setShow(false), 3200);
+    const t = setTimeout(() => setShow(false), 1600);
     return () => clearTimeout(t);
   }, [db.user]);
 
   if (!show) return null;
 
   return (
-    <div className="fixed inset-0 z-[90] pointer-events-none flex items-center justify-center bg-background/70 backdrop-blur-md animate-fade-up">
-      <div className="absolute inset-0 overflow-hidden">
-        {Array.from({ length: 24 }).map((_, i) => (
+    <div
+      onClick={() => setShow(false)}
+      className="fixed inset-0 z-[90] flex items-center justify-center bg-background/70 backdrop-blur-md animate-fade-up cursor-pointer"
+    >
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {Array.from({ length: 10 }).map((_, i) => (
           <span
             key={i}
-            className="absolute text-3xl text-gold animate-crown"
+            className="absolute text-2xl text-gold opacity-70"
             style={{
-              left: `${5 + (i * 4) % 90}%`,
-              top: `${10 + (i * 7) % 80}%`,
-              animationDelay: `${i * 80}ms`,
+              left: `${8 + (i * 9) % 88}%`,
+              top: `${12 + (i * 11) % 76}%`,
             }}
           >
             👑

@@ -19,32 +19,43 @@ export function useEmpireBooster() {
   const now = useNowTick(2000);
 
   const load = useCallback(async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setBooster(null); setLoading(false); return; }
-    const { data } = await (supabase.rpc as any)("get_active_empire_booster");
-    const row = Array.isArray(data) && data.length > 0 ? (data[0] as EmpireBooster) : null;
-    setBooster(row);
-    setLoading(false);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { setBooster(null); setLoading(false); return; }
+      const { data } = await (supabase.rpc as any)("get_active_empire_booster");
+      const row = Array.isArray(data) && data.length > 0 ? (data[0] as EmpireBooster) : null;
+      setBooster(row);
+    } catch {
+      setBooster(null);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => { void load(); }, [load]);
 
-  // Realtime: re-load when a new booster row is inserted for the user
+  // Realtime: re-load when a new booster row is inserted for the user.
+  // Guarded against StrictMode double-mount and channel-already-subscribed errors.
   useEffect(() => {
     let ch: any;
+    let cancelled = false;
     (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      ch = supabase
-        .channel(`empire-booster-${user.id}`)
-        .on(
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user || cancelled) return;
+        const name = `empire-booster-${user.id}-${Math.random().toString(36).slice(2, 8)}`;
+        ch = supabase.channel(name);
+        ch.on(
           "postgres_changes",
           { event: "INSERT", schema: "public", table: "empire_boosters", filter: `user_id=eq.${user.id}` },
           () => void load(),
-        )
-        .subscribe();
+        ).subscribe((_status: string, err?: unknown) => { if (err) { /* swallow */ } });
+      } catch { /* realtime unreachable — silent */ }
     })();
-    return () => { if (ch) supabase.removeChannel(ch); };
+    return () => {
+      cancelled = true;
+      try { if (ch) supabase.removeChannel(ch); } catch { /* noop */ }
+    };
   }, [load]);
 
   const remainingMs = booster ? Math.max(0, new Date(booster.expires_at).getTime() - now) : 0;
