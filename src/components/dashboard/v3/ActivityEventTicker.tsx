@@ -7,6 +7,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
+import { useAppSettings, tickerIntervalFor } from "@/lib/app-settings";
 
 const NAMES = ["K***", "J***", "S***", "P***", "L***", "M***", "H***", "C***", "Y***", "B***", "T***", "R***", "D***", "N***", "W***"];
 const TEMPLATES: Array<(n: string) => { icon: string; text: string }> = [
@@ -26,7 +27,25 @@ function makeEvent(): { id: number; icon: string; text: string } {
   return { id: Date.now() + Math.floor(Math.random() * 1000), ...t };
 }
 
-export default function ActivityEventTicker({ variant = "hero", limit = 3 }: { variant?: "hero" | "strip"; limit?: number }) {
+/**
+ * intervalMs:
+ *  - undefined → use user "tickerSpeed" setting (default normal)
+ *  - number    → fixed delay
+ *  - [min,max] → random delay in window
+ *  - "off"     → no client-side fallback ticks (realtime only)
+ */
+export type TickerInterval = number | [number, number] | "off" | undefined;
+
+export default function ActivityEventTicker({
+  variant = "hero",
+  limit = 3,
+  intervalMs,
+}: {
+  variant?: "hero" | "strip";
+  limit?: number;
+  intervalMs?: TickerInterval;
+}) {
+  const [settings] = useAppSettings();
   const [feed, setFeed] = useState<{ id: number; icon: string; text: string }[]>(() =>
     Array.from({ length: limit }, () => makeEvent()),
   );
@@ -34,13 +53,23 @@ export default function ActivityEventTicker({ variant = "hero", limit = 3 }: { v
 
   useEffect(() => {
     let cancelled = false;
+
+    // Resolve effective interval window
+    let window_: [number, number] | null;
+    if (intervalMs === "off") window_ = null;
+    else if (typeof intervalMs === "number") window_ = [intervalMs, intervalMs];
+    else if (Array.isArray(intervalMs)) window_ = intervalMs;
+    else window_ = tickerIntervalFor(settings.tickerSpeed);
+
     const tick = () => {
-      if (cancelled) return;
+      if (cancelled || !window_) return;
       setFeed((prev) => [makeEvent(), ...prev].slice(0, limit));
-      const next = 800 + Math.floor(Math.random() * 1200);
+      const span = Math.max(0, window_[1] - window_[0]);
+      const next = window_[0] + Math.floor(Math.random() * (span + 1));
       timer = window.setTimeout(tick, next);
     };
-    let timer = window.setTimeout(tick, 1000);
+    let timer = 0;
+    if (window_) timer = window.setTimeout(tick, window_[0]);
 
     const ch = supabase
       .channel(`ghost-feed-${Math.random().toString(36).slice(2, 8)}`)
@@ -58,10 +87,10 @@ export default function ActivityEventTicker({ variant = "hero", limit = 3 }: { v
 
     return () => {
       cancelled = true;
-      window.clearTimeout(timer);
+      if (timer) window.clearTimeout(timer);
       supabase.removeChannel(ch);
     };
-  }, [limit]);
+  }, [limit, intervalMs, settings.tickerSpeed]);
 
   if (variant === "strip") {
     return (

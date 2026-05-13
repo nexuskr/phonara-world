@@ -25,6 +25,7 @@ import ReferralCard from "@/components/ReferralCard";
 import NotificationPrefsCard from "@/components/profile/NotificationPrefsCard";
 import PushNotificationCard from "@/components/settings/PushNotificationCard";
 import LineConnectCard from "@/components/settings/LineConnectCard";
+import AppSettingsCard from "@/components/settings/AppSettingsCard";
 import CoinMasterLounge from "@/components/CoinMasterLounge";
 
 export default function Profile() {
@@ -232,6 +233,9 @@ export default function Profile() {
           <Row icon={KeyRound} label={t("rowPass")} sub={t("rowPassSub")} onClick={() => setPassOpen(true)} />
           <Row icon={Lock} label={u.withdrawPw ? t("rowPinChange") : t("rowPinSet")} sub={u.withdrawPw ? t("rowPinSubActive") : t("rowPinSubInactive")} onClick={() => setPwOpen(true)} statusGood={!!u.withdrawPw} statusActive={t("statusActive")} statusInactive={t("statusInactive")} />
           <Row icon={KeyRound} label={t("rowPinReset")} sub={t("rowPinResetSub")} onClick={() => setPinResetOpen(true)} />
+
+          <SectionTitle>화면 · 모션</SectionTitle>
+          <AppSettingsCard />
 
           <SectionTitle>{t("sectionGuide")}</SectionTitle>
           <Link to="/guide" className="block">

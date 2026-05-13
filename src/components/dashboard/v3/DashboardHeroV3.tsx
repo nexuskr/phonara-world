@@ -22,7 +22,10 @@ export default function DashboardHeroV3() {
   }
 
   return (
-    <section className="relative w-full min-h-[100svh] overflow-hidden flex flex-col items-center justify-center px-5 select-none">
+    <section
+      className="relative w-full overflow-hidden flex flex-col items-center justify-center px-5 select-none"
+      style={{ minHeight: "var(--app-vh, 100svh)" }}
+    >
       <CosmicBackdrop className="absolute inset-0 w-full h-full" />
       <div
         aria-hidden
