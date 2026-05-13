@@ -259,6 +259,18 @@ export default function PackageUpgradeCards() {
   }
 
   function goToPackage(focus?: string) {
+    if (typeof window !== "undefined" && window.location.pathname === "/packages" && focus) {
+      const el = document.getElementById(`pkg-${focus}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        const url = new URL(window.location.href);
+        url.searchParams.set("focus", focus);
+        window.history.replaceState({}, "", url.toString());
+        // ping Packages page via storage-like hash trick — but easier: dispatch popstate
+        window.dispatchEvent(new PopStateEvent("popstate"));
+        return;
+      }
+    }
     navigate(focus ? `/packages?focus=${focus}` : "/packages");
   }
 
