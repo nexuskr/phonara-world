@@ -739,6 +739,8 @@ export type Database = {
         Row: {
           auto_phase_enabled: boolean
           bot_ratio_phase: number
+          daily_growth_max: number
+          daily_growth_min: number
           dau_threshold_high: number
           dau_threshold_low: number
           enabled: boolean
@@ -746,12 +748,15 @@ export type Database = {
           online_base: number
           online_jitter: number
           strength_pct: number
+          target_total_users: number
           updated_at: string
           updated_by: string | null
         }
         Insert: {
           auto_phase_enabled?: boolean
           bot_ratio_phase?: number
+          daily_growth_max?: number
+          daily_growth_min?: number
           dau_threshold_high?: number
           dau_threshold_low?: number
           enabled?: boolean
@@ -759,12 +764,15 @@ export type Database = {
           online_base?: number
           online_jitter?: number
           strength_pct?: number
+          target_total_users?: number
           updated_at?: string
           updated_by?: string | null
         }
         Update: {
           auto_phase_enabled?: boolean
           bot_ratio_phase?: number
+          daily_growth_max?: number
+          daily_growth_min?: number
           dau_threshold_high?: number
           dau_threshold_low?: number
           enabled?: boolean
@@ -772,6 +780,7 @@ export type Database = {
           online_base?: number
           online_jitter?: number
           strength_pct?: number
+          target_total_users?: number
           updated_at?: string
           updated_by?: string | null
         }
@@ -5965,6 +5974,8 @@ export type Database = {
         Returns: {
           auto_phase_enabled: boolean
           bot_ratio_phase: number
+          daily_growth_max: number
+          daily_growth_min: number
           dau_threshold_high: number
           dau_threshold_low: number
           enabled: boolean
@@ -5972,6 +5983,7 @@ export type Database = {
           online_base: number
           online_jitter: number
           strength_pct: number
+          target_total_users: number
           updated_at: string
           updated_by: string | null
         }
@@ -6311,8 +6323,18 @@ export type Database = {
           reward_amount: number
         }[]
       }
+      get_bot_live_ranking: {
+        Args: { _limit?: number }
+        Returns: {
+          amount: number
+          nickname: string
+          rank: number
+          tier: string
+        }[]
+      }
       get_bot_mix_metrics: { Args: never; Returns: Json }
       get_bot_online_count: { Args: never; Returns: number }
+      get_bot_total_users: { Args: never; Returns: number }
       get_cockpit_snapshot: { Args: never; Returns: Json }
       get_crown_war_snapshot: { Args: never; Returns: Json }
       get_empire_seats_remaining: { Args: never; Returns: number }
