@@ -71,6 +71,7 @@ import { LegalConsentGate } from "./components/legal/LegalConsentGate";
 import { PracticeModeBanner } from "./components/practice/PracticeModeBanner";
 import { PracticeModeGate } from "./components/practice/PracticeModeGate";
 import SimGlobalBadge from "./components/SimGlobalBadge";
+const EmpireMomentToast = lazy(() => import("./components/empire/EmpireMomentToast"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
