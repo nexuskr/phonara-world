@@ -51,6 +51,14 @@ interface Props {
 
 export default function FirstEmperorBurst({ onCta }: Props) {
   const { open, payload, close } = useFirstEmperorBurst();
+  const { nextThreshold } = useMyPower();
+
+  // 다음 티어까지 진행률 — gold(50 USDT 누적), diamond(100 USDT 누적) 임계값 가정
+  const nextLevel = nextThreshold?.next_level ?? null;
+  const usdtNeeded = Math.max(0, Number(nextThreshold?.usdt_needed ?? 0));
+  const tierTotal = nextLevel === "gold" ? 50 : nextLevel === "diamond" ? 100 : 0;
+  const progressed = tierTotal > 0 ? Math.max(0, tierTotal - usdtNeeded) : 0;
+  const progressPct = tierTotal > 0 ? Math.min(100, Math.round((progressed / tierTotal) * 100)) : 0;
 
   // ESC to close
   useEffect(() => {
