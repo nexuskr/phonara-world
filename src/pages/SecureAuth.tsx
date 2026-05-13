@@ -245,7 +245,7 @@ export default function SecureAuth() {
         <LanguageSwitcher variant="auth" />
       </div>
 
-      <main className="relative z-10 flex flex-col items-center px-4 pt-16 pb-10 max-w-xl mx-auto">
+      <main className="relative z-10 flex flex-col items-center px-3 sm:px-4 pt-12 sm:pt-16 pb-10 max-w-xl mx-auto">
         {/* === Static gold wordmark seal — framed double hairline === */}
         <div className="mt-2 flex flex-col items-center select-none">
           <div className="h-px w-56 bg-gradient-to-r from-transparent via-gold/55 to-transparent" />
