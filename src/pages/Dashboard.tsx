@@ -71,11 +71,78 @@ export default function Dashboard() {
       </Suspense>
       <div className="relative animate-liquid-in">
         <div className="absolute inset-0 bg-grid opacity-20 pointer-events-none" />
+
+        {/* === Imperial overlay (static, no motion): grids + grain + 3-layer vignette + corner glows === */}
+        <div aria-hidden className="absolute inset-0 pointer-events-none">
+          <div
+            className="absolute inset-0 opacity-[0.065]"
+            style={{
+              backgroundImage:
+                "linear-gradient(hsl(var(--gold)/0.7) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--gold)/0.7) 1px, transparent 1px)",
+              backgroundSize: "112px 112px",
+            }}
+          />
+          <div
+            className="absolute inset-0 opacity-[0.034]"
+            style={{
+              backgroundImage:
+                "linear-gradient(hsl(var(--gold)/0.6) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--gold)/0.6) 1px, transparent 1px)",
+              backgroundSize: "28px 28px",
+            }}
+          />
+          <div
+            className="absolute inset-0 opacity-[0.05] mix-blend-overlay"
+            style={{
+              backgroundImage:
+                "radial-gradient(hsl(var(--gold)/0.55) 0.5px, transparent 0.5px), radial-gradient(hsl(var(--gold)/0.35) 0.5px, transparent 0.5px)",
+              backgroundSize: "3px 3px, 7px 7px",
+              backgroundPosition: "0 0, 1px 2px",
+            }}
+          />
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "radial-gradient(70% 55% at 50% 18%, transparent 0%, hsl(var(--background)/0.5) 70%, hsl(var(--background)/0.82) 100%)",
+            }}
+          />
+          <div
+            className="absolute inset-0"
+            style={{
+              background: "radial-gradient(45% 30% at 50% 35%, transparent 0%, hsl(var(--background)/0.65) 100%)",
+              mixBlendMode: "multiply",
+            }}
+          />
+          <div className="absolute -top-32 -left-32 w-[420px] h-[420px] rounded-full bg-gold/15 blur-3xl" />
+          <div className="absolute -bottom-32 -right-32 w-[420px] h-[420px] rounded-full bg-gold/10 blur-3xl" />
+        </div>
+
         <Particles density={particleDensity} />
 
         <HubTabs hub="command" />
 
         <div className="container relative pt-2 pb-10">
+          {/* === PHONARA · EST. 2026 seal + Crown 키커 === */}
+          <div className="flex flex-col items-center select-none mt-1 mb-3">
+            <div className="h-px w-44 bg-gradient-to-r from-transparent via-gold/55 to-transparent" />
+            <div
+              className="mt-1.5 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-gold/55 bg-background/70"
+              style={{
+                boxShadow:
+                  "0 0 28px -6px hsl(var(--gold)/0.55), inset 0 1px 0 hsl(var(--gold)/0.45), inset 0 -1px 0 hsl(var(--gold)/0.18)",
+              }}
+            >
+              <Crown className="w-4 h-4 text-gold drop-shadow-[0_0_7px_hsl(var(--gold)/0.7)]" />
+              <span
+                className="text-[10px] tracking-[0.42em] text-gold font-black"
+                style={{ textShadow: "0 0 10px hsl(var(--gold)/0.45)" }}
+              >
+                PHONARA · EST. 2026
+              </span>
+            </div>
+            <div className="mt-1.5 h-px w-44 bg-gradient-to-r from-transparent via-gold/55 to-transparent" />
+          </div>
+
           {/* P5 — Recovery FOMO cascade */}
           <FomoNotificationStrip />
           <div className="mb-3"><CrownWarHUD /></div>
