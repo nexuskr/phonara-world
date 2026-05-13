@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import Layout from "@/components/Layout";
@@ -10,18 +10,20 @@ import PinPad from "@/components/PinPad";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { refreshWallet } from "@/lib/missions-rpc";
-import ServerTxList from "@/components/wallet/ServerTxList";
-import WithdrawalHistoryList from "@/components/wallet/WithdrawalHistoryList";
-import DepositHistoryList from "@/components/wallet/DepositHistoryList";
+import LazyMount from "@/components/util/LazyMount";
+// Heavy / below-the-fold panels — lazy-loaded so first paint of /wallet is light.
+const ServerTxList = lazy(() => import("@/components/wallet/ServerTxList"));
+const WithdrawalHistoryList = lazy(() => import("@/components/wallet/WithdrawalHistoryList"));
+const DepositHistoryList = lazy(() => import("@/components/wallet/DepositHistoryList"));
+const NotificationPreferencesPanel = lazy(() => import("@/components/wallet/NotificationPreferencesPanel"));
+const RiskLimitsPanel = lazy(() => import("@/components/wallet/RiskLimitsPanel"));
+const InsuranceFundDashboard = lazy(() => import("@/components/InsuranceFundDashboard"));
 import WithdrawIntentInterceptor from "@/components/conversion/WithdrawIntentInterceptor";
 import AMLGate from "@/components/wallet/AMLGate";
 import WithdrawQueueStatus from "@/components/wallet/WithdrawQueueStatus";
 import WithdrawReceiptUpload from "@/components/wallet/WithdrawReceiptUpload";
 import DepositReceiptUpload from "@/components/wallet/DepositReceiptUpload";
 import WithdrawETABadge from "@/components/wallet/WithdrawETABadge";
-import NotificationPreferencesPanel from "@/components/wallet/NotificationPreferencesPanel";
-import RiskLimitsPanel from "@/components/wallet/RiskLimitsPanel";
-import InsuranceFundDashboard from "@/components/InsuranceFundDashboard";
 import { z } from "zod";
 import Disclaimer from "@/components/Disclaimer";
 import StepUpGate from "@/components/security/StepUpGate";
@@ -658,18 +660,24 @@ export default function Wallet() {
           <div className="space-y-5">
             <div>
               <div className="text-[10px] tracking-[0.25em] text-primary font-black mb-3 uppercase">출금 이력</div>
-              <WithdrawalHistoryList />
+              <Suspense fallback={null}><WithdrawalHistoryList /></Suspense>
             </div>
             <div>
               <div className="text-[10px] tracking-[0.25em] text-primary font-black mb-3 uppercase">충전 이력</div>
-              <DepositHistoryList />
+              <Suspense fallback={null}><DepositHistoryList /></Suspense>
             </div>
-            <NotificationPreferencesPanel userId={u.id} />
-            <RiskLimitsPanel />
-            <InsuranceFundDashboard variant="user" />
+            <LazyMount minHeight={120} rootMargin="300px 0px">
+              <Suspense fallback={null}><NotificationPreferencesPanel userId={u.id} /></Suspense>
+            </LazyMount>
+            <LazyMount minHeight={120} rootMargin="300px 0px">
+              <Suspense fallback={null}><RiskLimitsPanel /></Suspense>
+            </LazyMount>
+            <LazyMount minHeight={200} rootMargin="300px 0px">
+              <Suspense fallback={null}><InsuranceFundDashboard variant="user" /></Suspense>
+            </LazyMount>
             <div>
               <div className="text-[10px] tracking-[0.25em] text-primary font-black mb-3 uppercase">{t("historyTitle")}</div>
-              <ServerTxList />
+              <Suspense fallback={null}><ServerTxList /></Suspense>
             </div>
           </div>
         )}
