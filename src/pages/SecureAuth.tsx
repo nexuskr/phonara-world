@@ -355,10 +355,10 @@ export default function SecureAuth() {
 
         {/* === Main CTA card — luxury watch frame === */}
         <div
-          className="relative w-full mt-3 rounded-3xl p-5 sm:p-6 border-2 border-gold/50 bg-background/85 outline outline-1 outline-offset-[3px] outline-gold/20 overflow-hidden"
+          className="relative w-full mt-3 rounded-3xl p-4 sm:p-6 border-2 border-gold/55 bg-background/85 outline outline-1 outline-offset-[3px] outline-gold/22 overflow-hidden"
           style={{
             boxShadow:
-              "0 0 40px hsl(var(--gold)/0.25), 0 0 80px hsl(var(--gold)/0.12), inset 0 1px 0 hsl(var(--gold)/0.25), inset 0 -1px 0 hsl(var(--gold)/0.12)",
+              "0 0 44px hsl(var(--gold)/0.28), 0 0 84px hsl(var(--gold)/0.14), inset 0 1px 0 hsl(var(--gold)/0.28), inset 0 -1px 0 hsl(var(--gold)/0.14)",
           }}
         >
           {/* inner top hairline */}
