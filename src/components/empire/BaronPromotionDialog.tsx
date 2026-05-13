@@ -105,7 +105,7 @@ export default function BaronPromotionDialog() {
   // 1s tick for live countdown
   useEffect(() => {
     if (!row) return;
-    const t = setInterval(() => setNow(Date.now()), 1000);
+    const t = setInterval(() => setNow(Date.now()), 2000);
     return () => clearInterval(t);
   }, [row]);
 

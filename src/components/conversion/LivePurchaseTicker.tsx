@@ -97,7 +97,7 @@ export default function LivePurchaseTicker() {
 
   useEffect(() => {
     if (merged.length === 0) return;
-    const t = setInterval(() => setIdx((v) => (v + 1) % merged.length), 5000);
+    const t = setInterval(() => setIdx((v) => (v + 1) % merged.length), 8000);
     return () => clearInterval(t);
   }, [merged.length]);
 

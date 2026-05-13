@@ -1,39 +1,42 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import Particles from "@/components/Particles";
-import LiveRanking from "@/components/LiveRanking";
-import JackpotBanner from "@/components/JackpotBanner";
-import AttendanceCard from "@/components/AttendanceCard";
-import { ActiveBotsMini } from "@/components/AIBotCards";
+import LazyMount from "@/components/util/LazyMount";
 import BoostHeroCard from "@/components/BoostHeroCard";
-import SevenDayChallengeCard from "@/components/SevenDayChallengeCard";
-import EmpireDayCountdown from "@/components/EmpireDayCountdown";
-import MachineFomoTicker from "@/components/MachineFomoTicker";
 import { useOnline, useTodayPayout } from "@/components/LiveStats";
 import { useDB, DEFAULT_MISSIONS, formatKRW } from "@/lib/store";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { refreshWallet } from "@/lib/missions-rpc";
 import { Flame, Zap, Trophy, ChevronRight, TrendingUp, Sparkles, Crown, Wallet, Users, Activity } from "lucide-react";
-import OnboardingV2 from "@/components/onboarding/OnboardingV2";
-import FirstMissionCard from "@/components/FirstMissionCard";
 import CommandHero from "@/components/CommandHero";
-import EmpireP2EDashboard from "@/components/empire/EmpireP2EDashboard";
 import { FomoNotificationStrip } from "@/components/empire/FomoNotificationStrip";
 import WhaleStrikeRail from "@/components/empire/WhaleStrikeRail";
 import CrownWarHUD from "@/components/empire/CrownWarHUD";
-import SixtySecondFlow from "@/components/onboarding/SixtySecondFlow";
-import EarnedToast from "@/components/onboarding/EarnedToast";
-import FirstDepositTopBanner from "@/components/onboarding/FirstDepositTopBanner";
 import EmpireSignature from "@/components/status/EmpireSignature";
-import LivePurchaseTicker from "@/components/conversion/LivePurchaseTicker";
-import TierComparisonCard from "@/components/status/TierComparisonCard";
 import { useWinback } from "@/hooks/use-winback";
 import { useTranslation } from "react-i18next";
 import HubTabs from "@/components/HubTabs";
 import Disclaimer from "@/components/Disclaimer";
-import PersonalizedFeedRail from "@/components/feed/PersonalizedFeedRail";
-import RevenueWidget from "@/components/feed/RevenueWidget";
+
+// Below-the-fold + overlay components — code-split so first paint is fast.
+const LiveRanking = lazy(() => import("@/components/LiveRanking"));
+const JackpotBanner = lazy(() => import("@/components/JackpotBanner"));
+const AttendanceCard = lazy(() => import("@/components/AttendanceCard"));
+const ActiveBotsMini = lazy(() => import("@/components/AIBotCards").then(m => ({ default: m.ActiveBotsMini })));
+const SevenDayChallengeCard = lazy(() => import("@/components/SevenDayChallengeCard"));
+const EmpireDayCountdown = lazy(() => import("@/components/EmpireDayCountdown"));
+const MachineFomoTicker = lazy(() => import("@/components/MachineFomoTicker"));
+const OnboardingV2 = lazy(() => import("@/components/onboarding/OnboardingV2"));
+const FirstMissionCard = lazy(() => import("@/components/FirstMissionCard"));
+const EmpireP2EDashboard = lazy(() => import("@/components/empire/EmpireP2EDashboard"));
+const SixtySecondFlow = lazy(() => import("@/components/onboarding/SixtySecondFlow"));
+const EarnedToast = lazy(() => import("@/components/onboarding/EarnedToast"));
+const FirstDepositTopBanner = lazy(() => import("@/components/onboarding/FirstDepositTopBanner"));
+const LivePurchaseTicker = lazy(() => import("@/components/conversion/LivePurchaseTicker"));
+const TierComparisonCard = lazy(() => import("@/components/status/TierComparisonCard"));
+const PersonalizedFeedRail = lazy(() => import("@/components/feed/PersonalizedFeedRail"));
+const RevenueWidget = lazy(() => import("@/components/feed/RevenueWidget"));
 
 export default function Dashboard() {
   const [db] = useDB();
@@ -55,13 +58,17 @@ export default function Dashboard() {
 
   return (
     <Layout>
-      <FirstDepositTopBanner />
-      <SixtySecondFlow enabled={!!user} />
-      <EarnedToast />
+      <Suspense fallback={null}>
+        <FirstDepositTopBanner />
+        <SixtySecondFlow enabled={!!user} />
+        <EarnedToast />
+      </Suspense>
       <EmpireSignature />
-      <LivePurchaseTicker />
-      <OnboardingV2 enabled={!!user} />
-      <FirstMissionCard />
+      <Suspense fallback={null}>
+        <LivePurchaseTicker />
+        <OnboardingV2 enabled={!!user} />
+        <FirstMissionCard />
+      </Suspense>
       <div className="relative animate-liquid-in">
         <div className="absolute inset-0 bg-grid opacity-20 pointer-events-none" />
         <Particles density={particleDensity} />
@@ -77,9 +84,11 @@ export default function Dashboard() {
           <CommandHero />
 
           {/* P2 — Empire P2E (Daily Combo + Idle Growth + Tap-to-Reinforce) */}
-          <div className="mt-4">
-            <EmpireP2EDashboard />
-          </div>
+          <LazyMount minHeight={320} rootMargin="400px 0px">
+            <div className="mt-4">
+              <Suspense fallback={null}><EmpireP2EDashboard /></Suspense>
+            </div>
+          </LazyMount>
 
           {/* Live ticker (compact, beneath hero) */}
           <div className="grid grid-cols-2 gap-2 mt-4 mb-4">
@@ -105,10 +114,12 @@ export default function Dashboard() {
           </div>
 
           {/* V17 — 개인화 추천 피드 + 24h 매출 위젯 */}
-          <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_280px] items-start">
-            <PersonalizedFeedRail />
-            <RevenueWidget />
-          </div>
+          <LazyMount minHeight={280} rootMargin="400px 0px">
+            <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_280px] items-start">
+              <Suspense fallback={null}><PersonalizedFeedRail /></Suspense>
+              <Suspense fallback={null}><RevenueWidget /></Suspense>
+            </div>
+          </LazyMount>
 
           {/* Balance hero */}
           <div className="relative animate-fade-up mt-4">
@@ -180,21 +191,27 @@ export default function Dashboard() {
           </div>
 
           {/* 보조 훅 */}
-          <div className="mt-4 space-y-3">
-            <SevenDayChallengeCard />
-            <div className="flex justify-center"><EmpireDayCountdown /></div>
-            <MachineFomoTicker />
-          </div>
+          <LazyMount minHeight={240} rootMargin="500px 0px">
+            <div className="mt-4 space-y-3">
+              <Suspense fallback={null}><SevenDayChallengeCard /></Suspense>
+              <div className="flex justify-center"><Suspense fallback={null}><EmpireDayCountdown /></Suspense></div>
+              <Suspense fallback={null}><MachineFomoTicker /></Suspense>
+            </div>
+          </LazyMount>
 
           {/* DAILY ATTENDANCE — habit/streak driver */}
-          <div className="mt-4">
-            <AttendanceCard />
-          </div>
+          <LazyMount minHeight={120} rootMargin="500px 0px">
+            <div className="mt-4">
+              <Suspense fallback={null}><AttendanceCard /></Suspense>
+            </div>
+          </LazyMount>
 
           {/* TIER COMPARISON — 한국 유저 우월감 엔진 */}
-          <div className="mt-4">
-            <TierComparisonCard />
-          </div>
+          <LazyMount minHeight={140} rootMargin="500px 0px">
+            <div className="mt-4">
+              <Suspense fallback={null}><TierComparisonCard /></Suspense>
+            </div>
+          </LazyMount>
 
           {/* LUCKY ROULETTE entry */}
           <Link to="/roulette" className="mt-4 block press">
@@ -230,14 +247,18 @@ export default function Dashboard() {
           </div>
 
           {/* MEGA JACKPOT — primary dopamine driver */}
-          <div className="mt-5">
-            <JackpotBanner />
-          </div>
+          <LazyMount minHeight={180} rootMargin="500px 0px">
+            <div className="mt-5">
+              <Suspense fallback={null}><JackpotBanner /></Suspense>
+            </div>
+          </LazyMount>
 
           {/* AI Auto Bots summary */}
-          <div className="mt-5">
-            <ActiveBotsMini />
-          </div>
+          <LazyMount minHeight={180} rootMargin="500px 0px">
+            <div className="mt-5">
+              <Suspense fallback={null}><ActiveBotsMini /></Suspense>
+            </div>
+          </LazyMount>
 
           {/* Quick actions */}
           <div className="grid grid-cols-4 gap-2 mt-5">
@@ -282,9 +303,11 @@ export default function Dashboard() {
           </div>
 
           {/* Live ranking */}
-          <div className="mt-8">
-            <LiveRanking />
-          </div>
+          <LazyMount minHeight={320} rootMargin="600px 0px">
+            <div className="mt-8">
+              <Suspense fallback={null}><LiveRanking /></Suspense>
+            </div>
+          </LazyMount>
 
           <Disclaimer className="mt-6" />
         </div>

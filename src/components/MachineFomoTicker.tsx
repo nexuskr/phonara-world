@@ -19,7 +19,7 @@ function makeFeed() {
 export default function MachineFomoTicker() {
   const [item, setItem] = useState(makeFeed());
   useEffect(() => {
-    const i = setInterval(() => setItem(makeFeed()), 3200);
+    const i = setInterval(() => setItem(makeFeed()), 6500);
     return () => clearInterval(i);
   }, []);
   return (

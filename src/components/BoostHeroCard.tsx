@@ -73,7 +73,7 @@ export default function BoostHeroCard() {
 
   useEffect(() => { void load(); }, []);
   useEffect(() => {
-    const i = setInterval(() => setTick((t) => t + 1), 1000);
+    const i = setInterval(() => setTick((t) => t + 1), 2000);
     return () => clearInterval(i);
   }, []);
 

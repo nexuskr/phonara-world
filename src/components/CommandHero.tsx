@@ -56,8 +56,9 @@ export default function CommandHero() {
           aria-hidden
           width={1920}
           height={1080}
-          loading="eager"
+          loading="lazy"
           decoding="async"
+          fetchPriority="low"
           className="w-full h-full object-cover opacity-40 blur-[2px] scale-105"
         />
         <div className="absolute inset-0 bg-gradient-to-br from-background/80 via-background/60 to-background/90" />

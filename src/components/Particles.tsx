@@ -15,7 +15,7 @@ export default function Particles({ density = 60, className = "" }: { density?: 
     const FRAME_MS = 1000 / 30; // 30fps target
     const isMobile = window.matchMedia("(max-width: 768px)").matches;
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const effective = reduce ? Math.min(12, density) : isMobile ? Math.min(24, density) : density;
+    const effective = reduce ? 0 : isMobile ? Math.min(14, density) : Math.min(40, density);
     const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
 
     type P = { x: number; y: number; r: number; vx: number; vy: number; c: string; a: number };

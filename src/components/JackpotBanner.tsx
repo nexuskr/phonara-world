@@ -59,7 +59,7 @@ function useJackpotState() {
         setDb(d => ({ ...d, jackpot: cur }));
       }
     };
-    const i = setInterval(tick, 5000);
+    const i = setInterval(tick, 10000);
     return () => clearInterval(i);
   }, [setDb]);
 

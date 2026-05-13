@@ -41,7 +41,7 @@ export function useCrownWar(pollMs = 15000) {
 
   // 1s tick for countdown
   useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 1000);
+    const t = setInterval(() => setNow(Date.now()), 2000);
     return () => clearInterval(t);
   }, []);
 
