@@ -5,11 +5,24 @@ const corsHeaders = {
 };
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let m = 0;
+  for (let i = 0; i < a.length; i++) m |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return m === 0;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "").trim();
+  if (!token || !serviceKey || !timingSafeEqual(token, serviceKey)) {
+    return new Response(JSON.stringify({ error: "Forbidden" }), {
+      status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
   const admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
 
   const since = new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(); // last 6h
