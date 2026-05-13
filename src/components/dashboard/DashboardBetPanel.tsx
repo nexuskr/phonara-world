@@ -12,6 +12,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useAutoBet } from "@/hooks/use-auto-bet";
 import { notify } from "@/lib/notify";
 import { track } from "@/lib/telemetry";
+import { useMyPower } from "@/hooks/use-my-power";
 
 type Side = "long" | "short";
 
