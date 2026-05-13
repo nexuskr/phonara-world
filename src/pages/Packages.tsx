@@ -80,9 +80,9 @@ export default function Packages() {
             const isEmpire = p.tier === "EMPIRE" || p.tier === "PHANTOM";
             return (
               <div key={p.id} className="relative lift group">
-                <div className={`absolute -inset-0.5 rounded-3xl bg-gradient-to-br ${ts.ring} opacity-60 blur-md group-hover:opacity-100 transition duration-700`} />
+                <div aria-hidden className={`pointer-events-none absolute -inset-0.5 rounded-3xl bg-gradient-to-br ${ts.ring} opacity-60 blur-md group-hover:opacity-100 transition duration-700`} />
                 <div className="relative glass-strong rounded-3xl p-5 sm:p-6 overflow-hidden sheen">
-                  <div className={`absolute -top-20 -right-20 w-44 h-44 rounded-full bg-gradient-to-br ${ts.bg} to-transparent blur-3xl opacity-70`} />
+                  <div aria-hidden className={`pointer-events-none absolute -top-20 -right-20 w-44 h-44 rounded-full bg-gradient-to-br ${ts.bg} to-transparent blur-3xl opacity-70`} />
                   {isEmpire && (
                     <div className="absolute inset-0 pointer-events-none overflow-hidden">
                       {Array.from({ length: 6 }).map((_, i) => (
