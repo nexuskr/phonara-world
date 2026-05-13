@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useRequireAuth } from "@/hooks/use-require-auth";
+import { subscribePostgres } from "@/lib/realtime-bus";
 
 export type FomoNotification = {
   id: string;
@@ -33,17 +34,15 @@ export function useFomoNotifications() {
 
   useEffect(() => {
     if (!user) return;
-    const ch = supabase
-      .channel("fomo-notifs")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "fomo_notifications", filter: `user_id=eq.${user.id}` },
-        () => void load(),
-      )
-      .subscribe();
-    return () => {
-      supabase.removeChannel(ch);
-    };
+    return subscribePostgres(
+      {
+        key: `fomo:user:${user.id}`,
+        table: "fomo_notifications",
+        event: "INSERT",
+        filter: `user_id=eq.${user.id}`,
+      },
+      () => void load(),
+    );
   }, [user, load]);
 
   const markRead = useCallback(async (id: string) => {

@@ -29,14 +29,34 @@ const REGISTRY: Record<string, Loader> = {
 };
 
 const fetched = new Set<string>();
+const timings = new Map<string, { startedAt: number; loadedAt?: number; navAt?: number; deltaMs?: number }>();
+
+const isDev = typeof import.meta !== "undefined" && (import.meta as any).env?.DEV;
+
+function log(label: string, payload: Record<string, unknown>) {
+  if (!isDev) return;
+  // eslint-disable-next-line no-console
+  console.info(`%c[prefetch] ${label}`, "color:#a78bfa", payload);
+}
 
 export function prefetchRoute(path: string): void {
   if (fetched.has(path)) return;
   const loader = REGISTRY[path];
   if (!loader) return;
   fetched.add(path);
-  // Fire and forget — errors will be retried on real navigation.
-  loader().catch(() => fetched.delete(path));
+  const startedAt = performance.now();
+  timings.set(path, { startedAt });
+  loader()
+    .then(() => {
+      const t = timings.get(path);
+      if (!t) return;
+      t.loadedAt = performance.now();
+      log("chunk-loaded", { path, ms: +(t.loadedAt - t.startedAt).toFixed(1) });
+    })
+    .catch(() => {
+      fetched.delete(path);
+      timings.delete(path);
+    });
 }
 
 /**
@@ -64,4 +84,33 @@ export function prefetchHandlers(path: string) {
     onFocus: () => prefetchRoute(path),
     onTouchStart: () => prefetchRoute(path),
   };
+}
+
+/**
+ * Record an actual navigation to `path` and report perceived transition latency.
+ * Called from a global useEffect in App on every route change.
+ */
+export function recordNavigation(path: string): void {
+  const t = timings.get(path);
+  const navAt = performance.now();
+  if (!t) {
+    log("nav-cold", { path, prefetched: false });
+    return;
+  }
+  t.navAt = navAt;
+  // If chunk already loaded by hover/idle, perceived JS-ready delta is 0.
+  // Otherwise it's the gap until the chunk finished.
+  const ready = t.loadedAt ?? navAt;
+  t.deltaMs = +(Math.max(0, ready - navAt)).toFixed(1);
+  log("nav-hit", {
+    path,
+    prefetchedMs: t.loadedAt ? +(t.loadedAt - t.startedAt).toFixed(1) : null,
+    waitedForChunkMs: t.deltaMs,
+    saved: t.loadedAt && t.loadedAt < navAt,
+  });
+}
+
+/** Read the latest navigation metric for an external panel. */
+export function getPrefetchTimings() {
+  return Array.from(timings.entries()).map(([path, t]) => ({ path, ...t }));
 }
