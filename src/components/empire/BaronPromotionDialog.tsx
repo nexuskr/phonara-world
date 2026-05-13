@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { useNowTick } from "@/hooks/use-now-tick";
 import { supabase } from "@/integrations/supabase/client";
+import { subscribePostgres } from "@/lib/realtime-bus";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Crown, Zap, Percent, Users, Bot, Timer, Flame } from "lucide-react";
@@ -96,11 +97,10 @@ export default function BaronPromotionDialog() {
 
   useEffect(() => {
     void loadLatest();
-    const ch = supabase
-      .channel("fomo-baron")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "fomo_notifications" }, () => void loadLatest())
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    return subscribePostgres(
+      { key: "fomo:baron:any", table: "fomo_notifications", event: "INSERT" },
+      () => void loadLatest(),
+    );
   }, []);
 
   async function dismiss() {
