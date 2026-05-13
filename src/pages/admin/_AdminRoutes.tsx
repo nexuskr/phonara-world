@@ -34,6 +34,7 @@ const PermissionsAudit       = lazy(() => import("@/components/admin/Permissions
 // Operations
 const ObservabilityCockpit = lazy(() => import("@/components/admin/ObservabilityCockpit"));
 const ErrorMonitorAdmin    = lazy(() => import("@/components/admin/ErrorMonitorAdmin"));
+const AnomalyAckQueue      = lazy(() => import("@/components/admin/AnomalyAckQueue"));
 const SecurityAuditAdmin   = lazy(() => import("@/components/admin/SecurityAuditAdmin"));
 const CronJobsCard         = lazy(() => import("@/components/admin/CronJobsCard"));
 const OpsReport            = lazy(() => import("./OpsReport"));
