@@ -40,6 +40,7 @@ const LivePurchaseTicker = lazy(() => import("@/components/conversion/LivePurcha
 const TierComparisonCard = lazy(() => import("@/components/status/TierComparisonCard"));
 const PersonalizedFeedRail = lazy(() => import("@/components/feed/PersonalizedFeedRail"));
 const RevenueWidget = lazy(() => import("@/components/feed/RevenueWidget"));
+const CosmicSection = lazy(() => import("@/components/cosmic/CosmicSection"));
 
 export default function Dashboard() {
   const [db] = useDB();
@@ -84,6 +85,11 @@ export default function Dashboard() {
         <LivePurchaseTicker />
         <OnboardingV2 enabled={!!user && allowOnboardingV2} />
         <FirstMissionCard />
+      </Suspense>
+
+      {/* 🌌 우주 끝판왕 — Above-the-fold Cosmic Layer */}
+      <Suspense fallback={<div className="h-[70vh]" />}>
+        <CosmicSection />
       </Suspense>
       <div className="relative animate-liquid-in">
         <div className="absolute inset-0 bg-grid opacity-20 pointer-events-none" />

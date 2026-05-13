@@ -68,16 +68,18 @@ type NavItem = {
   to: string;
   matches: string[];
   icon: typeof LayoutDashboard;
-  labelKey: "command" | "earn" | "empire" | "treasury" | "legacy";
+  label: string;
   fab?: boolean;
+  desktopOnly?: boolean;
 };
 
 const NAV: NavItem[] = [
-  { to: "/command",  matches: ["/command", "/dashboard"],                                                    icon: LayoutDashboard, labelKey: "command" },
-  { to: "/empire",   matches: ["/empire", "/packages"],                                                       icon: Crown,           labelKey: "empire" },
-  { to: "/earn",     matches: ["/earn", "/missions", "/quests", "/roulette", "/season-pass"],                 icon: Zap,             labelKey: "earn", fab: true },
-  { to: "/treasury", matches: ["/treasury", "/wallet", "/secure-wallet"],                                     icon: Wallet,          labelKey: "treasury" },
-  { to: "/legacy",   matches: ["/legacy", "/achievements"],                                                   icon: Trophy,          labelKey: "legacy" },
+  { to: "/command",  matches: ["/command", "/dashboard"],                                icon: LayoutDashboard, label: "제국 대시보드" },
+  { to: "/arena",    matches: ["/arena", "/trading-arena"],                              icon: TrendingUp,      label: "Long/Short 트레이딩" },
+  { to: "/roulette", matches: ["/roulette"],                                             icon: Zap,             label: "Imperial Zeus 슬롯", fab: true },
+  { to: "/empire",   matches: ["/empire", "/packages"],                                  icon: Crown,           label: "제국 광장" },
+  { to: "/missions", matches: ["/missions", "/quests", "/season-pass"],                  icon: Trophy,          label: "황제 미션", desktopOnly: true },
+  { to: "/profile",  matches: ["/profile", "/treasury", "/wallet", "/secure-wallet"],    icon: UserIcon,        label: "내 제국" },
 ];
 
 const SIDE_EXTRA: Array<{ to: string; icon: typeof MessageSquare; labelKey: any; gold?: boolean }> = [
@@ -133,7 +135,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   }`}
                 >
                   <Icon className="w-4 h-4" />
-                  <span>{t(item.labelKey)}</span>
+                  <span>{item.label}</span>
                   {active && <ChevronRight className="w-3 h-3 ml-auto" />}
                 </NavLink>
               );
@@ -299,7 +301,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           style={{ bottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
         >
           <div className="glass-strong rounded-2xl px-2 py-2 flex items-end justify-between shadow-2xl neon-border relative overflow-visible">
-            {NAV.map((item) => {
+            {NAV.filter((n) => !n.desktopOnly).map((item) => {
               const Icon = item.icon;
               const active = isActive(item, loc.pathname);
 
@@ -314,7 +316,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       <div className="absolute inset-0 rounded-full bg-primary/30 blur-xl animate-ring-pulse -z-10" />
                       <Icon className="w-7 h-7 text-primary-foreground" />
                       <span className="absolute -bottom-5 text-[10px] font-imperial tracking-[0.2em] text-primary">
-                        {t(item.labelKey).toUpperCase()}
+                        {item.label.toUpperCase()}
                       </span>
                     </div>
                   </NavLink>
@@ -335,7 +337,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     <span
                       className={`text-[10px] font-semibold ${active ? "text-foreground" : "text-muted-foreground"}`}
                     >
-                      {t(item.labelKey)}
+                      {item.label}
                     </span>
                   </div>
                 </NavLink>
