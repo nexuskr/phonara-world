@@ -77,7 +77,7 @@ export function useBoosterCountdown(expiresAt: string | null) {
       setText(`${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(sec).padStart(2,"0")}`);
     }
     tick();
-    const id = window.setInterval(tick, 1000);
+    const id = window.setInterval(tick, 2000);
     return () => window.clearInterval(id);
   }, [expiresAt]);
   return text;
