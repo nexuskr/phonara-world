@@ -214,11 +214,11 @@ function HookScene({ onNext }: { onNext: () => void }) {
 function SimplifyScene({ onNext }: { onNext: () => void }) {
   return (
     <motion.section
-      className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center"
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -30 }}
-      transition={{ duration: 0.5 }}
+      className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center overflow-hidden"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.4 }}
     >
       <div className="space-y-4 max-w-md w-full">
         <motion.div
