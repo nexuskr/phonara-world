@@ -34,7 +34,7 @@ export default function FoundingSeasonsAdmin() {
     if (!confirm(`"${s.title}" 시즌을 종료하고 자동 정산할까요?`)) return;
     try {
       const r: any = await adminEndFoundingSeason(s.id);
-      notify.success("시즌 종료 + 정산 완료", `${r?.settled_users ?? 0}명에게 퍼크 지급`);
+      notify.success("시즌 종료 + 정산 완료", { description: `${r?.settled_users ?? 0}명에게 퍼크 지급` });
       load();
     } catch (e: any) { notify.error("종료 실패", { description: e.message }); }
   }
