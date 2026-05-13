@@ -214,11 +214,11 @@ function HookScene({ onNext }: { onNext: () => void }) {
 function SimplifyScene({ onNext }: { onNext: () => void }) {
   return (
     <motion.section
-      className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center"
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -30 }}
-      transition={{ duration: 0.5 }}
+      className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center overflow-hidden"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.4 }}
     >
       <div className="space-y-4 max-w-md w-full">
         <motion.div
@@ -291,8 +291,9 @@ function FomoScene({ onFinish }: { onFinish: (target: string) => void }) {
       transition={{ duration: 0.4 }}
     >
       <motion.div
-        animate={{ scale: [1, 1.04, 1] }}
-        transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
         className="font-imperial font-black text-2xl sm:text-4xl leading-tight break-keep max-w-md"
       >
         지금 시작하지 않으면<br />
