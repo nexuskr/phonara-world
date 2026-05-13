@@ -7,6 +7,7 @@
  */
 import { useEffect, useRef, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { ensureAdminSW, notifyViaSW } from "@/lib/admin-sw";
 
 const MUTE_KEY = "admin_siren_muted_v1";
 const PUSH_KEY = "admin_push_enabled_v1";
