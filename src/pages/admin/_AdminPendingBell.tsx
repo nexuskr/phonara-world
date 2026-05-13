@@ -14,7 +14,7 @@ interface Props {
 function AdminPendingBellBase({ pending }: Props) {
   const total = Object.values(pending).reduce<number>((a, b) => a + (b ?? 0), 0);
   const hot = total >= 5;
-  const { muted, setMuted, lastFiredAt, testBeep } = useAdminSiren(true);
+  const { muted, setMuted, pushEnabled, setPushEnabled, lastFiredAt, testBeep } = useAdminSiren(true);
 
   const items = ADMIN_NAV_FLAT
     .filter((i) => i.badge && (pending[i.badge] ?? 0) > 0)
