@@ -31,6 +31,7 @@ const TradingArenaBybit = lazy(() => import("./pages/TradingArenaBybit.tsx"));
 const WarTradingArena = lazy(() => import("./pages/WarTradingArena.tsx"));
 const Pay = lazy(() => import("./pages/Pay.tsx"));
 const MyFoundingSeat = lazy(() => import("./pages/MyFoundingSeat.tsx"));
+const EmpireCollection = lazy(() => import("./pages/EmpireCollection.tsx"));
 // Lounge/Whales/Roulette — 통합되었으나 직관적인 진입을 위해 직접 라우팅 복원
 const Lounge = lazy(() => import("./pages/Lounge.tsx"));
 const Whales = lazy(() => import("./pages/Whales.tsx"));
