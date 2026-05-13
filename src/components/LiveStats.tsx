@@ -63,3 +63,29 @@ export function useTodayPayout() {
 export function useMembers() {
   return useJitter(284_392, { min: 0, max: 6, every: 6000 });
 }
+
+/**
+ * P1-6 — 누적 가입자 수 (목표 100만 + 결정론적 일일 성장).
+ * 서버 RPC `get_bot_total_users` → 봇 비활성/강도 0이면 0 반환.
+ * Reviewer Mode에서는 0.
+ */
+export function useTotalUsers() {
+  const [base, setBase] = useState<number>(0);
+  useEffect(() => {
+    if (isReviewerMode()) { setBase(0); return; }
+    let cancelled = false;
+    async function tick() {
+      try {
+        const { data } = await supabase.rpc("get_bot_total_users");
+        if (!cancelled) setBase(typeof data === "number" && data > 0 ? data : 1_000_000);
+      } catch {
+        if (!cancelled) setBase(1_000_000);
+      }
+    }
+    void tick();
+    const t = setInterval(tick, 60_000);
+    return () => { cancelled = true; clearInterval(t); };
+  }, []);
+  // 1분 사이엔 작게만 흔들림
+  return useJitter(base, { min: -2, max: 8, every: 5000 });
+}
