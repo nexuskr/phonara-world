@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { subscribePostgres } from "@/lib/realtime-bus";
 
+const FOMO_RPC_DISABLED_KEY = "phonara_disable_fomo_rpc";
+
 export type FomoNotification = {
   id: string;
   kind: string;
@@ -22,9 +24,22 @@ export function useFomoNotifications() {
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
+    if (typeof window !== "undefined" && sessionStorage.getItem(FOMO_RPC_DISABLED_KEY) === "1") {
+      setItems([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
-      const { data } = await supabase.rpc("get_my_fomo_notifications", { _limit: 10 });
+      const { data, error } = await supabase.rpc("get_my_fomo_notifications", { _limit: 10 });
+      if (error) {
+        if ((error as { code?: string }).code === "PGRST301" || /401|400|unauthorized|bad request/i.test(error.message ?? "")) {
+          try { sessionStorage.setItem(FOMO_RPC_DISABLED_KEY, "1"); } catch { /* noop */ }
+        }
+        setItems([]);
+        setLoading(false);
+        return;
+      }
       setItems((data ?? []) as FomoNotification[]);
     } catch {
       setItems([]); // fallback when backend unreachable
@@ -38,6 +53,7 @@ export function useFomoNotifications() {
 
   useEffect(() => {
     if (!user) return;
+    if (typeof window !== "undefined" && sessionStorage.getItem(FOMO_RPC_DISABLED_KEY) === "1") return;
     return subscribePostgres(
       {
         key: `fomo:user:${user.id}`,
