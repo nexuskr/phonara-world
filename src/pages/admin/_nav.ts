@@ -90,6 +90,7 @@ export const ADMIN_NAV: AdminNavSection[] = [
       { id: "security",      name: "Security Audit",to: "/admin/ops/security",      icon: ShieldCheck },
       { id: "cron",          name: "Cron / Webhooks", to: "/admin/ops/cron",        icon: Zap },
       { id: "report",        name: "Daily AI Report", to: "/admin/ops/report",      icon: BarChart3 },
+      { id: "thresholds",    name: "임계값 / SLA",     to: "/admin/ops/thresholds",  icon: Sliders },
     ],
   },
   {
