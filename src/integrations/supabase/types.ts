@@ -539,6 +539,56 @@ export type Database = {
         }
         Relationships: []
       }
+      auto_rule_decisions: {
+        Row: {
+          actual_action: string | null
+          created_at: string
+          deposit_id: string | null
+          id: string
+          matched: boolean | null
+          payload: Json | null
+          resolved_at: string | null
+          rule_id: string | null
+          rule_name: string
+          suggested_action: string
+          user_id: string | null
+        }
+        Insert: {
+          actual_action?: string | null
+          created_at?: string
+          deposit_id?: string | null
+          id?: string
+          matched?: boolean | null
+          payload?: Json | null
+          resolved_at?: string | null
+          rule_id?: string | null
+          rule_name: string
+          suggested_action: string
+          user_id?: string | null
+        }
+        Update: {
+          actual_action?: string | null
+          created_at?: string
+          deposit_id?: string | null
+          id?: string
+          matched?: boolean | null
+          payload?: Json | null
+          resolved_at?: string | null
+          rule_id?: string | null
+          rule_name?: string
+          suggested_action?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auto_rule_decisions_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "deposit_auto_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       badges_catalog: {
         Row: {
           created_at: string
@@ -6566,6 +6616,10 @@ export type Database = {
             }
             Returns: Json
           }
+      admin_freeze_user: {
+        Args: { _hours?: number; _reason?: string; _user_id: string }
+        Returns: string
+      }
       admin_get_ab_stats: {
         Args: { _key: string }
         Returns: {
@@ -6778,6 +6832,7 @@ export type Database = {
         Args: { _key: string; _value: Json }
         Returns: Json
       }
+      admin_unfreeze_user: { Args: { _user_id: string }; Returns: number }
       admin_update_founding_season: {
         Args: {
           _ends_at: string
@@ -7136,6 +7191,10 @@ export type Database = {
         Args: { _badge_key: string; _slot: number }
         Returns: Json
       }
+      evaluate_deposit_rules_shadow: {
+        Args: { _deposit_id: string }
+        Returns: number
+      }
       evolve_empire_unit: { Args: { _unit_id: string }; Returns: Json }
       fill_pending_order: {
         Args: { p_mark_price: number; p_order_id: string }
@@ -7421,6 +7480,7 @@ export type Database = {
       }
       get_phon_balance: { Args: never; Returns: number }
       get_public_crown_replay: { Args: { _token: string }; Returns: Json }
+      get_queue_sla_stats: { Args: never; Returns: Json }
       get_recent_errors: {
         Args: { _limit?: number }
         Returns: {

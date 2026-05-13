@@ -105,21 +105,29 @@ export default function AdminCockpitV2() {
   const [thresholds, setThresholds] = useState<Record<string, number>>({
     deposits_hot: 5, withdrawals_hot: 3, aml_hot: 1, refund_hot: 2, anomaly_hot: 5,
   });
+  const [sla, setSla] = useState<any>(null);
+  const [slaTargets, setSlaTargets] = useState<Record<string, number>>({
+    withdrawal_minutes: 30, deposit_minutes: 15, aml_minutes: 60,
+  });
 
   useEffect(() => {
     if (!user?.isAdmin) return;
     (async () => {
-      const { data } = await (supabase as any).rpc("admin_settings_get", {
-        _key: "cockpit.thresholds",
-      });
-      if (data && typeof data === "object") {
-        setThresholds((prev) => ({ ...prev, ...(data as Record<string, number>) }));
+      const [t, s] = await Promise.all([
+        (supabase as any).rpc("admin_settings_get", { _key: "cockpit.thresholds" }),
+        (supabase as any).rpc("admin_settings_get", { _key: "cockpit.sla" }),
+      ]);
+      if (t.data && typeof t.data === "object") {
+        setThresholds((prev) => ({ ...prev, ...(t.data as Record<string, number>) }));
+      }
+      if (s.data && typeof s.data === "object") {
+        setSlaTargets((prev) => ({ ...prev, ...(s.data as Record<string, number>) }));
       }
     })();
   }, [user?.isAdmin]);
 
   async function load() {
-    const [wd, an, fz] = await Promise.all([
+    const [wd, an, fz, slaRes] = await Promise.all([
       supabase
         .from("withdrawal_requests")
         .select("id, user_id, amount, created_at, status")
@@ -138,10 +146,12 @@ export default function AdminCockpitV2() {
         .select("id", { count: "exact", head: true })
         .is("released_at", null)
         .then((r: any) => r, () => ({ count: 0 })),
+      (supabase as any).rpc("get_queue_sla_stats").then((r: any) => r, () => ({ data: null })),
     ]);
     setRisks((wd.data ?? []) as RiskWd[]);
     setAnoms(((an as any).data ?? []) as Anom[]);
     setFreezes((fz as any).count ?? 0);
+    setSla((slaRes as any).data ?? null);
     setLoading(false);
     setRefreshedAt(new Date());
   }
@@ -169,7 +179,8 @@ export default function AdminCockpitV2() {
   }
 
   return (
-    <div className="space-y-6">
+    <>
+    <div className="space-y-6 pb-20 md:pb-0">
       {/* Header */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
@@ -244,6 +255,53 @@ export default function AdminCockpitV2() {
           />
         </div>
       </section>
+
+      {/* PR-17 SLA Strip */}
+      {sla && (
+        <section className="glass-strong rounded-2xl p-3 border border-border/50">
+          <div className="flex items-center justify-between mb-2 px-1">
+            <h3 className="text-[10px] tracking-[0.3em] font-black text-muted-foreground uppercase">
+              SLA 카운트다운 · 평균 / 최장 대기 (분)
+            </h3>
+            <Link to="/admin/ops/thresholds" className="text-[10px] text-primary font-bold tracking-wider uppercase">
+              임계 설정 →
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            {([
+              ["충전",   "deposits",    slaTargets.deposit_minutes],
+              ["출금",   "withdrawals", slaTargets.withdrawal_minutes],
+              ["AML",    "anomalies",   slaTargets.aml_minutes],
+              ["환불",   "refunds",     60],
+            ] as [string, string, number][]).map(([label, key, target]) => {
+              const s = (sla as any)?.[key] ?? { count: 0, avg_minutes: 0, oldest_minutes: 0 };
+              const oldest = s.oldest_minutes ?? 0;
+              const breach = oldest > target;
+              return (
+                <div
+                  key={key}
+                  className={`rounded-xl border px-3 py-2 ${
+                    breach ? "border-destructive/60 bg-destructive/5" : "border-border/40 bg-card/40"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-black tracking-[0.2em] uppercase text-muted-foreground">{label}</span>
+                    <span className="text-[10px] tabular-nums opacity-60">SLA {target}m</span>
+                  </div>
+                  <div className="flex items-baseline gap-2 mt-1">
+                    <span className={`font-display font-black text-xl tabular-nums ${breach ? "text-destructive" : ""}`}>
+                      {oldest}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground tabular-nums">
+                      / 평균 {s.avg_minutes ?? 0}m · {s.count ?? 0}건
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {/* Today Treasury */}
       <section>
@@ -332,5 +390,33 @@ export default function AdminCockpitV2() {
         </section>
       </div>
     </div>
+
+    {/* PR-20 Mobile bottom action dock */}
+    <div className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-border/60 bg-background/95 backdrop-blur-xl">
+      <div className="grid grid-cols-5 text-[10px] font-black uppercase tracking-wider">
+        {[
+          { to: "/admin", label: "콕핏",  icon: Crown },
+          { to: "/admin/treasury/deposits", label: "충전", icon: ArrowUpFromLine, n: pending.deposits_pending },
+          { to: "/admin/treasury/withdrawals", label: "출금", icon: ArrowDownToLine, n: pending.withdrawals_pending },
+          { to: "/admin/ops/errors", label: "이상", icon: AlertTriangle, n: pending.anomalies_unack },
+          { to: "/admin/compliance/aml", label: "AML", icon: ShieldAlert, n: pending.aml_pending },
+        ].map(({ to, label, icon: I, n }) => (
+          <Link
+            key={to}
+            to={to}
+            className="flex flex-col items-center justify-center py-2 gap-0.5 hover:bg-muted/40 transition relative"
+          >
+            <I className="w-4 h-4" />
+            <span>{label}</span>
+            {n != null && n > 0 && (
+              <span className="absolute top-1 right-1/4 min-w-[14px] h-[14px] px-1 rounded-full bg-destructive text-destructive-foreground text-[8px] grid place-items-center tabular-nums font-black">
+                {n > 99 ? "99+" : n}
+              </span>
+            )}
+          </Link>
+        ))}
+      </div>
+    </div>
+    </>
   );
 }

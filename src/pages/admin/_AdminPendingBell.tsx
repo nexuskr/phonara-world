@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { Bell, BellOff, Volume2 } from "lucide-react";
+import { Bell, BellOff, Volume2, Smartphone } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { NavLink } from "@/components/NavLink";
 import { ADMIN_NAV_FLAT } from "@/pages/admin/_nav";
@@ -14,7 +14,7 @@ interface Props {
 function AdminPendingBellBase({ pending }: Props) {
   const total = Object.values(pending).reduce<number>((a, b) => a + (b ?? 0), 0);
   const hot = total >= 5;
-  const { muted, setMuted, lastFiredAt, testBeep } = useAdminSiren(true);
+  const { muted, setMuted, pushEnabled, setPushEnabled, lastFiredAt, testBeep } = useAdminSiren(true);
 
   const items = ADMIN_NAV_FLAT
     .filter((i) => i.badge && (pending[i.badge] ?? 0) > 0)
@@ -63,6 +63,20 @@ function AdminPendingBellBase({ pending }: Props) {
               title="사이렌 테스트"
             >
               <Volume2 className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => void setPushEnabled(!pushEnabled)}
+              className={cn(
+                "h-6 px-1.5 rounded text-[9px] font-black tracking-[0.15em] uppercase flex items-center gap-1",
+                pushEnabled
+                  ? "bg-primary/15 text-primary"
+                  : "bg-muted/40 text-muted-foreground",
+              )}
+              aria-pressed={pushEnabled}
+              title={pushEnabled ? "브라우저 알림 OFF" : "브라우저 알림 ON (백그라운드)"}
+            >
+              <Smartphone className="w-3 h-3" />
+              {pushEnabled ? "PUSH" : "오프"}
             </button>
             <button
               onClick={() => setMuted(!muted)}

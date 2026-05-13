@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { ActionTable } from "@/components/admin/ActionTable";
+import ShadowDecisionsPanel from "@/components/admin/ShadowDecisionsPanel";
 import { notify } from "@/lib/notify";
 import { ShieldAlert } from "lucide-react";
 
@@ -186,6 +187,7 @@ function AutoRulesAdminBase() {
           },
         ]}
       />
+      <ShadowDecisionsPanel />
     </div>
   );
 }

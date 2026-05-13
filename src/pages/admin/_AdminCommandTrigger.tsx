@@ -6,7 +6,8 @@
  */
 import { useEffect, useState, useMemo, memo, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, User as UserIcon, Loader2 } from "lucide-react";
+import { Search, User as UserIcon, Loader2, Snowflake, Sun } from "lucide-react";
+import { notify } from "@/lib/notify";
 import {
   CommandDialog,
   CommandInput,
@@ -138,9 +139,10 @@ function AdminCommandTriggerBase() {
                     onSelect={() =>
                       go(`/admin/product/users?q=${encodeURIComponent(u.username ?? u.user_id)}`)
                     }
+                    className="group"
                   >
                     <UserIcon className="w-3.5 h-3.5 mr-2 text-muted-foreground" />
-                    <div className="flex flex-col min-w-0">
+                    <div className="flex flex-col min-w-0 flex-1">
                       <span className="truncate font-bold text-xs">
                         {u.username ?? "(no nickname)"}
                       </span>
@@ -148,9 +150,55 @@ function AdminCommandTriggerBase() {
                         {u.email ?? u.user_id.slice(0, 8)}
                       </span>
                     </div>
-                    <CommandShortcut className="text-[9px] tracking-[0.2em] font-black uppercase">
+                    <span className="text-[9px] tracking-[0.2em] font-black uppercase opacity-70 mr-2">
                       {u.tier ?? "free"}
-                    </CommandShortcut>
+                    </span>
+                    {/* PR-18 inline actions */}
+                    <button
+                      type="button"
+                      onPointerDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
+                      onClick={async (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (!confirm(`${u.username ?? u.user_id.slice(0,8)} 24시간 동결?`)) return;
+                        try {
+                          const { error } = await (supabase as any).rpc("admin_freeze_user", {
+                            _user_id: u.user_id, _hours: 24, _reason: "cmdk_inline",
+                          });
+                          if (error) throw error;
+                          notify.success("24시간 동결 처리됨");
+                        } catch (err: any) { notify.fail("동결 실패", err); }
+                      }}
+                      className="h-6 px-1.5 rounded text-[9px] font-black tracking-[0.15em] uppercase flex items-center gap-1 border border-destructive/40 text-destructive hover:bg-destructive/10 mr-1"
+                      title="24h 동결"
+                    >
+                      <Snowflake className="w-3 h-3" /> 동결
+                    </button>
+                    <button
+                      type="button"
+                      onPointerDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
+                      onClick={async (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        try {
+                          const { data, error } = await (supabase as any).rpc("admin_unfreeze_user", {
+                            _user_id: u.user_id,
+                          });
+                          if (error) throw error;
+                          notify.success(`${data ?? 0}건 해제됨`);
+                        } catch (err: any) { notify.fail("해제 실패", err); }
+                      }}
+                      className="h-6 px-1.5 rounded text-[9px] font-black tracking-[0.15em] uppercase flex items-center gap-1 border border-secondary/40 text-secondary hover:bg-secondary/10"
+                      title="동결 해제"
+                    >
+                      <Sun className="w-3 h-3" /> 해제
+                    </button>
                   </CommandItem>
                 ))}
               </CommandGroup>
