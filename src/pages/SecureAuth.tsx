@@ -249,9 +249,18 @@ export default function SecureAuth() {
         {/* === Static gold wordmark seal — framed double hairline === */}
         <div className="mt-2 flex flex-col items-center select-none">
           <div className="h-px w-56 bg-gradient-to-r from-transparent via-gold/55 to-transparent" />
-          <div className="mt-1.5 inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-gold/40 bg-background/65 shadow-[0_0_24px_-8px_hsl(var(--gold)/0.5)]">
-            <Crown className="w-3.5 h-3.5 text-gold" />
-            <span className="text-[10px] tracking-[0.42em] text-gold font-black">
+          <div
+            className="mt-1.5 inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-gold/55 bg-background/70"
+            style={{
+              boxShadow:
+                "0 0 28px -6px hsl(var(--gold)/0.55), inset 0 1px 0 hsl(var(--gold)/0.45), inset 0 -1px 0 hsl(var(--gold)/0.18)",
+            }}
+          >
+            <Crown className="w-4 h-4 text-gold drop-shadow-[0_0_6px_hsl(var(--gold)/0.7)]" />
+            <span
+              className="text-[10px] tracking-[0.42em] text-gold font-black"
+              style={{ textShadow: "0 0 10px hsl(var(--gold)/0.45)" }}
+            >
               PHONARA · EST. 2026
             </span>
           </div>
@@ -269,18 +278,22 @@ export default function SecureAuth() {
             </span>
           </div>
           {/* Imperial kicker */}
-          <div className="inline-flex items-center gap-1.5 mb-3 text-gold/90">
-            <Crown className="w-4 h-4" />
-            <span className="font-imperial font-black text-[11px] sm:text-xs tracking-[0.32em] uppercase">
+          <div className="inline-flex items-center gap-2 mb-3 text-gold">
+            <Crown className="w-[18px] h-[18px] drop-shadow-[0_0_8px_hsl(var(--gold)/0.65)]" />
+            <span
+              className="font-imperial font-black text-[12px] sm:text-[13px] tracking-[0.34em] uppercase"
+              style={{ textShadow: "0 0 14px hsl(var(--gold)/0.4)" }}
+            >
               패키지 1회로 모든 미션이 자동 완료
             </span>
-            <Crown className="w-4 h-4" />
+            <Crown className="w-[18px] h-[18px] drop-shadow-[0_0_8px_hsl(var(--gold)/0.65)]" />
           </div>
           <h1
             className="font-imperial font-black text-gradient-gold leading-[1.05] text-[34px] sm:text-[56px]"
             style={{
               WebkitTextStroke: "1px hsl(var(--gold-stroke) / 0.45)",
-              textShadow: "0 0 28px hsl(var(--gold) / 0.22), 0 0 60px hsl(var(--gold) / 0.12)",
+              textShadow:
+                "0 0 32px hsl(var(--gold) / 0.25), 0 0 70px hsl(var(--gold) / 0.15)",
             }}
           >
             제국 입장을 위한
