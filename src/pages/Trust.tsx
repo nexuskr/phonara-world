@@ -98,6 +98,27 @@ export default function Trust() {
 
         <section className="mt-10">
           <div className="flex items-center gap-2 mb-3">
+            <ShieldCheck className="w-4 h-4 text-money-strong" />
+            <h2 className="font-imperial font-bold text-lg tracking-[0.02em]">Phonara 3대 보장</h2>
+          </div>
+          <TrustGuaranteeBadges />
+        </section>
+
+        <section className="mt-10">
+          <div className="flex items-center gap-2 mb-3">
+            <Radio className="w-4 h-4 text-money-strong animate-pulse" />
+            <h2 className="font-imperial font-bold text-lg tracking-[0.02em]">실시간 출금 라이브 (최근 100건)</h2>
+          </div>
+          <LiveWithdrawalsTable />
+        </section>
+
+        <section className="mt-10 grid md:grid-cols-2 gap-3">
+          <RefundRequestPanel />
+          <LossProtectionGate />
+        </section>
+
+        <section className="mt-10">
+          <div className="flex items-center gap-2 mb-3">
             <ShieldCheck className="w-4 h-4 text-secondary" />
             <h2 className="font-imperial font-bold text-lg tracking-[0.02em]">법적 문서</h2>
           </div>
