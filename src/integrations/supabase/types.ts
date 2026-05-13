@@ -3957,6 +3957,7 @@ export type Database = {
           daily_mission_count: number | null
           email_notifications_enabled: boolean | null
           empire_level: number
+          has_seen_guide: boolean
           id: string
           is_adult: boolean
           last_attendance: string | null
@@ -3992,6 +3993,7 @@ export type Database = {
           daily_mission_count?: number | null
           email_notifications_enabled?: boolean | null
           empire_level?: number
+          has_seen_guide?: boolean
           id: string
           is_adult?: boolean
           last_attendance?: string | null
@@ -4027,6 +4029,7 @@ export type Database = {
           daily_mission_count?: number | null
           email_notifications_enabled?: boolean | null
           empire_level?: number
+          has_seen_guide?: boolean
           id?: string
           is_adult?: boolean
           last_attendance?: string | null

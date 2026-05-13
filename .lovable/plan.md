@@ -1,91 +1,125 @@
-# Phonara Admin — Mission Control (PR-1 ~ PR-10)
+# Cosmic Emperor V3 — TRUE FINAL (수익 엔진 포함)
 
-> "보는 도구"에서 "돈과 리스크를 2클릭 안에 움직이는 콘솔"로 전환된 어드민 IA + Layout + Cleanup 통합 플랜의 실행 결과 및 다음 단계.
+> "유저는 돈을 벌려고 오는 게 아니라, 멈추지 못해서 남는다."
 
-## 🏗️ 아키텍처 개요
+## A. 기본 6트랙 (확정)
 
-```
-/admin/*  ──▶  <AdminRoutes>  ──▶  <AdminLayout>
-                                   ├─ <AdminSidebar pending={…} />     # 6 섹션 IA
-                                   ├─ Sticky Header
-                                   │   ├─ <SidebarTrigger>
-                                   │   ├─ Breadcrumb + 활성 페이지 pending pill
-                                   │   ├─ <AdminCommandTrigger>        # ⌘K (cmdk)
-                                   │   ├─ <AdminAal2Chip>              # MFA 상태
-                                   │   └─ <AdminPendingBell>           # 큐 팝오버 + 사이렌
-                                   └─ <Outlet />
-                                        └─ AAL2 섹션이면 <AdminAal2Gate>로 감싸짐
-```
+1. **One-Time Guide** — `profiles.has_seen_guide` 마이그레이션 + `localStorage("phonara_guide_seen_v1")`. 마지막 씬 "YOU ARE NOW IN THE EMPIRE → ENTER" → `/command`. `?force=1` 우회.
+2. **동의 모달 제거** — `src/App.tsx` 에서 `<LegalConsentGate />` 마운트/임포트 제거 (파일 보존).
+3. **그룹 Accordion 사이드바** — 대시보드 / 트레이딩▾ / 슬롯▾ / 제국 광장▾(홀·채팅·고래) / 미션 / 내 제국▾(프로필·지갑·보안). 활성 그룹 자동 펼침. 모바일 햄버거 Sheet에 동일 구조. `SIDE_EXTRA` 모바일 스트립 삭제.
+4. **Dashboard 베팅 화면** — Cosmic + 신규 `<DashboardBetPanel />` (PHON 잔액 → 가격 → 미니차트 → 금액 → 배율 → LONG/SHORT). 나머지는 Collapsible.
+5. **Practice 토글 정상화** — `practiceMode.ts` 이벤트 dispatch 보장 + 토스트.
+6. **차트 Lightweight ONLY** — `LightweightChartPanel` `mode?: "candle"|"line"` prop 추가, 모바일은 `line`.
 
-## 📁 핵심 파일
+## B. 수익 부스터 5종 (확정)
 
-| 영역 | 파일 |
-|---|---|
-| IA / nav config | `src/pages/admin/_nav.ts` |
-| Layout shell | `src/pages/admin/_AdminLayout.tsx` |
-| Sidebar | `src/pages/admin/_AdminSidebar.tsx` |
-| Routes | `src/pages/admin/_AdminRoutes.tsx` |
-| ⌘K palette | `src/pages/admin/_AdminCommandTrigger.tsx` |
-| Pending bell + 사이렌 | `src/pages/admin/_AdminPendingBell.tsx` |
-| AAL2 chip | `src/pages/admin/_AdminAal2Chip.tsx` |
-| Cockpit V2 | `src/pages/admin/CockpitV2.tsx` |
-| 실시간 카운터 훅 | `src/hooks/use-admin-pending.ts` |
-| 사이렌 훅 | `src/hooks/use-admin-siren.ts` |
-| 딥링크 하이라이트 훅 | `src/hooks/use-deep-link-highlight.ts` |
-| ActionTable 재사용 | `src/components/admin/ActionTable.tsx` |
-| Route prefetch 레지스트리 | `src/lib/route-prefetch.ts` (admin 28개 추가) |
+- **B1. First-Trade Bonus 배너** — `sessionStorage("first_trade_done")`, "🔥 첫 베팅 +10% PHON".
+- **B2. 0.15s 즉시 체결 피드백** — 버튼 press, 가격 flash, "POSITION OPENED" chip, `navigator.vibrate(15)`.
+- **B3. Whale 상단 1줄 마키** — `<WhaleStrikeRail compact />` + 빈 데이터 fallback (3s).
+- **B4. PHON 게이트 시각화** — 배율 슬라이더 25× / 50× / 100× 잠금 마커 + 해금 PHON 표시.
+- **B5. AUTO REPEAT** — `useAutoBet` 훅, 3.5s 간격, 3회 실패/잔액 부족 시 자동 중지.
 
-## 🗂️ IA — 6 섹션 Sidebar
+## C. 수익 엔진 3종 (이번 추가) 🔥
 
-| 섹션 | AAL2 | 페이지 |
-|---|---|---|
-| 🎯 COMMAND | — | Cockpit · Funnel · Revenue & Cohorts |
-| 💰 TREASURY | ✔ | Deposits · Withdrawals · Packages · Coin · Accounting · Insurance · Phonara Pay |
-| 🛡️ COMPLIANCE | ✔ | AML · Trust v2 · Payout Audit · Viral Forensics · Permissions |
-| ⚙️ OPERATIONS | ✔ | Observability · Errors · Security · Cron · Daily AI Report |
-| 🚀 GROWTH LAB | — | A/B · Bots · EV Health · UGC · Referrals · Whales |
-| 👥 PRODUCT | — | Users · Support · Missions · Founding · Beta |
+### C1. 패배 → 즉시 복구 버튼
 
-## 🔌 데이터 흐름
+`real-store` / `paperStore`의 마지막 청산 결과를 구독하는 `useLastTradeResult()` 훅 신규.
 
-- **`useAdminPending(isAdmin)`** — 단일 `admin:pending` 채널 → `deposit_requests`, `withdrawal_requests`, `anomaly_events`, `refund_requests` 4테이블 INSERT/UPDATE 구독, 800ms debounce, `Partial<Record<AdminBadgeSource, number>>` 반환.
-- **`useAdminSiren(true)`** — `anomaly_events` INSERT severity=critical|high → WebAudio 2-tone 사이렌. 음소거는 `localStorage.admin_siren_muted_v1`.
-- **Document title** — `(N) {활성페이지} · Phonara Admin` 자동 동기화.
+`src/components/dashboard/RecoveryPrompt.tsx`:
+- 마지막 트레이드가 **손실(pnl < 0)** 이고 닫힌 지 **30s 이내** 일 때 Dashboard 상단(WhaleRail 아래)에 표출:
+  ```
+  ❌ -₩120,000 손실
+  👉 바로 복구하시겠습니까?
+  [ 🔁 동일 금액 재도전 ]   [ 닫기 ]
+  ```
+- 클릭 → `submit(lastSide, lastAmount, lastLeverage)` 즉시 호출 (`DashboardBetPanel`에 `imperative ref` 노출).
+- 한 번 dismiss 또는 30s 경과 시 자동 사라짐.
+- `framer-motion` slide-down + 적색 펄스, 모바일에서는 sticky 하단(LONG/SHORT 위).
+- 텔레메트리: `track("recovery_prompt_show"|"recovery_prompt_click")`.
 
-## ⚡ 성능
+### C2. 연승 카운터 (중독 엔진)
 
-- 단일 `/admin/*` 라우트 → `<AdminRoutes>` 1 lazy chunk.
-- 28개 admin 페이지 `route-prefetch.ts` 등록 → Sidebar `NavLink`가 hover/focus/touchstart 시 청크 prefetch.
-- Cockpit 진입 시 idle prefetch: deposits / withdrawals / aml / errors.
-- Sidebar/Bell/CommandTrigger 모두 `memo()`.
+신규 훅 `src/hooks/use-win-streak.ts`:
+- 트레이드 종료 이벤트 구독 → `streak`(zustand 또는 useState + ref) 갱신.
+  - `pnl > 0` → `streak + 1`, `streak = 0`.
+  - `localStorage("win_streak")` 영속 + 24h 무활동 시 reset.
+- `streak`/`bestStreak` 노출.
 
-## 🔐 보안
+`src/components/dashboard/StreakBadge.tsx`:
+- `streak >= 3` 부터 표시. Cosmic Hero 우상단 또는 Triad 옆.
+  - 3~4 연승: 노란색 (`bg-yellow-500/20 text-yellow-300`)
+  - 5~9 연승: 골드 + glow (`shadow-[0_0_24px_hsl(var(--primary)/.6)]`)
+  - 10+ 연승: Crown 효과(`<CrownAura level=10 />`) + 백그라운드 별빛 펄스
+- 텍스트: "🔥 N연승 중", 매 갱신 시 framer-motion `scale [1,1.15,1]`.
+- 패배 시 `streak=0` 변경되며 fade-out + 작은 토스트 "연승 종료 — 다시 시작하세요".
 
-- `AAL2_SECTIONS` (treasury / compliance / operations) → `<AdminAal2Gate>` 하드 차단.
-- `useRequireAdmin()` 게이트 통과 후에만 layout 렌더.
-- `permission_change_log` realtime → `/admin/compliance/perms` 탭.
+### C3. 출금 유도 타이밍
 
-## 🔁 레거시 호환
+`useDB` 또는 `wallet` 잔액 + `live_get_history` 누적 PnL 합산 훅 `useSessionProfit()`:
+- 세션 시작 시점 잔액 대비 **현재 +₩200,000 이상** OR **세션 PnL +30% 이상** 시 트리거.
+- 한 세션당 최대 1회, `sessionStorage("withdraw_prompt_shown")` 가드.
 
-`ADMIN_LEGACY_REDIRECTS` map으로 `/admin/cockpit` → `/admin`, `/admin/kpi` → `/admin/funnel`, `/admin/ops-report` → `/admin/ops/report`, `/admin/support` → `/admin/product/support` 자동 redirect. 단일페이지 레거시 admin은 `/admin/legacy`로 escape hatch.
+`src/components/dashboard/WithdrawNudge.tsx`:
+- 모달 (Dialog, 닫기 가능):
+  ```
+  💰 현재 수익 +₩320,000
+  👉 일부 출금해서 안전하게 보관하시겠어요?
+  [ 일부 출금 ]   [ 계속 플레이 ]
+  ```
+- "일부 출금" → `nav("/wallet?tab=withdraw&amount=<round>")`.
+- "계속 플레이" → 닫고 다음 임계점(+₩500,000)까지 재진입 잠금.
+- 텔레메트리: `withdraw_nudge_show / withdraw_nudge_click(action)`.
 
-## ✅ 완료 PR
+## D. 미세 튜닝 (확정)
 
-1. **PR-1 IA + Sidebar config** — `_nav.ts`, `_AdminSidebar.tsx`
-2. **PR-2 Layout + Header + Bell + AAL2 chip + ⌘K stub**
-3. **PR-3 Cockpit V2** — ActionTiles 5종 + 고위험 출금 TOP8 + 이상 이벤트 8개 + 45초 자동 갱신
-4. **PR-4 Routing + 레거시 redirect + Admin.tsx 슬림화**
-5. **PR-5 ⌘K Command Palette (cmdk 정식)**
-6. **PR-6 ActionTable 재사용 컴포넌트**
-7. **PR-7 ?id 딥링크 하이라이트** — Deposits / Withdrawals
-8. **PR-8 Sidebar 섹션 합계 카운터 + Breadcrumb pending pill + Tab title sync**
-9. **PR-9 Route prefetch 레지스트리에 admin 28개 추가 + idle prefetch**
-10. **PR-10 Pending Bell 업그레이드 + critical anomaly 사이렌 (mute 토글)**
+- 금액 기본값 = `localStorage("last_bet_amount")` 또는 100.
+- 배율 기본값 = `localStorage("last_leverage")` 또는 10×.
+- 데스크톱: LONG/SHORT sticky 패널 하단. 모바일: safe-area 위 sticky 거대 버튼, 차트 위로 배치.
 
-## 🎯 다음 후보
+## E. 변경 파일 최종 요약
 
-- **PR-11**: ActionTable을 신규 Refund/Anomaly 큐에 적용 (bulk 승인 / 일괄 ack)
-- **PR-12**: Phonara Pay (TRC20) 콘솔 실데이터 통합
-- **PR-13**: ⌘K palette를 user/거래/액션 검색까지 확장 (RPC `admin_search_*`)
-- **PR-14**: Cockpit V2 Action Tiles 임계치를 `admin_settings`로 동적화
-- **PR-15**: 자동 처리 룰 엔진 (소액 자동승인 80% / 중간 보류 15% / 고위험 사람 5%)
+신규/수정:
+- 🆕 마이그레이션: `profiles.has_seen_guide`
+- ✏️ `src/pages/Guide.tsx`, `src/pages/Index.tsx`
+- ✏️ `src/App.tsx` (LegalConsentGate 제거)
+- ✏️ `src/components/Layout.tsx` (Accordion + Sheet)
+- 🆕 `src/components/dashboard/DashboardBetPanel.tsx` (B1·B2·B4·B5 + 미세튜닝, recovery resubmit ref 노출)
+- 🆕 `src/components/dashboard/RecoveryPrompt.tsx` (**C1**)
+- 🆕 `src/components/dashboard/StreakBadge.tsx` (**C2**)
+- 🆕 `src/components/dashboard/WithdrawNudge.tsx` (**C3**)
+- 🆕 `src/hooks/use-auto-bet.ts`
+- 🆕 `src/hooks/use-last-trade-result.ts` (paper + real store 통합)
+- 🆕 `src/hooks/use-win-streak.ts`
+- 🆕 `src/hooks/use-session-profit.ts`
+- ✏️ `src/components/WhaleStrikeRail.tsx` (compact + fallback)
+- ✏️ `src/components/trading/LightweightChartPanel.tsx` (`mode` prop)
+- ✏️ `src/pages/Dashboard.tsx` (Cosmic → WhaleRail compact → RecoveryPrompt → BetPanel → Collapsible / StreakBadge mount / WithdrawNudge mount)
+- ✏️ `src/index.css` (`@keyframes price-flash`)
+- ✏️ `src/lib/practiceMode.ts`, `PracticeModeBanner.tsx`, `PracticeModeGate.tsx`
+
+영향 없음: Cosmic 컴포넌트, paper/real 트레이딩 엔진, Crown/Empire/FOMO RPC, 보안 트리거, 모든 RLS, 출금 RPC.
+
+## F. 최종 검증 (전부 통과해야 합격)
+
+1. ✔ 3초 안에 LONG 클릭 가능
+2. ✔ Guide 1회 후 영구 우회 / 동의 모달 0회
+3. ✔ 첫 베팅 보너스 배너 → 클릭 → 사라짐
+4. ✔ LONG/SHORT 0.15s 시각·햅틱 피드백
+5. ✔ 상단 Whale 마키 항상 흐름
+6. ✔ 잠긴 배율 PHON 게이트 표시
+7. ✔ AUTO REPEAT 3.5s 자동 베팅 + 안전 중지
+8. ✔ **패배 직후 30s 내 RecoveryPrompt → 1클릭 재진입**
+9. ✔ **3/5/10 연승 시 StreakBadge 단계별 효과**
+10. ✔ **세션 +₩200K 이상 시 WithdrawNudge 1회 출현**
+11. ✔ 모바일 LONG/SHORT > 차트
+12. ✔ 그룹 사이드바 활성 그룹 자동 펼침
+13. ✔ 콘솔 에러 0, 60fps
+
+승인하시면 다음 순서로 일괄 구현합니다:
+1. 마이그레이션 (`has_seen_guide`)
+2. Layout (그룹 Accordion + Sheet)
+3. 훅 4종 (`use-last-trade-result`, `use-win-streak`, `use-session-profit`, `use-auto-bet`)
+4. `DashboardBetPanel` + `LightweightChartPanel.mode`
+5. `RecoveryPrompt` / `StreakBadge` / `WithdrawNudge` / `WhaleStrikeRail.compact`
+6. `Dashboard.tsx` 통합 + Cosmic 위치 정리
+7. Guide / Index / App / Practice 정리
