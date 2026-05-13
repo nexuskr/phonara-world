@@ -47,6 +47,7 @@ const REGISTRY: Record<string, Loader> = {
   "/admin/ops/security":          () => import("@/components/admin/SecurityAuditAdmin.tsx"),
   "/admin/ops/cron":              () => import("@/components/admin/CronJobsCard.tsx"),
   "/admin/ops/report":            () => import("@/pages/admin/OpsReport.tsx"),
+  "/admin/ops/thresholds":        () => import("@/components/admin/ThresholdsAdmin.tsx"),
   "/admin/growth/ab":             () => import("@/components/admin/AbExperimentsAdmin.tsx"),
   "/admin/growth/bots":           () => import("@/components/admin/BotStrengthAdmin.tsx"),
   "/admin/growth/ev":             () => import("@/components/admin/EvHealthAdmin.tsx"),

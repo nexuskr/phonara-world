@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { adminSetTier, adminAdjustBalance } from "@/lib/deposits-rpc";
 import { formatKRW } from "@/lib/store";
@@ -37,9 +38,11 @@ function providerClass(p: string | null, complete: boolean): string {
 }
 
 export default function ServerUserAdmin() {
+  const [sp] = useSearchParams();
+  const initialQ = sp.get("q") ?? "";
   const [rows, setRows] = useState<Row[]>([]);
   const [busy, setBusy] = useState(false);
-  const [q, setQ] = useState("");
+  const [q, setQ] = useState(initialQ);
   const [filter, setFilter] = useState<Filter>("all");
 
   async function load() {

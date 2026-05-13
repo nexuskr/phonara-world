@@ -16,24 +16,28 @@ import { ko } from "date-fns/locale";
 type ActionTone = "destructive" | "gold" | "primary" | "secondary";
 
 function ActionTile({
-  icon: Icon, label, count, hint, to, tone = "primary", sla,
+  icon: Icon, label, count, hint, to, tone = "primary", sla, threshold,
 }: {
   icon: any; label: string; count: number; hint?: string; to: string;
-  tone?: ActionTone; sla?: string;
+  tone?: ActionTone; sla?: string; threshold?: number;
 }) {
   const hot = count > 0;
+  const exceeds = threshold != null && count >= threshold;
   const toneClass: Record<ActionTone, string> = {
     destructive: "border-destructive/50 bg-destructive/5 text-destructive",
     gold:        "border-gold/50 bg-gold/5 text-gold",
     primary:     "border-primary/40 bg-primary/5 text-primary",
     secondary:   "border-secondary/40 bg-secondary/5 text-secondary",
   };
+  const cls = exceeds
+    ? "border-destructive bg-destructive/10 text-destructive animate-pulse"
+    : hot
+      ? toneClass[tone]
+      : "border-border/40 bg-card/40 text-muted-foreground";
   return (
     <Link
       to={to}
-      className={`group glass-strong rounded-2xl p-4 border transition hover:scale-[1.01] ${
-        hot ? toneClass[tone] : "border-border/40 bg-card/40 text-muted-foreground"
-      }`}
+      className={`group glass-strong rounded-2xl p-4 border transition hover:scale-[1.01] ${cls}`}
     >
       <div className="flex items-center justify-between mb-3">
         <Icon className="w-5 h-5" />
@@ -45,8 +49,10 @@ function ActionTile({
       </div>
       <div className="flex items-center justify-between mt-1">
         <div className="text-[10px] text-muted-foreground">{hint ?? ""}</div>
-        {sla && (
-          <div className="text-[10px] font-bold tabular-nums opacity-80">SLA {sla}</div>
+        {(sla || threshold != null) && (
+          <div className="text-[10px] font-bold tabular-nums opacity-80">
+            {exceeds ? "임계초과" : sla ? `SLA ${sla}` : `≥${threshold}`}
+          </div>
         )}
       </div>
     </Link>
@@ -96,6 +102,21 @@ export default function AdminCockpitV2() {
   const [freezes, setFreezes] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [refreshedAt, setRefreshedAt] = useState<Date | null>(null);
+  const [thresholds, setThresholds] = useState<Record<string, number>>({
+    deposits_hot: 5, withdrawals_hot: 3, aml_hot: 1, refund_hot: 2, anomaly_hot: 5,
+  });
+
+  useEffect(() => {
+    if (!user?.isAdmin) return;
+    (async () => {
+      const { data } = await (supabase as any).rpc("admin_settings_get", {
+        _key: "cockpit.thresholds",
+      });
+      if (data && typeof data === "object") {
+        setThresholds((prev) => ({ ...prev, ...(data as Record<string, number>) }));
+      }
+    })();
+  }, [user?.isAdmin]);
 
   async function load() {
     const [wd, an, fz] = await Promise.all([
@@ -182,6 +203,7 @@ export default function AdminCockpitV2() {
             hint="영수증 / 코인 입금"
             to="/admin/treasury/deposits"
             tone="gold"
+            threshold={thresholds.deposits_hot}
           />
           <ActionTile
             icon={ArrowDownToLine}
@@ -190,6 +212,7 @@ export default function AdminCockpitV2() {
             hint="잔액 / KYC / SLA"
             to="/admin/treasury/withdrawals"
             tone="destructive"
+            threshold={thresholds.withdrawals_hot}
             sla={pending.withdrawals_pending && pending.withdrawals_pending > 10 ? "위험" : "30분"}
           />
           <ActionTile
@@ -199,6 +222,7 @@ export default function AdminCockpitV2() {
             hint="고위험 트랜잭션"
             to="/admin/compliance/aml"
             tone="destructive"
+            threshold={thresholds.aml_hot}
           />
           <ActionTile
             icon={HeartHandshake}
@@ -207,6 +231,7 @@ export default function AdminCockpitV2() {
             hint="Trust v2 큐"
             to="/admin/compliance/trust"
             tone="primary"
+            threshold={thresholds.refund_hot}
           />
           <ActionTile
             icon={AlertTriangle}
@@ -215,6 +240,7 @@ export default function AdminCockpitV2() {
             hint="미확인 이벤트"
             to="/admin/ops/errors"
             tone="destructive"
+            threshold={thresholds.anomaly_hot}
           />
         </div>
       </section>

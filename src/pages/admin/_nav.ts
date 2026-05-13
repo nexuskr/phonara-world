@@ -8,7 +8,7 @@ import {
   ArrowDownToLine, ArrowUpFromLine, Coins, ShieldCheck, ShieldAlert,
   HeartHandshake, ScrollText, Flame, Lock, Users, Wallet,
   Gauge, KeyRound, FlaskConical, Bot, HeartPulse, BarChart3,
-  Target, MessageSquare, LifeBuoy, Zap, AlertTriangle, Send,
+  Target, MessageSquare, LifeBuoy, Zap, AlertTriangle, Send, Sliders,
 } from "lucide-react";
 
 export type AdminBadgeSource =
@@ -90,6 +90,7 @@ export const ADMIN_NAV: AdminNavSection[] = [
       { id: "security",      name: "Security Audit",to: "/admin/ops/security",      icon: ShieldCheck },
       { id: "cron",          name: "Cron / Webhooks", to: "/admin/ops/cron",        icon: Zap },
       { id: "report",        name: "Daily AI Report", to: "/admin/ops/report",      icon: BarChart3 },
+      { id: "thresholds",    name: "임계값 / SLA",     to: "/admin/ops/thresholds",  icon: Sliders },
     ],
   },
   {

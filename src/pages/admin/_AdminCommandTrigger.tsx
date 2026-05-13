@@ -1,10 +1,12 @@
 /**
- * ⌘K Command Palette — section/page jump powered by cmdk (shadcn).
- * Groups by IA section, marks AAL2 routes, prefetch on hover via NavLink.
+ * ⌘K Command Palette — section/page jump + user search (PR-13).
+ * - Sections from ADMIN_NAV (AAL2 marked)
+ * - Live user search via admin_search_users RPC (debounced 200ms, min 2 chars)
+ *   Result navigates to /admin/product/users?q=<userid> which auto-seeds search.
  */
-import { useEffect, useState, useMemo, memo, useCallback } from "react";
+import { useEffect, useState, useMemo, memo, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search } from "lucide-react";
+import { Search, User as UserIcon, Loader2 } from "lucide-react";
 import {
   CommandDialog,
   CommandInput,
@@ -13,11 +15,25 @@ import {
   CommandGroup,
   CommandItem,
   CommandShortcut,
+  CommandSeparator,
 } from "@/components/ui/command";
 import { ADMIN_NAV } from "@/pages/admin/_nav";
+import { supabase } from "@/integrations/supabase/client";
+
+type UserHit = {
+  user_id: string;
+  username: string | null;
+  email: string | null;
+  tier: string | null;
+  created_at: string;
+};
 
 function AdminCommandTriggerBase() {
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [hits, setHits] = useState<UserHit[]>([]);
+  const [searching, setSearching] = useState(false);
+  const debounceRef = useRef<number | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -31,10 +47,38 @@ function AdminCommandTriggerBase() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  // Debounced user search
+  useEffect(() => {
+    if (debounceRef.current) window.clearTimeout(debounceRef.current);
+    const q = query.trim();
+    if (q.length < 2) {
+      setHits([]);
+      setSearching(false);
+      return;
+    }
+    setSearching(true);
+    debounceRef.current = window.setTimeout(async () => {
+      try {
+        const { data, error } = await (supabase as any).rpc("admin_search_users", {
+          _q: q,
+          _limit: 8,
+        });
+        if (error) throw error;
+        setHits((data ?? []) as UserHit[]);
+      } catch {
+        setHits([]);
+      } finally {
+        setSearching(false);
+      }
+    }, 200);
+    return () => {
+      if (debounceRef.current) window.clearTimeout(debounceRef.current);
+    };
+  }, [query]);
+
   const go = useCallback(
     (to: string) => {
       setOpen(false);
-      // small defer so dialog close animation doesn't fight router transition
       requestAnimationFrame(() => navigate(to));
     },
     [navigate],
@@ -62,9 +106,58 @@ function AdminCommandTriggerBase() {
       </button>
 
       <CommandDialog open={open} onOpenChange={setOpen}>
-        <CommandInput placeholder="섹션·페이지 검색…" />
+        <CommandInput
+          placeholder="섹션·페이지 검색 / 닉네임·이메일·UUID로 유저 찾기…"
+          value={query}
+          onValueChange={setQuery}
+        />
         <CommandList>
           <CommandEmpty>결과 없음</CommandEmpty>
+
+          {/* User results */}
+          {query.trim().length >= 2 && (
+            <>
+              <CommandGroup
+                heading={
+                  <span className="flex items-center gap-2">
+                    <UserIcon className="w-3 h-3" />
+                    유저
+                    {searching && <Loader2 className="w-3 h-3 animate-spin opacity-70" />}
+                  </span>
+                }
+              >
+                {hits.length === 0 && !searching && (
+                  <div className="px-3 py-2 text-[11px] text-muted-foreground">
+                    일치하는 유저 없음 (닉네임 / 이메일 / UUID 2자 이상)
+                  </div>
+                )}
+                {hits.map((u) => (
+                  <CommandItem
+                    key={u.user_id}
+                    value={`user ${u.username ?? ""} ${u.email ?? ""} ${u.user_id}`}
+                    onSelect={() =>
+                      go(`/admin/product/users?q=${encodeURIComponent(u.username ?? u.user_id)}`)
+                    }
+                  >
+                    <UserIcon className="w-3.5 h-3.5 mr-2 text-muted-foreground" />
+                    <div className="flex flex-col min-w-0">
+                      <span className="truncate font-bold text-xs">
+                        {u.username ?? "(no nickname)"}
+                      </span>
+                      <span className="truncate text-[10px] text-muted-foreground">
+                        {u.email ?? u.user_id.slice(0, 8)}
+                      </span>
+                    </div>
+                    <CommandShortcut className="text-[9px] tracking-[0.2em] font-black uppercase">
+                      {u.tier ?? "free"}
+                    </CommandShortcut>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+              <CommandSeparator />
+            </>
+          )}
+
           {groups.map((section) => (
             <CommandGroup
               key={section.id}

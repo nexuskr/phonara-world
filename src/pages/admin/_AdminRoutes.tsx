@@ -40,6 +40,7 @@ const CronJobsCard         = lazy(() => import("@/components/admin/CronJobsCard"
 const OpsReport            = lazy(() => import("./OpsReport"));
 const PayConsole           = lazy(() => import("@/components/admin/PayConsole"));
 const AutoRulesAdmin       = lazy(() => import("@/components/admin/AutoRulesAdmin"));
+const ThresholdsAdmin      = lazy(() => import("@/components/admin/ThresholdsAdmin"));
 
 // Growth
 const AbExperimentsAdmin   = lazy(() => import("@/components/admin/AbExperimentsAdmin"));
@@ -153,6 +154,7 @@ export default function AdminRoutes() {
         <Route path="ops/security"      element={<Section title="Security Audit"><SecurityAuditAdmin /></Section>} />
         <Route path="ops/cron"          element={<CronCombined />} />
         <Route path="ops/report"        element={<Suspense fallback={<LoadingList rows={4} />}><OpsReport /></Suspense>} />
+        <Route path="ops/thresholds"    element={<Section title="Mission Control 임계값"><ThresholdsAdmin /></Section>} />
 
         {/* GROWTH */}
         <Route path="growth/ab"        element={<Section title="A/B Experiments"><AbExperimentsAdmin /></Section>} />
