@@ -54,9 +54,12 @@ export function SceneNetworkEffect({ large = false, isLoggedIn = false }: { larg
                   <line x1={A.x} y1={A.y} x2={B.x} y2={B.y} stroke="hsl(var(--gold)/0.4)" strokeWidth="1.5" />
                   {!reduce && (
                     <motion.circle
-                      r="3"
+                      r={3}
+                      cx={A.x}
+                      cy={A.y}
                       fill="hsl(var(--gold))"
                       style={{ filter: "drop-shadow(0 0 6px hsl(var(--gold)))" }}
+                      initial={{ cx: A.x, cy: A.y, opacity: 0 }}
                       animate={{
                         cx: [A.x, B.x],
                         cy: [A.y, B.y],
