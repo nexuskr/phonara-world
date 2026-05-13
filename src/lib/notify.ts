@@ -53,6 +53,8 @@ export const notify = {
     sonner.warning?.(message, fmt(message, "warning", opts)) ??
     sonner(message, fmt(message, "warning", opts)),
   message: (message: ReactNode, opts?: Opts) => sonner(message, fmt(message, "default", opts)),
+  loading: (message: ReactNode, opts?: Opts) =>
+    sonner.loading(message, fmt(message, "default", opts)),
   /** Convenience: report an unknown error with a Korean fallback. */
   fail: (title: string, err?: unknown, opts?: Opts) =>
     sonner.error(title, fmt(title, "error", { description: describeError(err), ...opts })),
