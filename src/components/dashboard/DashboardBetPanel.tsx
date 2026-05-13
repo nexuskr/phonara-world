@@ -239,10 +239,46 @@ const DashboardBetPanel = forwardRef<BetPanelHandle>(function DashboardBetPanel(
             </div>
           )}
           {serverMaxLev > 0 && leverage > serverMaxLev && (
-            <div className="mt-1 text-[10px] text-rose-400 flex items-center gap-1">
-              <Lock className="w-2.5 h-2.5" />
-              현재 최대 {serverMaxLev}× — NFT 부스트 시 더 높은 배율 해금
-            </div>
+            <>
+              <button
+                type="button"
+                onClick={() => setShowLevCalc((v) => !v)}
+                className="mt-1 w-full text-left text-[10px] text-rose-400 flex items-center gap-1 hover:text-rose-300"
+              >
+                <Lock className="w-2.5 h-2.5" />
+                현재 최대 {serverMaxLev}× — 자세히 보기 {showLevCalc ? "▴" : "▾"}
+              </button>
+              <AnimatePresence>
+                {showLevCalc && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="mt-2 rounded-lg border border-rose-500/30 bg-rose-500/5 p-2.5 text-[10px] space-y-1"
+                  >
+                    {(() => {
+                      const base = phon >= 5000 ? 100 : phon >= 1200 ? 50 : phon >= 500 ? 25 : 10;
+                      const cap = Math.min(100, Math.max(0, serverBoost || 0));
+                      return (
+                        <>
+                          <div className="flex justify-between"><span className="text-muted-foreground">PHON 보유</span><span className="font-mono tabular-nums">{phon.toLocaleString()}</span></div>
+                          <div className="flex justify-between"><span className="text-muted-foreground">PHON 등급 기본 배율</span><span className="font-mono tabular-nums text-foreground">{base}×</span></div>
+                          <div className="flex justify-between"><span className="text-muted-foreground">NFT 부스트 (cap 100%)</span><span className="font-mono tabular-nums text-amber-300">+{cap}%</span></div>
+                          <div className="flex justify-between border-t border-rose-500/20 pt-1 mt-1">
+                            <span className="font-bold">= {base} × (1 + {cap}/100)</span>
+                            <span className="font-mono tabular-nums font-black text-primary">{serverMaxLev}×</span>
+                          </div>
+                          <div className="text-muted-foreground/80 leading-relaxed pt-1">
+                            현재 선택: <span className="font-bold text-rose-400">{leverage}×</span> · 차이: <span className="font-bold">{leverage - serverMaxLev}×</span> 초과<br/>
+                            PHON을 더 모으거나 NFT 부스트를 올려 해금하세요.
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </>
           )}
         </div>
 
