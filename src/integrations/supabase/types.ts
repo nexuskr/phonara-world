@@ -2042,6 +2042,7 @@ export type Database = {
           ends_at: string | null
           id: string
           perks: Json
+          settled_at: string | null
           starts_at: string
           subtitle: string | null
           title: string
@@ -2054,6 +2055,7 @@ export type Database = {
           ends_at?: string | null
           id?: string
           perks?: Json
+          settled_at?: string | null
           starts_at?: string
           subtitle?: string | null
           title: string
@@ -2066,12 +2068,54 @@ export type Database = {
           ends_at?: string | null
           id?: string
           perks?: Json
+          settled_at?: string | null
           starts_at?: string
           subtitle?: string | null
           title?: string
           total_seats?: number
         }
         Relationships: []
+      }
+      founding_seat_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          note: string | null
+          payload: Json
+          season_id: string
+          seat_no: number | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          note?: string | null
+          payload?: Json
+          season_id: string
+          seat_no?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          note?: string | null
+          payload?: Json
+          season_id?: string
+          seat_no?: number | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "founding_seat_events_season_id_fkey"
+            columns: ["season_id"]
+            isOneToOne: false
+            referencedRelation: "founding_seasons"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       function_permissions_baseline: {
         Row: {
@@ -6414,6 +6458,7 @@ export type Database = {
           ends_at: string | null
           id: string
           perks: Json
+          settled_at: string | null
           starts_at: string
           subtitle: string | null
           title: string
@@ -6426,6 +6471,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      admin_end_founding_season: { Args: { _id: string }; Returns: Json }
       admin_force_close_position:
         | {
             Args: {
@@ -6476,6 +6522,22 @@ export type Database = {
           uses: number
         }[]
       }
+      admin_list_founding_seasons: {
+        Args: never
+        Returns: {
+          active: boolean
+          claimed: number
+          code: string
+          ends_at: string
+          id: string
+          perks: Json
+          settled_at: string
+          starts_at: string
+          subtitle: string
+          title: string
+          total_seats: number
+        }[]
+      }
       admin_list_refund_requests: {
         Args: { _limit?: number; _offset?: number; _status?: string }
         Returns: {
@@ -6492,6 +6554,10 @@ export type Database = {
       }
       admin_operator_pnl: {
         Args: { p_from?: string; p_to?: string }
+        Returns: Json
+      }
+      admin_release_founding_seat: {
+        Args: { _reason: string; _season_id: string; _seat_no: number }
         Returns: Json
       }
       admin_release_freeze: {
@@ -6616,6 +6682,34 @@ export type Database = {
           _tier: Database["public"]["Enums"]["user_tier"]
         }
         Returns: Json
+      }
+      admin_update_founding_season: {
+        Args: {
+          _ends_at: string
+          _id: string
+          _perks: Json
+          _subtitle: string
+          _title: string
+        }
+        Returns: {
+          active: boolean
+          code: string
+          created_at: string
+          ends_at: string | null
+          id: string
+          perks: Json
+          settled_at: string | null
+          starts_at: string
+          subtitle: string | null
+          title: string
+          total_seats: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "founding_seasons"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       admin_update_trailing_peak: {
         Args: { p_peak_roi_pct: number; p_position_id: string }
@@ -7133,6 +7227,21 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      get_my_founding_seat: { Args: { _season_id?: string }; Returns: Json }
+      get_my_founding_seat_history: {
+        Args: { _limit?: number }
+        Returns: {
+          created_at: string
+          event_type: string
+          id: string
+          note: string
+          payload: Json
+          season_code: string
+          season_id: string
+          season_title: string
+          seat_no: number
+        }[]
       }
       get_my_godmode_status: {
         Args: never
@@ -7751,6 +7860,8 @@ export type Database = {
         }
       }
       settle_crown_war: { Args: never; Returns: Json }
+      settle_ended_founding_seasons: { Args: never; Returns: number }
+      settle_founding_season: { Args: { _season_id: string }; Returns: Json }
       settle_guild_weekly: { Args: { _target_week?: string }; Returns: Json }
       settle_jackpot: {
         Args: { p_nickname?: string; p_winner_id: string }
