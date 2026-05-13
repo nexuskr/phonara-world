@@ -309,6 +309,10 @@ export default function AdminCockpitV2() {
         <TodayKpiCards />
       </section>
 
+      {/* PR-22 Predictive SLA */}
+      <PredictiveSlaPanel />
+      </section>
+
       <div className="grid lg:grid-cols-2 gap-4">
         {/* Top Risk Withdrawals */}
         <section className="glass-strong rounded-2xl p-4 border border-border/50">
