@@ -1,125 +1,126 @@
-# Cosmic Emperor V3 — TRUE FINAL (수익 엔진 포함)
 
-> "유저는 돈을 벌려고 오는 게 아니라, 멈추지 못해서 남는다."
+# COSMIC EMPEROR V3 — NFT × PHON 수익엔진 (v3 FINAL: 행동 루프 완성)
 
-## A. 기본 6트랙 (확정)
+## 한 줄 요약
+입금 → NFT/PHON 폭발 → 즉시 베팅 → 결과 → 복구 또는 연승 → 반복.
+서버는 "힘"의 진실, 클라는 "느낌"의 연출.
 
-1. **One-Time Guide** — `profiles.has_seen_guide` 마이그레이션 + `localStorage("phonara_guide_seen_v1")`. 마지막 씬 "YOU ARE NOW IN THE EMPIRE → ENTER" → `/command`. `?force=1` 우회.
-2. **동의 모달 제거** — `src/App.tsx` 에서 `<LegalConsentGate />` 마운트/임포트 제거 (파일 보존).
-3. **그룹 Accordion 사이드바** — 대시보드 / 트레이딩▾ / 슬롯▾ / 제국 광장▾(홀·채팅·고래) / 미션 / 내 제국▾(프로필·지갑·보안). 활성 그룹 자동 펼침. 모바일 햄버거 Sheet에 동일 구조. `SIDE_EXTRA` 모바일 스트립 삭제.
-4. **Dashboard 베팅 화면** — Cosmic + 신규 `<DashboardBetPanel />` (PHON 잔액 → 가격 → 미니차트 → 금액 → 배율 → LONG/SHORT). 나머지는 Collapsible.
-5. **Practice 토글 정상화** — `practiceMode.ts` 이벤트 dispatch 보장 + 토스트.
-6. **차트 Lightweight ONLY** — `LightweightChartPanel` `mode?: "candle"|"line"` prop 추가, 모바일은 `line`.
+---
 
-## B. 수익 부스터 5종 (확정)
+## 현재 상태
+- PHON 인프라(`phon_balances`/`phon_transactions`/`get_phon_balance`)만 존재 → 레버리지 미연결
+- NFT 0%, 입금 → 보상 훅 0%
+- **이미 구현된 것 (재사용)**: `<RecoveryPrompt>`, `<StreakBadge>`, `use-win-streak`, `<CrownAura>`, `<EmpireBoosterTimer>`, `notify`, `<DashboardBetPanel ref={betRef}>`
+- `profiles.phon_balance` 컬럼 추가 금지(가드 트리거 충돌)
 
-- **B1. First-Trade Bonus 배너** — `sessionStorage("first_trade_done")`, "🔥 첫 베팅 +10% PHON".
-- **B2. 0.15s 즉시 체결 피드백** — 버튼 press, 가격 flash, "POSITION OPENED" chip, `navigator.vibrate(15)`.
-- **B3. Whale 상단 1줄 마키** — `<WhaleStrikeRail compact />` + 빈 데이터 fallback (3s).
-- **B4. PHON 게이트 시각화** — 배율 슬라이더 25× / 50× / 100× 잠금 마커 + 해금 PHON 표시.
-- **B5. AUTO REPEAT** — `useAutoBet` 훅, 3.5s 간격, 3회 실패/잔액 부족 시 자동 중지.
+---
 
-## C. 수익 엔진 3종 (이번 추가) 🔥
+## PR-NFT-1 · 백엔드 엔진
 
-### C1. 패배 → 즉시 복구 버튼
+**테이블 `nft_collection`**
+```text
+id · user_id · type(crown/emperor/founder) · level(bronze/gold/diamond)
+boost_pct int 0..50 · source(deposit/baron/founding/admin) · source_ref
+unique(user_id, source, source_ref)   -- idempotent
+```
+RLS: `select_own` + `admin_all`. 변경은 SECURITY DEFINER RPC만.
 
-`real-store` / `paperStore`의 마지막 청산 결과를 구독하는 `useLastTradeResult()` 훅 신규.
+**RPC (모두 SECURITY DEFINER, idempotent, baseline 등록)**
+- `grant_nft_for_deposit(_user, _krw, _deposit_id, _is_first)` — 100k≥diamond+25, 50k≥gold+15, else bronze+5. `_is_first=true`면 boost_pct **+10** ("FIRST EMPEROR")
+- `grant_phon_for_deposit(_user, _krw, _deposit_id)` — `floor(_krw*0.1)` 적립
+- `get_my_nft_collection()` / `get_my_total_boost_pct()` (cap 100) / `get_my_max_leverage()`
+- `get_next_nft_threshold()` → `{next_level, krw_needed}` (입금 유도 카피용)
 
-`src/components/dashboard/RecoveryPrompt.tsx`:
-- 마지막 트레이드가 **손실(pnl < 0)** 이고 닫힌 지 **30s 이내** 일 때 Dashboard 상단(WhaleRail 아래)에 표출:
-  ```
-  ❌ -₩120,000 손실
-  👉 바로 복구하시겠습니까?
-  [ 🔁 동일 금액 재도전 ]   [ 닫기 ]
-  ```
-- 클릭 → `submit(lastSide, lastAmount, lastLeverage)` 즉시 호출 (`DashboardBetPanel`에 `imperative ref` 노출).
-- 한 번 dismiss 또는 30s 경과 시 자동 사라짐.
-- `framer-motion` slide-down + 적색 펄스, 모바일에서는 sticky 하단(LONG/SHORT 위).
-- 텔레메트리: `track("recovery_prompt_show"|"recovery_prompt_click")`.
+**`credit_crypto_deposit` 패치 (응답 확장 — 폭발 UX의 연료)**
+```sql
+v_first := (SELECT count(*)=0 FROM phon_transactions
+            WHERE user_id=_user AND kind='deposit_usdt');
+PERFORM grant_phon_for_deposit(_user, _krw, _deposit_id);
+SELECT * INTO v_nft FROM grant_nft_for_deposit(_user, _krw, _deposit_id, v_first);
 
-### C2. 연승 카운터 (중독 엔진)
+RETURN jsonb_build_object(
+  'phon_granted', v_phon, 'nft_level', v_nft.level, 'nft_type', v_nft.type,
+  'boost_pct', v_nft.boost_pct, 'first_bonus', v_first,
+  'max_leverage', get_my_max_leverage_for(_user)
+);
+```
 
-신규 훅 `src/hooks/use-win-streak.ts`:
-- 트레이드 종료 이벤트 구독 → `streak`(zustand 또는 useState + ref) 갱신.
-  - `pnl > 0` → `streak + 1`, `streak = 0`.
-  - `localStorage("win_streak")` 영속 + 24h 무활동 시 reset.
-- `streak`/`bestStreak` 노출.
+---
 
-`src/components/dashboard/StreakBadge.tsx`:
-- `streak >= 3` 부터 표시. Cosmic Hero 우상단 또는 Triad 옆.
-  - 3~4 연승: 노란색 (`bg-yellow-500/20 text-yellow-300`)
-  - 5~9 연승: 골드 + glow (`shadow-[0_0_24px_hsl(var(--primary)/.6)]`)
-  - 10+ 연승: Crown 효과(`<CrownAura level=10 />`) + 백그라운드 별빛 펄스
-- 텍스트: "🔥 N연승 중", 매 갱신 시 framer-motion `scale [1,1.15,1]`.
-- 패배 시 `streak=0` 변경되며 fade-out + 작은 토스트 "연승 종료 — 다시 시작하세요".
+## PR-NFT-2 · 레버리지 게이트
 
-### C3. 출금 유도 타이밍
+```text
+base = phon ≥5000→100 | ≥1200→50 | ≥500→25 | else→10
+final = floor(base * (1 + min(boost_pct,100)/100))
+```
+- **베팅 RPC 진입부 강제**: `if requested_lev > get_my_max_leverage() then raise 'leverage_exceeds_phon_tier'` — 클라 우회 차단
+- 클라 미러: `src/lib/leverage.ts` + `src/hooks/use-my-power.ts` (`{phon, nfts, boostPct, maxLeverage, nextThreshold}` + realtime on `phon_balances`/`nft_collection`)
+- `<DashboardBetPanel>` 슬라이더 max 클램프 + "5,000 PHON에서 100x 해금" 안내
 
-`useDB` 또는 `wallet` 잔액 + `live_get_history` 누적 PnL 합산 훅 `useSessionProfit()`:
-- 세션 시작 시점 잔액 대비 **현재 +₩200,000 이상** OR **세션 PnL +30% 이상** 시 트리거.
-- 한 세션당 최대 1회, `sessionStorage("withdraw_prompt_shown")` 가드.
+---
 
-`src/components/dashboard/WithdrawNudge.tsx`:
-- 모달 (Dialog, 닫기 가능):
-  ```
-  💰 현재 수익 +₩320,000
-  👉 일부 출금해서 안전하게 보관하시겠어요?
-  [ 일부 출금 ]   [ 계속 플레이 ]
-  ```
-- "일부 출금" → `nav("/wallet?tab=withdraw&amount=<round>")`.
-- "계속 플레이" → 닫고 다음 임계점(+₩500,000)까지 재진입 잠금.
-- 텔레메트리: `withdraw_nudge_show / withdraw_nudge_click(action)`.
+## PR-NFT-3 · 폭발 UX (사용자 1차 추가 3종)
 
-## D. 미세 튜닝 (확정)
+### ① 입금 직후 폭발 토스트 + FIRST EMPEROR 모달
+```ts
+notify.success(`💥 ${data.nft_level.toUpperCase()} CROWN 획득`, {
+  description: `⚡ +${data.boost_pct}% · 🚀 ${data.max_leverage}x 해금`,
+});
+if (data.first_bonus) openFirstEmperorModal(data);
+```
+- `<FirstEmperorBurst>`: framer-motion scale-pop + Diamond CrownAura + 황금 파티클
 
-- 금액 기본값 = `localStorage("last_bet_amount")` 또는 100.
-- 배율 기본값 = `localStorage("last_leverage")` 또는 10×.
-- 데스크톱: LONG/SHORT sticky 패널 하단. 모바일: safe-area 위 sticky 거대 버튼, 차트 위로 배치.
+### ② 첫 입금 +10% (서버 + 24h 헤더 배지)
 
-## E. 변경 파일 최종 요약
+### ③ `<PowerHeader>` 화면 우상단 항상 고정
+- Layout `<EmpireBoosterTimer>` 옆 `fixed top-0 right-0 z-50`
+- `👑 GOLD · 💰 1,240 PHON · ⚡ +85% / MAX 100% · 🚀 50x` (cap 항상 표시)
+- 클릭 → `/empire/collection` (다음 티어까지 ₩20,000 남음 카드)
+- realtime 변경 시 0.4s pulse + Crown Aura 반짝임
 
-신규/수정:
-- 🆕 마이그레이션: `profiles.has_seen_guide`
-- ✏️ `src/pages/Guide.tsx`, `src/pages/Index.tsx`
-- ✏️ `src/App.tsx` (LegalConsentGate 제거)
-- ✏️ `src/components/Layout.tsx` (Accordion + Sheet)
-- 🆕 `src/components/dashboard/DashboardBetPanel.tsx` (B1·B2·B4·B5 + 미세튜닝, recovery resubmit ref 노출)
-- 🆕 `src/components/dashboard/RecoveryPrompt.tsx` (**C1**)
-- 🆕 `src/components/dashboard/StreakBadge.tsx` (**C2**)
-- 🆕 `src/components/dashboard/WithdrawNudge.tsx` (**C3**)
-- 🆕 `src/hooks/use-auto-bet.ts`
-- 🆕 `src/hooks/use-last-trade-result.ts` (paper + real store 통합)
-- 🆕 `src/hooks/use-win-streak.ts`
-- 🆕 `src/hooks/use-session-profit.ts`
-- ✏️ `src/components/WhaleStrikeRail.tsx` (compact + fallback)
-- ✏️ `src/components/trading/LightweightChartPanel.tsx` (`mode` prop)
-- ✏️ `src/pages/Dashboard.tsx` (Cosmic → WhaleRail compact → RecoveryPrompt → BetPanel → Collapsible / StreakBadge mount / WithdrawNudge mount)
-- ✏️ `src/index.css` (`@keyframes price-flash`)
-- ✏️ `src/lib/practiceMode.ts`, `PracticeModeBanner.tsx`, `PracticeModeGate.tsx`
+---
 
-영향 없음: Cosmic 컴포넌트, paper/real 트레이딩 엔진, Crown/Empire/FOMO RPC, 보안 트리거, 모든 RLS, 출금 RPC.
+## PR-NFT-4 · 행동 루프 (사용자 2차 FINAL 3종 — 돈 도는 핵심)
 
-## F. 최종 검증 (전부 통과해야 합격)
+### ④ 입금 후 즉시 베팅 강제 흐름 (이탈 30% 차단)
+- `<FirstEmperorBurst>` CTA `[🚀 지금 베팅하기]`
+- 클릭 → `closeModal()` → `betRef.current?.focusAmount()` + `scrollToBetPanel()` (Dashboard에서 `<DashboardBetPanel ref={betRef}>` 이미 존재)
+- 입금이 아닌 일반 NFT 획득(승급·시즌 정산)에는 모달 띄우지 않음 — 폭발은 입금 모먼트에 집중
 
-1. ✔ 3초 안에 LONG 클릭 가능
-2. ✔ Guide 1회 후 영구 우회 / 동의 모달 0회
-3. ✔ 첫 베팅 보너스 배너 → 클릭 → 사라짐
-4. ✔ LONG/SHORT 0.15s 시각·햅틱 피드백
-5. ✔ 상단 Whale 마키 항상 흐름
-6. ✔ 잠긴 배율 PHON 게이트 표시
-7. ✔ AUTO REPEAT 3.5s 자동 베팅 + 안전 중지
-8. ✔ **패배 직후 30s 내 RecoveryPrompt → 1클릭 재진입**
-9. ✔ **3/5/10 연승 시 StreakBadge 단계별 효과**
-10. ✔ **세션 +₩200K 이상 시 WithdrawNudge 1회 출현**
-11. ✔ 모바일 LONG/SHORT > 차트
-12. ✔ 그룹 사이드바 활성 그룹 자동 펼침
-13. ✔ 콘솔 에러 0, 60fps
+### ⑤ 베팅 실패 → 즉시 복구 루프 (`<RecoveryPrompt>` 강화)
+- 이미 마운트됨. 조건 `lastTrade.pnl < 0 && within30s` 유지
+- 보강:
+  - 손실액 + "🔁 동일 금액 재도전" 1탭 버튼 → `betRef.current?.resubmit()`
+  - 30초 카운트다운 바 (긴급감)
+  - 3회 연속 손실 시 "잠시 쉬세요" 카피로 자동 전환 (책임 게이밍 — Trust v2 정책 일치)
 
-승인하시면 다음 순서로 일괄 구현합니다:
-1. 마이그레이션 (`has_seen_guide`)
-2. Layout (그룹 Accordion + Sheet)
-3. 훅 4종 (`use-last-trade-result`, `use-win-streak`, `use-session-profit`, `use-auto-bet`)
-4. `DashboardBetPanel` + `LightweightChartPanel.mode`
-5. `RecoveryPrompt` / `StreakBadge` / `WithdrawNudge` / `WhaleStrikeRail.compact`
-6. `Dashboard.tsx` 통합 + Cosmic 위치 정리
-7. Guide / Index / App / Practice 정리
+### ⑥ 연승 중독 (`<StreakBadge>` 강화)
+- 이미 헤더 우측 마운트. 시각 단계 추가:
+  - `streak ≥ 3` 표시 시작
+  - `≥ 5` glow 펄스
+  - `≥ 10` `<CrownAura level={10}>` 적용 + `notify.success("🔥 10연승 — Crown Aura 발동")`
+- "지금 멈추면 손해" 느낌은 **시각만으로** — 강제 베팅 트리거는 추가하지 않음 (책임 게이밍)
+
+---
+
+## 사용자 원안 대비 결정
+| 원안 | 결정 | 사유 |
+|---|---|---|
+| `alter profiles add phon_balance` | 거절 | `phon_balances` + 가드 트리거 충돌 |
+| 클라 직접 PHON/NFT INSERT | 거절 | RLS·idempotency·민감컬럼 가드 위반 |
+| 클라만 leverage 검사 | 보강 | 서버 RPC 강제 |
+| 첫 입금 +10% / 폭발 모달 / Header 고정 | 채택 (PR-3) | |
+| 즉시 베팅 강제 / 복구 루프 / 연승 단계 | 채택 (PR-4) | |
+| RecoveryPrompt 자동 재베팅(무인터랙션) | 거절 | 1탭 명시 클릭 유지 (책임 게이밍 + Trust v2 카피 일관성) |
+
+---
+
+## 산출물 체크리스트
+- [ ] migration: `nft_collection` + RLS + 5 RPC + `credit_crypto_deposit` 응답 확장 + 베팅 RPC 가드 + `function_permissions_baseline` 등록
+- [ ] `src/lib/leverage.ts`, `src/hooks/use-my-power.ts`
+- [ ] `<PowerHeader>` (fixed top-right, cap 표시) · `<FirstEmperorBurst>` · `<NFTCard>` · `/empire/collection` (다음 티어 카드)
+- [ ] `<DashboardBetPanel>`: `focusAmount()` 노출 + `useMyPower` 클램프
+- [ ] 입금 confirm 흐름에 폭발 토스트 + first-bonus 모달 + scrollToBetPanel
+- [ ] `<RecoveryPrompt>` 카운트다운 + 3연패 휴식 카피
+- [ ] `<StreakBadge>` 5/10단계 glow + Aura
+- [ ] 메모리 Core 추가: PHON 레버리지 공식, boost cap 100, 첫 입금 +10, 입금 후 베팅 강제 흐름

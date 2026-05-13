@@ -3356,6 +3356,39 @@ export type Database = {
         }
         Relationships: []
       }
+      nft_collection: {
+        Row: {
+          boost_pct: number
+          created_at: string
+          id: string
+          level: string
+          source: string
+          source_ref: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          boost_pct?: number
+          created_at?: string
+          id?: string
+          level: string
+          source: string
+          source_ref?: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          boost_pct?: number
+          created_at?: string
+          id?: string
+          level?: string
+          source?: string
+          source_ref?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notification_preferences: {
         Row: {
           channel: string
@@ -6550,6 +6583,8 @@ export type Database = {
         Args: { _deposit_id: string }
         Returns: number
       }
+      _get_max_leverage_for: { Args: { _user: string }; Returns: number }
+      _get_total_boost_pct_for: { Args: { _user: string }; Returns: number }
       _grant_guild_crown: {
         Args: {
           _amount: number
@@ -7426,6 +7461,18 @@ export type Database = {
         }
       }
       get_my_legal_consent_status: { Args: never; Returns: Json }
+      get_my_max_leverage: { Args: never; Returns: number }
+      get_my_nft_collection: {
+        Args: never
+        Returns: {
+          boost_pct: number
+          created_at: string
+          id: string
+          level: string
+          source: string
+          type: string
+        }[]
+      }
       get_my_pending_deposits: {
         Args: never
         Returns: {
@@ -7462,8 +7509,10 @@ export type Database = {
           severity: string
         }[]
       }
+      get_my_total_boost_pct: { Args: never; Returns: number }
       get_my_weekly_referral_rank: { Args: never; Returns: Json }
       get_next_empire_day: { Args: never; Returns: string }
+      get_next_nft_threshold: { Args: never; Returns: Json }
       get_pay_receive_address: { Args: never; Returns: string }
       get_payout_ops_stats_24h: { Args: never; Returns: Json }
       get_permission_change_log: {
@@ -7592,6 +7641,14 @@ export type Database = {
           _wd_delta: number
         }
         Returns: undefined
+      }
+      grant_nft_for_deposit: {
+        Args: { _is_first: boolean; _phon: number; _ref: string; _user: string }
+        Returns: Json
+      }
+      grant_phon_for_deposit: {
+        Args: { _phon: number; _ref: string; _user: string }
+        Returns: number
       }
       grant_recovery_bonus: {
         Args: { p_amount: number; p_source?: string }

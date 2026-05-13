@@ -12,6 +12,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useAutoBet } from "@/hooks/use-auto-bet";
 import { notify } from "@/lib/notify";
 import { track } from "@/lib/telemetry";
+import { useMyPower } from "@/hooks/use-my-power";
 
 type Side = "long" | "short";
 
@@ -30,6 +31,7 @@ const LEVERAGE_GATES: Array<{ x: number; phon: number }> = [
 
 export interface BetPanelHandle {
   resubmit: () => void;
+  focusAmount: () => void;
 }
 
 /**
@@ -60,6 +62,8 @@ const DashboardBetPanel = forwardRef<BetPanelHandle>(function DashboardBetPanel(
     try { return sessionStorage.getItem(FIRST_TRADE_KEY) === "1"; } catch { return false; }
   });
   const [flash, setFlash] = useState<Side | null>(null);
+  const amountInputRef = useRef<HTMLInputElement | null>(null);
+  const { maxLeverage: serverMaxLev } = useMyPower();
 
   const amountNum = Math.max(0, parseFloat(amount) || 0);
 
@@ -108,6 +112,11 @@ const DashboardBetPanel = forwardRef<BetPanelHandle>(function DashboardBetPanel(
 
   useImperativeHandle(ref, () => ({
     resubmit: () => { submit(lastSideRef.current); },
+    focusAmount: () => {
+      amountInputRef.current?.focus();
+      amountInputRef.current?.select();
+      amountInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    },
   }), []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // B5 — AUTO REPEAT
@@ -178,6 +187,7 @@ const DashboardBetPanel = forwardRef<BetPanelHandle>(function DashboardBetPanel(
             type="number"
             inputMode="decimal"
             min={0}
+            ref={amountInputRef}
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             className="mt-1 bg-background/60 text-lg font-bold tabular-nums h-12"
@@ -225,6 +235,12 @@ const DashboardBetPanel = forwardRef<BetPanelHandle>(function DashboardBetPanel(
             <div className="mt-1.5 text-[10px] text-amber-400/90 flex items-center gap-1">
               <Lock className="w-2.5 h-2.5" />
               {lockedGateForCurrent.x}× 해금까지 PHON {(lockedGateForCurrent.phon - phon).toLocaleString()} 더 필요
+            </div>
+          )}
+          {serverMaxLev > 0 && leverage > serverMaxLev && (
+            <div className="mt-1 text-[10px] text-rose-400 flex items-center gap-1">
+              <Lock className="w-2.5 h-2.5" />
+              현재 최대 {serverMaxLev}× — NFT 부스트 시 더 높은 배율 해금
             </div>
           )}
         </div>

@@ -59,6 +59,22 @@ export default function Dashboard() {
   useEffect(() => { void refreshWallet(); }, []);
   useWinback();
 
+  // FirstEmperorBurst CTA + ?focus=bet → focus bet panel
+  useEffect(() => {
+    const focus = () => betRef.current?.focusAmount();
+    const onEvt = () => focus();
+    window.addEventListener("phonara:focus-bet", onEvt);
+    try {
+      const url = new URL(window.location.href);
+      if (url.searchParams.get("focus") === "bet") {
+        setTimeout(focus, 400);
+        url.searchParams.delete("focus");
+        window.history.replaceState({}, "", url.toString());
+      }
+    } catch {}
+    return () => window.removeEventListener("phonara:focus-bet", onEvt);
+  }, []);
+
   useEffect(() => {
     if (!user || typeof window === "undefined") {
       setAllowOnboardingV2(false);
