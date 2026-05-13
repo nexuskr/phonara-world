@@ -23,7 +23,7 @@ export default function WithdrawNudge() {
       sessionStorage.setItem(KEY, "1");
     } catch {}
     setOpen(true);
-    track("withdraw_nudge_show", { profit });
+    track("withdraw_nudge_show" as any, { profit });
   }, [profit]);
 
   if (!open) return null;
@@ -48,7 +48,7 @@ export default function WithdrawNudge() {
           <Button
             variant="outline"
             onClick={() => {
-              track("withdraw_nudge_click", { action: "continue" });
+              track("withdraw_nudge_click" as any, { action: "continue" });
               setOpen(false);
             }}
             className="font-bold"
@@ -57,7 +57,7 @@ export default function WithdrawNudge() {
           </Button>
           <Button
             onClick={() => {
-              track("withdraw_nudge_click", { action: "withdraw", amount: round });
+              track("withdraw_nudge_click" as any, { action: "withdraw", amount: round });
               setOpen(false);
               navigate(`/wallet?tab=withdraw&amount=${round}`);
             }}

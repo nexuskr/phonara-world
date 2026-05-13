@@ -21,7 +21,7 @@ export default function RecoveryPrompt({ onResubmit }: Props) {
   const visible = !!last && last.pnl < 0 && (!dismissed || last.closedAt > dismissed);
 
   useEffect(() => {
-    if (visible) track("recovery_prompt_show", { pnl: last!.pnl });
+    if (visible) track("recovery_prompt_show" as any, { pnl: last!.pnl });
   }, [visible, last]);
 
   return (
@@ -43,7 +43,7 @@ export default function RecoveryPrompt({ onResubmit }: Props) {
           </div>
           <button
             onClick={() => {
-              track("recovery_prompt_click", { action: "resubmit", pnl: last.pnl });
+              track("recovery_prompt_click" as any, { action: "resubmit", pnl: last.pnl });
               onResubmit();
               setDismissed(Date.now());
             }}
@@ -52,7 +52,7 @@ export default function RecoveryPrompt({ onResubmit }: Props) {
             <RotateCcw className="w-4 h-4" /> 재도전
           </button>
           <button
-            onClick={() => { track("recovery_prompt_click", { action: "dismiss" }); setDismissed(Date.now()); }}
+            onClick={() => { track("recovery_prompt_click" as any, { action: "dismiss" }); setDismissed(Date.now()); }}
             aria-label="닫기"
             className="shrink-0 h-12 w-10 rounded-xl border border-border/40 text-muted-foreground hover:text-foreground"
           >
