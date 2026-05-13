@@ -40,6 +40,7 @@ const CronJobsCard         = lazy(() => import("@/components/admin/CronJobsCard"
 const OpsReport            = lazy(() => import("./OpsReport"));
 const PayConsole           = lazy(() => import("@/components/admin/PayConsole"));
 const AutoRulesAdmin       = lazy(() => import("@/components/admin/AutoRulesAdmin"));
+const ThresholdsAdmin      = lazy(() => import("@/components/admin/ThresholdsAdmin"));
 
 // Growth
 const AbExperimentsAdmin   = lazy(() => import("@/components/admin/AbExperimentsAdmin"));
