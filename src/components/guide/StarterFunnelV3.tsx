@@ -280,20 +280,7 @@ function SimplifyScene({ onNext }: { onNext: () => void }) {
 /* ─────────────── SCENE 3 ─ FOMO LOOP ─────────────── */
 
 function FomoScene({ onFinish }: { onFinish: (target: string) => void }) {
-  const [feed, setFeed] = useState<{ id: number; text: string }[]>(() =>
-    Array.from({ length: 5 }, (_, i) => ({ id: -i, text: makeFomoLine() }))
-  );
-  const idRef = useRef(1);
-
-  useEffect(() => {
-    const t = setInterval(() => {
-      setFeed((prev) => {
-        const next = [{ id: idRef.current++, text: makeFomoLine() }, ...prev];
-        return next.slice(0, 6);
-      });
-    }, 1200);
-    return () => clearInterval(t);
-  }, []);
+  const online = useOnline();
 
   return (
     <motion.section
@@ -315,26 +302,13 @@ function FomoScene({ onFinish }: { onFinish: (target: string) => void }) {
         밀립니다.
       </motion.div>
 
-      <div className="mt-8 w-full max-w-sm h-[200px] relative overflow-hidden rounded-2xl border border-white/10 bg-black/40 backdrop-blur">
-        <div className="absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-black/80 to-transparent z-10 pointer-events-none" />
-        <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-black/80 to-transparent z-10 pointer-events-none" />
-        <div className="px-4 py-3 space-y-2">
-          <AnimatePresence initial={false}>
-            {feed.map((item) => (
-              <motion.div
-                key={item.id}
-                initial={{ opacity: 0, y: -16, scale: 0.96 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.96 }}
-                transition={{ duration: 0.35 }}
-                className="flex items-center gap-2 text-left text-sm font-bold text-white/90"
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_hsl(var(--success)/0.6)] flex-shrink-0" />
-                <span className="truncate">{item.text}</span>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
+      <div className="mt-5 inline-flex items-center gap-1.5 text-[10px] tracking-[0.32em] text-gold/85 font-black">
+        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+        SIMULATION ACTIVE · {online.toLocaleString()}명 제국에 입성 중
+      </div>
+
+      <div className="mt-4 w-full max-w-sm">
+        <ActivityEventTicker variant="hero" limit={5} />
       </div>
 
       <motion.button
