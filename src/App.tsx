@@ -83,6 +83,7 @@ const Trust = lazy(() => import("./pages/Trust.tsx"));
 const LegalDoc = lazy(() => import("./pages/LegalDoc.tsx"));
 const LiveOverlay = lazy(() => import("./pages/LiveOverlay.tsx"));
 const InfluencerLanding = lazy(() => import("./pages/InfluencerLanding.tsx"));
+const Vip = lazy(() => import("./pages/Vip.tsx"));
 const ForcedShareDialog = lazy(() => import("./components/share/ForcedShareDialog.tsx"));
 import { PracticeModeBanner } from "./components/practice/PracticeModeBanner";
 import { PracticeModeGate } from "./components/practice/PracticeModeGate";
