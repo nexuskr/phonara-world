@@ -111,7 +111,7 @@ export default function AdminLayout() {
 
           {/* Body */}
           <main className="flex-1 overflow-y-auto">
-            <div className="container max-w-screen-2xl py-5">
+            <div className="container max-w-screen-2xl py-5 lg:pr-[340px]">
               {requiresAal2 ? (
                 <AdminAal2Gate>
                   <Outlet />
@@ -121,6 +121,16 @@ export default function AdminLayout() {
               )}
             </div>
           </main>
+
+          {/* God Mode Panel — desktop fixed right, mobile floating drawer */}
+          <Suspense fallback={null}>
+            <GodModePanel />
+          </Suspense>
+        </SidebarInset>
+      </div>
+    </SidebarProvider>
+  );
+}
         </SidebarInset>
       </div>
     </SidebarProvider>
