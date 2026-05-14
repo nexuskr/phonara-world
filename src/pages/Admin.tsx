@@ -44,7 +44,7 @@ import PressCurationPanel from "@/components/admin/PressCurationPanel";
 const SENSITIVE_ADMIN_TABS = [
   "server_wd", "server_dep", "users", "packages", "coin",
   "perms", "aml", "payout_audit", "security", "ops", "viral_forensics",
-  "accounting", "bot_mix", "trust_v2", "founding", "kernel", "oracle", "economy",
+  "accounting", "bot_mix", "trust_v2", "founding", "kernel", "oracle", "economy", "press",
 ];
 import { Activity, Lock, Bot, Flame, FlaskConical, HeartPulse, Gauge, KeyRound, HeartHandshake, Cpu, Radio } from "lucide-react";
 import TrustV2Admin from "@/components/admin/TrustV2Admin";
