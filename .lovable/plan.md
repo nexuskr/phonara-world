@@ -1,137 +1,158 @@
-# 🛠️ Admin Self-Heal Console — 운영자 단독 운영 모드
 
-> 목표: **앞으로 사이트에서 오류가 나도 팀장님이 어드민에 들어가서 직접 진단·복구·재시작**할 수 있게, 한 페이지에 "운영자 손이 필요한 모든 액션"을 모은 풀버전을 만듭니다. 저(AI)에게 매번 코드를 고쳐달라고 안 해도 되는 게 핵심.
+# Operation Empire Nova — Phase C 실행 플랜
 
----
-
-## 1. 전체 구성 — `/admin/ops/self-heal` (신규 단일 진입점)
-
-기존 사이드바 **운영(Operations)** 섹션 최상단에 `🛟 Self-Heal 콘솔`을 추가합니다 (AAL2 보호). 한 페이지에 8개 패널을 탭으로 묶음:
-
-```text
-┌─ Self-Heal Console (AAL2) ────────────────────────────────────┐
-│ [개요] [진단] [큐/잡] [캐시] [Realtime] [DB] [엣지함수] [긴급] │
-└────────────────────────────────────────────────────────────────┘
-```
-
-### Tab 1. 개요 (Health Overview)
-- 한눈에 보는 시스템 신호등: DB·Auth·Edge·Realtime·Oracle·Cron 6종
-- 최근 1시간 / 24시간 에러 카운트 (`error_logs`, `anomaly_events`)
-- 최근 5분 활성 사용자 / 진행 중 베팅 / 대기 출금 / 동결 계정 수
-- "지금 해야 할 일" 액션 카드 자동 생성 (예: "출금 12건 대기 → 처리하기")
-
-### Tab 2. 진단 (Diagnostics)
-- **자동 헬스체크 12종** — 각 항목 실행/PASS·FAIL 표시, 결과 JSON 펼쳐보기
-  - Oracle 졸업 게이트 5종 (기존 `admin_get_oracle_swap_readiness`)
-  - 권한 drift (`check_permission_drift`)
-  - Stuck LPI 인텐트 (`monitor_lpi_stuck_reserved`)
-  - Cron 지연 (마지막 실행 시각 vs 예상)
-  - 미정산 가드 (settlement queue lag)
-  - RLS 정책 누락 테이블 스캔
-  - 트리거 비활성 감지
-  - 미해결 anomaly 상위 10
-- **"전체 진단 실행"** 버튼 — 전 항목 순차 실행 + 결과 다운로드(JSON)
-
-### Tab 3. 큐 / 잡 (Queues & Jobs)
-- 출금/충전/AML/환불 대기 큐 카운트 + "큐 처리 페이지로 이동"
-- Cron 작업 목록 + 마지막 실행 시각 + **수동 트리거 버튼** (지원되는 RPC만)
-  - `settle_ended_founding_seasons`, `settle_guild_weekly`, `reclaim_stale_intents`, `monitor_lpi_stuck_reserved`, `oracle-consensus-tick` 등
-- 실행 결과 인라인 토스트 + 감사로그 자동 기록
-
-### Tab 4. 캐시 / 클라이언트 상태 (Cache & Client)
-- "전체 사용자 강제 리로드" (브로드캐스트 채널로 `force_refresh` 송신 → 클라이언트 자동 새로고침)
-- "특정 유저 세션 무효화" (user_id 입력 → `auth.admin.signOut`)
-- "Realtime 채널 통계" — 활성 구독자 수, 가장 바쁜 채널 Top 10
-- 클라 React Query 키 무효화 신호 (전역/유저별)
-
-### Tab 5. Realtime 헬스
-- 채널 연결률 / 재연결 횟수 / 최근 에러
-- "Realtime 재시작 신호 보내기" (전 클라이언트 reconnect)
-- 최근 30분 dropped events 카운트
-
-### Tab 6. DB 도우미
-- **테이블 행 카운트 대시보드** (주요 25개 테이블)
-- **마이그레이션 상태** — 마지막 적용 시각
-- **느린 쿼리 Top 10** (pg_stat_statements 노출되면)
-- **읽기 전용 SQL 실행기** — admin만, SELECT/EXPLAIN만 허용 (서버 가드)
-  - 결과 테이블 + CSV 다운로드
-  - 실행 이력 자동 감사로그
-
-### Tab 7. 엣지 함수
-- 배포된 함수 목록 + 마지막 호출 시각 + 24h 호출/에러 수
-- "함수 재호출 테스트" 버튼 (페이로드 입력 가능)
-- 최근 100개 로그 인라인 뷰 (검색 + 레벨 필터)
-
-### Tab 8. 긴급 (Emergency / Kill Switch) — 빨간 영역
-- 🔴 **거래 중단** (전 사용자 베팅/출금 일시 정지 플래그)
-- 🔴 **출금 중단** (출금만 정지)
-- 🔴 **신규 가입 중단**
-- 🔴 **유지보수 모드 ON/OFF** (전 사용자에게 maintenance 배너)
-- 🟡 **특정 유저 동결/해제** (`is_account_frozen` 즉시 토글)
-- 🟡 **공지 즉시 푸시** (전체 토스트 + Lounge 핀)
-- 모든 액션은 사유(reason) 필수 + 감사로그 + 슬랙/이메일 알림
+**목표**: 결제·이차시장·바이럴 루프를 한 번에 점화시켜 “MOR(Most Addictive·Profitable·Legendary)” 단계로 진입.
+**원칙**: 기존 v3.2 kernel / Oracle / PHON / NFT / Crown War 0% 변경. 신규 파일 ≤ 8개. 모든 RPC는 SECURITY DEFINER + `function_permissions_baseline` 등록.
 
 ---
 
-## 2. 백엔드 — 신규 RPC & 테이블
+## Week 1 — 💰 Monetization Engine (C-1)
 
-### 신규 테이블
-- `platform_kill_switches(key text pk, enabled bool, reason text, set_by uuid, set_at timestamptz)`
-  - 키: `trading_halt`, `withdrawals_halt`, `signup_halt`, `maintenance_mode`
-- `admin_action_log(id, admin_id, action, target, payload jsonb, result jsonb, created_at)`
-  - 모든 Self-Heal 액션 자동 기록
+### 1.1 NFT Atelier 유료화 + RNG
+기존 `fuse_nft` RPC를 확장 (signature 유지, 내부 로직만 교체):
+- **PHON 비용**: Bronze→Gold 250 PHON / Gold→Diamond 750 PHON (`atelier_config` 테이블, admin 실시간 조정)
+- **결과 분기** (서버 RNG, idempotent):
+  - 80% 성공 → 상위 NFT 1개
+  - 15% 실패 → 재료 3개 중 1개만 반환, PHON 50% 소각
+  - 5% 잭팟 → 상위 NFT + boost +10%p (cap 50%)
+- **새 테이블**: `atelier_runs` (user, cost, outcome, jackpot, refund_nft_id) — admin/owner SELECT, RPC만 INSERT
+- **알림**: 잭팟 시 `enqueue_fomo_notification('atelier_jackpot')` → CrownThroneOverlay와 동일 톤의 골드 burst
 
-### 신규 RPC (admin-only, AAL2 강제)
-- `admin_run_healthcheck(name text)` → 단일 항목 실행
-- `admin_run_all_healthchecks()` → 12종 일괄
-- `admin_trigger_cron(job_name text)` → 화이트리스트만
-- `admin_set_kill_switch(key, enabled, reason)`
-- `admin_get_kill_switches()`
-- `admin_force_user_signout(user_id)`
-- `admin_broadcast_refresh(scope: 'all' | user_id)`
-- `admin_exec_readonly_sql(sql text)` — 정규식 가드 (`^\s*(select|explain|with)\b`, 세미콜론 1개), 5초 타임아웃, LIMIT 1000 강제
-- `admin_get_table_counts()` — 주요 테이블 24개
-- `admin_get_realtime_stats()`
-- `admin_get_edge_function_stats()`
+### 1.2 Marketplace 1.0
+- **신규 테이블**: `nft_listings`(nft_id, seller, price_phon, kind: fixed|auction, ends_at, status), `nft_bids`, `nft_trades`
+- **RPC 4종**: `list_nft(nft_id, price, kind, duration)` / `cancel_listing(id)` / `place_bid(listing_id, amount)` / `buy_nft(listing_id)` — 모두 `FOR UPDATE`로 race 방지
+- **수수료**: 6% 플랫폼 (3% burn + 3% Crown Pool 적립)
+- **NFT 소유권 이전**: `nft_collection.user_id` UPDATE는 `marketplace_transfer_nft()` internal helper만 가능 — `guard_nft_ownership` 트리거 추가
+- **UI**: `/marketplace` 신규 페이지 1개 (그리드 + 필터 + 디테일 시트). NftAtelier 페이지 상단 “보유 NFT 판매” 버튼만 추가.
 
-### 클라이언트 가드 추가
-- `useKillSwitches()` 훅을 루트에 마운트 → `trading_halt`/`withdrawals_halt` 켜지면 베팅·출금 버튼 자동 비활성 + 안내
-- `maintenance_mode` ON → 비-admin은 전체 화면 유지보수 페이지
+### 1.3 Crown War Legendary 자동 발행
+- 기존 주간/시즌 정산 cron 끝부분에 `mint_legendary_for_winner(season_id, user_id)` 호출
+- 변종 2종: `golden_trump_crown` (boost +35%) / `starship_musk_crown` (boost +35%, leverage cap +1단계)
+- 시즌당 1장 한정 — `nft_collection.source='crown_war_legendary'` + `source_ref=season_id` UNIQUE
 
----
-
-## 3. 자동화 — "운영자가 안 봐도 되는" 영역
-- Cron `every 5min` `auto_heal_tick()` 실행:
-  - stale LPI > 120s → 자동 reclaim
-  - oracle 5게이트 fail 발생 → admin 알림(`anomaly_events` severity=high)
-  - error_logs 5분 내 50건 초과 → kill switch 후보 알림 (자동 차단은 X, 알림만)
-- 결과는 `auto_heal_log`에 기록, Self-Heal Tab 1 개요에 노출
+### 1.4 Emperor Daily Dividend
+- `daily_emperor_dividend()` cron 매일 00:10 KST: 직전 24h Crown 1위에게 Crown Pool의 1% PHON 지급 (`phon_balances` + 이벤트 로그)
 
 ---
 
-## 4. UI / 컴포넌트 (frontend)
-- `src/pages/admin/ops/SelfHeal.tsx` — 8탭 컨테이너
-- `src/components/admin/self-heal/` 하위 8개 패널 컴포넌트
-- 디자인 토큰만 사용 (semantic), 빨강 영역은 `destructive` 토큰
-- 모든 액션은 `notify` 사용, 빈/로딩 상태는 `EmptyState`/`LoadingList`
-- `<AdminAal2Gate>`로 페이지 전체 보호
-- 사이드바 `_nav.ts` operations 최상단에 `self-heal` 항목 추가 + ⌘K 등록
+## Week 2 — 📣 Imperial Story Engine (C-2) + 🌌 Cosmos/Journey Backend (C-3)
+
+### 2.1 Story Engine
+- **신규 테이블**: `imperial_stories`(kind, actor_masked, payload jsonb, headline_ko/en/ja/vi, hashtags, created_at) — public SELECT (마스킹된 닉만)
+- **트리거 5종** (event → row insert):
+  1. `crown_events` (new emperor) → "👑 익명#A1B2 just dethroned the Empire."
+  2. `atelier_runs` jackpot → "💎 1-in-20 Diamond fusion ignited at 03:42 KST."
+  3. `nft_trades` ≥ 1000 PHON → "🛒 Legendary Crown traded for 12,400 PHON."
+  4. `crown_events` 3연속 1위 유지 → "🔥 Emperor #X holds the throne for 3 days straight."
+  5. `recompute_empire_level` Baron+ 승급 → "🚀 New Baron joins the Multi-Planetary Empire."
+- **클라**: `<ImperialStoryRail />` (Index/Dashboard 상단), `<StoryShareButton />` 1-click X 공유 (Web Intent URL, `#EmpireNova #MakeEmpireGreatAgain #MultiPlanetary` 자동)
+- **i18n**: 헤드라인 4언어를 트리거 안에서 미리 생성 (런타임 번역 X)
+
+### 2.2 Galaxy Emperor 100-Seat Auction
+- 기존 `founding_seasons` 재활용: `kind='galaxy_emperor'` 추가, 100석, 입찰가 시작 $30,000 상당 PHON
+- 신규 RPC: `bid_galaxy_seat(amount)` / 정산은 기존 `settle_ended_founding_seasons()` 분기 추가
+- 좌석 보유자: 30일 자동 Booster (수수료 -50% / Crown ×2 / leverage cap +2단계)
+
+### 2.3 Imperial Journey 100-Stage Auto-Reward
+- `imperial_journey_stages`(stage 1..100, requirement_jsonb, reward_jsonb) 시드
+- RPC: `claim_journey_stage(stage)` (서버에서 조건 검증) / `get_journey_progress()` (현재 stage + “다음 보상까지” 거리: PHON / 거래수 / Crown)
+- `<ImperialJourneyMap />`에 progress bar + "Bronze Crown까지 $87" 라이브 라인 추가 (Phase A 약속한 보강)
 
 ---
 
-## 5. 안전장치
-- 모든 파괴적 액션: **사유 입력 필수 + 2단계 확인 다이얼로그 + AAL2 + 30일 감사로그**
-- `admin_exec_readonly_sql`: SELECT/EXPLAIN/WITH만, statement_timeout 5s, 결과 1000행 cap, 결과+쿼리 자동 로그
-- Kill switch 토글은 슬랙/이메일 즉시 통보 (선택)
-- 모든 RPC는 `function_permissions_baseline`에 등록 → drift 감지 자동 포함
+## Week 3 — ✨ Polish & Global Scale (C-4)
+
+### 3.1 i18n 4언어 마감
+- 신규 키 (Atelier·Marketplace·Story·Galaxy·Journey) ko/en/ja/vi 채움
+- `scripts/i18n-audit.ts`로 누락 키 0 보장
+
+### 3.2 모바일 60fps QA
+- CrownThroneOverlay: particle 22→12, `will-change: transform`, 저사양 감지 시 burst skip
+- Atelier RNG 애니메이션: GPU layer 분리, `prefers-reduced-motion` 존중
+- ImperialStoryRail: `content-visibility: auto`
+- Lighthouse 모바일 95+ 목표 (LCP < 2.5s, CLS < 0.05, INP < 200ms)
+
+### 3.3 Launch Readiness
+- Self-Heal Console에 "Atelier kill switch" / "Marketplace kill switch" 추가
+- `admin_get_phase_c_metrics()` RPC + `/admin/kpi`에 Phase C 패널 (atelier 매출·marketplace 거래·story 노출·journey 클레임)
 
 ---
 
-## 6. 산출물 요약
-- 신규 페이지 1개 (`/admin/ops/self-heal`) + 8개 패널 컴포넌트
-- 신규 마이그레이션 1개: 2개 테이블 + 12개 RPC + 1개 cron + RLS
-- 사이드바 / ⌘K 항목 추가
-- 클라이언트 kill-switch 훅 + maintenance 모드 페이지
-- 문서 1장: 운영자용 "오류 났을 때 30초 가이드"
+## 📊 정확한 수치표
 
-이걸 끝내면 일반적인 운영 이슈(큐 막힘, 캐시 꼬임, 특정 유저 문제, 세션 잠김, 임시 차단, 진단)는 **저 없이 팀장님 혼자** 해결 가능합니다. 코드 버그(React 에러 같은 건)는 여전히 제가 필요하지만, 그 외 90%는 셀프 처리 가능.
+| 항목 | 값 |
+|---|---|
+| Bronze→Gold 비용 | **250 PHON** |
+| Gold→Diamond 비용 | **750 PHON** |
+| 성공 확률 | 80% |
+| 실패 확률 | 15% (재료 1개 반환, 50% PHON burn) |
+| 잭팟 확률 | 5% (+10%p boost, cap 50) |
+| Marketplace 수수료 | 6% (3% burn / 3% Crown Pool) |
+| Galaxy Emperor 좌석 | 100석, 시작가 $30,000 상당 |
+| Galaxy Booster 기간 | 30일 |
+| Emperor Daily Dividend | Crown Pool의 1% / day |
+
+---
+
+## 📰 Story Card 샘플 (4언어 중 EN)
+
+1. `👑 New Emperor crowned — #A1B2 dethroned the Empire at 03:42 KST.`
+2. `💎 Diamond strike — 1-in-20 jackpot ignited at the Atelier.`
+3. `🛒 Legendary Crown sold for 12,400 PHON — secondary market is live.`
+4. `🔥 Triple reign — Emperor #X holds the throne for 72 hours.`
+5. `🚀 New Baron — joining 38 others on the road to Multi-Planetary status.`
+
+---
+
+## ⚠️ 리스크 & 대응
+
+| 리스크 | 대응 |
+|---|---|
+| Marketplace 자전거래 / wash trading | 동일 IP·디바이스 fp 거래 차단 + `anomaly_events('wash_trade')` |
+| Atelier RNG 신뢰 이슈 | 결과 jsonb + server seed hash를 `atelier_runs`에 영구 기록, 사용자 검증 페이지 |
+| 잭팟 인플레이션 | boost cap 50%, daily atelier_runs 25회/유저 제한 |
+| Galaxy 좌석 매크로 | 입찰당 50 PHON 보증금 + 캡차 + AAL2 |
+| 트래픽 폭증 (런칭) | Self-Heal Console kill switch 4종 + Story Engine은 트리거 기반(폴링 없음) |
+
+---
+
+## 🛠 기술 변경 요약
+
+**신규 파일 (7개)**:
+- `src/pages/Marketplace.tsx`
+- `src/components/marketplace/ListingDetailSheet.tsx`
+- `src/components/story/ImperialStoryRail.tsx`
+- `src/components/story/StoryShareButton.tsx`
+- `src/pages/GalaxyAuction.tsx`
+- `supabase/migrations/{week1}.sql` (atelier 유료화 + marketplace + legendary)
+- `supabase/migrations/{week2}.sql` (story engine + galaxy + journey stages)
+
+**수정 파일 (5개)**:
+- `src/pages/NftAtelier.tsx` (PHON 비용 표시 + RNG 결과 모달)
+- `src/components/journey/ImperialJourneyMap.tsx` ("다음 보상까지" 라인)
+- `src/App.tsx` (라우트 3개 추가)
+- `src/pages/Index.tsx` + `Dashboard.tsx` (StoryRail 마운트)
+- `src/pages/AdminKPI.tsx` (Phase C 패널)
+
+**RPC 신규 (10개)**: `list_nft` / `cancel_listing` / `place_bid` / `buy_nft` / `marketplace_transfer_nft`(internal) / `bid_galaxy_seat` / `claim_journey_stage` / `get_journey_progress` / `daily_emperor_dividend` / `admin_get_phase_c_metrics` — 모두 `function_permissions_baseline` 등록.
+
+---
+
+## 🚀 Launch Copy (Trump × Musk)
+
+> **Empire Nova is here.**
+> The greatest NFT empire in the history of the world — believe me — just went live.
+> Fuse, trade, conquer. Win the throne, mint Legendary Crowns, collect daily dividends.
+> 100 Galaxy Emperor seats. One Empire. Multi-Planetary by design.
+> #EmpireNova #MakeEmpireGreatAgain #MultiPlanetary 🗡️🚀
+
+---
+
+## ✅ 승인 후 즉시 시작 순서
+1. Week 1 마이그레이션 (atelier 유료화 + marketplace 테이블/RPC + legendary mint)
+2. Marketplace UI + Atelier 결과 모달
+3. Story Engine 트리거 + Rail 컴포넌트
+4. Galaxy Auction + Journey 100-stage
+5. i18n 마감 + 모바일 QA + Self-Heal kill switch
+
+**“Implement plan” 누르시면 Week 1부터 차례로 실행합니다.**

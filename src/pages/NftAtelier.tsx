@@ -96,25 +96,43 @@ export default function NftAtelier() {
       const ids = Array.from(selected);
       const { data, error } = await (supabase.rpc as any)("fuse_nft", { _nft_ids: ids });
       if (error) throw error;
-      const r = data as { ok: boolean; new_nft_id: string; type: NFTType; level: NFTLevel; boost_pct: number };
+      const r = data as {
+        ok: boolean;
+        outcome: "success" | "fail" | "jackpot";
+        cost_phon: number;
+        refund_phon: number;
+        new_nft_id: string | null;
+        refund_nft_id: string | null;
+        type: NFTType;
+        level: NFTLevel;
+        boost_pct: number;
+      };
       if (!r?.ok) throw new Error("fusion_failed");
-      // 황제 처형식 스타일 burst
       setBurst({
-        id: r.new_nft_id,
+        id: (r.new_nft_id ?? r.refund_nft_id ?? "x"),
         type: r.type,
         level: r.level,
         boost_pct: r.boost_pct,
-        source: "fusion",
+        source: r.outcome === "jackpot" ? "fusion_jackpot" : r.outcome === "fail" ? "fusion_fail_refund" : "fusion",
         created_at: new Date().toISOString(),
       });
       setSelected(new Set());
       setSelectedGroup(null);
-      notify.success("합성 성공", { description: `${TYPE_LABEL[r.type]} ${LEVEL_LABEL[r.level]} 1장이 주조되었습니다 (+${r.boost_pct}% Boost)` });
+      if (r.outcome === "jackpot") {
+        notify.success("💎 잭팟!", { description: `1-in-20 — ${TYPE_LABEL[r.type]} ${LEVEL_LABEL[r.level]} +${r.boost_pct}% (보너스 부스트)` });
+      } else if (r.outcome === "success") {
+        notify.success("합성 성공", { description: `${TYPE_LABEL[r.type]} ${LEVEL_LABEL[r.level]} +${r.boost_pct}% Boost` });
+      } else {
+        notify.warning("합성 실패", { description: `재료 1장 + ${r.refund_phon} PHON 환불되었습니다` });
+      }
       refresh();
-      window.setTimeout(() => setBurst(null), 3200);
+      window.setTimeout(() => setBurst(null), 3500);
     } catch (e: any) {
       const msg = e?.message ?? String(e);
       const friendly =
+        msg.includes("insufficient_phon") ? "PHON이 부족합니다 (Bronze→Gold 250 / Gold→Diamond 750)" :
+        msg.includes("atelier_daily_limit_exceeded") ? "오늘의 합성 한도(25회)를 모두 사용했습니다." :
+        msg.includes("atelier_disabled") ? "Atelier가 일시 점검 중입니다." :
         msg.includes("cannot_fuse_diamond") ? "다이아몬드는 더 이상 합성할 수 없습니다." :
         msg.includes("fuse_requires_same_type") ? "같은 type 3장만 합성할 수 있습니다." :
         msg.includes("fuse_requires_same_level") ? "같은 등급 3장만 합성할 수 있습니다." :
@@ -125,6 +143,13 @@ export default function NftAtelier() {
       setBusy(false);
     }
   }, [selected, refresh]);
+
+  // Cost for currently selected group
+  const fusionCost = useMemo(() => {
+    if (!selectedGroup) return 0;
+    const lvl = selectedGroup.split("|")[1] as NFTLevel;
+    return lvl === "bronze" ? 250 : lvl === "gold" ? 750 : 0;
+  }, [selectedGroup]);
 
   const totalBoost = useMemo(() => nfts.reduce((s, n) => s + (n.boost_pct ?? 0), 0), [nfts]);
 
@@ -149,6 +174,9 @@ export default function NftAtelier() {
             <div className="px-2 py-1 rounded-md bg-primary/10 text-primary font-mono tabular-nums">
               +{totalBoost}% Boost
             </div>
+            <Button size="sm" variant="outline" onClick={() => navigate("/marketplace")} className="h-7">
+              마켓플레이스 →
+            </Button>
           </div>
         </div>
       </div>
@@ -200,7 +228,7 @@ export default function NftAtelier() {
                   <span className="text-[11px] text-muted-foreground tabular-nums">{g.items.length}장</span>
                   {g.fusable && (
                     <span className="ml-auto text-[10px] tracking-wider px-2 py-0.5 rounded-md bg-amber-400/15 text-amber-300 ring-1 ring-amber-400/30 animate-pulse">
-                      합성 가능 → {LEVEL_LABEL[LEVEL_NEXT[g.level]!]}
+                      → {LEVEL_LABEL[LEVEL_NEXT[g.level]!]} · {g.level === "bronze" ? "250" : "750"} PHON
                     </span>
                   )}
                 </div>
@@ -259,10 +287,17 @@ export default function NftAtelier() {
             <div className="max-w-5xl mx-auto px-4 py-3 flex items-center gap-3">
               <Flame className="h-5 w-5 text-amber-300" />
               <div className="flex-1">
-                <div className="text-sm font-bold">선택 {selected.size}/3</div>
+                <div className="text-sm font-bold flex items-center gap-2">
+                  선택 {selected.size}/3
+                  {fusionCost > 0 && (
+                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-400/15 text-amber-200">
+                      비용 {fusionCost} PHON
+                    </span>
+                  )}
+                </div>
                 <div className="text-[11px] text-muted-foreground">
                   {selected.size === 3
-                    ? "🔥 합성 준비 완료 — 3장이 1장으로 통합됩니다"
+                    ? "🔥 80% 성공 · 15% 실패(재료1+50%환불) · 5% 잭팟(+10%p)"
                     : "같은 type · 같은 등급 3장을 선택하세요"}
                 </div>
               </div>
@@ -274,56 +309,67 @@ export default function NftAtelier() {
                 disabled={selected.size !== 3 || busy}
                 className="bg-gradient-to-r from-amber-400 to-yellow-500 text-black font-black hover:opacity-90"
               >
-                {busy ? "주조 중…" : "🔥 합성 실행"}
+                {busy ? "주조 중…" : `🔥 ${fusionCost} PHON 합성`}
               </Button>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Fusion success burst — Trump급 연출 */}
+      {/* Fusion result burst — outcome-aware */}
       <AnimatePresence>
-        {burst && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm pointer-events-none"
-          >
+        {burst && (() => {
+          const isJackpot = burst.source === "fusion_jackpot";
+          const isFail = burst.source === "fusion_fail_refund";
+          const titleText = isJackpot ? "💎 JACKPOT" : isFail ? "재료 환불" : "FUSION COMPLETE";
+          const gradient = isJackpot
+            ? "from-cyan-200 via-fuchsia-200 to-violet-300"
+            : isFail
+            ? "from-zinc-300 via-zinc-200 to-zinc-400"
+            : "from-amber-300 via-yellow-300 to-amber-500";
+          const particleColor = isJackpot ? "bg-cyan-200" : isFail ? "bg-zinc-300" : "bg-amber-300";
+          const particleCount = isJackpot ? 22 : isFail ? 8 : 14;
+          return (
             <motion.div
-              initial={{ scale: 0.4, rotate: -12 }}
-              animate={{ scale: 1, rotate: 0 }}
-              transition={{ type: "spring", stiffness: 240, damping: 14 }}
-              className="relative"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm pointer-events-none"
             >
-              <div className="absolute inset-0 -z-0 bg-[radial-gradient(circle,hsl(45_100%_60%/0.7),transparent_70%)] blur-2xl" />
-              <div className="relative px-10 py-8 rounded-3xl bg-gradient-to-br from-amber-300 via-yellow-300 to-amber-500 text-black text-center shadow-[0_0_80px_hsl(45_100%_55%/0.8)]">
-                <div className="text-[10px] tracking-[0.4em] font-black opacity-70">FUSION COMPLETE</div>
-                <div className="mt-2 flex items-center justify-center gap-3">
-                  <CrownAura level={burst.level === "diamond" ? 10 : burst.level === "gold" ? 7 : 5} size={72} />
-                </div>
-                <div className="mt-3 text-2xl font-black tracking-tight">
-                  {TYPE_LABEL[burst.type]} {LEVEL_LABEL[burst.level]}
-                </div>
-                <div className="mt-1 text-sm font-mono">+{burst.boost_pct}% Boost · 영원히 귀하의 제국</div>
-              </div>
-            </motion.div>
-            {/* particles */}
-            {Array.from({ length: 14 }).map((_, i) => (
               <motion.div
-                key={i}
-                initial={{ x: 0, y: 0, opacity: 1 }}
-                animate={{
-                  x: Math.cos((i / 14) * Math.PI * 2) * 260,
-                  y: Math.sin((i / 14) * Math.PI * 2) * 260,
-                  opacity: 0,
-                }}
-                transition={{ duration: 1.6, ease: "easeOut" }}
-                className="absolute h-2 w-2 rounded-full bg-amber-300 shadow-[0_0_12px_hsl(45_100%_60%)]"
-              />
-            ))}
-          </motion.div>
-        )}
+                initial={{ scale: 0.4, rotate: -12 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ type: "spring", stiffness: 240, damping: 14 }}
+                className="relative"
+              >
+                <div className="absolute inset-0 -z-0 bg-[radial-gradient(circle,hsl(45_100%_60%/0.7),transparent_70%)] blur-2xl" />
+                <div className={`relative px-10 py-8 rounded-3xl bg-gradient-to-br ${gradient} text-black text-center shadow-[0_0_80px_hsl(45_100%_55%/0.8)]`}>
+                  <div className="text-[10px] tracking-[0.4em] font-black opacity-70">{titleText}</div>
+                  <div className="mt-2 flex items-center justify-center gap-3">
+                    <CrownAura level={burst.level === "diamond" ? 10 : burst.level === "gold" ? 7 : 5} size={72} />
+                  </div>
+                  <div className="mt-3 text-2xl font-black tracking-tight">
+                    {TYPE_LABEL[burst.type]} {LEVEL_LABEL[burst.level]}
+                  </div>
+                  <div className="mt-1 text-sm font-mono">+{burst.boost_pct}% Boost{isFail ? " · 재료 환불" : isJackpot ? " · 보너스 +10%p" : " · 영원히 귀하의 제국"}</div>
+                </div>
+              </motion.div>
+              {Array.from({ length: particleCount }).map((_, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ x: 0, y: 0, opacity: 1 }}
+                  animate={{
+                    x: Math.cos((i / particleCount) * Math.PI * 2) * 260,
+                    y: Math.sin((i / particleCount) * Math.PI * 2) * 260,
+                    opacity: 0,
+                  }}
+                  transition={{ duration: 1.6, ease: "easeOut" }}
+                  className={`absolute h-2 w-2 rounded-full ${particleColor} shadow-[0_0_12px_hsl(45_100%_60%)]`}
+                />
+              ))}
+            </motion.div>
+          );
+        })()}
       </AnimatePresence>
     </div>
   );

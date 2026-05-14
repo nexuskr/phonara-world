@@ -42,6 +42,7 @@ const MyFoundingSeat = lazy(() => import("./pages/MyFoundingSeat.tsx"));
 const EmpireCollection = lazy(() => import("./pages/EmpireCollection.tsx"));
 const NftAtelier = lazy(() => import("./pages/NftAtelier.tsx"));
 const HybridNetPage = lazy(() => import("./pages/HybridNetPage.tsx"));
+const Marketplace = lazy(() => import("./pages/Marketplace.tsx"));
 const Dynasty = lazy(() => import("./pages/Dynasty.tsx"));
 // Lounge/Whales/Roulette — 통합되었으나 직관적인 진입을 위해 직접 라우팅 복원
 const Lounge = lazy(() => import("./pages/Lounge.tsx"));
@@ -178,6 +179,7 @@ const App = () => (
               <Route path="/empire/collection" element={<EmpireCollection />} />
               <Route path="/empire/atelier" element={<NftAtelier />} />
               <Route path="/trade/net" element={<HybridNetPage />} />
+              <Route path="/marketplace" element={<Marketplace />} />
               <Route path="/dynasty" element={<Dynasty />} />
               <Route path="/treasury" element={<Navigate to="/wallet" replace />} />
               <Route path="/treasury/settlements" element={<Settlements />} />

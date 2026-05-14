@@ -674,6 +674,96 @@ export type Database = {
         }
         Relationships: []
       }
+      atelier_config: {
+        Row: {
+          cost_bronze_to_gold: number
+          cost_gold_to_diamond: number
+          daily_limit_per_user: number
+          enabled: boolean
+          fail_pct: number
+          fail_phon_refund_pct: number
+          id: number
+          jackpot_boost_bonus: number
+          jackpot_pct: number
+          success_pct: number
+          updated_at: string
+        }
+        Insert: {
+          cost_bronze_to_gold?: number
+          cost_gold_to_diamond?: number
+          daily_limit_per_user?: number
+          enabled?: boolean
+          fail_pct?: number
+          fail_phon_refund_pct?: number
+          id?: number
+          jackpot_boost_bonus?: number
+          jackpot_pct?: number
+          success_pct?: number
+          updated_at?: string
+        }
+        Update: {
+          cost_bronze_to_gold?: number
+          cost_gold_to_diamond?: number
+          daily_limit_per_user?: number
+          enabled?: boolean
+          fail_pct?: number
+          fail_phon_refund_pct?: number
+          id?: number
+          jackpot_boost_bonus?: number
+          jackpot_pct?: number
+          success_pct?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      atelier_runs: {
+        Row: {
+          boost_pct: number | null
+          cost_phon: number
+          created_at: string
+          id: string
+          outcome: string
+          refund_nft_id: string | null
+          refund_phon: number
+          result_nft_id: string | null
+          server_seed_hash: string
+          source_ids: string[]
+          src_level: string
+          src_type: string
+          user_id: string
+        }
+        Insert: {
+          boost_pct?: number | null
+          cost_phon: number
+          created_at?: string
+          id?: string
+          outcome: string
+          refund_nft_id?: string | null
+          refund_phon?: number
+          result_nft_id?: string | null
+          server_seed_hash: string
+          source_ids: string[]
+          src_level: string
+          src_type: string
+          user_id: string
+        }
+        Update: {
+          boost_pct?: number | null
+          cost_phon?: number
+          created_at?: string
+          id?: string
+          outcome?: string
+          refund_nft_id?: string | null
+          refund_phon?: number
+          result_nft_id?: string | null
+          server_seed_hash?: string
+          source_ids?: string[]
+          src_level?: string
+          src_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       auto_rule_decisions: {
         Row: {
           actual_action: string | null
@@ -3793,6 +3883,100 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      nft_listings: {
+        Row: {
+          closed_at: string | null
+          ends_at: string | null
+          id: string
+          kind: string
+          listed_at: string
+          nft_id: string
+          price_phon: number
+          seller_id: string
+          status: string
+        }
+        Insert: {
+          closed_at?: string | null
+          ends_at?: string | null
+          id?: string
+          kind?: string
+          listed_at?: string
+          nft_id: string
+          price_phon: number
+          seller_id: string
+          status?: string
+        }
+        Update: {
+          closed_at?: string | null
+          ends_at?: string | null
+          id?: string
+          kind?: string
+          listed_at?: string
+          nft_id?: string
+          price_phon?: number
+          seller_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nft_listings_nft_id_fkey"
+            columns: ["nft_id"]
+            isOneToOne: false
+            referencedRelation: "nft_collection"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nft_trades: {
+        Row: {
+          burn_phon: number
+          buyer_id: string
+          created_at: string
+          fee_phon: number
+          id: string
+          listing_id: string
+          net_to_seller: number
+          nft_id: string
+          pool_phon: number
+          price_phon: number
+          seller_id: string
+        }
+        Insert: {
+          burn_phon: number
+          buyer_id: string
+          created_at?: string
+          fee_phon: number
+          id?: string
+          listing_id: string
+          net_to_seller: number
+          nft_id: string
+          pool_phon: number
+          price_phon: number
+          seller_id: string
+        }
+        Update: {
+          burn_phon?: number
+          buyer_id?: string
+          created_at?: string
+          fee_phon?: number
+          id?: string
+          listing_id?: string
+          net_to_seller?: number
+          nft_id?: string
+          pool_phon?: number
+          price_phon?: number
+          seller_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nft_trades_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "nft_listings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notification_preferences: {
         Row: {
@@ -8072,8 +8256,10 @@ export type Database = {
         Args: { _delta?: number; _metric: string }
         Returns: undefined
       }
+      buy_nft: { Args: { _listing_id: string }; Returns: Json }
       cancel_bequest: { Args: { _req_id: string }; Returns: Json }
       cancel_dynasty_link: { Args: { _link_id: string }; Returns: Json }
+      cancel_listing: { Args: { _listing_id: string }; Returns: Json }
       cancel_pending_order: { Args: { p_order_id: string }; Returns: boolean }
       check_achievements: { Args: { _user_id?: string }; Returns: Json }
       check_daily_ev_health: { Args: never; Returns: Json }
@@ -8835,6 +9021,10 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      list_nft: {
+        Args: { _nft_id: string; _price_phon: number }
+        Returns: Json
       }
       live_account_equity: { Args: { p_user_id: string }; Returns: Json }
       live_adjust_isolated_margin: {
