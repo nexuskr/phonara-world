@@ -129,9 +129,9 @@ export default function EmpireArena() {
     }
   }, []);
 
-  if (!user) return null;
   const { prices } = useBybitTicker();
   const btcPrice = prices["BTCUSDT"] ?? 0;
+  if (!user) return null;
 
   return (
     <Layout>
