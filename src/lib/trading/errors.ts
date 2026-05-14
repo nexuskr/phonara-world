@@ -6,6 +6,10 @@
  */
 
 const RULES: Array<{ test: RegExp; out: string }> = [
+  { test: /RISK_TOO_HIGH/i, out: "증거금 대비 리스크가 너무 높습니다. 레버리지를 낮추거나 마진을 줄여주세요." },
+  { test: /LIQUIDATION_TOO_CLOSE/i, out: "청산 가격이 너무 근접합니다. 안전한 레버리지로 조정해 주세요." },
+  { test: /RISK_WARNING/i, out: "리스크가 높습니다. 레버리지를 낮추는 것을 추천합니다." },
+  { test: /INSUFFICIENT_EQUITY/i, out: "가용 잔액이 부족합니다." },
   { test: /시장가 동기화/, out: "시장가 동기화가 일시적으로 지연되었습니다. 5초 후 다시 시도해 주세요." },
   { test: /시장가와 차이가 너무 큽니다/, out: "현재 시장가와 차이가 큽니다. 가격이 안정된 후 다시 시도해 주세요." },
   { test: /54000/, out: "시장가 동기화 중입니다. 잠시 후 다시 시도해 주세요." },
