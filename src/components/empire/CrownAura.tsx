@@ -49,6 +49,8 @@ export default function CrownAura({ level, size = 48, className = "", children }
   const isEmperor = lv >= 10;
   const ringPad = lv >= 8 ? 4 : lv >= 5 ? 3 : 2;
   const outer = size + ringPad * 2;
+  // Pause expensive corona/pulse animations while tab is hidden — saves GPU.
+  const tabVisible = useDocumentVisible();
 
   return (
     <div
