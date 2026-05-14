@@ -438,6 +438,7 @@ export default function Wallet() {
 
         {action === "withdraw" && (
           <>
+            <PhonSpendPanel />
             <WithdrawQueueStatus />
             <WithdrawSimpleStatus />
           </>
