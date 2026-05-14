@@ -131,8 +131,3 @@ export default function AdminLayout() {
     </SidebarProvider>
   );
 }
-        </SidebarInset>
-      </div>
-    </SidebarProvider>
-  );
-}
