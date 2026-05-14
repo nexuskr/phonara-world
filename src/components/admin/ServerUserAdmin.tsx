@@ -264,10 +264,17 @@ export default function ServerUserAdmin() {
                     ❄ 동결 {new Date(u.frozen_until).toLocaleString("ko-KR")}까지 · {u.freeze_reason ?? ""}
                   </div>
                 )}
-              </div>
-              <div className="text-right shrink-0">
+                </div>
+              </label>
+              <div className="text-right shrink-0 flex flex-col items-end gap-1">
                 <div className="font-display font-bold text-sm text-gradient-primary">{formatKRW(u.available_balance)}</div>
                 <div className="text-[10px] text-muted-foreground">총 {formatKRW(u.total_balance)}</div>
+                <Link
+                  to={`/admin/product/users/${u.id}`}
+                  className="text-[10px] text-primary hover:underline inline-flex items-center gap-0.5"
+                >
+                  360 상세 <ExternalLink className="w-3 h-3" />
+                </Link>
               </div>
             </div>
 
