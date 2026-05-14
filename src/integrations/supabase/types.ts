@@ -6835,6 +6835,45 @@ export type Database = {
         }
         Relationships: []
       }
+      vip_passes: {
+        Row: {
+          active: boolean
+          created_at: string
+          expires_at: string
+          last_paid_at: string | null
+          last_paid_phon: number | null
+          renewals: number
+          source: string
+          started_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          expires_at: string
+          last_paid_at?: string | null
+          last_paid_phon?: number | null
+          renewals?: number
+          source?: string
+          started_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          expires_at?: string
+          last_paid_at?: string | null
+          last_paid_phon?: number | null
+          renewals?: number
+          source?: string
+          started_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       viral_ai_circuit_state: {
         Row: {
           id: number
@@ -8227,6 +8266,20 @@ export type Database = {
         Args: { _level: string; _type: string }
         Returns: Json
       }
+      admin_grant_vip_pass: {
+        Args: { _days?: number; _uid: string }
+        Returns: Json
+      }
+      admin_list_active_vip: {
+        Args: { _limit?: number; _offset?: number }
+        Returns: {
+          expires_at: string
+          renewals: number
+          source: string
+          started_at: string
+          user_id: string
+        }[]
+      }
       admin_list_bequests: {
         Args: { _limit?: number }
         Returns: {
@@ -9443,6 +9496,7 @@ export type Database = {
         }[]
       }
       get_my_total_boost_pct: { Args: never; Returns: number }
+      get_my_vip_pass: { Args: never; Returns: Json }
       get_my_weekly_referral_rank: { Args: never; Returns: Json }
       get_next_empire_day: { Args: never; Returns: string }
       get_next_nft_threshold: { Args: never; Returns: Json }
@@ -9646,6 +9700,7 @@ export type Database = {
         Returns: boolean
       }
       is_passkey_verified: { Args: never; Returns: boolean }
+      is_vip_active: { Args: { _uid: string }; Returns: boolean }
       issue_line_link_token: { Args: never; Returns: string }
       join_guild: { Args: { _guild_id: string }; Returns: boolean }
       jsonb_object_keys_count: { Args: { _obj: Json }; Returns: number }
@@ -10292,6 +10347,7 @@ export type Database = {
         }
         Returns: Json
       }
+      subscribe_vip_pass_phon: { Args: never; Returns: Json }
       take_phon_snapshot: { Args: never; Returns: Json }
       tap_reinforce: { Args: { _nonce: string }; Returns: Json }
       tick_weekly_leaderboard_ranks: { Args: never; Returns: Json }
