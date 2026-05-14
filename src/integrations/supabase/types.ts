@@ -3273,6 +3273,48 @@ export type Database = {
         }
         Relationships: []
       }
+      live_position_open_audit: {
+        Row: {
+          client_request_id: string | null
+          created_at: string
+          entry_price: number | null
+          error_code: string | null
+          id: string
+          lease_owner: string | null
+          oracle_snapshot: Json | null
+          outcome: string
+          position_id: string | null
+          request_meta: Json | null
+          user_id: string
+        }
+        Insert: {
+          client_request_id?: string | null
+          created_at?: string
+          entry_price?: number | null
+          error_code?: string | null
+          id?: string
+          lease_owner?: string | null
+          oracle_snapshot?: Json | null
+          outcome: string
+          position_id?: string | null
+          request_meta?: Json | null
+          user_id: string
+        }
+        Update: {
+          client_request_id?: string | null
+          created_at?: string
+          entry_price?: number | null
+          error_code?: string | null
+          id?: string
+          lease_owner?: string | null
+          oracle_snapshot?: Json | null
+          outcome?: string
+          position_id?: string | null
+          request_meta?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       live_positions: {
         Row: {
           allocated_margin: number | null
@@ -8420,9 +8462,18 @@ export type Database = {
         }
         Returns: undefined
       }
+      log_lpi_audit_failure: {
+        Args: {
+          p_client_request_id: string
+          p_error_code: string
+          p_meta?: Json
+        }
+        Returns: string
+      }
       mark_fomo_notification_read: { Args: { _id: string }; Returns: boolean }
       mark_handbook_step: { Args: { _step: string }; Returns: Json }
       mask_nickname: { Args: { _nick: string }; Returns: string }
+      monitor_lpi_stuck_reserved: { Args: never; Returns: number }
       move_to_dlq: {
         Args: {
           dlq_name: string
