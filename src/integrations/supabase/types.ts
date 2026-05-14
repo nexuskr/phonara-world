@@ -5500,6 +5500,140 @@ export type Database = {
         }
         Relationships: []
       }
+      reactivation_campaigns: {
+        Row: {
+          active: boolean
+          body: string
+          channels: string[]
+          created_at: string
+          cta_label: string
+          dormant_days: number
+          expires_after_hours: number
+          id: string
+          key: string
+          phon_bonus: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          body: string
+          channels?: string[]
+          created_at?: string
+          cta_label?: string
+          dormant_days: number
+          expires_after_hours?: number
+          id?: string
+          key: string
+          phon_bonus?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          body?: string
+          channels?: string[]
+          created_at?: string
+          cta_label?: string
+          dormant_days?: number
+          expires_after_hours?: number
+          id?: string
+          key?: string
+          phon_bonus?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      reactivation_claims: {
+        Row: {
+          campaign_id: string
+          claimed_at: string
+          id: string
+          phon_credited: number
+          send_id: string | null
+          user_id: string
+        }
+        Insert: {
+          campaign_id: string
+          claimed_at?: string
+          id?: string
+          phon_credited?: number
+          send_id?: string | null
+          user_id: string
+        }
+        Update: {
+          campaign_id?: string
+          claimed_at?: string
+          id?: string
+          phon_credited?: number
+          send_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reactivation_claims_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "reactivation_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reactivation_claims_send_id_fkey"
+            columns: ["send_id"]
+            isOneToOne: false
+            referencedRelation: "reactivation_sends"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reactivation_sends: {
+        Row: {
+          campaign_id: string
+          channel: string
+          claimed_at: string | null
+          clicked_at: string | null
+          expires_at: string
+          id: string
+          meta: Json
+          opened_at: string | null
+          sent_at: string
+          user_id: string
+        }
+        Insert: {
+          campaign_id: string
+          channel: string
+          claimed_at?: string | null
+          clicked_at?: string | null
+          expires_at: string
+          id?: string
+          meta?: Json
+          opened_at?: string | null
+          sent_at?: string
+          user_id: string
+        }
+        Update: {
+          campaign_id?: string
+          channel?: string
+          claimed_at?: string | null
+          clicked_at?: string | null
+          expires_at?: string
+          id?: string
+          meta?: Json
+          opened_at?: string | null
+          sent_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reactivation_sends_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "reactivation_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recovery_bonus_eligibility: {
         Row: {
           consumed_at: string | null
@@ -8370,6 +8504,23 @@ export type Database = {
       admin_get_oracle_health: { Args: never; Returns: Json }
       admin_get_oracle_swap_readiness: { Args: never; Returns: Json }
       admin_get_phase_c_metrics: { Args: never; Returns: Json }
+      admin_get_reactivation_funnel: {
+        Args: never
+        Returns: {
+          campaign_key: string
+          claim_rate: number
+          claimed_30d: number
+          click_rate: number
+          clicked_30d: number
+          dormant_days: number
+          open_rate: number
+          opened_30d: number
+          phon_bonus: number
+          phon_credited_30d: number
+          sent_30d: number
+          title: string
+        }[]
+      }
       admin_get_recent_errors: {
         Args: { _limit?: number; _only_unresolved?: boolean }
         Returns: {
@@ -9093,6 +9244,7 @@ export type Database = {
         }
       }
       claim_quest: { Args: { _quest_key: string }; Returns: Json }
+      claim_reactivation_offer: { Args: { _send_id: string }; Returns: Json }
       claim_season_reward: {
         Args: { _level: number; _track: string }
         Returns: Json
@@ -9267,6 +9419,12 @@ export type Database = {
           _ttl_hours?: number
         }
         Returns: number
+      }
+      enqueue_reactivation_for_campaign: {
+        Args: { _campaign_id: string; _max_users?: number }
+        Returns: {
+          enqueued_count: number
+        }[]
       }
       ensure_settlement_audit_partition: {
         Args: { _when?: string }
@@ -9694,6 +9852,20 @@ export type Database = {
         }
       }
       get_my_quests: { Args: never; Returns: Json }
+      get_my_reactivation_offer: {
+        Args: never
+        Returns: {
+          body: string
+          campaign_id: string
+          campaign_key: string
+          channel: string
+          cta_label: string
+          expires_at: string
+          phon_bonus: number
+          send_id: string
+          title: string
+        }[]
+      }
       get_my_security_events: {
         Args: { _limit?: number }
         Returns: {
@@ -10137,6 +10309,10 @@ export type Database = {
       log_vip_arrival: { Args: never; Returns: Json }
       mark_fomo_notification_read: { Args: { _id: string }; Returns: boolean }
       mark_handbook_step: { Args: { _step: string }; Returns: Json }
+      mark_reactivation_event: {
+        Args: { _event: string; _send_id: string }
+        Returns: undefined
+      }
       mask_nickname: { Args: { _nick: string }; Returns: string }
       monitor_lpi_stuck_reserved: { Args: never; Returns: number }
       move_to_dlq: {
@@ -10426,6 +10602,7 @@ export type Database = {
         Returns: Json
       }
       run_policy_assertions: { Args: never; Returns: Json }
+      run_reactivation_campaigns: { Args: never; Returns: Json }
       run_security_self_audit: { Args: { _source?: string }; Returns: Json }
       run_uptime_canary: { Args: never; Returns: undefined }
       search_support_kb: {
