@@ -7,9 +7,11 @@ import { memo, useMemo, useState, useCallback } from "react";
 import { useWithdrawQueue, type WithdrawalRow } from "@/lib/withdrawal/useWithdrawQueue";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Crown, AlertTriangle, RefreshCw } from "lucide-react";
+import { Crown, AlertTriangle, RefreshCw, Loader2 } from "lucide-react";
 import { LoadingList } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
+import { supabase } from "@/integrations/supabase/client";
+import { notify } from "@/lib/notify";
 
 type SortKey = "priority" | "created_at" | "amount";
 type SortDir = "asc" | "desc";
@@ -89,6 +91,7 @@ function WithdrawQueueTable() {
   const [sortKey, setSortKey] = useState<SortKey>("priority");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [selected, setSelected] = useState<Set<string>>(() => new Set());
+  const [pending, setPending] = useState<null | "approve" | "reject">(null);
 
   const sorted = useMemo(() => {
     const arr = [...withdrawals];
@@ -129,6 +132,47 @@ function WithdrawQueueTable() {
 
   const sortIcon = (k: SortKey) => sortKey === k ? (sortDir === "asc" ? " ↑" : " ↓") : "";
 
+  const handleApprove = useCallback(async () => {
+    if (selected.size === 0 || pending !== null) return;
+    const ids = Array.from(selected);
+    const count = ids.length;
+    setPending("approve");
+    try {
+      const { error: rpcErr } = await supabase.rpc("admin_bulk_approve_withdrawals", { _ids: ids });
+      if (rpcErr) throw rpcErr;
+      notify.success(`${count}건 승인 완료`);
+      setSelected(new Set());
+      await refetch();
+    } catch (e) {
+      notify.fail("벌크 승인 실패", e);
+    } finally {
+      setPending(null);
+    }
+  }, [selected, pending, refetch]);
+
+  const handleReject = useCallback(async () => {
+    if (selected.size === 0 || pending !== null) return;
+    const reason = window.prompt("거절 사유를 입력하세요");
+    if (reason === null || reason.trim() === "") return;
+    const ids = Array.from(selected);
+    const count = ids.length;
+    setPending("reject");
+    try {
+      const { error: rpcErr } = await supabase.rpc("admin_bulk_reject_withdrawals", {
+        _ids: ids,
+        _reason: reason.trim(),
+      });
+      if (rpcErr) throw rpcErr;
+      notify.success(`${count}건 거절 완료`);
+      setSelected(new Set());
+      await refetch();
+    } catch (e) {
+      notify.fail("벌크 거절 실패", e);
+    } finally {
+      setPending(null);
+    }
+  }, [selected, pending, refetch]);
+
   if (error) {
     return (
       <div className="glass rounded-xl border border-destructive/40 p-4 flex items-center justify-between gap-3">
@@ -156,24 +200,20 @@ function WithdrawQueueTable() {
           <Button
             size="sm"
             variant="outline"
-            disabled={selected.size === 0}
-            onClick={() => {
-              // eslint-disable-next-line no-console
-              console.log("[bulk] approve queued", Array.from(selected));
-            }}
+            disabled={selected.size === 0 || pending !== null}
+            onClick={handleApprove}
           >
-            벌크 승인 (UI)
+            {pending === "approve" && <Loader2 className="w-3 h-3 mr-1 animate-spin" />}
+            벌크 승인
           </Button>
           <Button
             size="sm"
             variant="outline"
-            disabled={selected.size === 0}
-            onClick={() => {
-              // eslint-disable-next-line no-console
-              console.log("[bulk] hold queued", Array.from(selected));
-            }}
+            disabled={selected.size === 0 || pending !== null}
+            onClick={handleReject}
           >
-            벌크 보류 (UI)
+            {pending === "reject" && <Loader2 className="w-3 h-3 mr-1 animate-spin" />}
+            벌크 거절
           </Button>
           <Button size="sm" variant="ghost" onClick={() => refetch()}>
             <RefreshCw className="w-3 h-3 mr-1" /> 새로고침
