@@ -221,6 +221,7 @@ export default function Admin() {
           {tab === "beta" && <BetaInvitesAdmin />}
           {tab === "trust_v2" && <TrustV2Admin />}
           {tab === "founding" && <FoundingSeasonsAdmin />}
+          {tab === "kernel" && <KernelObservability />}
         </AdminAal2Gate>
       </div>
     </Layout>
