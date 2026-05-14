@@ -177,6 +177,28 @@ export default function TradingArenaBybit() {
           notify.warning("Empire Balance 부족", { description: "충전 후 다시 시도하세요." });
           return;
         }
+        // === Risk Engine Level 4: pre-trade validation ===
+        const verdict = await preTradeValidate({
+          symbol, side: args.side, leverage: args.leverage,
+          margin: args.margin, markPriceFallback: price,
+        });
+        if (verdict.status === "REJECT") {
+          notify.error("주문 거부 (Risk Engine)", {
+            description: `${mapTradingError(verdict.reason)} · RPI ${(verdict.rpi*100).toFixed(1)}% · 안전거리 ${(verdict.safetyDistance*100).toFixed(1)}%`,
+          });
+          try { navigator.vibrate?.([10, 40, 10, 40, 10]); } catch { /* noop */ }
+          return;
+        }
+        if (verdict.status === "WARN") {
+          const ok = window.confirm(
+            `⚠️ ${mapTradingError(verdict.reason)}\n\nRPI: ${(verdict.rpi*100).toFixed(1)}%\n안전거리: ${(verdict.safetyDistance*100).toFixed(1)}%\n\n그래도 진입하시겠습니까?`,
+          );
+          if (!ok) {
+            notify.info("주문 취소됨");
+            return;
+          }
+          notify.warning("리스크 경고를 무시하고 진입합니다");
+        }
         const r = await openReal({
           symbol,
           side: args.side,
