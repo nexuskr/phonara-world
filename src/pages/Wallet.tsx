@@ -635,6 +635,9 @@ export default function Wallet() {
             {action === "withdraw" && (
               <WithdrawReceiptUpload userId={u.id} onUploaded={setReceiptPath} />
             )}
+            {action === "withdraw" && Number(amount) >= 10000 && (
+              <PhonFeeDiscountToggle withdrawAmount={Number(amount)} />
+            )}
 
             {/* Verification block */}
             <div className="rounded-xl p-4 space-y-3 border border-primary/20 bg-primary/[0.03]">
