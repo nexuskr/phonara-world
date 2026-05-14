@@ -18,7 +18,7 @@ import AdminDashboardCharts from "@/components/admin/AdminDashboardCharts";
 import TodayKpiCards from "@/components/admin/TodayKpiCards";
 import AdvancedAnalytics from "@/components/admin/AdvancedAnalytics";
 import ErrorMonitorAdmin from "@/components/admin/ErrorMonitorAdmin";
-import SecurityAuditAdmin from "@/components/admin/SecurityAuditAdmin";
+import SecurityAuditAdmin from "@/components/admin/compliance/audit/SecurityAuditAdmin";
 import ObservabilityCockpit from "@/components/admin/ObservabilityCockpit";
 import PermissionsAudit from "@/components/admin/PermissionsAudit";
 import AdminUgc from "@/components/admin/AdminUgc";
