@@ -11,6 +11,7 @@ import FeedDiagnosticsPanel from "@/components/feed/FeedDiagnosticsPanel";
 import BetaFunnelPanel from "@/components/admin/BetaFunnelPanel";
 import WhaleStrikeFunnelPanel from "@/components/admin/WhaleStrikeFunnelPanel";
 import PhaseCMetricsPanel from "@/components/admin/PhaseCMetricsPanel";
+import ReactivationFunnelPanel from "@/components/admin/ReactivationFunnelPanel";
 
 type Kpi = {
   mau: number;
@@ -135,6 +136,7 @@ export default function AdminKpi() {
               <Stat icon={Flame} label="평균 Viral Score" value={k.viralAvg.toFixed(3)} hint="최근 500개 영상" />
             </div>
             <PhaseCMetricsPanel />
+            <ReactivationFunnelPanel />
             <WhaleStrikeFunnelPanel />
             <BetaFunnelPanel />
             <FeedDiagnosticsPanel />

@@ -87,6 +87,7 @@ const Vip = lazy(() => import("./pages/Vip.tsx"));
 const DevConsole = lazy(() => import("./pages/DevConsole.tsx"));
 const ForcedShareDialog = lazy(() => import("./components/share/ForcedShareDialog.tsx"));
 const VipArrivalAnnouncer = lazy(() => import("./components/empire/VipArrivalAnnouncer.tsx"));
+const ReactivationOfferDialog = lazy(() => import("./components/reactivation/ReactivationOfferDialog.tsx"));
 import { PracticeModeBanner } from "./components/practice/PracticeModeBanner";
 import { PracticeModeGate } from "./components/practice/PracticeModeGate";
 import SimGlobalBadge from "./components/SimGlobalBadge";
@@ -164,6 +165,7 @@ function GlobalOverlays() {
       <Suspense fallback={null}><FloatingCashLoopWidget /></Suspense>
       <Suspense fallback={null}><ForcedShareDialog /></Suspense>
       <Suspense fallback={null}><VipArrivalAnnouncer /></Suspense>
+      <Suspense fallback={null}><ReactivationOfferDialog /></Suspense>
     </>
   );
 }
