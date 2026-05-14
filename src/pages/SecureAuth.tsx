@@ -171,74 +171,13 @@ export default function SecureAuth() {
     >
       <AdultOnlyBanner className="absolute top-0 left-0 right-0 z-30" />
 
-      {/* === Static cinematic imperial background (no animation) === */}
-      <div aria-hidden className="absolute inset-0 pointer-events-none">
-        {/* deep gradient base */}
-        <div className="absolute inset-0 bg-gradient-to-b from-background via-background to-[hsl(var(--background))]" />
-        {/* large gold grid */}
-        <div
-          className="absolute inset-0 opacity-[0.065]"
-          style={{
-            backgroundImage:
-              "linear-gradient(hsl(var(--gold)/0.7) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--gold)/0.7) 1px, transparent 1px)",
-            backgroundSize: "112px 112px",
-          }}
-        />
-        {/* fine gold grid */}
-        <div
-          className="absolute inset-0 opacity-[0.034]"
-          style={{
-            backgroundImage:
-              "linear-gradient(hsl(var(--gold)/0.6) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--gold)/0.6) 1px, transparent 1px)",
-            backgroundSize: "28px 28px",
-          }}
-        />
-        {/* ultra-fine gold grain/noise — pure CSS, no image asset */}
-        <div
-          className="absolute inset-0 opacity-[0.05] mix-blend-overlay"
-          style={{
-            backgroundImage:
-              "radial-gradient(hsl(var(--gold)/0.55) 0.5px, transparent 0.5px), radial-gradient(hsl(var(--gold)/0.35) 0.5px, transparent 0.5px)",
-            backgroundSize: "3px 3px, 7px 7px",
-            backgroundPosition: "0 0, 1px 2px",
-          }}
-        />
-        {/* triple vignette for cinematic depth */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(70% 55% at 50% 30%, transparent 0%, hsl(var(--background)/0.55) 70%, hsl(var(--background)/0.85) 100%)",
-          }}
-        />
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(45% 30% at 50% 45%, transparent 0%, hsl(var(--background)/0.7) 100%)",
-            mixBlendMode: "multiply",
-          }}
-        />
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(55% 38% at 50% 100%, transparent 0%, hsl(var(--background)/0.92) 100%)",
-          }}
-        />
-        {/* top-center static gold ray */}
-        <div
-          className="absolute -top-40 left-1/2 -translate-x-1/2 w-[720px] h-[420px] opacity-[0.24]"
-          style={{
-            background:
-              "conic-gradient(from 270deg at 50% 100%, transparent 0deg, hsl(var(--gold)/0.6) 90deg, transparent 180deg, transparent 360deg)",
-            filter: "blur(40px)",
-          }}
-        />
-        {/* two corner gold glows — pure CSS, no animation */}
-        <div className="absolute -top-32 -left-32 w-[420px] h-[420px] rounded-full bg-gold/15 blur-3xl" />
-        <div className="absolute -bottom-32 -right-32 w-[420px] h-[420px] rounded-full bg-gold/10 blur-3xl" />
-      </div>
+      {/* === Seoul night cinematic backdrop + live global pulses === */}
+      <AuthSeoulBackdrop>
+        <LiveFeedPulses events={pulses} />
+      </AuthSeoulBackdrop>
+
+      {/* === Floating social-proof panels (LIVE FEED, TOP 5, CROWN counter, KPI bar) === */}
+      <AuthSocialProof onPulses={(p) => setPulses(p)} />
 
       {/* Top-right language switcher */}
       <div className="absolute top-3 right-3 z-20">
