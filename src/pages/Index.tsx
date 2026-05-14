@@ -142,13 +142,13 @@ export default function Index() {
           className="font-display font-black tracking-tight animate-fade-up text-gradient-imperial"
           style={{ fontSize: "clamp(40px, 9vw, 84px)", lineHeight: 1.04 }}
         >
-          이미 시작된 흐름입니다.
+          잃어도 70% 돌려받는<br />한국형 코인 베팅
         </h1>
         <p className="mt-6 text-base sm:text-xl text-muted-foreground max-w-xl mx-auto animate-fade-up" style={{ animationDelay: "0.1s" }}>
-          복잡한 설명은 필요 없습니다.<br />들어오면 바로 이해됩니다.
+          한국어 · 한국시간 · 즉시출금<br />손실보호 보장
         </p>
         <p className="mt-5 text-[11px] sm:text-xs tracking-[0.25em] text-primary/80 font-bold animate-fade-up" style={{ animationDelay: "0.15s" }}>
-          전세 · 팀미션 · 주식 · 다단계 — 더 이상 당하지 않습니다.
+          가입 즉시 ₩5,000 · Practice Mode 무료 체험
         </p>
 
         {/* Throne treasury card */}
