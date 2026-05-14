@@ -1,9 +1,10 @@
 // 사용자 티켓 상태 페이지: 본인 스레드의 상태/우선순위/마지막 메시지를 실시간으로 보여줍니다.
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { supabase } from "@/integrations/supabase/client";
 import { useRequireAuth } from "@/hooks/use-require-auth";
+import { useRealtimeChannel } from "@/hooks/use-realtime-channel";
 import { LoadingList } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
 import { MessageSquare, Clock, CheckCircle2, AlertTriangle, PauseCircle, ChevronRight } from "lucide-react";
