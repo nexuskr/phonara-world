@@ -25,7 +25,12 @@ export function useFomoNotifications() {
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    if (typeof window !== "undefined" && sessionStorage.getItem(FOMO_RPC_DISABLED_KEY) === "1") {
+    if (isCircuitTripped(FOMO_RPC_DISABLED_KEY)) {
+      setItems([]);
+      setLoading(false);
+      return;
+    }
+    if (typeof window !== "undefined" && window.location.pathname.startsWith("/guide")) {
       setItems([]);
       setLoading(false);
       return;
@@ -34,9 +39,7 @@ export function useFomoNotifications() {
     try {
       const { data, error } = await supabase.rpc("get_my_fomo_notifications", { _limit: 10 });
       if (error) {
-        if ((error as { code?: string }).code === "PGRST301" || /401|400|unauthorized|bad request/i.test(error.message ?? "")) {
-          try { sessionStorage.setItem(FOMO_RPC_DISABLED_KEY, "1"); } catch { /* noop */ }
-        }
+        if (shouldTripCircuit(error)) tripCircuit(FOMO_RPC_DISABLED_KEY);
         setItems([]);
         setLoading(false);
         return;
