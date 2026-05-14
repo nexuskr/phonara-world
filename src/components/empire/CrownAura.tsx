@@ -2,6 +2,7 @@
 // 1~6: 정적 그라디언트 링. 7(Baron)+: 회전 광채 + 펄스. 10(Emperor): 마그마 + 별빛.
 import { ReactNode } from "react";
 import { motion } from "framer-motion";
+import { useDocumentVisible } from "@/lib/util/visible-interval";
 
 type Props = {
   level: number;
