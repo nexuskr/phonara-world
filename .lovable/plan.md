@@ -1,124 +1,102 @@
+## 목표
+`/secure-auth` 로그인 페이지를 6번 레퍼런스 + 사용자 첨부 "서울 야경" 이미지를 배경으로 하는 풀스크린 다크 영화적 화면으로 리뉴얼. 좌측 = 진입(이메일/소셜 로그인 카드), 우측·배경 = 글로벌 제국 사회적 증명(LIVE FEED · TOP 5 · CROWN EXPLOSION · 신뢰 배지). 기존 백엔드 RPC만 사용 — 신규 마이그레이션 0건.
 
-# Phase D — "TRUMP × MUSK 모드" 재설계
+## 배경 처리 (변경된 핵심)
+**사용자 첨부 서울 야경 이미지를 그대로 배경 베이스로 사용 + 6번 사진 스타일로 업그레이드.**
 
-## 두 인물의 운영 원칙을 코드/UX로 번역
+레이어 스택(아래 → 위):
+1. `bg-[url('/auth-seoul-night.jpg')] bg-cover bg-center` — 첨부된 서울 야경 사진을 `public/auth-seoul-night.jpg`로 저장해 그대로 사용.
+2. 디밍 그라디언트 오버레이 — `bg-gradient-to-b from-background/40 via-background/70 to-background/95` (상단 살짝 비치고 하단으로 갈수록 가독성 확보).
+3. 골드 비네트 — `radial-gradient(ellipse at 70% 30%, hsl(var(--gold)/0.18), transparent 60%)` (6번 사진의 골드 무드).
+4. SVG 도트 그리드 + 가는 위경도 라인 (불투명 8%) — 6번 사진의 "데이터 시티" 느낌.
+5. 라이브 펄스 마커 — `LiveFeedPulses.tsx`(신규)가 `get_whale_strikes_24h` 결과의 country를 위경도로 매핑(`src/lib/countryLatLng.ts` 신규 ~60개국 정적 테이블)해서 화면 위에 골드/시안 ring 펄스. 신규 LIVE FEED row마다 새 펄스 1.6s 트리거. `prefers-reduced-motion` 시 정적 dot.
+6. 모바일(<md)에서는 배경 이미지 더 강하게 dim(`bg-background/85`)해서 폼 가독성 우선.
 
-| 원칙 | Trump | Musk | Phonara 적용 |
-|---|---|---|---|
-| 메시징 | "WE ARE #1, EVERYONE ELSE IS FAKE" | "Physics says it's possible" | 모든 카피를 **단언형 + 숫자**로 |
-| 속도 | 매일 새 헤드라인 | 주간 deploy, 카오스 테스트 | 매일 자동 헤드라인 + 주간 라이브 이벤트 |
-| 적 만들기 | 명확한 라이벌 호명 | "레거시 vs 미래" 프레이밍 | "vs CEX/은행" 비교 위젯 상시 노출 |
-| 인물 중심 | 본인이 브랜드 | 본인 트윗이 시총 | **유저를 황제로 인격화** (이름/국기/금액이 헤드라인) |
-| 연출 | MAGA 집회 | Starship live stream | **Crown War / 출금 라이브 스트림** 상시 |
+three.js/3D 의존성 **추가하지 않음** — 첨부 사진 자체가 도시 스카이라인이므로 3D 글로브는 중복. 펄스만 SVG로 오버레이해서 6번 사진의 "글로벌 라이브" 효과를 더 가볍게 구현.
 
----
+## 데이터 소스 (기존 RPC만, 신규 0)
+- `get_world_domination_stats()` → 상단 KPI 4개(총 사용자 / 온라인 / 24h 거래량 / 누적 지급액). 30s 폴링 + `useCountUp` 부드럽게 변동.
+- `get_whale_strikes_24h(40)` → LIVE FEED 마키(국기 + 마스킹 닉 + 이벤트 + 금액 + "Xs ago"). 60s 폴링 + `crown_events` realtime 신규 row prepend.
+- `get_weekly_referral_leaderboard(5)` → TOP 5 EMPERORS THIS WEEK 우측 패널. 60s 폴링.
+- `crown_events`(realtime) → 24h CROWN EXPLOSION 카운터(`useCountUp`) + 신규 이벤트 시 파티클 버스트 + 배경 펄스 트리거.
 
-## 재정렬된 4주 (속도 우선, 시각화 우선, 자기증식)
+## 화면 레이아웃
+```text
+┌──────────────────── 풀스크린 (배경: 서울야경 + 오버레이 + 라이브 펄스) ────────────────────┐
+│ TOP BAR  [PHONARA 로고]   KPI 4개(실시간 카운트업)        [Lang ▾]                       │
+│                                                                                          │
+│ ┌────────── 좌측 (5/12, md+) ──────────┐    ┌────────── 우측 (7/12) ──────────────────┐ │
+│ │ H1 "당신의 제국이 지금 시작됩니다"     │    │ ▣ LIVE FEED — 세로 무한 마키            │ │
+│ │ sub: "글로벌 12만 황제 · 실시간 가동"  │    │   🇰🇷 KIM**  Crown ×2.4  +12,400 PHON  │ │
+│ │                                       │    │   🇺🇸 JOH**  Withdraw   $48,200         │ │
+│ │ [로그인 / 회원가입 탭]                 │    │   🇯🇵 SAT**  Baron 승급                  │ │
+│ │  · 이메일 / 비밀번호                   │    │   …                                      │ │
+│ │  · Google 로그인 버튼                  │    │ ▣ TOP 5 EMPERORS THIS WEEK              │ │
+│ │  · "5초 매직링크" 보조 링크            │    │   1. 🥇 LEE**   1,240 RP                │ │
+│ │                                       │    │   2. 🥈 PAR**     980 RP                │ │
+│ │ ─ 신뢰 배지 6칩 (강화)                │    │ ▣ CROWN EXPLOSION COUNTER ×N           │ │
+│ │   100% Anonymous · AAL2 · KYC-Free   │    │   (24h 누적 + 폭발 파티클)              │ │
+│ │   AES-256 · 24/7 Ops · Bank-grade    │    │                                          │ │
+│ │                                       │    │                                          │ │
+│ │ ── 폼 하단 한 줄 ─────────────────── │    │                                          │ │
+│ │ "PHONARA EMPIRE는 만 19세 이상       │    │                                          │ │
+│ │  성인만 이용 가능한 서비스입니다."    │    │                                          │ │
+│ └───────────────────────────────────────┘    └──────────────────────────────────────────┘
+│                                                                                          │
+│ BOTTOM 마키: Crown War · NFT Atelier · AI Coach · Galaxy Auction · Empire Booster · ... │
+└──────────────────────────────────────────────────────────────────────────────────────────┘
+```
 
-원래: Week1 Wall → Week3 Viral → Week2 AI/PWA → Week4 Monetization
-**TRUMP×MUSK 버전**: 동일 순서 유지하되, **각 주차에 "쇼" 레이어 1개 + "엔지니어링" 레이어 1개** 강제 추가.
+## 컴포넌트 계획 (신규는 모두 `src/components/auth/`)
+1. `AuthSeoulBackdrop.tsx` — `public/auth-seoul-night.jpg` + 그라디언트 오버레이 + 골드 비네트 + 도트그리드 SVG. `<LiveFeedPulses/>` 자식으로 렌더.
+2. `LiveFeedPulses.tsx` — 부모로부터 받은 최근 LIVE FEED 이벤트의 country → 위경도 → SVG `<circle>` 펄스. framer-motion `AnimatePresence`로 1.6s 후 자연 소멸. reduced-motion fallback.
+3. `LiveFeedRail.tsx` — `get_whale_strikes_24h(40)` 60s 폴링 + `crown_events` realtime prepend, framer-motion 무한 세로 마키, 국기 이모지 + 마스킹 닉 + 이벤트 + 금액 + 상대시간(매초 갱신은 `use-now-tick` 훅 재활용). 부모(SecureAuth)에 onNewEvent 콜백을 통해 펄스 트리거.
+4. `Top5EmperorsCard.tsx` — `get_weekly_referral_leaderboard(5)` 60s 폴링.
+5. `CrownExplosionCounter.tsx` — `crown_events` realtime + `useCountUp` + 신규 시 골드 파티클 버스트(framer-motion).
+6. `LiveKpiBar.tsx` — `get_world_domination_stats()` 30s 폴링 + `useCountUp`(기존 `src/hooks/use-count-up.ts` 재사용).
+7. `TrustBadgeStrip6.tsx` — 6칩 (100% Anonymous · AAL2 Secured · 24/7 Live Ops · Bank-grade AES-256 · KYC-Free · SOC2-aligned).
 
----
+기존 파일 수정:
+- `src/pages/SecureAuth.tsx` — 레이아웃 전면 교체. **로그인/회원가입/Google OAuth 로직과 zod 스키마는 그대로 보존**, 좌측 카드 안으로 이동. 폼 하단에 사용자가 지정한 한 줄 문구 추가.
+- `index.css` — 필요 시 `.auth-vignette`, `.auth-dotgrid` 유틸 추가(HSL 토큰만 사용).
 
-### Week 1 — "WE ARE WINNING" Wall (현재 진행중 → 확장)
+`src/lib/countryLatLng.ts` (신규, 정적 ~60개국 lookup table) — 펄스 좌표 매핑.
 
-**SHOW (Trump)**
-- `WorldDominationWall`에 **실시간 비교 티커** 추가:
-  `"Phonara 24h GMV: $X — Coinbase retail withdrawal avg: $Y — WE ARE Nx FASTER"` (공개 데이터 기반, 정직한 수치)
-- **Top Emperor Hall of Fame**: 24h Crown 1위 유저를 **마스킹된 닉 + 국기 + 금액**으로 홈 최상단 고정. "EMPEROR OF THE DAY" 배너.
-- **Daily Headline Generator** (cron 1h): Lovable AI Gateway(`gemini-2.5-flash`)가 24h 데이터로 **트럼프 톤 헤드라인 5종** 자동 생성 → `daily_headlines` 테이블 → Wall 회전.
+## 자산
+사용자 첨부 서울 야경 이미지를 `public/auth-seoul-night.jpg`로 저장(빌드 시 정적 서빙). 이미지가 무거울 경우 `bun add sharp`(이미 있음) 활용해 ≤300KB로 압축.
 
-**ENGINEERING (Musk)**
-- **Public KPI API** (`/api/public/stats`): 외부 매체/봇이 직접 인용 가능하게 JSON 엔드포인트 + ETag 캐시. CoinMarketCap 스타일.
-- **Sitemap × 4언어** + per-route Helmet (ko/en/ja/zh) — 검색 유입 자동화.
-- **OG 이미지 엣지 함수** (`og-render`): satori → PNG, 5템플릿 × 4언어 = 20조합 캐시.
+## 의존성
+**신규 패키지 0건**. three/R3F 추가 안 함. framer-motion / lucide-react / supabase-js / zod 모두 기존 사용중.
 
-신규 RPC: `get_top_emperor_24h()`, `get_competitor_compare()`, `get_daily_headlines()`. 모두 baseline 등록.
+## 실시간 변동 매핑 (요구사항 점검)
+- ✅ KPI 4숫자 → `useCountUp` + 30s 폴링.
+- ✅ CROWN EXPLOSION 카운터 → `crown_events` realtime + `useCountUp`.
+- ✅ LIVE FEED → 60s 폴링 + realtime prepend + 매초 "Xs ago" 갱신 + 무한 마키.
+- ✅ TOP 5 RP 숫자 → 60s 폴링 + `useCountUp`.
+- ✅ 배경 글로벌 펄스 → LIVE FEED 신규 row마다 해당 국가 좌표에 ring 트리거.
+- ✅ LIVE FEED 국기 이모지 — 기존 `get_whale_strikes_24h` 응답에 country 코드가 있으므로 `🇰🇷` 등 그대로 표시. 누락 시 `🌐` 폴백.
 
----
+## 폼 하단 한 줄 (사용자 지정 문구)
+```
+PHONARA EMPIRE는 만 19세 이상 성인만 이용 가능한 서비스입니다.
+```
+- 위치: 로그인/회원가입 카드 폼 가장 아래, 신뢰 배지 6칩 위.
+- 스타일: `text-[11px] text-muted-foreground text-center break-keep`, `lucide-react ShieldAlert` 아이콘 좌측.
+- 기존 상단 `<AdultOnlyBanner/>`는 유지(중복 OK — 상단 경고 + 하단 안내).
 
-### Week 3 — VIRAL: "1탭 = 100명에게" + Live Tournament
+## 범위 외 (이번 PR에서 안 함)
+- 신규 마이그레이션 / RPC / 엣지 함수 0건.
+- `Auth.tsx` 리다이렉트 셸·라우팅 변경 없음.
+- 결제 / 관리자 페이지 / 모바일 네이티브 변경 없음.
+- 3D 글로브(R3F) 도입 안 함 — 첨부 사진이 도시 스카이라인이라 중복.
 
-**SHOW (Trump)**
-- **Crown War: WEEKLY PRIMETIME** — 매주 토요일 22:00 KST 고정 시간 토너먼트. 카운트다운이 **모든 페이지 상단 띠**로 강제 노출 (D-2 이내). `tournament_schedule` 테이블 + `<TournamentCountdownBar />`.
-- **Live Battle Overlay** (`/live/:tournamentId`): OBS-ready, 1080p 16:9, 실시간 leaderboard + Crown 폭발 파티클. 우승자 인터뷰 카드 자동 생성.
-- **"받았으면 자랑하라" 강제 공유 모먼트**: Crown ≥50/Baron 승급/출금 완료 시 풀스크린 모달 + **자동 생성 OG 이미지** + 1탭 X/카카오/Line/Telegram. dismiss는 작은 X. (UX 다크패턴 경계 — 강제 X, 기본 노출 O)
-
-**ENGINEERING (Musk)**
-- **Referral 2.0**: `referral_codes` 확장 — 인플루언서 전용 코드(고정 링크 + 클릭/가입/입금 트래킹 + RPE 분배). `<ReferralLeaderboard />` 공개.
-- **Share Tracking**: `share_events(user_id, kind, channel, click_count)` — Branch.io 없이 자체 short-link (`/s/:code`).
-- **Edge function `og-render-dynamic`**: Crown 금액/유저명/국기 동적 합성.
-
-신규 테이블: `tournament_schedule`, `tournament_results`, `share_events`, `influencer_codes`. 모두 RLS.
-
----
-
-### Week 2 — HABIT: AI Coach + PWA + Daily Briefing
-
-**SHOW (Trump)**
-- **Emperor AI Coach 페르소나**: "당신의 전속 트레이딩 자문". 톤은 Trump식 단언 + Musk식 데이터. 매일 09:00 KST `<DailyBriefingCard />`가 5장 카드로:
-  1. **MISSION TODAY** (오늘의 단일 미션)
-  2. **MARKET SIGNAL** (BTC/ETH 24h + 추천 사이드)
-  3. **RISK CHECK** (어제 손실 > 임계 시 경고 + 손실보호 안내)
-  4. **CROWN OPPORTUNITY** (오늘 ×2 이벤트/founding seat 잔여)
-  5. **YOUR FORTUNE** (가벼운 운세 — 재미 요소)
-- **Push 알림**: 09:00 브리핑 + Crown War 시작 30분 전 + 본인이 leaderboard 진입 시.
-
-**ENGINEERING (Musk)**
-- **PWA**: manifest-only (SW 없음 — 가드레일 준수). Add to Home + 아이콘 6사이즈 + 테마컬러.
-- **AI Coach 엣지 함수** (`emperor-coach`): `gemini-2.5-flash` 기본, 복잡 질의는 `gpt-5-mini`. 시스템 프롬프트 = "데이터 기반 단언 + 손실 보호 의무 안내". 컨텍스트 = 유저 최근 30d 거래/잔고/Empire level.
-- **Briefing Generator cron** (08:55 KST): 전일 데이터 → 카드 5장 미리 생성 → `daily_briefings(user_id, date, payload)` → 09:00 푸시.
-- `/coach` 풀 채팅 페이지 + 잔여 토큰 카운터(VIP는 무제한).
-
----
-
-### Week 4 — MONETIZE: VIP Empire Pass + B2B + "X 인수" 수준 시그널
-
-**SHOW (Trump)**
-- **VIP Empire Pass** ($29/mo or 30,000 PHON/mo):
-  - 골드 닉네임 + Crown Aura 진화 + 입장 시 풀스크린 효과 (다른 유저 화면에도 1초 노출 = 사회적 증명)
-  - VIP 전용 채팅방 + Crown 폭발 ×3 보너스 + 출금 우선순위 표식 + AI Coach 무제한
-  - **"VIP만 보이는 시그널"** — Whale 입금/대형 출금 30초 선공개
-- **세계 1위 시그널**:
-  - 홈 푸터 "AS SEEN ON" (실제 유입 매체 로고 자동 수집 — UTM/referer 기반 `inbound_press` 테이블)
-  - "최근 24시간 N개국에서 접속" 라이브 카운터
-  - **CEO 트윗 컴포넌트** (트럼프식 단문 공지) — 관리자가 1탭으로 전체 유저 푸시 + 채팅 핀
-
-**ENGINEERING (Musk)**
-- **Stripe + 토스/PayPay 라우팅** (지역별): IP/locale 기반 자동 결제수단 선택. `subscription_plans`/`user_subscriptions`/`subscription_events`. cron 갱신.
-- **B2B Trading Sim API**: 외부 개발자용 sandbox. `api_keys` 테이블 + rate limit (DB 카운터, 인프라 RL은 가드레일상 보류) + 대시보드 `/dev/console`.
-- **Press Auto-Capture**: referer 도메인 → `og-fetch` 엣지 함수 → 로고 수집 → 관리자 승인 후 노출.
-
----
-
-## 가드레일 (전 주차 공통, 위반 금지)
-
-- 모든 신규 RPC → `function_permissions_baseline` 등록 + drift CI 통과
-- 모든 신규 테이블 → RLS + `useRealtimeChannel` 단일 진입
-- 토스트는 `@/lib/notify`만, 색상은 design tokens만
-- AI는 Lovable AI Gateway만, 새 cron은 Self-Heal Console 등록
-- PWA는 manifest-only (SW 미사용 — 기존 결정 유지)
-- "강제 공유 모먼트"는 dismiss 가능해야 함 (다크패턴 금지선)
-- 경쟁사 비교 수치는 **공개 데이터 출처 명시** (legal risk)
-
----
-
-## 즉시 실행 권고 (이 플랜 승인 시 첫 배치)
-
-**Week 1 확장분 먼저** — 이미 Wall이 살아있으므로 위에 얹기:
-1. `daily_headlines` 테이블 + cron + AI 생성 (Trump 톤)
-2. `<TopEmperorBanner />` Wall 상단
-3. `<CompetitorCompareTicker />` Wall 우측
-4. Public KPI JSON 엔드포인트 (`get_public_stats_json` RPC)
-5. `og-render` 엣지 함수 + 5템플릿
-
-이후 Week 3 → 2 → 4 순서대로.
-
----
-
-## 한 줄 요약
-
-> **"보이지 않는 시스템 밀도를, 보이는 제국으로 폭발시킨다."**
-> Trump가 외치고, Musk가 배포하고, 유저가 자랑한다.
-
-승인하면 Week 1 확장분부터 즉시 착수합니다. 다른 주차를 먼저 가져오라면 그렇게 합니다.
+## 검수 절차
+1. 빌드 통과(신규 패키지 0건 → 번들 사이즈 동일).
+2. 미인증 상태로 `/secure-auth` 진입:
+   - 서울 야경 배경 + 골드 비네트 + 도트그리드 + 라이브 펄스 노출.
+   - KPI 4개 카운트업, LIVE FEED 마키, TOP 5, CROWN EXPLOSION, 6칩 신뢰 배지, 폼 하단 19+ 문구 노출.
+   - LIVE FEED 신규 row마다 배경 좌표에 펄스 트리거.
+3. 로그인 / 회원가입 / Google OAuth 모두 정상(기존 회귀 없음).
+4. `prefers-reduced-motion` ON 시 마키 정지 + 펄스 정적 dot.
+5. 모바일(<md): 배경 더 강하게 dim, 우측 패널은 폼 아래로 스택 — 폼 가독성 우선.
+6. Lighthouse: LCP < 2.5s 유지(배경 이미지 압축 + `loading="eager" fetchpriority="high"`).
