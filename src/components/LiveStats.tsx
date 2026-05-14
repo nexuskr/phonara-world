@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { isReviewerMode } from "@/lib/reviewerMode";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 // P0.5 — Live stats now blend SERVER-DRIVEN bot seeding with a light client-side
 // jitter so the counters never look static. Reviewer Mode forces 0 (store safety).
@@ -31,7 +32,7 @@ export function useFluctuate(initial: number, opts: any = {}) {
  * Reviewer Mode → 0.
  */
 let ONLINE_BASE = 0;
-let ONLINE_TIMER: number | null = null;
+let ONLINE_STOP: (() => void) | null = null;
 let ONLINE_REFCOUNT = 0;
 const ONLINE_SUBS = new Set<() => void>();
 function emitOnline() { ONLINE_SUBS.forEach((fn) => { try { fn(); } catch {} }); }
@@ -53,16 +54,16 @@ export function useOnline() {
     ONLINE_REFCOUNT++;
     if (ONLINE_REFCOUNT === 1) {
       void tickOnline();
-      ONLINE_TIMER = window.setInterval(tickOnline, 30_000);
+      ONLINE_STOP = setVisibleInterval(tickOnline, 30_000);
     } else {
       setBase(ONLINE_BASE);
     }
     return () => {
       ONLINE_SUBS.delete(fn);
       ONLINE_REFCOUNT = Math.max(0, ONLINE_REFCOUNT - 1);
-      if (ONLINE_REFCOUNT === 0 && ONLINE_TIMER) {
-        clearInterval(ONLINE_TIMER);
-        ONLINE_TIMER = null;
+      if (ONLINE_REFCOUNT === 0 && ONLINE_STOP) {
+        ONLINE_STOP();
+        ONLINE_STOP = null;
       }
     };
   }, []);
@@ -106,8 +107,8 @@ export function useTotalUsers() {
       }
     }
     void tick();
-    const t = setInterval(tick, 60_000);
-    return () => { cancelled = true; clearInterval(t); };
+    const stop = setVisibleInterval(tick, 60_000);
+    return () => { cancelled = true; stop(); };
   }, []);
   // 1분 사이엔 작게만 흔들림
   return useJitter(base, { min: -2, max: 8, every: 5000 });

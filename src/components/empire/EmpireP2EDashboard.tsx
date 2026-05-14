@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { assertRateLimit, RL_WALLET } from "@/lib/rateLimit";
 import { notify } from "@/lib/notify";
 import { formatKRW } from "@/lib/store";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 const COMBO_STEPS = [
   { key: "attendance", label: "출석 체크", icon: CheckCircle2 },
@@ -80,8 +81,7 @@ export default function EmpireP2EDashboard() {
       setPendingIdle(Math.floor(preview));
     }
     tick();
-    const t = setInterval(tick, 30_000);
-    return () => clearInterval(t);
+    return setVisibleInterval(tick, 30_000);
   }, [idle]);
 
   const progressStep = useCallback(async (step: string) => {

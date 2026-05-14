@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 import { Trophy, ArrowUp, ArrowDown, Minus, Sparkles } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { AnimatePresence, motion } from "framer-motion";
@@ -88,18 +89,15 @@ export default function LiveRanking() {
     });
     void load();
     // Auto-refresh every 30s + on tab visibility resume + realtime push.
-    const safety = setInterval(load, 30000);
-    const onVis = () => { if (document.visibilityState === "visible") void load(); };
+    const stopSafety = setVisibleInterval(load, 30000);
     const onOnline = () => void load();
-    document.addEventListener("visibilitychange", onVis);
     window.addEventListener("online", onOnline);
     const off = subscribePostgres(
       { key: "leaderboard-live", table: "daily_stats", event: "*" },
       () => void load(),
     );
     return () => {
-      clearInterval(safety);
-      document.removeEventListener("visibilitychange", onVis);
+      stopSafety();
       window.removeEventListener("online", onOnline);
       off();
     };

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { TrendingUp, ArrowDownToLine, Package as PackageIcon, Coins } from "lucide-react";
 import { LoadingKpiGrid } from "@/components/ui/loading-state";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 type Snap = {
   deposits_today: number;
@@ -47,8 +48,7 @@ export default function TodayKpiCards() {
 
   useEffect(() => {
     void load();
-    const id = setInterval(load, 30_000);
-    return () => clearInterval(id);
+    return setVisibleInterval(load, 30_000);
   }, []);
 
   if (loading || !s) {

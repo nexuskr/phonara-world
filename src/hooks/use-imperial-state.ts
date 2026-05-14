@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNowTick } from "@/hooks/use-now-tick";
 import { shouldTripCircuit, tripCircuit, isCircuitTripped } from "@/lib/rpc-circuit";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 export type ImperialState = {
   total_is: number;
@@ -77,10 +78,10 @@ export function useImperialState() {
   useEffect(() => {
     let alive = true;
     refresh();
-    const t = window.setInterval(() => { if (alive) refresh(); }, 30_000);
+    const stop = setVisibleInterval(() => { if (alive) refresh(); }, 30_000);
     const onFocus = () => refresh();
     window.addEventListener("focus", onFocus);
-    return () => { alive = false; window.clearInterval(t); window.removeEventListener("focus", onFocus); };
+    return () => { alive = false; stop(); window.removeEventListener("focus", onFocus); };
   }, [refresh]);
 
   return { state, loading, refresh };

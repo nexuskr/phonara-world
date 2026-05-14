@@ -5,6 +5,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { isReviewerMode, useReviewerMode } from "@/lib/reviewerMode";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 export interface BotFeedItem {
   id: number;
@@ -29,8 +30,8 @@ export function useBotFeed(limit = 30): BotFeedItem[] {
       if (!error && Array.isArray(data)) setItems(data as BotFeedItem[]);
     }
     void tick();
-    const t = setInterval(tick, 10_000); // 10초 폴링 (서버 부하 vs 신선도 균형)
-    return () => { cancelled = true; clearInterval(t); };
+    const stop = setVisibleInterval(tick, 10_000); // 10초 폴링 (탭 hidden 시 자동 일시정지)
+    return () => { cancelled = true; stop(); };
   }, [limit, reviewer]);
 
   return items;

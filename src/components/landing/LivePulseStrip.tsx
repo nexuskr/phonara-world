@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
 import { Activity, UserPlus, Clock } from "lucide-react";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 type Pulse = {
   completed_24h: number;
@@ -36,8 +37,8 @@ export default function LivePulseStrip() {
       if (alive) setLoaded(true);
     };
     load();
-    const id = setInterval(load, 60_000);
-    return () => { alive = false; clearInterval(id); };
+    const stop = setVisibleInterval(load, 60_000);
+    return () => { alive = false; stop(); };
   }, []);
 
   if (!loaded || !pulse) return null;

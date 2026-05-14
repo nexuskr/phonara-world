@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Crown } from "lucide-react";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 export default function EmpireFoundingCounter({ compact }: { compact?: boolean }) {
   const [remaining, setRemaining] = useState<number | null>(null);
@@ -25,11 +26,11 @@ export default function EmpireFoundingCounter({ compact }: { compact?: boolean }
         )
         .subscribe((_s: string, err?: unknown) => { if (err) { /* swallow */ } });
     } catch { /* realtime unreachable */ }
-    const i = setInterval(load, 30_000);
+    const stopPoll = setVisibleInterval(load, 30_000);
     return () => {
       mounted = false;
       try { if (ch) supabase.removeChannel(ch); } catch { /* noop */ }
-      clearInterval(i);
+      stopPoll();
     };
   }, []);
 

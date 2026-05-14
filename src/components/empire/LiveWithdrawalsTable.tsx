@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { LoadingList } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Banknote, CheckCircle2 } from "lucide-react";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 type Row = {
   masked_nick: string;
@@ -41,10 +42,10 @@ export default function LiveWithdrawalsTable() {
         () => load(),
       )
       .subscribe();
-    const id = setInterval(load, 30_000);
+    const stop = setVisibleInterval(load, 30_000);
     return () => {
       supabase.removeChannel(ch);
-      clearInterval(id);
+      stop();
     };
   }, []);
 

@@ -5,6 +5,7 @@
 import { useEffect, useState } from "react";
 import { ShieldAlert, Check, X, Plus, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -42,7 +43,7 @@ export function RecoveryRequestsPanel() {
     });
     setRows((data as Req[]) ?? []);
   };
-  useEffect(() => { load(); const id = setInterval(load, 30_000); return () => clearInterval(id); }, []);
+  useEffect(() => { load(); return setVisibleInterval(load, 30_000); }, []);
 
   const create = async () => {
     if (!target || reason.trim().length < 10) {

@@ -5,6 +5,7 @@ import { isFlagOn } from "@/lib/conversion-flags";
 import { trackClick } from "@/lib/telemetry";
 import { useBotFeed } from "@/hooks/use-bot-feed";
 import i18n from "@/lib/i18n";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 type Item = {
   id: string;
@@ -59,7 +60,7 @@ export default function LivePurchaseTicker() {
     }
 
     void load();
-    const refresh = setInterval(load, 30_000);
+    const stopRefresh = setVisibleInterval(load, 30_000);
 
     const ch = supabase
       .channel("live-purchases")
@@ -72,7 +73,7 @@ export default function LivePurchaseTicker() {
 
     return () => {
       mounted = false;
-      clearInterval(refresh);
+      stopRefresh();
       supabase.removeChannel(ch);
     };
   }, []);

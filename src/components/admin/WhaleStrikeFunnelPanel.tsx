@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Zap, MousePointerClick, Eye, Wallet, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { LoadingList } from "@/components/ui/loading-state";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 type Funnel = {
   impressions_24h: number;
@@ -34,8 +35,8 @@ export default function WhaleStrikeFunnelPanel() {
       setLoading(false);
     }
     void load();
-    const id = setInterval(load, 60_000);
-    return () => { alive = false; clearInterval(id); };
+    const stop = setVisibleInterval(load, 60_000);
+    return () => { alive = false; stop(); };
   }, []);
 
   return (
