@@ -4,7 +4,7 @@ import { useRealtimeChannel } from "@/hooks/use-realtime-channel";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { useDB, formatKRW, uid, type Mission, type MissionTier } from "@/lib/store";
-import { ShieldCheck, Users, TrendingUp, ArrowDownToLine, ArrowUpFromLine, Plus, MessageSquare, Send, Coins, Target, Crown, BarChart3, ShieldAlert, GitBranch } from "lucide-react";
+import { ShieldCheck, Users, TrendingUp, ArrowDownToLine, ArrowUpFromLine, Plus, MessageSquare, Send, Coins, Target, Crown, BarChart3, ShieldAlert, GitBranch, Newspaper } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useRequireAdmin } from "@/hooks/use-require-auth";
 import { useTranslation } from "react-i18next";
@@ -39,6 +39,7 @@ import EvHealthAdmin from "@/components/admin/EvHealthAdmin";
 import AbExperimentsAdmin from "@/components/admin/AbExperimentsAdmin";
 import CoinAddressAdmin from "@/components/admin/CoinAddressAdmin";
 import FoundingSeasonsAdmin from "@/components/admin/FoundingSeasonsAdmin";
+import PressCurationPanel from "@/components/admin/PressCurationPanel";
 
 const SENSITIVE_ADMIN_TABS = [
   "server_wd", "server_dep", "users", "packages", "coin",
@@ -51,7 +52,7 @@ import KernelObservability from "@/components/admin/KernelObservability";
 import OracleFortress from "@/components/admin/OracleFortress";
 import EconomyDashboard from "@/components/admin/EconomyDashboard";
 
-type Tab = "dashboard" | "funnel" | "analytics" | "errors" | "security" | "ops" | "perms" | "viral_forensics" | "aml" | "ai_missions" | "payout_audit" | "referrals" | "server_dep" | "server_wd" | "packages" | "users" | "missions" | "chats" | "coin" | "ugc" | "insurance" | "accounting" | "bots" | "bot_mix" | "ev_health" | "ab_experiments" | "beta" | "trust_v2" | "founding" | "kernel" | "oracle" | "economy";
+type Tab = "dashboard" | "funnel" | "analytics" | "errors" | "security" | "ops" | "perms" | "viral_forensics" | "aml" | "ai_missions" | "payout_audit" | "referrals" | "server_dep" | "server_wd" | "packages" | "users" | "missions" | "chats" | "coin" | "ugc" | "insurance" | "accounting" | "bots" | "bot_mix" | "ev_health" | "ab_experiments" | "beta" | "trust_v2" | "founding" | "kernel" | "oracle" | "economy" | "press";
 
 export default function Admin() {
   const [db, setDb] = useDB();
@@ -163,6 +164,7 @@ export default function Admin() {
     { id: "kernel", label: "Kernel (v3.2)", icon: Cpu },
     { id: "oracle", label: "Oracle Fortress", icon: Radio },
     { id: "economy", label: "PHON·NFT 경제", icon: Coins },
+    { id: "press", label: "AS SEEN ON", icon: Newspaper },
   ];
 
   return (
@@ -228,6 +230,7 @@ export default function Admin() {
           {tab === "kernel" && <KernelObservability />}
           {tab === "oracle" && <OracleFortress />}
           {tab === "economy" && <EconomyDashboard />}
+          {tab === "press" && <PressCurationPanel />}
         </AdminAal2Gate>
       </div>
     </Layout>
