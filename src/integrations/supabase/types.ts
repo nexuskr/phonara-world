@@ -7467,6 +7467,10 @@ export type Database = {
       admin_get_trust_v2_stats: { Args: never; Returns: Json }
       admin_get_user_360: { Args: { _uid: string }; Returns: Json }
       admin_get_user_email: { Args: { _user_id: string }; Returns: string }
+      admin_grant_self_nft: {
+        Args: { _level: string; _type: string }
+        Returns: Json
+      }
       admin_list_bequests: {
         Args: { _limit?: number }
         Returns: {
