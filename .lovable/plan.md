@@ -1,158 +1,172 @@
 
-# Operation Empire Nova — Phase C 실행 플랜
+# Phase D — World #1 Empire (사용자 피드백 반영 최종판)
 
-**목표**: 결제·이차시장·바이럴 루프를 한 번에 점화시켜 “MOR(Most Addictive·Profitable·Legendary)” 단계로 진입.
-**원칙**: 기존 v3.2 kernel / Oracle / PHON / NFT / Crown War 0% 변경. 신규 파일 ≤ 8개. 모든 RPC는 SECURITY DEFINER + `function_permissions_baseline` 등록.
-
----
-
-## Week 1 — 💰 Monetization Engine (C-1)
-
-### 1.1 NFT Atelier 유료화 + RNG
-기존 `fuse_nft` RPC를 확장 (signature 유지, 내부 로직만 교체):
-- **PHON 비용**: Bronze→Gold 250 PHON / Gold→Diamond 750 PHON (`atelier_config` 테이블, admin 실시간 조정)
-- **결과 분기** (서버 RNG, idempotent):
-  - 80% 성공 → 상위 NFT 1개
-  - 15% 실패 → 재료 3개 중 1개만 반환, PHON 50% 소각
-  - 5% 잭팟 → 상위 NFT + boost +10%p (cap 50%)
-- **새 테이블**: `atelier_runs` (user, cost, outcome, jackpot, refund_nft_id) — admin/owner SELECT, RPC만 INSERT
-- **알림**: 잭팟 시 `enqueue_fomo_notification('atelier_jackpot')` → CrownThroneOverlay와 동일 톤의 골드 burst
-
-### 1.2 Marketplace 1.0
-- **신규 테이블**: `nft_listings`(nft_id, seller, price_phon, kind: fixed|auction, ends_at, status), `nft_bids`, `nft_trades`
-- **RPC 4종**: `list_nft(nft_id, price, kind, duration)` / `cancel_listing(id)` / `place_bid(listing_id, amount)` / `buy_nft(listing_id)` — 모두 `FOR UPDATE`로 race 방지
-- **수수료**: 6% 플랫폼 (3% burn + 3% Crown Pool 적립)
-- **NFT 소유권 이전**: `nft_collection.user_id` UPDATE는 `marketplace_transfer_nft()` internal helper만 가능 — `guard_nft_ownership` 트리거 추가
-- **UI**: `/marketplace` 신규 페이지 1개 (그리드 + 필터 + 디테일 시트). NftAtelier 페이지 상단 “보유 NFT 판매” 버튼만 추가.
-
-### 1.3 Crown War Legendary 자동 발행
-- 기존 주간/시즌 정산 cron 끝부분에 `mint_legendary_for_winner(season_id, user_id)` 호출
-- 변종 2종: `golden_trump_crown` (boost +35%) / `starship_musk_crown` (boost +35%, leverage cap +1단계)
-- 시즌당 1장 한정 — `nft_collection.source='crown_war_legendary'` + `source_ref=season_id` UNIQUE
-
-### 1.4 Emperor Daily Dividend
-- `daily_emperor_dividend()` cron 매일 00:10 KST: 직전 24h Crown 1위에게 Crown Pool의 1% PHON 지급 (`phon_balances` + 이벤트 로그)
+순서 변경: **Week 1 → Week 3(Viral) → Week 2(AI/PWA) → Week 4(Monetization)**
+이유: 바이럴이 유입을 만들고 → AI가 유지율을 만들고 → VIP가 수익화. 반대로 가면 초기 모멘텀이 약해짐.
 
 ---
 
-## Week 2 — 📣 Imperial Story Engine (C-2) + 🌌 Cosmos/Journey Backend (C-3)
+## Week 1 — "살아있는 제국" 기반 (필수 선행)
 
-### 2.1 Story Engine
-- **신규 테이블**: `imperial_stories`(kind, actor_masked, payload jsonb, headline_ko/en/ja/vi, hashtags, created_at) — public SELECT (마스킹된 닉만)
-- **트리거 5종** (event → row insert):
-  1. `crown_events` (new emperor) → "👑 익명#A1B2 just dethroned the Empire."
-  2. `atelier_runs` jackpot → "💎 1-in-20 Diamond fusion ignited at 03:42 KST."
-  3. `nft_trades` ≥ 1000 PHON → "🛒 Legendary Crown traded for 12,400 PHON."
-  4. `crown_events` 3연속 1위 유지 → "🔥 Emperor #X holds the throne for 3 days straight."
-  5. `recompute_empire_level` Baron+ 승급 → "🚀 New Baron joins the Multi-Planetary Empire."
-- **클라**: `<ImperialStoryRail />` (Index/Dashboard 상단), `<StoryShareButton />` 1-click X 공유 (Web Intent URL, `#EmpireNova #MakeEmpireGreatAgain #MultiPlanetary` 자동)
-- **i18n**: 헤드라인 4언어를 트리거 안에서 미리 생성 (런타임 번역 X)
+### 1.1 `<WorldDominationWall />` (홈 최상단)
+3초 안에 "여기 사람 많다 / 돈이 돈다 / 세계가 움직인다"를 체감.
 
-### 2.2 Galaxy Emperor 100-Seat Auction
-- 기존 `founding_seasons` 재활용: `kind='galaxy_emperor'` 추가, 100석, 입찰가 시작 $30,000 상당 PHON
-- 신규 RPC: `bid_galaxy_seat(amount)` / 정산은 기존 `settle_ended_founding_seasons()` 분기 추가
-- 좌석 보유자: 30일 자동 Booster (수수료 -50% / Crown ×2 / leverage cap +2단계)
+**구성 요소**
+- **글로벌 KPI 행**: 24h GMV · 누적 출금 · 동시접속(Supabase Presence) · 활성 Empire 수 · 최대 Crown 폭발
+- **국가별 깃발 마키**: 최근 24h 활동 국가 top 12, 깃발 + 활동량
+- **🆕 LIVE NOW 인간 피드** (60초 윈도)
+  - "🇯🇵 Emperor minted Legendary NFT"
+  - "🇰🇷 Whale triggered Crown Explosion +2,341"
+  - "🇺🇸 Baron reached Tier 9"
+  - 마스킹 닉네임, framer-motion 슬라이드 인
+- **🆕 시간대 자동 헤드라인**
+  - 09–18 JST → "Tokyo Empire Rising"
+  - 09–17 EST → "New York Session Active"
+  - 02–06 KST → "Night Crown Rush"
+  - 21–24 KST → "Korean Prime Hour"
+  - 서버 UTC + 사용자 locale로 결정
 
-### 2.3 Imperial Journey 100-Stage Auto-Reward
-- `imperial_journey_stages`(stage 1..100, requirement_jsonb, reward_jsonb) 시드
-- RPC: `claim_journey_stage(stage)` (서버에서 조건 검증) / `get_journey_progress()` (현재 stage + “다음 보상까지” 거리: PHON / 거래수 / Crown)
-- `<ImperialJourneyMap />`에 progress bar + "Bronze Crown까지 $87" 라이브 라인 추가 (Phase A 약속한 보강)
+**백엔드**
+- 공개 RPC `get_world_domination_stats()` — 5초 캐시
+- 공개 RPC `get_live_activity_60s(_limit)` — 마스킹된 최근 60초 이벤트 (atelier_runs/crown_events/empire_levels/nft_collection 머지)
+- Supabase Presence 채널 `world` (가입자 수만 노출)
+- `function_permissions_baseline` 등록 + drift 통과
+
+### 1.2 다국어 SEO/OG 완성
+- `react-helmet-async` 도입 + 라우트별 `<Helmet>` (lang/og:locale/canonical 분기 ko/en/ja/zh)
+- `scripts/generate-sitemap.ts` (predev/prebuild) + hreflang
+- `og-card-renderer` 확장: `?locale=` + `?style=epic` 파라미터
+
+### 1.3 🆕 감정형 동적 OG 이미지
+공유 링크 = 광고. 정적 카드 X.
+
+**5종 템플릿** (`og-card-renderer` 내부 SVG)
+- `crown_explosion`: 붉은 폭발 + 황금 왕관 + 유저명 + Crown 수치
+- `legendary_mint`: NFT rarity glow + 별빛 파티클 + "WORLD #1 EMPIRE"
+- `baron_promotion`: 7+ 티어 코로나 + 승급 호칭
+- `world_rank`: 글로벌 순위 + 국가 깃발
+- `default_empire`: 사이트 기본
+
+**호출 예**
+```
+/og?style=crown_explosion&user=Phantom&crown=2341&locale=ko
+```
 
 ---
 
-## Week 3 — ✨ Polish & Global Scale (C-4)
+## Week 3 — Viral Loop (다음 우선)
 
-### 3.1 i18n 4언어 마감
-- 신규 키 (Atelier·Marketplace·Story·Galaxy·Journey) ko/en/ja/vi 채움
-- `scripts/i18n-audit.ts`로 누락 키 0 보장
+### 3.1 1탭 외부 공유 + 보상
+- `<StoryShareButton />` 확장: X / 카카오 / 라인 / Threads / 클립보드
+- 공유 시 동적 OG (Week 1.3 사용)
+- `share_events` + `record_share(kind, channel)` RPC, 일 3회 +5 PHON
 
-### 3.2 모바일 60fps QA
-- CrownThroneOverlay: particle 22→12, `will-change: transform`, 저사양 감지 시 burst skip
-- Atelier RNG 애니메이션: GPU layer 분리, `prefers-reduced-motion` 존중
-- ImperialStoryRail: `content-visibility: auto`
-- Lighthouse 모바일 95+ 목표 (LCP < 2.5s, CLS < 0.05, INP < 200ms)
+### 3.2 인플루언서 커스텀 referral
+- `/referral` 확장: 커스텀 슬러그 + 실시간 conversion 위젯
+- 인플루언서 전용 30일 leaderboard
 
-### 3.3 Launch Readiness
-- Self-Heal Console에 "Atelier kill switch" / "Marketplace kill switch" 추가
-- `admin_get_phase_c_metrics()` RPC + `/admin/kpi`에 Phase C 패널 (atelier 매출·marketplace 거래·story 노출·journey 클레임)
+### 3.3 라이브 시즌 토너먼트 (월/수/금 정기)
+- `tournaments` 테이블 + `enter_tournament` / `settle_tournament` (cron)
+- `/tournaments` + 홈 `<TournamentRail />`
+
+### 3.4 OBS 라이브 오버레이 (`/live`)
+- transparent 배경, 스트리머가 OBS browser source로 임베드
+- 실시간 PnL · Crown 획득 · NFT 폭발 · Empire Tier 변동
+- URL 토큰 인증으로 본인 데이터 표출
 
 ---
 
-## 📊 정확한 수치표
+## Week 2 — 습관 형성 + AI
 
-| 항목 | 값 |
+### 2.1 🆕 `<DailyBriefingCard />` (가장 중요)
+"매일 돌아오게 만드는 이유". 09:00 KST 리셋, 5칸 카드.
+
+| 칸 | 내용 |
 |---|---|
-| Bronze→Gold 비용 | **250 PHON** |
-| Gold→Diamond 비용 | **750 PHON** |
-| 성공 확률 | 80% |
-| 실패 확률 | 15% (재료 1개 반환, 50% PHON burn) |
-| 잭팟 확률 | 5% (+10%p boost, cap 50) |
-| Marketplace 수수료 | 6% (3% burn / 3% Crown Pool) |
-| Galaxy Emperor 좌석 | 100석, 시작가 $30,000 상당 |
-| Galaxy Booster 기간 | 30일 |
-| Emperor Daily Dividend | Crown Pool의 1% / day |
+| 오늘의 미션 | persona 기반 1개, 클릭 시 해당 페이지 |
+| 오늘의 추천 | 최적 패키지/심볼 (V17 엔진 활용) |
+| 오늘의 위험도 | 시장 변동성 + 본인 손실 한도 경고 |
+| 오늘의 Crown 기회 | 이벤트/시즌/멀티플라이어 안내 |
+| 오늘의 운세 | AI가 유저 데이터 기반 한 줄 (재미 요소) |
+
+- 백엔드 RPC `get_daily_briefing()` (서버 캐시 24h, 사용자별)
+- Edge Function `daily-briefing-build` cron 매일 00:05 KST
+- Dashboard 최상단 마운트
+
+### 2.2 PWA (manifest-only, 풀 SW 미사용)
+- `public/manifest.webmanifest` + 아이콘만 → "홈 화면 추가" 가능
+- 서비스 워커 X (Lovable preview iframe 충돌 방지 — 가드레일)
+- `<InstallPromptCard />` — 첫 입금 후 1회
+
+### 2.3 Push 구독
+- `<NotificationPrefsCard />` UI 확장
+- 기존 `send-push` 함수에 endpoint 저장 + 토큰 관리
+
+### 2.4 Emperor AI Coach (`/coach`)
+- 채팅 UI + Edge Function `emperor-coach` (Lovable AI Gateway, `google/gemini-2.5-flash` 기본)
+- 컨텍스트: phon_balance / 최근 거래 / NFT / journey
+- 손실 3연속 자동 인사이트 토스트
 
 ---
 
-## 📰 Story Card 샘플 (4언어 중 EN)
+## Week 4 — 수익화 (마지막)
 
-1. `👑 New Emperor crowned — #A1B2 dethroned the Empire at 03:42 KST.`
-2. `💎 Diamond strike — 1-in-20 jackpot ignited at the Atelier.`
-3. `🛒 Legendary Crown sold for 12,400 PHON — secondary market is live.`
-4. `🔥 Triple reign — Emperor #X holds the throne for 72 hours.`
-5. `🚀 New Baron — joining 38 others on the road to Multi-Planetary status.`
+### 4.1 VIP Empire Pass (시각적 계급이 핵심)
 
----
+**혜택보다 "신분 상승 연출"**
+- 황금 닉네임 + 회전 코로나 (`<CrownAura />` 응용)
+- 입장 이펙트 (페이지 전환 시 황금 스윕)
+- VIP 전용 테두리 (전 컴포넌트의 avatar/card)
+- VIP 전용 글로벌 채팅방
+- 황제 전용 Crown 애니메이션 (3배 크기 폭발)
+- VIP Empire Badge (전 사이트 노출)
 
-## ⚠️ 리스크 & 대응
+**구조**
+- Stripe seamless 연동 검토 (eligibility check 선행)
+- `vip_subscriptions` 테이블, $19/$49/$99 3티어
+- 혜택 (보조): 수수료 -50%, Crown ×2, NFT fusion -30%, 일일 PHON 보너스
+- `<VipPassPanel />` + `/vip` 페이지
 
-| 리스크 | 대응 |
-|---|---|
-| Marketplace 자전거래 / wash trading | 동일 IP·디바이스 fp 거래 차단 + `anomaly_events('wash_trade')` |
-| Atelier RNG 신뢰 이슈 | 결과 jsonb + server seed hash를 `atelier_runs`에 영구 기록, 사용자 검증 페이지 |
-| 잭팟 인플레이션 | boost cap 50%, daily atelier_runs 25회/유저 제한 |
-| Galaxy 좌석 매크로 | 입찰당 50 PHON 보증금 + 캡차 + AAL2 |
-| 트래픽 폭증 (런칭) | Self-Heal Console kill switch 4종 + Story Engine은 트리거 기반(폴링 없음) |
+### 4.2 B2B Trading Sim API (`/developers`)
+- Edge Function `public-sim-api` + API key 인증
+- 외부 임베드 → 백링크 + 신규 수익원
 
----
-
-## 🛠 기술 변경 요약
-
-**신규 파일 (7개)**:
-- `src/pages/Marketplace.tsx`
-- `src/components/marketplace/ListingDetailSheet.tsx`
-- `src/components/story/ImperialStoryRail.tsx`
-- `src/components/story/StoryShareButton.tsx`
-- `src/pages/GalaxyAuction.tsx`
-- `supabase/migrations/{week1}.sql` (atelier 유료화 + marketplace + legendary)
-- `supabase/migrations/{week2}.sql` (story engine + galaxy + journey stages)
-
-**수정 파일 (5개)**:
-- `src/pages/NftAtelier.tsx` (PHON 비용 표시 + RNG 결과 모달)
-- `src/components/journey/ImperialJourneyMap.tsx` ("다음 보상까지" 라인)
-- `src/App.tsx` (라우트 3개 추가)
-- `src/pages/Index.tsx` + `Dashboard.tsx` (StoryRail 마운트)
-- `src/pages/AdminKPI.tsx` (Phase C 패널)
-
-**RPC 신규 (10개)**: `list_nft` / `cancel_listing` / `place_bid` / `buy_nft` / `marketplace_transfer_nft`(internal) / `bid_galaxy_seat` / `claim_journey_stage` / `get_journey_progress` / `daily_emperor_dividend` / `admin_get_phase_c_metrics` — 모두 `function_permissions_baseline` 등록.
+### 4.3 세계 1위 시그널 강화
+- Trust 페이지: 누적 출금 카운터 (count-up 24/7)
+- "Featured on" 섹션 + 외부 리뷰 위젯
 
 ---
 
-## 🚀 Launch Copy (Trump × Musk)
+## 가드레일 (절대 위반 금지)
 
-> **Empire Nova is here.**
-> The greatest NFT empire in the history of the world — believe me — just went live.
-> Fuse, trade, conquer. Win the throne, mint Legendary Crowns, collect daily dividends.
-> 100 Galaxy Emperor seats. One Empire. Multi-Planetary by design.
-> #EmpireNova #MakeEmpireGreatAgain #MultiPlanetary 🗡️🚀
+- 모든 신규 RPC → `function_permissions_baseline` 등록
+- 모든 신규 테이블 → RLS + admin 전용 직접 SELECT
+- 신규 cron → Self-Heal Console 메타 등록
+- 토스트 = `@/lib/notify` 만 / 빈상태·로딩 = ui 프리미티브
+- Realtime = `useRealtimeChannel` 단일
+- 색상 = 디자인 토큰만
+- AI = Lovable AI Gateway (별도 키 X)
+- PWA = manifest-only (서비스 워커 금지 — preview iframe 충돌)
 
 ---
 
-## ✅ 승인 후 즉시 시작 순서
-1. Week 1 마이그레이션 (atelier 유료화 + marketplace 테이블/RPC + legendary mint)
-2. Marketplace UI + Atelier 결과 모달
-3. Story Engine 트리거 + Rail 컴포넌트
-4. Galaxy Auction + Journey 100-stage
-5. i18n 마감 + 모바일 QA + Self-Heal kill switch
+## Week 1 첫 산출물 (이번 빌드 범위)
 
-**“Implement plan” 누르시면 Week 1부터 차례로 실행합니다.**
+```text
+DB:
+  + RPC get_world_domination_stats()
+  + RPC get_live_activity_60s()
+  + function_permissions_baseline 등록
+
+프론트:
+  + src/components/landing/WorldDominationWall.tsx
+  + src/components/landing/LiveActivityFeed.tsx (자식)
+  + src/components/landing/SessionHeadline.tsx (자식)
+  + src/pages/Index.tsx — 최상단 마운트
+  + react-helmet-async 도입
+  + scripts/generate-sitemap.ts + predev/prebuild
+  + Helmet을 주요 5개 페이지에 적용 (Index/Dashboard/Trust/Packages/Empire)
+  + og-card-renderer 5 템플릿 + locale 파라미터
+```
+
+승인하시면 Week 1을 한 번에 구현하고, 끝나면 바로 Week 3로 넘어갑니다.

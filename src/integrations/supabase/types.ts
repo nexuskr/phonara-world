@@ -8893,6 +8893,17 @@ export type Database = {
           subline: string
         }[]
       }
+      get_live_activity_60s: {
+        Args: { _limit?: number }
+        Returns: {
+          amount: number
+          created_at: string
+          flag: string
+          kind: string
+          title: string
+          user_mask: string
+        }[]
+      }
       get_main_nft: {
         Args: { _user_id: string }
         Returns: {
@@ -9197,6 +9208,7 @@ export type Database = {
       }
       get_whale_strike_funnel: { Args: never; Returns: Json }
       get_whale_strikes_24h: { Args: { _limit?: number }; Returns: Json }
+      get_world_domination_stats: { Args: never; Returns: Json }
       ghost_cleanup_expired: { Args: never; Returns: undefined }
       ghost_pulse_run: { Args: never; Returns: undefined }
       ghost_reset_daily: { Args: never; Returns: undefined }

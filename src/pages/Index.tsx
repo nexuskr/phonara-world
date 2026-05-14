@@ -18,6 +18,7 @@ import PayoutTicker from "@/components/PayoutTicker";
 import WhaleStrikeRail from "@/components/empire/WhaleStrikeRail";
 const WhaleStrikeRailV3 = lazy(() => import("@/components/empire/WhaleStrikeRailV3"));
 const ImperialStoryRail = lazy(() => import("@/components/empire/ImperialStoryRail"));
+const WorldDominationWall = lazy(() => import("@/components/landing/WorldDominationWall"));
 const LiveCounterStrip = lazy(() => import("@/components/empire/LiveCounterStrip"));
 const GhostPulseGlobe = lazy(() => import("@/components/empire/GhostPulseGlobe"));
 import { useOnline, useTotalPayout, useTodayPayout, useTotalUsers } from "@/components/LiveStats.tsx";
@@ -251,6 +252,9 @@ export default function Index() {
           </Link>
         </div>
       </section>
+
+      {/* Phase D Week 1 — World Domination Wall */}
+      <Suspense fallback={null}><WorldDominationWall /></Suspense>
 
       {/* Live payout ticker + Council */}
       <section className="relative z-10 container py-12">
