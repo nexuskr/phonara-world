@@ -167,7 +167,7 @@ export default function JackpotBanner({ compact = false }: { compact?: boolean }
         {/* 최근 당첨자 마키 — 무한 스크롤 */}
         {j.recentWins.length > 0 && (
           <div className="mt-3 overflow-hidden rounded-xl bg-background/40 border border-border/40 py-1.5">
-            <div className="flex gap-4 animate-[aurora-shift_30s_linear_infinite] whitespace-nowrap" style={{ animationName: "marquee", animationDuration: "30s", animationTimingFunction: "linear", animationIterationCount: "infinite" }}>
+            <div className="flex gap-4 animate-marquee whitespace-nowrap will-change-transform">
               {[...j.recentWins, ...j.recentWins].map((w, i) => (
                 <div key={i} className="inline-flex items-center gap-2 text-[11px] px-2">
                   {w.type === "main" ? <Trophy className="w-3 h-3 text-gold" /> : <Sparkles className="w-3 h-3 text-secondary" />}
