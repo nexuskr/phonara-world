@@ -22,6 +22,8 @@ export type AwardResult = {
   level_mult?: number;
   streak_mult?: number;
   type_mult?: number;
+  vip_bonus?: boolean;
+  vip_mult?: number;
   level: number;
   level_up?: boolean;
   duplicate?: boolean;
