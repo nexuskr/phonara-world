@@ -47,7 +47,11 @@ export function useImperialState() {
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
-    if (typeof window !== "undefined" && sessionStorage.getItem(DASHBOARD_STATE_DISABLED_KEY) === "1") {
+    if (isCircuitTripped(DASHBOARD_STATE_DISABLED_KEY)) {
+      setLoading(false);
+      return;
+    }
+    if (typeof window !== "undefined" && window.location.pathname.startsWith("/guide")) {
       setLoading(false);
       return;
     }
@@ -59,9 +63,7 @@ export function useImperialState() {
       }
       const { data, error } = await supabase.rpc("get_my_dashboard_state" as any);
       if (error) {
-        if ((error as { code?: string }).code === "PGRST301" || /401|400|unauthorized|bad request/i.test(error.message ?? "")) {
-          try { sessionStorage.setItem(DASHBOARD_STATE_DISABLED_KEY, "1"); } catch { /* noop */ }
-        }
+        if (shouldTripCircuit(error)) tripCircuit(DASHBOARD_STATE_DISABLED_KEY);
         setLoading(false);
         return;
       }
