@@ -94,6 +94,11 @@ export default function Dashboard() {
 
   if (!user) return null;
 
+  // Single shared subscription — passed down to Hero & KpiGrid as props
+  // to eliminate duplicate RPC + realtime channels.
+  const { phon, nfts } = useMyPower();
+  const online = useOnline();
+
   return (
     <Layout>
       <Suspense fallback={null}>
@@ -106,14 +111,14 @@ export default function Dashboard() {
       <EmpireSignature />
 
       {/* 🌌 100vh Cosmic Hero — 단일 CTA */}
-      <DashboardHeroV3 />
+      <DashboardHeroV3 phon={phon} nfts={nfts} online={online} />
 
       <div className="container relative pt-6 pb-12 space-y-6">
         {/* ⚡ 핵심 베팅 진입 카드 */}
         <TradingEntryCard />
 
         {/* 📊 KPI 4개 */}
-        <KpiGridV3 />
+        <KpiGridV3 nfts={nfts} online={online} />
 
         {/* 📦 더 보기 — 기존 카드 전부 보존 */}
         <MoreSection ref={moreRef}>
