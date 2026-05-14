@@ -180,9 +180,11 @@ function FpsHud() {
   }, []);
   const color = fps >= 55 ? "text-emerald-300" : fps >= 40 ? "text-amber-300" : "text-rose-300";
   return (
-    <div className={`pointer-events-none fixed top-2 right-2 z-[70] font-mono tabular-nums text-[10px] px-2 py-0.5 rounded bg-black/60 border border-white/10 ${color}`}>
-      {fps} fps
-    </div>
+    <FloatingSlot slot="topRight" order={99}>
+      <div className={`pointer-events-none font-mono tabular-nums text-[10px] px-2 py-0.5 rounded bg-black/60 border border-white/10 ${color}`}>
+        {fps} fps
+      </div>
+    </FloatingSlot>
   );
 }
 
