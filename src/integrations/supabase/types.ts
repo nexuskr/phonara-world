@@ -7890,6 +7890,7 @@ export type Database = {
       admin_get_monthly_revenue_progress: { Args: never; Returns: Json }
       admin_get_oracle_health: { Args: never; Returns: Json }
       admin_get_oracle_swap_readiness: { Args: never; Returns: Json }
+      admin_get_phase_c_metrics: { Args: never; Returns: Json }
       admin_get_recent_errors: {
         Args: { _limit?: number; _only_unresolved?: boolean }
         Returns: {
