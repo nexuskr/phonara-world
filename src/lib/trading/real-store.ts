@@ -126,12 +126,44 @@ export const useRealStore = create<State>()((set, get) => ({
           p_client_request_id: crid,
         } as never,
       ).abortSignal(ctrl.signal);
-      if (error) return { error: mapTradingError(error.message) };
+      if (error) {
+        // v3.2 audit: failure path. Best-effort, do not block UI.
+        try {
+          await supabase.rpc("log_lpi_audit_failure", {
+            p_client_request_id: crid,
+            p_error_code: String(error.message ?? "unknown_error").slice(0, 500),
+            p_meta: {
+              symbol: args.symbol,
+              side: args.side,
+              leverage: args.leverage,
+              margin: args.margin,
+              mark_price: args.mark,
+              margin_mode: args.marginMode ?? "isolated",
+            } as any,
+          } as never);
+        } catch { /* swallow audit error */ }
+        return { error: mapTradingError(error.message) };
+      }
       await get().load();
       if (typeof window !== "undefined") window.dispatchEvent(new Event("wallet:refresh"));
       return { id: data as string };
     } catch (e: any) {
-      return { error: mapTradingError(e?.message ?? "AbortError") };
+      const errMsg = e?.message ?? "AbortError";
+      try {
+        await supabase.rpc("log_lpi_audit_failure", {
+          p_client_request_id: crid,
+          p_error_code: String(errMsg).slice(0, 500),
+          p_meta: {
+            symbol: args.symbol,
+            side: args.side,
+            leverage: args.leverage,
+            margin: args.margin,
+            mark_price: args.mark,
+            phase: "client_abort_or_network",
+          } as any,
+        } as never);
+      } catch { /* noop */ }
+      return { error: mapTradingError(errMsg) };
     } finally {
       clearTimeout(timer);
     }
