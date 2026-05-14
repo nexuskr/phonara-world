@@ -174,6 +174,9 @@ export default function NftAtelier() {
             <div className="px-2 py-1 rounded-md bg-primary/10 text-primary font-mono tabular-nums">
               +{totalBoost}% Boost
             </div>
+            <Button size="sm" variant="outline" onClick={() => navigate("/marketplace")} className="h-7">
+              마켓플레이스 →
+            </Button>
           </div>
         </div>
       </div>
