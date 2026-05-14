@@ -7,12 +7,19 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
 import { useMyPower } from "@/hooks/use-my-power";
-import { getMainNftStatus, setMainNft, type MainNftStatus, invalidateMainNftCache } from "@/lib/mainNft";
+import { getMainNftStatus, setMainNft, adminGrantSelfNft, type MainNftStatus, invalidateMainNftCache } from "@/lib/mainNft";
 import { getNftImage, getRarityRingClass, getNftTypeLabel } from "@/lib/nftImage";
 import { notify } from "@/lib/notify";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Coins, Clock, Sparkles } from "lucide-react";
+import { Coins, Clock, Sparkles, Shield } from "lucide-react";
+import { useDB } from "@/lib/store";
 import { cn } from "@/lib/utils";
+
+const ADMIN_SHOWCASE: Array<{ type: "crown" | "emperor" | "founder"; level: "bronze" | "gold" | "diamond" }> = [
+  { type: "crown", level: "bronze" }, { type: "crown", level: "gold" }, { type: "crown", level: "diamond" },
+  { type: "emperor", level: "bronze" }, { type: "emperor", level: "gold" }, { type: "emperor", level: "diamond" },
+  { type: "founder", level: "bronze" }, { type: "founder", level: "gold" }, { type: "founder", level: "diamond" },
+];
 
 interface Props {
   open: boolean;
@@ -26,6 +33,10 @@ export default function NftGalleryDialog({ open, onOpenChange, onChanged }: Prop
   const [status, setStatus] = useState<MainNftStatus | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
 
+  const [db] = useDB();
+  const isAdmin = !!db.user?.isAdmin;
+  const [adminBusy, setAdminBusy] = useState<string | null>(null);
+
   useEffect(() => { if (open) getMainNftStatus().then(setStatus); }, [open]);
 
   const cooldownActive =
@@ -33,6 +44,19 @@ export default function NftGalleryDialog({ open, onOpenChange, onChanged }: Prop
   const cooldownStr = cooldownActive
     ? new Date(status!.cooldown_until!).toLocaleString()
     : null;
+
+  async function adminPick(type: "crown"|"emperor"|"founder", level: "bronze"|"gold"|"diamond") {
+    const key = `${type}:${level}`;
+    setAdminBusy(key);
+    const res = await adminGrantSelfNft(type, level);
+    setAdminBusy(null);
+    if (!res.ok) { notify.error(res.error ?? "failed"); return; }
+    invalidateMainNftCache();
+    notify.success(`${type.toUpperCase()} ${level.toUpperCase()} 적용됨`);
+    refresh();
+    getMainNftStatus().then(setStatus);
+    onChanged?.();
+  }
 
   async function pick(nftId: string) {
     if (!status) return;
@@ -136,6 +160,42 @@ export default function NftGalleryDialog({ open, onOpenChange, onChanged }: Prop
                 </button>
               );
             })}
+          </div>
+        )}
+
+        {isAdmin && (
+          <div className="space-y-2 pt-3 border-t border-border/40">
+            <div className="flex items-center gap-2 text-xs">
+              <Shield className="w-3.5 h-3.5 text-amber-400" />
+              <span className="font-imperial tracking-[0.2em] text-amber-400 uppercase">Admin Showcase</span>
+              <span className="text-muted-foreground">— 9종 전체 (무료 · 쿨다운 없음)</span>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {ADMIN_SHOWCASE.map(({ type, level }) => {
+                const key = `${type}:${level}`;
+                const img = getNftImage(type, level);
+                return (
+                  <button
+                    key={key}
+                    onClick={() => adminPick(type, level)}
+                    disabled={!!adminBusy}
+                    className={cn(
+                      "group relative rounded-xl overflow-hidden border border-amber-500/30 bg-card transition-all hover:scale-[1.03] hover:border-amber-400",
+                      adminBusy === key && "opacity-60",
+                    )}
+                  >
+                    <div className={cn("aspect-square overflow-hidden", getRarityRingClass(level))}>
+                      {img && <img src={img} alt={key} className="w-full h-full object-cover" loading="lazy" />}
+                    </div>
+                    <div className="p-1.5 text-left">
+                      <div className="text-[10px] font-bold uppercase">
+                        {getNftTypeLabel(type)} · {level}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
 
