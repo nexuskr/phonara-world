@@ -40,35 +40,40 @@ export default function SupportTickets() {
   const user = useRequireAuth();
   const nav = useNavigate();
   const [threads, setThreads] = useState<Thread[] | null>(null);
+  const [uid, setUid] = useState<string | null>(null);
+
+  const reload = useCallback(async (forUid?: string) => {
+    const id = forUid ?? uid;
+    if (!id) return;
+    const { data } = await supabase
+      .from("support_threads")
+      .select("id,status,priority,last_message,last_message_at,ai_escalated,ai_last_category,unread_user,created_at")
+      .eq("user_id", id)
+      .order("last_message_at", { ascending: false });
+    setThreads((data as any[]) ?? []);
+  }, [uid]);
 
   useEffect(() => {
     if (!user) return;
-    let channel: any;
+    let cancelled = false;
     (async () => {
       const { data: { user: u } } = await supabase.auth.getUser();
-      if (!u) return;
-      const { data } = await supabase
-        .from("support_threads")
-        .select("id,status,priority,last_message,last_message_at,ai_escalated,ai_last_category,unread_user,created_at")
-        .eq("user_id", u.id)
-        .order("last_message_at", { ascending: false });
-      setThreads((data as any[]) ?? []);
-
-      channel = supabase.channel(`tickets:${u.id}`)
-        .on("postgres_changes",
-          { event: "*", schema: "public", table: "support_threads", filter: `user_id=eq.${u.id}` },
-          async () => {
-            const { data: d } = await supabase
-              .from("support_threads")
-              .select("id,status,priority,last_message,last_message_at,ai_escalated,ai_last_category,unread_user,created_at")
-              .eq("user_id", u.id)
-              .order("last_message_at", { ascending: false });
-            setThreads((d as any[]) ?? []);
-          })
-        .subscribe();
+      if (!u || cancelled) return;
+      setUid(u.id);
+      await reload(u.id);
     })();
-    return () => { if (channel) supabase.removeChannel(channel); };
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
+
+  useRealtimeChannel({
+    key: uid ? `tickets:${uid}` : "",
+    bindings: uid
+      ? [{ event: "*", table: "support_threads", filter: `user_id=eq.${uid}` }]
+      : [],
+    onEvent: () => void reload(),
+    enabled: !!uid,
+  });
 
   if (!user) return null;
 
