@@ -49,8 +49,9 @@ import { Activity, Lock, Bot, Flame, FlaskConical, HeartPulse, Gauge, KeyRound, 
 import TrustV2Admin from "@/components/admin/TrustV2Admin";
 import KernelObservability from "@/components/admin/KernelObservability";
 import OracleFortress from "@/components/admin/OracleFortress";
+import EconomyDashboard from "@/components/admin/EconomyDashboard";
 
-type Tab = "dashboard" | "funnel" | "analytics" | "errors" | "security" | "ops" | "perms" | "viral_forensics" | "aml" | "ai_missions" | "payout_audit" | "referrals" | "server_dep" | "server_wd" | "packages" | "users" | "missions" | "chats" | "coin" | "ugc" | "insurance" | "accounting" | "bots" | "bot_mix" | "ev_health" | "ab_experiments" | "beta" | "trust_v2" | "founding" | "kernel" | "oracle";
+type Tab = "dashboard" | "funnel" | "analytics" | "errors" | "security" | "ops" | "perms" | "viral_forensics" | "aml" | "ai_missions" | "payout_audit" | "referrals" | "server_dep" | "server_wd" | "packages" | "users" | "missions" | "chats" | "coin" | "ugc" | "insurance" | "accounting" | "bots" | "bot_mix" | "ev_health" | "ab_experiments" | "beta" | "trust_v2" | "founding" | "kernel" | "oracle" | "economy";
 
 export default function Admin() {
   const [db, setDb] = useDB();
