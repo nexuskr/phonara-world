@@ -38,6 +38,39 @@ export type Database = {
         }
         Relationships: []
       }
+      ab_events: {
+        Row: {
+          created_at: string
+          event: string
+          experiment_key: string
+          id: string
+          metadata: Json
+          user_id: string | null
+          value: number | null
+          variant: string
+        }
+        Insert: {
+          created_at?: string
+          event: string
+          experiment_key: string
+          id?: string
+          metadata?: Json
+          user_id?: string | null
+          value?: number | null
+          variant: string
+        }
+        Update: {
+          created_at?: string
+          event?: string
+          experiment_key?: string
+          id?: string
+          metadata?: Json
+          user_id?: string | null
+          value?: number | null
+          variant?: string
+        }
+        Relationships: []
+      }
       ab_experiments: {
         Row: {
           created_at: string
@@ -179,6 +212,48 @@ export type Database = {
           metadata?: Json
           target_id?: string | null
           target_type?: string | null
+        }
+        Relationships: []
+      }
+      admin_broadcasts: {
+        Row: {
+          audience: Json
+          body: string
+          channel: string
+          created_at: string
+          created_by: string
+          id: string
+          scheduled_at: string | null
+          sent_at: string | null
+          sent_count: number
+          status: string
+          title: string
+        }
+        Insert: {
+          audience?: Json
+          body: string
+          channel: string
+          created_at?: string
+          created_by: string
+          id?: string
+          scheduled_at?: string | null
+          sent_at?: string | null
+          sent_count?: number
+          status?: string
+          title: string
+        }
+        Update: {
+          audience?: Json
+          body?: string
+          channel?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          scheduled_at?: string | null
+          sent_at?: string | null
+          sent_count?: number
+          status?: string
+          title?: string
         }
         Relationships: []
       }
@@ -3277,6 +3352,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      marketing_campaigns: {
+        Row: {
+          budget_krw: number
+          created_at: string
+          created_by: string
+          id: string
+          kind: string
+          name: string
+          payload: Json
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          budget_krw?: number
+          created_at?: string
+          created_by: string
+          id?: string
+          kind: string
+          name: string
+          payload?: Json
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          budget_krw?: number
+          created_at?: string
+          created_by?: string
+          id?: string
+          kind?: string
+          name?: string
+          payload?: Json
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       mission_history: {
         Row: {
@@ -6649,6 +6760,15 @@ export type Database = {
         Args: { _reason?: string; _user_id: string }
         Returns: boolean
       }
+      admin_broadcast_send: {
+        Args: {
+          _audience?: Json
+          _body: string
+          _channel: string
+          _title: string
+        }
+        Returns: string
+      }
       admin_bulk_approve_withdrawals: {
         Args: { _ids: string[] }
         Returns: number
@@ -6658,6 +6778,25 @@ export type Database = {
         Returns: number
       }
       admin_cockpit_metrics: { Args: never; Returns: Json }
+      admin_create_campaign: {
+        Args: {
+          _budget_krw?: number
+          _kind: string
+          _name: string
+          _payload?: Json
+        }
+        Returns: string
+      }
+      admin_create_experiment: {
+        Args: {
+          _activate?: boolean
+          _description: string
+          _key: string
+          _label: string
+          _variants: Json
+        }
+        Returns: string
+      }
       admin_create_founding_season: {
         Args: {
           _code: string
@@ -6717,6 +6856,7 @@ export type Database = {
           variant: string
         }[]
       }
+      admin_get_ab_summary: { Args: { _key: string }; Returns: Json }
       admin_get_audit_log: {
         Args: { _action?: string; _admin?: string; _limit?: number }
         Returns: {
@@ -6794,6 +6934,7 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      admin_get_sim_real_conversion: { Args: { _days?: number }; Returns: Json }
       admin_get_telegram_bot_status: { Args: never; Returns: Json }
       admin_get_today_crown_total: { Args: never; Returns: Json }
       admin_get_trust_v2_stats: { Args: never; Returns: Json }
@@ -6811,6 +6952,48 @@ export type Database = {
           note: string
           uses: number
         }[]
+      }
+      admin_list_broadcasts: {
+        Args: { _limit?: number }
+        Returns: {
+          audience: Json
+          body: string
+          channel: string
+          created_at: string
+          created_by: string
+          id: string
+          scheduled_at: string | null
+          sent_at: string | null
+          sent_count: number
+          status: string
+          title: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "admin_broadcasts"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      admin_list_campaigns: {
+        Args: { _limit?: number }
+        Returns: {
+          budget_krw: number
+          created_at: string
+          created_by: string
+          id: string
+          kind: string
+          name: string
+          payload: Json
+          status: string
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "marketing_campaigns"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       admin_list_founding_seasons: {
         Args: never
@@ -7027,6 +7210,7 @@ export type Database = {
         Args: { _reason?: string; _user_id: string }
         Returns: boolean
       }
+      admin_stop_experiment: { Args: { _key: string }; Returns: undefined }
       admin_trigger_crown: {
         Args: {
           _base?: number
@@ -7038,6 +7222,10 @@ export type Database = {
       }
       admin_unban_user: { Args: { _user_id: string }; Returns: boolean }
       admin_unfreeze_user: { Args: { _user_id: string }; Returns: number }
+      admin_update_campaign_status: {
+        Args: { _id: string; _status: string }
+        Returns: undefined
+      }
       admin_update_founding_season: {
         Args: {
           _ends_at: string
