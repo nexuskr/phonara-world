@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Session } from "@supabase/supabase-js";
 import { fetchWallet, type WalletBalance } from "@/lib/wallet";
+import { useRealtimeChannel } from "@/hooks/use-realtime-channel";
 
 export function useSession() {
   const [session, setSession] = useState<Session | null>(null);
@@ -28,34 +29,37 @@ export function useWallet(userId: string | undefined) {
 
   useEffect(() => {
     if (!userId) return;
-    reload();
-    const ch = supabase.channel(`wallet:${userId}`)
-      .on("postgres_changes",
-        { event: "UPDATE", schema: "public", table: "wallet_balances", filter: `user_id=eq.${userId}` },
-        (payload) => {
-          const next = payload.new as WalletBalance;
-          setWallet(prev => {
-            if (prev && next.available_balance > prev.available_balance) setPulse(p => p + 1);
-            return next;
-          });
-        })
-      // Trade close → wallet update arrives separately, but force-reload as a safety net
-      // (covers cases where the wallet UPDATE event arrives before the trade INSERT, or
-      // when only a transaction row was inserted without an explicit balance UPDATE).
-      .on("postgres_changes",
-        { event: "INSERT", schema: "public", table: "live_trade_history", filter: `user_id=eq.${userId}` },
-        () => { reload(); })
-      .subscribe();
-
-    // Cross-component manual refresh hook (e.g. after deposit approval, mission claim).
-    const onRefresh = () => { reload(); };
+    void reload();
+    const onRefresh = () => { void reload(); };
     window.addEventListener("wallet:refresh", onRefresh);
-
-    return () => {
-      supabase.removeChannel(ch);
-      window.removeEventListener("wallet:refresh", onRefresh);
-    };
+    return () => window.removeEventListener("wallet:refresh", onRefresh);
   }, [userId, reload]);
+
+  // Idempotent shared channel — multiple <useWallet> consumers fan out from one socket.
+  useRealtimeChannel({
+    key: userId ? `wallet:${userId}` : "",
+    bindings: userId
+      ? [
+          { event: "UPDATE", table: "wallet_balances", filter: `user_id=eq.${userId}` },
+          // Trade close safety net: wallet UPDATE may race the trade INSERT, or only a
+          // transaction row may be inserted without an explicit balance UPDATE.
+          { event: "INSERT", table: "live_trade_history", filter: `user_id=eq.${userId}` },
+        ]
+      : [],
+    onEvent: (payload) => {
+      if (payload.table === "wallet_balances") {
+        const next = payload.new as unknown as WalletBalance;
+        setWallet((prev) => {
+          if (prev && next.available_balance > prev.available_balance) setPulse((p) => p + 1);
+          return next;
+        });
+      } else {
+        void reload();
+      }
+    },
+    enabled: !!userId,
+  });
 
   return { wallet, loading, reload, pulse };
 }
+
