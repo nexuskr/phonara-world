@@ -7,6 +7,7 @@ import { Link } from "react-router-dom";
 import {
   Wand2, Crown, Rocket, Image as ImageIcon, Megaphone, ShieldCheck,
 } from "lucide-react";
+import RiskEngineDashboard from "./RiskEngineDashboard";
 
 type Action = {
   to: string;
