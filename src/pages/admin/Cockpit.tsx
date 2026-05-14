@@ -81,9 +81,8 @@ export default function AdminCockpit() {
   useEffect(() => {
     if (!user?.isAdmin) return;
     load();
-    const id = setInterval(load, 60_000);
-    return () => clearInterval(id);
   }, [user?.isAdmin]);
+  useVisibleInterval(() => { if (user?.isAdmin) load(); }, 60_000, !!user?.isAdmin);
 
   if (!user) return null;
   if (!user.isAdmin) {
