@@ -205,6 +205,7 @@ const App = () => (
               <Route path="/support" element={<Support />} />
               <Route path="/support/tickets" element={<SupportTickets />} />
               <Route path="/guide" element={<Guide />} />
+              <Route path="/guide/phon" element={<GuidePhon />} />
               <Route path="/admin/*" element={<AdminRoutes />} />
               <Route path="/cockpit" element={<FounderCockpit />} />
               <Route path="/secure-auth" element={<SecureAuth />} />
