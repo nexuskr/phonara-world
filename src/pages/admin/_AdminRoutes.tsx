@@ -66,6 +66,12 @@ const WithdrawalQueueBulk   = lazy(() => import("@/components/admin/treasury/Wit
 const RiskCenter            = lazy(() => import("@/components/admin/compliance/RiskCenter"));
 const GameConfigPanel       = lazy(() => import("@/components/admin/game/GameConfigPanel"));
 
+// Day 3 — Audit, Notify, Marketing, SIM→Real
+const AuditLogTable       = lazy(() => import("@/components/admin/ops/AuditLogTable"));
+const NotificationCenter  = lazy(() => import("@/components/admin/ops/NotificationCenter"));
+const MarketingTools      = lazy(() => import("@/components/admin/growth/MarketingTools"));
+const SimRealConversion   = lazy(() => import("@/components/admin/growth/SimRealConversion"));
+
 function Section({
   title,
   desc,
@@ -170,17 +176,17 @@ export default function AdminRoutes() {
         {/* OPERATIONS */}
         <Route path="ops/observability" element={<Section title="Observability"><ObservabilityCockpit /></Section>} />
         <Route path="ops/errors"        element={<Section title="Errors / Anomalies"><AnomalyAckQueue /><div className="h-2" /><ErrorMonitorAdmin /></Section>} />
-        <Route path="ops/audit"         element={<Section title="📜 감사 로그" desc="Day 3 — admin_audit_log 검색·필터"><ComingSoon area="Audit Log" /></Section>} />
-        <Route path="ops/notify"        element={<Section title="🔔 공지 센터" desc="Day 3 — Push / Telegram / In-App 브로드캐스트"><ComingSoon area="Notification Center" /></Section>} />
+        <Route path="ops/audit"         element={<Section><AuditLogTable /></Section>} />
+        <Route path="ops/notify"        element={<Section><NotificationCenter /></Section>} />
         <Route path="ops/security"      element={<Section title="Security Audit"><SecurityAuditAdmin /></Section>} />
         <Route path="ops/cron"          element={<CronCombined />} />
         <Route path="ops/report"        element={<Suspense fallback={<LoadingList rows={4} />}><OpsReport /></Suspense>} />
         <Route path="ops/thresholds"    element={<Section title="Mission Control 임계값"><ThresholdsAdmin /></Section>} />
 
         {/* GROWTH */}
-        <Route path="growth/marketing"  element={<Section title="📢 마케팅 도구" desc="Day 3 출시 — 인플루언서·Telegram Blast·Push"><ComingSoon area="Marketing Tools" /></Section>} />
+        <Route path="growth/marketing"  element={<Section><MarketingTools /></Section>} />
         <Route path="growth/ab"         element={<Section title="A/B Experiments"><AbExperimentsAdmin /></Section>} />
-        <Route path="growth/conversion" element={<Section title="💱 SIM→Real 전환" desc="Day 3 — SIM 사용량 → 실제 매출 전환률"><ComingSoon area="SIM→Real Conversion" /></Section>} />
+        <Route path="growth/conversion" element={<Section><SimRealConversion /></Section>} />
         <Route path="growth/bots"       element={<BotsCombined />} />
         <Route path="growth/ev"         element={<Section title="EV Health"><EvHealthAdmin /></Section>} />
         <Route path="growth/ugc"        element={<Section title="UGC Performance"><AdminUgc /></Section>} />
