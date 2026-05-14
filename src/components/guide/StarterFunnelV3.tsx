@@ -309,7 +309,7 @@ function FomoScene({ onFinish }: { onFinish: (target: string) => void }) {
       </div>
 
       <div className="mt-4 w-full max-w-sm">
-        <ActivityEventTicker variant="hero" limit={5} />
+        <ActivityEventTicker variant="hero" limit={5} realtime={false} />
       </div>
 
       <motion.button
