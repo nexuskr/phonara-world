@@ -1,9 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useDB, formatKRW, MAIN_MILESTONE_AMOUNT, MAIN_MAX_INTERVAL_MS, MINI_MAX_INTERVAL_MS, jackpotPayoutPct, jackpotResetBase, miniJackpotResetBase, miniJackpotAmount, randomFakeNick, type Tier, type JackpotState } from "@/lib/store";
 import { setVisibleInterval } from "@/lib/util/visible-interval";
-import { Flame, Crown, Trophy, Sparkles } from "lucide-react";
+import CountUp from "@/components/intelligence/CountUp";
+import { Flame, Crown, Trophy, Sparkles, ArrowRight } from "lucide-react";
 
 // Live jackpot — runs in memory, syncs to DB every 30s only (avoids global rerender storm).
 function useJackpotState() {
