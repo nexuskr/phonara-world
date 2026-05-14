@@ -9,7 +9,7 @@ import {
   adminUpdateFoundingSeason, adminEndFoundingSeason,
   adminReleaseFoundingSeat, type FoundingSeasonAdminRow,
 } from "@/lib/foundingSeason";
-import { supabase } from "@/integrations/supabase/client";
+import { useRealtimeChannel } from "@/hooks/use-realtime-channel";
 
 export default function FoundingSeasonsAdmin() {
   const [rows, setRows] = useState<FoundingSeasonAdminRow[] | null>(null);
