@@ -187,6 +187,7 @@ const App = () => (
               <Route path="/trade/net" element={<HybridNetPage />} />
               <Route path="/marketplace" element={<Marketplace />} />
               <Route path="/empire/galaxy" element={<GalaxyAuction />} />
+              <Route path="/vip" element={<Vip />} />
               <Route path="/dynasty" element={<Dynasty />} />
               <Route path="/treasury" element={<Navigate to="/wallet" replace />} />
               <Route path="/treasury/settlements" element={<Settlements />} />
