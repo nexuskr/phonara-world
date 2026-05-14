@@ -175,7 +175,7 @@ function MegaOrderPanelImpl({ mode, symbol, setSymbol, price, balance, onSubmit,
             {(["isolated","cross"] as const).map((m) => (
               <button
                 key={m}
-                onClick={() => setMarginMode(m)}
+                onClick={() => { if (m !== marginMode) setPendingMode(m); }}
                 className={`px-2 py-1 rounded-md transition ${
                   marginMode === m
                     ? "bg-primary/20 text-primary"
