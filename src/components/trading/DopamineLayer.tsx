@@ -1,6 +1,8 @@
 import { memo, useEffect, useRef, useState } from "react";
 import confetti from "canvas-confetti";
 import { sfx } from "@/lib/trading/sounds";
+import { FloatingSlot } from "@/components/ui/floating-dock";
+import { Z } from "@/lib/ui/floating-slots";
 
 type FxKind = "win" | "legendary" | "liquidate" | "loss" | null;
 type FxUnit = "USDT" | "KRW";
@@ -118,7 +120,8 @@ function DopamineLayerImpl() {
       {import.meta.env.DEV && <FpsHud />}
 
       {fx?.kind && (
-        <div className="fixed inset-0 z-[60] pointer-events-none flex items-center justify-center">
+        <div className="fixed inset-0 pointer-events-none flex items-center justify-center" style={{ zIndex: Z.modal }}>
+
           {fx.kind === "liquidate" && (
             <div className="absolute inset-0 bg-gradient-radial from-red-600/40 via-red-900/30 to-black/0 animate-[fade_0.6s_ease-out]" />
           )}
@@ -177,9 +180,11 @@ function FpsHud() {
   }, []);
   const color = fps >= 55 ? "text-emerald-300" : fps >= 40 ? "text-amber-300" : "text-rose-300";
   return (
-    <div className={`pointer-events-none fixed top-2 right-2 z-[70] font-mono tabular-nums text-[10px] px-2 py-0.5 rounded bg-black/60 border border-white/10 ${color}`}>
-      {fps} fps
-    </div>
+    <FloatingSlot slot="topRight" order={99}>
+      <div className={`pointer-events-none font-mono tabular-nums text-[10px] px-2 py-0.5 rounded bg-black/60 border border-white/10 ${color}`}>
+        {fps} fps
+      </div>
+    </FloatingSlot>
   );
 }
 
