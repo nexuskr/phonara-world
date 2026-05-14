@@ -59,6 +59,7 @@ export default function Vip() {
   return (
     <div className="min-h-screen bg-background">
       <SEOHead
+        path="/vip"
         title="VIP Empire Pass · Phonara"
         description="골드 닉네임, Crown 폭발 ×3, Whale 시그널 선공개, AI Coach 무제한 — 30,000 PHON / 30일."
       />
