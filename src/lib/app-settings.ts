@@ -64,7 +64,21 @@ export function useAppSettings(): [AppSettings, (p: Partial<AppSettings>) => voi
   return [s, setAppSettings];
 }
 
-/** True when motion should be reduced (user pref OR OS pref). */
+/** Heuristic: low-end device or save-data network → auto-reduce. */
+function shouldAutoReduceForDevice(): boolean {
+  if (typeof navigator === "undefined") return false;
+  try {
+    const conn: any = (navigator as any).connection;
+    if (conn?.saveData) return true;
+    const et: string | undefined = conn?.effectiveType;
+    if (et && (et === "slow-2g" || et === "2g" || et === "3g")) return true;
+    const mem: number | undefined = (navigator as any).deviceMemory;
+    if (typeof mem === "number" && mem > 0 && mem < 4) return true;
+  } catch { /* noop */ }
+  return false;
+}
+
+/** True when motion should be reduced (user pref OR OS pref OR low-end device). */
 export function useReducedMotionPref(): boolean {
   const [s] = useAppSettings();
   const [osReduce, setOsReduce] = useState(() => {
@@ -83,7 +97,7 @@ export function useReducedMotionPref(): boolean {
   }, []);
   if (s.reduceMotion === "on") return true;
   if (s.reduceMotion === "off") return false;
-  return osReduce;
+  return osReduce || shouldAutoReduceForDevice();
 }
 
 /** Apply reduce-motion setting to <html> as a class so CSS can react. */
@@ -93,7 +107,8 @@ export function applyMotionClassFromSettings() {
     const reduce =
       s.reduceMotion === "on" ||
       (s.reduceMotion === "auto" &&
-        window.matchMedia?.("(prefers-reduced-motion: reduce)").matches);
+        (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ||
+          shouldAutoReduceForDevice()));
     document.documentElement.classList.toggle("reduce-motion", !!reduce);
   } catch {}
 }
