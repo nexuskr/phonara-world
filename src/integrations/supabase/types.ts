@@ -3749,6 +3749,8 @@ export type Database = {
           boost_pct: number
           created_at: string
           external_chain: string | null
+          external_image_url: string | null
+          external_metadata_url: string | null
           external_token_id: string | null
           id: string
           level: string
@@ -3763,6 +3765,8 @@ export type Database = {
           boost_pct?: number
           created_at?: string
           external_chain?: string | null
+          external_image_url?: string | null
+          external_metadata_url?: string | null
           external_token_id?: string | null
           id?: string
           level: string
@@ -3777,6 +3781,8 @@ export type Database = {
           boost_pct?: number
           created_at?: string
           external_chain?: string | null
+          external_image_url?: string | null
+          external_metadata_url?: string | null
           external_token_id?: string | null
           id?: string
           level?: string
@@ -4536,7 +4542,10 @@ export type Database = {
           id: string
           is_adult: boolean
           last_attendance: string | null
+          last_nft_change_at: string | null
           last_reset_date: string | null
+          main_nft_id: string | null
+          nft_change_count: number
           nickname: string
           persona: string
           phone: string | null
@@ -4572,7 +4581,10 @@ export type Database = {
           id: string
           is_adult?: boolean
           last_attendance?: string | null
+          last_nft_change_at?: string | null
           last_reset_date?: string | null
+          main_nft_id?: string | null
+          nft_change_count?: number
           nickname: string
           persona?: string
           phone?: string | null
@@ -4608,7 +4620,10 @@ export type Database = {
           id?: string
           is_adult?: boolean
           last_attendance?: string | null
+          last_nft_change_at?: string | null
           last_reset_date?: string | null
+          main_nft_id?: string | null
+          nft_change_count?: number
           nickname?: string
           persona?: string
           phone?: string | null
@@ -4625,7 +4640,15 @@ export type Database = {
           updated_at?: string
           withdraw_pin_hash?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_main_nft_id_fkey"
+            columns: ["main_nft_id"]
+            isOneToOne: false
+            referencedRelation: "nft_collection"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profit_share_distributions: {
         Row: {
@@ -8342,6 +8365,29 @@ export type Database = {
           total_contribution: number
         }[]
       }
+      get_main_nft: {
+        Args: { _user_id: string }
+        Returns: {
+          boost_pct: number
+          external_image_url: string
+          level: string
+          nft_id: string
+          source: string
+          type: string
+          user_id: string
+        }[]
+      }
+      get_main_nft_batch: {
+        Args: { _user_ids: string[] }
+        Returns: {
+          boost_pct: number
+          external_image_url: string
+          level: string
+          nft_id: string
+          type: string
+          user_id: string
+        }[]
+      }
       get_my_bequests: {
         Args: never
         Returns: {
@@ -8434,6 +8480,7 @@ export type Database = {
         }
       }
       get_my_legal_consent_status: { Args: never; Returns: Json }
+      get_my_main_nft_status: { Args: never; Returns: Json }
       get_my_max_leverage: { Args: never; Returns: number }
       get_my_nft_collection: {
         Args: never
@@ -9139,6 +9186,7 @@ export type Database = {
         }[]
       }
       send_guild_message: { Args: { _message: string }; Returns: string }
+      set_main_nft: { Args: { _nft_id: string }; Returns: Json }
       set_user_risk_limits: {
         Args: {
           p_daily_loss_cap: number
