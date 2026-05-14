@@ -1,6 +1,7 @@
 // V17 /admin/kpi — Empire master KPI dashboard (MAU, CTR, ARPU, K-Factor, Viral).
 // Admin-only. Pulls from feed_events, revenue_events, profiles. Auto-refresh 60s.
 import { useEffect, useState } from "react";
+import { useVisibleInterval } from "@/lib/util/visible-interval";
 import { Activity, MousePointerClick, Users, TrendingUp, Flame, RefreshCw, Crown } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
