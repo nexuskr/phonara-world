@@ -2,6 +2,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNowTick } from "@/hooks/use-now-tick";
+import { useRealtimeChannel } from "@/hooks/use-realtime-channel";
 
 export type EmpireBooster = {
   id: number;
@@ -16,11 +17,13 @@ export type EmpireBooster = {
 export function useEmpireBooster() {
   const [booster, setBooster] = useState<EmpireBooster | null>(null);
   const [loading, setLoading] = useState(true);
+  const [uid, setUid] = useState<string | null>(null);
   const now = useNowTick(2000);
 
   const load = useCallback(async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
+      setUid(user?.id ?? null);
       if (!user) { setBooster(null); setLoading(false); return; }
       const { data } = await (supabase.rpc as any)("get_active_empire_booster");
       const row = Array.isArray(data) && data.length > 0 ? (data[0] as EmpireBooster) : null;
@@ -34,29 +37,15 @@ export function useEmpireBooster() {
 
   useEffect(() => { void load(); }, [load]);
 
-  // Realtime: re-load when a new booster row is inserted for the user.
-  // Guarded against StrictMode double-mount and channel-already-subscribed errors.
-  useEffect(() => {
-    let ch: any;
-    let cancelled = false;
-    (async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user || cancelled) return;
-        const name = `empire-booster-${user.id}-${Math.random().toString(36).slice(2, 8)}`;
-        ch = supabase.channel(name);
-        ch.on(
-          "postgres_changes",
-          { event: "INSERT", schema: "public", table: "empire_boosters", filter: `user_id=eq.${user.id}` },
-          () => void load(),
-        ).subscribe((_status: string, err?: unknown) => { if (err) { /* swallow */ } });
-      } catch { /* realtime unreachable — silent */ }
-    })();
-    return () => {
-      cancelled = true;
-      try { if (ch) supabase.removeChannel(ch); } catch { /* noop */ }
-    };
-  }, [load]);
+  // Idempotent realtime: shared channel, StrictMode-safe, refcounted teardown.
+  useRealtimeChannel({
+    key: uid ? `empire-booster:${uid}` : "",
+    bindings: uid
+      ? [{ event: "INSERT", table: "empire_boosters", filter: `user_id=eq.${uid}` }]
+      : [],
+    onEvent: () => void load(),
+    enabled: !!uid,
+  });
 
   const remainingMs = booster ? Math.max(0, new Date(booster.expires_at).getTime() - now) : 0;
   const expired = !!booster && remainingMs <= 0;
