@@ -73,26 +73,28 @@ export default function ActivityEventTicker({
     let timer = 0;
     if (window_) timer = window.setTimeout(tick, window_[0]);
 
-    const ch = supabase
-      .channel(`ghost-feed-${Math.random().toString(36).slice(2, 8)}`)
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "bot_activity_events" },
-        (payload: any) => {
-          const text: string = payload?.new?.event_text ?? "";
-          if (!text) return;
-          const icon = pickIconForType(payload?.new?.event_type);
-          setFeed((prev) => [{ id: ++idRef.current, icon, text: maskText(text) }, ...prev].slice(0, limit));
-        },
-      )
-      .subscribe();
+    const ch = realtime
+      ? supabase
+          .channel(`ghost-feed-${Math.random().toString(36).slice(2, 8)}`)
+          .on(
+            "postgres_changes",
+            { event: "INSERT", schema: "public", table: "bot_activity_events" },
+            (payload: any) => {
+              const text: string = payload?.new?.event_text ?? "";
+              if (!text) return;
+              const icon = pickIconForType(payload?.new?.event_type);
+              setFeed((prev) => [{ id: ++idRef.current, icon, text: maskText(text) }, ...prev].slice(0, limit));
+            },
+          )
+          .subscribe()
+      : null;
 
     return () => {
       cancelled = true;
       if (timer) window.clearTimeout(timer);
-      supabase.removeChannel(ch);
+      if (ch) supabase.removeChannel(ch);
     };
-  }, [limit, intervalMs, settings.tickerSpeed]);
+  }, [limit, intervalMs, settings.tickerSpeed, realtime]);
 
   if (variant === "strip") {
     return (
