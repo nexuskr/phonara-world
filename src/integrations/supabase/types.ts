@@ -4345,6 +4345,30 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_kill_switches: {
+        Row: {
+          enabled: boolean
+          key: string
+          reason: string | null
+          set_at: string
+          set_by: string | null
+        }
+        Insert: {
+          enabled?: boolean
+          key: string
+          reason?: string | null
+          set_at?: string
+          set_by?: string | null
+        }
+        Update: {
+          enabled?: boolean
+          key?: string
+          reason?: string | null
+          set_at?: string
+          set_by?: string | null
+        }
+        Relationships: []
+      }
       policy_assertion_runs: {
         Row: {
           assertion_key: string
@@ -5224,6 +5248,39 @@ export type Database = {
           issues?: Json
           ok?: boolean
           source?: string
+        }
+        Relationships: []
+      }
+      self_heal_run_log: {
+        Row: {
+          action: string
+          admin_id: string | null
+          created_at: string
+          id: string
+          ok: boolean
+          payload: Json
+          result: Json
+          target: string | null
+        }
+        Insert: {
+          action: string
+          admin_id?: string | null
+          created_at?: string
+          id?: string
+          ok?: boolean
+          payload?: Json
+          result?: Json
+          target?: string | null
+        }
+        Update: {
+          action?: string
+          admin_id?: string | null
+          created_at?: string
+          id?: string
+          ok?: boolean
+          payload?: Json
+          result?: Json
+          target?: string | null
         }
         Relationships: []
       }
@@ -7327,6 +7384,7 @@ export type Database = {
         }
       }
       admin_end_founding_season: { Args: { _id: string }; Returns: Json }
+      admin_exec_readonly_sql: { Args: { _sql: string }; Returns: Json }
       admin_force_close_position:
         | {
             Args: {
@@ -7418,6 +7476,22 @@ export type Database = {
         }[]
       }
       admin_get_kernel_summary: { Args: never; Returns: Json }
+      admin_get_kill_switches: {
+        Args: never
+        Returns: {
+          enabled: boolean
+          key: string
+          reason: string | null
+          set_at: string
+          set_by: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "platform_kill_switches"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       admin_get_monthly_revenue_progress: { Args: never; Returns: Json }
       admin_get_oracle_health: { Args: never; Returns: Json }
       admin_get_oracle_swap_readiness: { Args: never; Returns: Json }
@@ -7462,6 +7536,7 @@ export type Database = {
       }
       admin_get_sim_real_conversion: { Args: { _days?: number }; Returns: Json }
       admin_get_stress_test_stats: { Args: never; Returns: Json }
+      admin_get_table_counts: { Args: never; Returns: Json }
       admin_get_telegram_bot_status: { Args: never; Returns: Json }
       admin_get_today_crown_total: { Args: never; Returns: Json }
       admin_get_trust_v2_stats: { Args: never; Returns: Json }
@@ -7701,6 +7776,7 @@ export type Database = {
             }
             Returns: Json
           }
+      admin_run_all_healthchecks: { Args: never; Returns: Json }
       admin_run_ev_health_now: { Args: never; Returns: Json }
       admin_run_rls_smoke: { Args: never; Returns: Json }
       admin_search_kernel_audit: {
@@ -7778,6 +7854,22 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      admin_set_kill_switch: {
+        Args: { _enabled: boolean; _key: string; _reason?: string }
+        Returns: {
+          enabled: boolean
+          key: string
+          reason: string | null
+          set_at: string
+          set_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "platform_kill_switches"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       admin_set_source_weight: {
         Args: { _max_lag_ms?: number; _source: string; _weight: number }
         Returns: undefined
@@ -7799,6 +7891,7 @@ export type Database = {
         Returns: boolean
       }
       admin_stop_experiment: { Args: { _key: string }; Returns: undefined }
+      admin_trigger_cron: { Args: { _job: string }; Returns: Json }
       admin_trigger_crown: {
         Args: {
           _base?: number
