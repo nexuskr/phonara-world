@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { sha256Hex } from "@/lib/deviceFingerprint";
+import { getFingerprint } from "@/lib/deviceFingerprint";
 import { Crown } from "lucide-react";
 
 type Inf = { code: string; display_name: string; channel: string | null; bonus_phon: number; bonus_crown: number };
@@ -24,9 +24,7 @@ export default function InfluencerLanding() {
       setLoading(false);
       if (row) {
         let fp = "";
-        try {
-          fp = await sha256Hex(`${navigator.userAgent}|${screen.width}x${screen.height}|${navigator.language}`);
-        } catch {}
+        try { fp = await getFingerprint(); } catch {}
         void supabase.rpc("track_influencer_click", {
           _code: norm, _fingerprint: fp, _referrer: document.referrer || null,
         });
