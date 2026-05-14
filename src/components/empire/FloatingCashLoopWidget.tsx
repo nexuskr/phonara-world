@@ -8,6 +8,7 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { FloatingSlot } from "@/components/ui/floating-dock";
 
 const ThreeMinuteCashLoop = lazy(() => import("./ThreeMinuteCashLoop"));
 const FirstDepositGodModeModal = lazy(() => import("./FirstDepositGodModeModal"));
@@ -55,13 +56,13 @@ export default function FloatingCashLoopWidget() {
 
   return (
     <>
-      <div className="fixed bottom-3 right-3 left-3 sm:left-auto sm:bottom-4 sm:right-4 z-[70] pointer-events-none">
-        <div className="pointer-events-auto sm:max-w-md sm:ml-auto">
+      <FloatingSlot slot="bottomRight" order={0} className="w-full sm:w-auto">
+        <div className="w-full sm:max-w-md">
           <Suspense fallback={null}>
             <ThreeMinuteCashLoop onConvert={handleConvert} onDismiss={handleDismiss} />
           </Suspense>
         </div>
-      </div>
+      </FloatingSlot>
       <Suspense fallback={null}>
         <FirstDepositGodModeModal
           open={godModalOpen}

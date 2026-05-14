@@ -6,6 +6,7 @@ import { useDB } from "@/lib/store";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { ScrollArea } from "./ui/scroll-area";
+import { FloatingSlot } from "./ui/floating-dock";
 
 type Msg = {
   id: string; message: string; created_at: string;
@@ -66,19 +67,24 @@ export default function FloatingChat() {
 
   return (
     <>
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="fixed bottom-24 right-4 z-50 w-14 h-14 rounded-2xl glass-strong neon-border flex items-center justify-center shadow-2xl hover:scale-110 transition"
-        aria-label="AI 황제 자문관"
-      >
-        <MessageCircle className="w-6 h-6 text-gold" />
-        {isEmpire && (
-          <span className="absolute -top-1 -right-1 w-5 h-5 bg-gold rounded-full flex items-center justify-center text-[10px] font-black text-black animate-pulse">👑</span>
-        )}
-      </button>
+      <FloatingSlot slot="bottomRight" order={1}>
+        <button
+          onClick={() => setOpen((v) => !v)}
+          className="w-14 h-14 rounded-2xl glass-strong neon-border flex items-center justify-center shadow-2xl hover:scale-110 transition relative"
+          aria-label="AI 황제 자문관"
+        >
+          <MessageCircle className="w-6 h-6 text-gold" />
+          {isEmpire && (
+            <span className="absolute -top-1 -right-1 w-5 h-5 bg-gold rounded-full flex items-center justify-center text-[10px] font-black text-black animate-pulse">👑</span>
+          )}
+        </button>
+      </FloatingSlot>
 
       {open && (
-        <div className="fixed bottom-44 right-4 z-[9999] w-[min(92vw,380px)] h-[480px] glass-strong rounded-3xl flex flex-col shadow-2xl overflow-hidden border border-border">
+        <div
+          className="fixed right-4 z-[90] w-[min(92vw,380px)] h-[min(70vh,480px)] glass-strong rounded-3xl flex flex-col shadow-2xl overflow-hidden border border-border"
+          style={{ bottom: "calc(var(--bottom-nav-h, 0px) + env(safe-area-inset-bottom) + 5.5rem)" }}
+        >
           <div className={`px-5 py-3 flex items-center gap-3 border-b border-border ${isEmpire ? "bg-gradient-gold/10" : ""}`}>
             <div className={`w-2.5 h-2.5 rounded-full animate-pulse ${isEmpire ? "bg-gold" : "bg-gold"}`} />
             <h2 className="font-bold flex-1 text-sm text-gold">
