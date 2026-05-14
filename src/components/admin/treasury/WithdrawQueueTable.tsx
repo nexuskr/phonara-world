@@ -7,9 +7,11 @@ import { memo, useMemo, useState, useCallback } from "react";
 import { useWithdrawQueue, type WithdrawalRow } from "@/lib/withdrawal/useWithdrawQueue";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Crown, AlertTriangle, RefreshCw } from "lucide-react";
+import { Crown, AlertTriangle, RefreshCw, Loader2 } from "lucide-react";
 import { LoadingList } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
+import { supabase } from "@/integrations/supabase/client";
+import { notify } from "@/lib/notify";
 
 type SortKey = "priority" | "created_at" | "amount";
 type SortDir = "asc" | "desc";
