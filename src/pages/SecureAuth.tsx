@@ -14,6 +14,9 @@ import {
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { AdultOnlyBanner } from "@/components/AdultOnlyBanner";
 import { SimBadge, GoldDivider, senior } from "@/components/guide/EmpireFX";
+import { AuthSeoulBackdrop } from "@/components/auth/AuthSeoulBackdrop";
+import { LiveFeedPulses, type PulseEvent } from "@/components/auth/LiveFeedPulses";
+import { AuthSocialProof, AuthTrustChips } from "@/components/auth/AuthSocialProof";
 
 function checkAge19(birth: string) {
   if (!birth) return false;
