@@ -161,8 +161,9 @@ export function isAal2Path(pathname: string): boolean {
 
 /** Legacy → new URL map (deep-link redirects, PR-1) */
 export const ADMIN_LEGACY_REDIRECTS: Record<string, string> = {
-  "/admin/kpi":        "/admin/funnel",
-  "/admin/revenue":    "/admin/revenue",
-  "/admin/ops-report": "/admin/ops/report",
-  "/admin/support":    "/admin/product/support",
+  "/admin/kpi":          "/admin/funnel",
+  "/admin/revenue":      "/admin/revenue",
+  "/admin/ops-report":   "/admin/ops/report",
+  "/admin/support":      "/admin/product/support",
+  "/admin/ops/security": "/admin/compliance/audit",
 };
