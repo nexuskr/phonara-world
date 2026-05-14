@@ -55,17 +55,17 @@ export default function NftAvatar({ userId, mainNft, size = "md", className, sho
 
   // Realtime invalidate on profile.main_nft_id update
   useRealtimeChannel({
-    key: userId ? `main-nft-watch:${userId}` : "",
-    bindings: userId ? [{ event: "UPDATE", table: "profiles", filter: `id=eq.${userId}` }] : [],
+    key: effectiveId ? `main-nft-watch:${effectiveId}` : "",
+    bindings: effectiveId ? [{ event: "UPDATE", table: "profiles", filter: `id=eq.${effectiveId}` }] : [],
     onEvent: (payload: any) => {
       const newM = payload?.new?.main_nft_id;
       const oldM = payload?.old?.main_nft_id;
       if (newM !== oldM) {
-        invalidateMainNftCache(userId);
-        getMainNft(userId!).then((r) => setResolved(r));
+        invalidateMainNftCache(effectiveId);
+        getMainNft(effectiveId!).then((r) => setResolved(r));
       }
     },
-    enabled: !!userId && mainNft === undefined,
+    enabled: !!effectiveId && mainNft === undefined,
   });
 
   const img = getNftImage(resolved?.type, resolved?.level, resolved?.external_image_url);
