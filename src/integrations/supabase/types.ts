@@ -3514,6 +3514,36 @@ export type Database = {
         }
         Relationships: []
       }
+      inbound_press_hits: {
+        Row: {
+          domain: string
+          first_seen_at: string
+          hit_count: number
+          id: string
+          last_seen_at: string
+          reviewed: boolean
+          sample_referrer: string | null
+        }
+        Insert: {
+          domain: string
+          first_seen_at?: string
+          hit_count?: number
+          id?: string
+          last_seen_at?: string
+          reviewed?: boolean
+          sample_referrer?: string | null
+        }
+        Update: {
+          domain?: string
+          first_seen_at?: string
+          hit_count?: number
+          id?: string
+          last_seen_at?: string
+          reviewed?: boolean
+          sample_referrer?: string | null
+        }
+        Relationships: []
+      }
       influencer_clicks: {
         Row: {
           code: string
@@ -5112,6 +5142,39 @@ export type Database = {
           scheduled_at?: string
           status?: string
           video_id?: string
+        }
+        Relationships: []
+      }
+      press_sources: {
+        Row: {
+          active: boolean
+          created_at: string
+          display_name: string
+          domain: string
+          id: string
+          logo_url: string | null
+          rank: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          display_name: string
+          domain: string
+          id?: string
+          logo_url?: string | null
+          rank?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          display_name?: string
+          domain?: string
+          id?: string
+          logo_url?: string | null
+          rank?: number
+          updated_at?: string
         }
         Relationships: []
       }
@@ -8005,6 +8068,15 @@ export type Database = {
         Args: { _delta: number; _reason: string; _target: string }
         Returns: Json
       }
+      admin_approve_press_source: {
+        Args: {
+          _display_name: string
+          _domain: string
+          _logo_url?: string
+          _rank?: number
+        }
+        Returns: string
+      }
       admin_ban_user: {
         Args: { _reason?: string; _user_id: string }
         Returns: boolean
@@ -8113,6 +8185,7 @@ export type Database = {
         }
         Returns: string
       }
+      admin_dismiss_inbound_hit: { Args: { _id: string }; Returns: undefined }
       admin_end_founding_season: { Args: { _id: string }; Returns: Json }
       admin_exec_readonly_sql: { Args: { _sql: string }; Returns: Json }
       admin_force_close_position:
@@ -8396,6 +8469,19 @@ export type Database = {
           subtitle: string
           title: string
           total_seats: number
+        }[]
+      }
+      admin_list_inbound_hits: {
+        Args: { _limit?: number; _only_unreviewed?: boolean }
+        Returns: {
+          already_curated: boolean
+          domain: string
+          first_seen_at: string
+          hit_count: number
+          id: string
+          last_seen_at: string
+          reviewed: boolean
+          sample_referrer: string
         }[]
       }
       admin_list_influencer_codes: {
@@ -8682,6 +8768,10 @@ export type Database = {
         Returns: boolean
       }
       admin_stop_experiment: { Args: { _key: string }; Returns: undefined }
+      admin_toggle_press_source: {
+        Args: { _active: boolean; _id: string }
+        Returns: undefined
+      }
       admin_trigger_cron: { Args: { _job: string }; Returns: Json }
       admin_trigger_crown: {
         Args: {
@@ -9151,6 +9241,15 @@ export type Database = {
           id: number
           kind: string
           leverage: number
+        }[]
+      }
+      get_active_press_sources: {
+        Args: never
+        Returns: {
+          display_name: string
+          domain: string
+          logo_url: string
+          rank: number
         }[]
       }
       get_admin_audit_recent: {
@@ -9913,6 +10012,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      log_inbound_press: { Args: { _referrer: string }; Returns: undefined }
       log_lpi_audit_failure: {
         Args: {
           p_client_request_id: string
