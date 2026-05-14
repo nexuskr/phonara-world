@@ -145,7 +145,10 @@ export default function StepUpGate({ open, scope = "민감 작업", onClose, onV
         )}
 
         {!loading && method === "totp" && (
-          <div className="space-y-3">
+          <form
+            className="space-y-3"
+            onSubmit={(e) => { e.preventDefault(); void verifyTotp(); }}
+          >
             <Input
               inputMode="numeric"
               maxLength={6}
@@ -155,11 +158,11 @@ export default function StepUpGate({ open, scope = "민감 작업", onClose, onV
               className="text-center text-2xl tracking-[0.5em] font-bold"
               autoFocus
             />
-            <Button onClick={verifyTotp} disabled={busy || code.length !== 6} className="w-full">
+            <Button type="submit" disabled={busy || code.length !== 6} className="w-full">
               {busy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <KeyRound className="w-4 h-4 mr-2" />}
               확인
             </Button>
-          </div>
+          </form>
         )}
 
         {!loading && method === "email" && (
