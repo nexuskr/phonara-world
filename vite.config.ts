@@ -30,6 +30,12 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       output: {
         manualChunks(id) {
+          // P5 — split per-language locale modules so only the active language
+          // ships at boot. (`src/lib/i18n.ts` dynamic-imports these.)
+          if (id.includes("/src/locales/ko")) return "locale-ko";
+          if (id.includes("/src/locales/en")) return "locale-en";
+          if (id.includes("/src/locales/ja")) return "locale-ja";
+          if (id.includes("/src/locales/vi")) return "locale-vi";
           if (!id.includes("node_modules")) return;
           // Three.js / R3F 제거 — chunk hint 더 이상 필요 없음.
           if (id.includes("@supabase")) return "supabase";
