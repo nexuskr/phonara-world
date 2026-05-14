@@ -3736,6 +3736,36 @@ export type Database = {
       }
       oracle_prices: {
         Row: {
+          divergence_bps: number | null
+          last_price: number
+          participating_sources: string[] | null
+          quorum_count: number
+          source: string
+          symbol: string
+          updated_at: string
+        }
+        Insert: {
+          divergence_bps?: number | null
+          last_price: number
+          participating_sources?: string[] | null
+          quorum_count?: number
+          source?: string
+          symbol: string
+          updated_at?: string
+        }
+        Update: {
+          divergence_bps?: number | null
+          last_price?: number
+          participating_sources?: string[] | null
+          quorum_count?: number
+          source?: string
+          symbol?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      oracle_prices_raw: {
+        Row: {
           last_price: number
           source: string
           symbol: string
@@ -3743,7 +3773,7 @@ export type Database = {
         }
         Insert: {
           last_price: number
-          source?: string
+          source: string
           symbol: string
           updated_at?: string
         }
@@ -7140,6 +7170,7 @@ export type Database = {
       }
       admin_get_kernel_summary: { Args: never; Returns: Json }
       admin_get_monthly_revenue_progress: { Args: never; Returns: Json }
+      admin_get_oracle_health: { Args: never; Returns: Json }
       admin_get_recent_errors: {
         Args: { _limit?: number; _only_unresolved?: boolean }
         Returns: {
@@ -7301,6 +7332,11 @@ export type Database = {
       admin_operator_pnl: {
         Args: { p_from?: string; p_to?: string }
         Returns: Json
+      }
+      admin_oracle_chaos_clear: { Args: never; Returns: number }
+      admin_oracle_chaos_stale_source: {
+        Args: { _minutes?: number; _source: string }
+        Returns: number
       }
       admin_release_founding_seat: {
         Args: { _reason: string; _season_id: string; _seat_no: number }
@@ -7732,6 +7768,7 @@ export type Database = {
       claim_weekly_pass_reward: { Args: { _level: number }; Returns: Json }
       cleanup_bot_activity: { Args: never; Returns: undefined }
       complete_guide_bonus: { Args: never; Returns: Json }
+      compute_oracle_consensus: { Args: { _symbol: string }; Returns: Json }
       consume_admin_backup_code: { Args: { _code: string }; Returns: Json }
       contribute_guild_war: {
         Args: { _score: number; _war_id: string }
