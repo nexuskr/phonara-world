@@ -110,12 +110,14 @@ function bindAndSubscribe(e: Entry) {
       if (cur.listeners.size > 0 && !cur.retryTimer) {
         const delay = Math.min(30_000, 1_000 * Math.pow(2, cur.retryAttempts++));
         dbg(e.key, "reconnect in", delay, "ms");
-        cur.retryTimer = setTimeout(() => {
+        cur.retryTimer = setTimeout(async () => {
           cur.retryTimer = null;
           if (REGISTRY.get(e.key) !== cur || cur.status === "removed") return;
-          // 기존 채널 정리 후 새로 구독
-          try { void supabase.removeChannel(cur.channel!); } catch { /* swallow */ }
+          // 기존 채널을 완전히 정리한 후에 새로 구독해야
+          // Supabase가 같은 이름의 이전 채널 핸들을 재사용해 ".on() after subscribe()" 에러를 던지는 것을 방지한다.
+          try { if (cur.channel) await supabase.removeChannel(cur.channel); } catch { /* swallow */ }
           cur.channel = null;
+          if (REGISTRY.get(e.key) !== cur || (cur.status as string) === "removed") return;
           bindAndSubscribe(cur);
         }, delay);
       }
@@ -300,16 +302,18 @@ export function useRealtimeChannel(opts: UseRealtimeChannelOpts) {
     void start();
 
     // focus/online 재개
-    const onResume = () => {
+    const onResume = async () => {
       if (cancelled) return;
       try { pollRef.current?.(); } catch { /* noop */ }
       // 채널이 down이면 재시도(빠른 재연결 트리거)
       const cur = REGISTRY.get(key);
-      if (!cur || cur.status === "removed") { void start(); return; }
+      if (!cur || (cur.status as string) === "removed") { void start(); return; }
       if (cur.status === "errored" && !cur.retryTimer) {
         cur.retryAttempts = 0;
-        try { if (cur.channel) void supabase.removeChannel(cur.channel); } catch {}
+        // 동일 이름 채널 재사용으로 인한 ".on() after subscribe()" 방지
+        try { if (cur.channel) await supabase.removeChannel(cur.channel); } catch {}
         cur.channel = null;
+        if (cancelled || REGISTRY.get(key) !== cur || (cur.status as string) === "removed") return;
         bindAndSubscribe(cur);
       }
     };
