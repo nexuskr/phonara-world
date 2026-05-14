@@ -6649,6 +6649,14 @@ export type Database = {
         Args: { _reason?: string; _user_id: string }
         Returns: boolean
       }
+      admin_bulk_approve_withdrawals: {
+        Args: { _ids: string[] }
+        Returns: number
+      }
+      admin_bulk_reject_withdrawals: {
+        Args: { _ids: string[]; _reason: string }
+        Returns: number
+      }
       admin_cockpit_metrics: { Args: never; Returns: Json }
       admin_create_founding_season: {
         Args: {
@@ -6709,6 +6717,24 @@ export type Database = {
           variant: string
         }[]
       }
+      admin_get_audit_log: {
+        Args: { _action?: string; _admin?: string; _limit?: number }
+        Returns: {
+          action: string
+          admin_id: string
+          created_at: string
+          id: string
+          metadata: Json
+          target_id: string | null
+          target_type: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "admin_audit_log"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       admin_get_demo_bias_perf: { Args: never; Returns: Json }
       admin_get_empire_realtime: { Args: never; Returns: Json }
       admin_get_ev_history: {
@@ -6746,9 +6772,32 @@ export type Database = {
           user_id: string
         }[]
       }
+      admin_get_risk_feed: {
+        Args: { _limit?: number; _only_unack?: boolean }
+        Returns: {
+          ack_note: string | null
+          acknowledged: boolean
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          created_at: string
+          dedupe_key: string | null
+          evidence: Json
+          id: string
+          rule: string
+          severity: string
+          user_id: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "anomaly_events"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       admin_get_telegram_bot_status: { Args: never; Returns: Json }
       admin_get_today_crown_total: { Args: never; Returns: Json }
       admin_get_trust_v2_stats: { Args: never; Returns: Json }
+      admin_get_user_360: { Args: { _uid: string }; Returns: Json }
       admin_get_user_email: { Args: { _user_id: string }; Returns: string }
       admin_list_beta_invites: {
         Args: never
@@ -6835,6 +6884,10 @@ export type Database = {
       admin_resolve_aml: {
         Args: { _action: string; _id: string; _reason?: string }
         Returns: Json
+      }
+      admin_resolve_anomaly: {
+        Args: { _id: string; _note?: string }
+        Returns: undefined
       }
       admin_resolve_deposit:
         | {
@@ -6973,6 +7026,15 @@ export type Database = {
       admin_soft_delete_user: {
         Args: { _reason?: string; _user_id: string }
         Returns: boolean
+      }
+      admin_trigger_crown: {
+        Args: {
+          _base?: number
+          _multiplier?: number
+          _reason?: string
+          _uid: string
+        }
+        Returns: Json
       }
       admin_unban_user: { Args: { _user_id: string }; Returns: boolean }
       admin_unfreeze_user: { Args: { _user_id: string }; Returns: number }
