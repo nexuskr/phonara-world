@@ -20,8 +20,30 @@ const corsHeaders = {
 // USDT TRC20 contract on Tron mainnet
 const USDT_CONTRACT = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
 
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let mismatch = 0;
+  for (let i = 0; i < a.length; i++) mismatch |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return mismatch === 0;
+}
+
+function isAuthorizedCron(req: Request): boolean {
+  const expected = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  if (!expected) return false;
+  const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "").trim();
+  if (!token) return false;
+  return timingSafeEqual(token, expected);
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+
+  if (!isAuthorizedCron(req)) {
+    return new Response(JSON.stringify({ error: "Forbidden" }), {
+      status: 403,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
   const ADDR = Deno.env.get("TRON_RECEIVE_ADDRESS");
   if (!ADDR) {
