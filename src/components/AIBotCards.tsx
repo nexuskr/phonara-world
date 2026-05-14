@@ -743,12 +743,14 @@ export function ActiveBotsMini() {
   const [db] = useDB();
   const [count, setCount] = useState({ running: 0, ready: 0 });
 
+  const uid = db.user?.id;
+
   useEffect(() => {
-    if (!db.user?.id) return;
+    if (!uid) return;
     let alive = true;
     const load = async () => {
       const { data } = await supabase.from("ai_bot_runs")
-        .select("status").eq("user_id", db.user!.id)
+        .select("status").eq("user_id", uid)
         .in("status", ["running", "ready"]);
       if (!alive) return;
       const rows = (data ?? []) as { status: Status }[];
@@ -758,11 +760,30 @@ export function ActiveBotsMini() {
       });
     };
     load();
-    const ch = supabase.channel(`ai_mini:${db.user.id}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "ai_bot_runs", filter: `user_id=eq.${db.user.id}` }, load)
-      .subscribe();
-    return () => { alive = false; supabase.removeChannel(ch); };
-  }, [db.user?.id]);
+    return () => { alive = false; };
+  }, [uid]);
+
+  // Unified realtime entry point — replaces direct supabase.channel call.
+  useRealtimeChannel({
+    key: uid ? `ai_mini:${uid}` : "ai_mini:disabled",
+    enabled: !!uid,
+    bindings: uid
+      ? [{ event: "*", schema: "public", table: "ai_bot_runs", filter: `user_id=eq.${uid}` }]
+      : [],
+    onEvent: () => {
+      if (!uid) return;
+      void supabase.from("ai_bot_runs")
+        .select("status").eq("user_id", uid)
+        .in("status", ["running", "ready"])
+        .then(({ data }) => {
+          const rows = (data ?? []) as { status: Status }[];
+          setCount({
+            running: rows.filter(r => r.status === "running").length,
+            ready:   rows.filter(r => r.status === "ready").length,
+          });
+        });
+    },
+  });
 
   if (!db.user) return null;
   const total = count.running + count.ready;
