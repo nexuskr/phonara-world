@@ -9,6 +9,7 @@ import { ADMIN_LEGACY_REDIRECTS } from "./_nav";
 import { LoadingList } from "@/components/ui/loading-state";
 
 // COMMAND
+const EmpireOverview = lazy(() => import("@/components/admin/empire/EmpireOverview"));
 const CockpitV2 = lazy(() => import("./CockpitV2"));
 const Revenue   = lazy(() => import("./Revenue"));
 const Funnel    = lazy(() => import("./Kpi"));
@@ -80,6 +81,15 @@ function Section({
   );
 }
 
+function ComingSoon({ area }: { area: string }) {
+  return (
+    <div className="glass-strong rounded-2xl p-6 border border-dashed border-border/40 text-sm text-muted-foreground">
+      <div className="font-display font-bold text-foreground mb-1">🚧 {area}</div>
+      Day 2/3 일정에 따라 출시됩니다. 백엔드 RPC와 권한 게이트는 이미 준비되어 있습니다.
+    </div>
+  );
+}
+
 function PayPlaceholder() {
   return (
     <Section title="Phonara Pay (TRC20)" desc="USDT 결제 콘솔 — 곧 출시">
@@ -127,7 +137,8 @@ export default function AdminRoutes() {
 
       <Route element={<AdminLayout />}>
         {/* COMMAND */}
-        <Route index element={<Suspense fallback={<LoadingList rows={4} />}><CockpitV2 /></Suspense>} />
+        <Route index element={<Suspense fallback={<LoadingList rows={4} />}><EmpireOverview /></Suspense>} />
+        <Route path="cockpit" element={<Suspense fallback={<LoadingList rows={4} />}><CockpitV2 /></Suspense>} />
         <Route path="funnel"  element={<Suspense fallback={<LoadingList rows={4} />}><Funnel /></Suspense>} />
         <Route path="revenue" element={<Suspense fallback={<LoadingList rows={4} />}><Revenue /></Suspense>} />
 
@@ -147,22 +158,33 @@ export default function AdminRoutes() {
         <Route path="compliance/viral"  element={<Section title="Viral Forensics"><ViralForensics /></Section>} />
         <Route path="compliance/perms"  element={<Section title="Permissions"><PermissionsAudit /></Section>} />
         <Route path="compliance/rules"  element={<Section><AutoRulesAdmin /></Section>} />
+        <Route path="compliance/risk"   element={<Section title="🚨 리스크 알림 센터" desc="Day 2 출시 — anomaly_events 통합 대시보드"><ComingSoon area="Risk Center" /></Section>} />
 
         {/* OPERATIONS */}
         <Route path="ops/observability" element={<Section title="Observability"><ObservabilityCockpit /></Section>} />
         <Route path="ops/errors"        element={<Section title="Errors / Anomalies"><AnomalyAckQueue /><div className="h-2" /><ErrorMonitorAdmin /></Section>} />
+        <Route path="ops/audit"         element={<Section title="📜 감사 로그" desc="Day 2 — admin_audit_log 검색·필터"><ComingSoon area="Audit Log" /></Section>} />
+        <Route path="ops/notify"        element={<Section title="🔔 공지 센터" desc="Day 3 — Push / Telegram / In-App 브로드캐스트"><ComingSoon area="Notification Center" /></Section>} />
         <Route path="ops/security"      element={<Section title="Security Audit"><SecurityAuditAdmin /></Section>} />
         <Route path="ops/cron"          element={<CronCombined />} />
         <Route path="ops/report"        element={<Suspense fallback={<LoadingList rows={4} />}><OpsReport /></Suspense>} />
         <Route path="ops/thresholds"    element={<Section title="Mission Control 임계값"><ThresholdsAdmin /></Section>} />
 
         {/* GROWTH */}
-        <Route path="growth/ab"        element={<Section title="A/B Experiments"><AbExperimentsAdmin /></Section>} />
-        <Route path="growth/bots"      element={<BotsCombined />} />
-        <Route path="growth/ev"        element={<Section title="EV Health"><EvHealthAdmin /></Section>} />
-        <Route path="growth/ugc"       element={<Section title="UGC Performance"><AdminUgc /></Section>} />
-        <Route path="growth/referrals" element={<Section title="Referral Window"><ReferralsAdmin /></Section>} />
-        <Route path="growth/whales"    element={<Section title="Whale Strike Funnel"><WhaleStrikeFunnelPanel /></Section>} />
+        <Route path="growth/marketing"  element={<Section title="📢 마케팅 도구" desc="Day 3 출시 — 인플루언서·Telegram Blast·Push"><ComingSoon area="Marketing Tools" /></Section>} />
+        <Route path="growth/ab"         element={<Section title="A/B Experiments"><AbExperimentsAdmin /></Section>} />
+        <Route path="growth/conversion" element={<Section title="💱 SIM→Real 전환" desc="Day 3 — SIM 사용량 → 실제 매출 전환률"><ComingSoon area="SIM→Real Conversion" /></Section>} />
+        <Route path="growth/bots"       element={<BotsCombined />} />
+        <Route path="growth/ev"         element={<Section title="EV Health"><EvHealthAdmin /></Section>} />
+        <Route path="growth/ugc"        element={<Section title="UGC Performance"><AdminUgc /></Section>} />
+        <Route path="growth/referrals"  element={<Section title="Referral Window"><ReferralsAdmin /></Section>} />
+        <Route path="growth/whales"     element={<Section title="Whale Strike Funnel"><WhaleStrikeFunnelPanel /></Section>} />
+
+        {/* GAME CONFIG (AAL2) */}
+        <Route path="game/bias"          element={<Section title="🎮 Demo Bias 슬라이더" desc="Day 2 — 게임별 편향 강도 실시간 조정"><ComingSoon area="Demo Bias" /></Section>} />
+        <Route path="game/nearmiss"      element={<Section title="🎯 Near-Miss 확률" desc="Day 2 — 슬롯/딜러 니어미스 확률"><ComingSoon area="Near-Miss" /></Section>} />
+        <Route path="game/particles"     element={<Section title="✨ Crown 파티클 강도" desc="Day 2 — 폭발 시각 효과 강도 0~100"><ComingSoon area="Particle Intensity" /></Section>} />
+        <Route path="game/crown-trigger" element={<Section title="👑 Manual Crown Trigger" desc="Day 2 — 특정 유저에게 즉시 Crown 부여 (idempotency 강제)"><ComingSoon area="Manual Crown Trigger" /></Section>} />
 
         {/* PRODUCT */}
         <Route path="product/users"    element={<Section title="Users"><ServerUserAdmin /></Section>} />

@@ -9,6 +9,7 @@ import {
   HeartHandshake, ScrollText, Flame, Lock, Users, Wallet,
   Gauge, KeyRound, FlaskConical, Bot, HeartPulse, BarChart3,
   Target, MessageSquare, LifeBuoy, Zap, AlertTriangle, Send, Sliders,
+  Gem, Megaphone, Bell, FileSearch, Sparkles, Rocket,
 } from "lucide-react";
 
 export type AdminBadgeSource =
@@ -30,7 +31,7 @@ export type AdminNavItem = {
 };
 
 export type AdminNavSection = {
-  id: "command" | "treasury" | "compliance" | "operations" | "growth" | "product";
+  id: "command" | "treasury" | "compliance" | "operations" | "growth" | "game" | "product";
   label: string;
   emoji: string;
   /** AAL2 step-up required for every route under this section */
@@ -45,9 +46,10 @@ export const ADMIN_NAV: AdminNavSection[] = [
     emoji: "🎯",
     aal2: false,
     items: [
-      { id: "cockpit",  name: "콕핏 (메인)",       to: "/admin",          icon: Crown },
-      { id: "funnel",   name: "퍼널 분석",         to: "/admin/funnel",   icon: GitBranch },
-      { id: "revenue",  name: "매출 · 코호트",     to: "/admin/revenue",  icon: TrendingUp },
+      { id: "empire",   name: "🌍 Empire Overview", to: "/admin",            icon: Gem },
+      { id: "cockpit",  name: "콕핏 (구버전)",      to: "/admin/cockpit",    icon: Crown },
+      { id: "funnel",   name: "퍼널 분석",          to: "/admin/funnel",     icon: GitBranch },
+      { id: "revenue",  name: "매출 · 코호트",      to: "/admin/revenue",    icon: TrendingUp },
     ],
   },
   {
@@ -73,6 +75,7 @@ export const ADMIN_NAV: AdminNavSection[] = [
     items: [
       { id: "aml",     name: "AML 심사 큐",            to: "/admin/compliance/aml",     icon: ShieldAlert, badge: "aml_pending" },
       { id: "trust",   name: "신뢰 (환불 · 손실보호)", to: "/admin/compliance/trust",   icon: HeartHandshake, badge: "refund_pending" },
+      { id: "risk",    name: "🚨 리스크 알림 센터",   to: "/admin/compliance/risk",    icon: AlertTriangle },
       { id: "payout",  name: "출금 감사 로그",         to: "/admin/compliance/payout",  icon: ScrollText },
       { id: "viral",   name: "바이럴 포렌식",          to: "/admin/compliance/viral",   icon: Flame },
       { id: "perms",   name: "권한 관리",              to: "/admin/compliance/perms",   icon: Lock },
@@ -87,6 +90,8 @@ export const ADMIN_NAV: AdminNavSection[] = [
     items: [
       { id: "observability", name: "관측 (옵저버빌리티)", to: "/admin/ops/observability", icon: Activity },
       { id: "errors",        name: "에러 · 이상감지",     to: "/admin/ops/errors",        icon: AlertTriangle, badge: "anomalies_unack" },
+      { id: "audit",         name: "📜 감사 로그",        to: "/admin/ops/audit",         icon: FileSearch },
+      { id: "notify",        name: "🔔 공지 센터",        to: "/admin/ops/notify",        icon: Bell },
       { id: "security",      name: "보안 감사",           to: "/admin/ops/security",      icon: ShieldCheck },
       { id: "cron",          name: "Cron · 웹훅",         to: "/admin/ops/cron",          icon: Zap },
       { id: "report",        name: "AI 일일 리포트",      to: "/admin/ops/report",        icon: BarChart3 },
@@ -99,12 +104,26 @@ export const ADMIN_NAV: AdminNavSection[] = [
     emoji: "🚀",
     aal2: false,
     items: [
+      { id: "marketing",  name: "📢 마케팅 도구",    to: "/admin/growth/marketing", icon: Megaphone },
       { id: "ab",         name: "A/B 실험",          to: "/admin/growth/ab",        icon: FlaskConical },
+      { id: "conversion", name: "💱 SIM→Real 전환",  to: "/admin/growth/conversion", icon: Sparkles },
       { id: "bots",       name: "봇 콘솔",           to: "/admin/growth/bots",      icon: Bot },
       { id: "ev",         name: "EV 헬스",           to: "/admin/growth/ev",        icon: HeartPulse },
       { id: "ugc",        name: "UGC 성과",          to: "/admin/growth/ugc",       icon: BarChart3 },
       { id: "referrals",  name: "추천 윈도우",       to: "/admin/growth/referrals", icon: Users },
       { id: "whales",     name: "고래 스트라이크",   to: "/admin/growth/whales",    icon: Flame },
+    ],
+  },
+  {
+    id: "game",
+    label: "게임 컨피그",
+    emoji: "🎮",
+    aal2: true,
+    items: [
+      { id: "bias",          name: "Demo Bias 슬라이더",  to: "/admin/game/bias",          icon: Sliders },
+      { id: "nearmiss",      name: "Near-Miss 확률",      to: "/admin/game/nearmiss",      icon: Target },
+      { id: "particles",     name: "Crown 파티클 강도",   to: "/admin/game/particles",     icon: Sparkles },
+      { id: "crown-trigger", name: "👑 Manual Crown",     to: "/admin/game/crown-trigger", icon: Rocket },
     ],
   },
   {
@@ -139,7 +158,6 @@ export function isAal2Path(pathname: string): boolean {
 
 /** Legacy → new URL map (deep-link redirects, PR-1) */
 export const ADMIN_LEGACY_REDIRECTS: Record<string, string> = {
-  "/admin/cockpit":    "/admin",
   "/admin/kpi":        "/admin/funnel",
   "/admin/revenue":    "/admin/revenue",
   "/admin/ops-report": "/admin/ops/report",

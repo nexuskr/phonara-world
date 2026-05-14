@@ -2278,6 +2278,33 @@ export type Database = {
         }
         Relationships: []
       }
+      game_config: {
+        Row: {
+          crown_particle_intensity: number
+          demo_bias: Json
+          id: number
+          nearmiss_prob: Json
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          crown_particle_intensity?: number
+          demo_bias?: Json
+          id?: number
+          nearmiss_prob?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          crown_particle_intensity?: number
+          demo_bias?: Json
+          id?: number
+          nearmiss_prob?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       ghost_moments: {
         Row: {
           amount: number | null
@@ -6682,6 +6709,8 @@ export type Database = {
           variant: string
         }[]
       }
+      admin_get_demo_bias_perf: { Args: never; Returns: Json }
+      admin_get_empire_realtime: { Args: never; Returns: Json }
       admin_get_ev_history: {
         Args: { _limit?: number }
         Returns: {
@@ -6692,6 +6721,15 @@ export type Database = {
           severity: string
         }[]
       }
+      admin_get_hot_users_1h: {
+        Args: never
+        Returns: {
+          deposit_count: number
+          total_amount: number
+          user_id: string
+        }[]
+      }
+      admin_get_monthly_revenue_progress: { Args: never; Returns: Json }
       admin_get_recent_errors: {
         Args: { _limit?: number; _only_unresolved?: boolean }
         Returns: {
@@ -6708,6 +6746,8 @@ export type Database = {
           user_id: string
         }[]
       }
+      admin_get_telegram_bot_status: { Args: never; Returns: Json }
+      admin_get_today_crown_total: { Args: never; Returns: Json }
       admin_get_trust_v2_stats: { Args: never; Returns: Json }
       admin_get_user_email: { Args: { _user_id: string }; Returns: string }
       admin_list_beta_invites: {
@@ -6960,6 +7000,23 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "founding_seasons"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      admin_update_game_config: {
+        Args: { _patch: Json }
+        Returns: {
+          crown_particle_intensity: number
+          demo_bias: Json
+          id: number
+          nearmiss_prob: Json
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "game_config"
           isOneToOne: true
           isSetofReturn: false
         }
@@ -7433,6 +7490,8 @@ export type Database = {
           observed_roles: string[]
         }[]
       }
+      get_game_config_public: { Args: never; Returns: Json }
+      get_ghost_empire_stats: { Args: never; Returns: Json }
       get_ghost_pulse: { Args: never; Returns: Json }
       get_ghost_strikes: { Args: { _limit?: number }; Returns: Json }
       get_guild_leaderboard: {
@@ -7842,6 +7901,15 @@ export type Database = {
         }
         Returns: undefined
       }
+      log_admin_action: {
+        Args: {
+          _action: string
+          _payload?: Json
+          _target_id?: string
+          _target_type?: string
+        }
+        Returns: undefined
+      }
       log_client_error: {
         Args: {
           _context?: Json
@@ -8089,6 +8157,7 @@ export type Database = {
         }
         Returns: Json
       }
+      require_admin: { Args: never; Returns: undefined }
       reset_daily_mission_count: { Args: never; Returns: undefined }
       reset_withdraw_pin: {
         Args: { _method: string; _new_pin: string }
