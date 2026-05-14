@@ -75,19 +75,17 @@ export default function DepositHistoryList() {
   useEffect(() => { void load(); }, [page]);
 
   useEffect(() => {
-    let ch: ReturnType<typeof supabase.channel> | null = null;
-    (async () => {
-      const { data: u } = await supabase.auth.getUser();
-      if (!u.user) return;
-      ch = supabase
-        .channel(`dh-${u.user.id}`)
-        .on("postgres_changes",
-          { event: "*", schema: "public", table: "deposit_requests", filter: `user_id=eq.${u.user.id}` },
-          () => { void load(); })
-        .subscribe();
-    })();
-    return () => { if (ch) supabase.removeChannel(ch); };
-  }, [page]);
+    void supabase.auth.getUser().then(({ data }) => setUid(data.user?.id ?? null));
+  }, []);
+
+  useRealtimeChannel({
+    key: uid ? `dh-${uid}` : "",
+    bindings: uid
+      ? [{ event: "*", table: "deposit_requests", filter: `user_id=eq.${uid}` }]
+      : [],
+    onEvent: () => { void load(); },
+    enabled: !!uid,
+  });
 
   const opened = useMemo(() => rows.find((r) => r.id === openId) || null, [rows, openId]);
   const lastPage = Math.max(0, Math.ceil(total / PAGE_SIZE) - 1);
