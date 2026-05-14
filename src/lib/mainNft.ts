@@ -97,6 +97,16 @@ export async function getMainNftStatus(): Promise<MainNftStatus | null> {
   return data as unknown as MainNftStatus;
 }
 
+export async function adminGrantSelfNft(
+  type: "crown" | "emperor" | "founder",
+  level: "bronze" | "gold" | "diamond",
+): Promise<{ ok: boolean; error?: string; nft_id?: string }> {
+  const { data, error } = await supabase.rpc("admin_grant_self_nft", { _type: type, _level: level });
+  if (error) return { ok: false, error: error.message };
+  const r = data as any;
+  return { ok: true, nft_id: r?.nft_id };
+}
+
 export async function setMainNft(nftId: string | null): Promise<{ ok: boolean; error?: string; cost?: number; free_remaining?: number }> {
   const { data, error } = await supabase.rpc("set_main_nft", { _nft_id: nftId });
   if (error) return { ok: false, error: error.message };
