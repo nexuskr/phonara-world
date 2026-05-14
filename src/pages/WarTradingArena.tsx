@@ -41,26 +41,16 @@ export default function WarTradingArena() {
   const [nearMiss, setNearMiss] = useState(false);
   const [nearMissCount, setNearMissCount] = useState(0);
   const [board, setBoard] = useState<WarLeaderRow[]>([]);
-  const [now, setNow] = useState(Date.now());
+  const now = useNowTick(1000);
   const recordTimer = useRef<number | null>(null);
 
-  // 세션 로드 + 60s마다 재폴
-  useEffect(() => {
-    let alive = true;
-    async function load() {
-      const s = await warGetCurrentSession();
-      if (alive) setSession(s);
-    }
-    load();
-    const t = window.setInterval(load, 60_000);
-    return () => { alive = false; clearInterval(t); };
-  }, []);
-
-  // 1s 시계
-  useEffect(() => {
-    const t = window.setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(t);
-  }, []);
+  // 세션 로드 + 60s마다 재폴 (탭 숨김 시 정지)
+  const loadSession = async () => {
+    const s = await warGetCurrentSession();
+    setSession(s);
+  };
+  useEffect(() => { void loadSession(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
+  useVisibleInterval(() => { void loadSession(); }, 60_000);
 
   // 리더보드 로드 + Realtime
   useEffect(() => {
