@@ -295,35 +295,42 @@ function ChatAdmin() {
   const [adminId, setAdminId] = useState<string | null>(null);
 
   useEffect(() => {
-    (async () => {
+    void (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setAdminId(user?.id || null);
       const { data } = await supabase.from("support_threads").select("*").order("last_message_at", { ascending: false });
       setThreads((data as ST[]) || []);
     })();
-    const ch = supabase.channel("admin:threads")
-      .on("postgres_changes", { event: "*", schema: "public", table: "support_threads" }, async () => {
+  }, []);
+
+  useRealtimeChannel({
+    key: "admin:threads",
+    bindings: [{ event: "*", table: "support_threads" }],
+    onEvent: () => {
+      void (async () => {
         const { data } = await supabase.from("support_threads").select("*").order("last_message_at", { ascending: false });
         setThreads((data as ST[]) || []);
-      }).subscribe();
-    return () => { supabase.removeChannel(ch); };
-  }, []);
+      })();
+    },
+  });
 
   useEffect(() => {
     if (!active) { setMsgs([]); return; }
-    let ch: any;
-    (async () => {
+    void (async () => {
       const { data } = await supabase.from("support_messages").select("*")
         .eq("thread_id", active.id).order("created_at", { ascending: true });
       setMsgs((data as SM[]) || []);
-      ch = supabase.channel(`admin:msgs:${active.id}`)
-        .on("postgres_changes",
-          { event: "INSERT", schema: "public", table: "support_messages", filter: `thread_id=eq.${active.id}` },
-          (p) => setMsgs(prev => [...prev, p.new as SM])
-        ).subscribe();
     })();
-    return () => { if (ch) supabase.removeChannel(ch); };
   }, [active?.id]);
+
+  useRealtimeChannel({
+    key: active?.id ? `admin:msgs:${active.id}` : "",
+    bindings: active?.id
+      ? [{ event: "INSERT", table: "support_messages", filter: `thread_id=eq.${active.id}` }]
+      : [],
+    onEvent: (p) => setMsgs(prev => [...prev, p.new as unknown as SM]),
+    enabled: !!active?.id,
+  });
 
   async function reply() {
     if (!active || !text.trim() || !adminId) return;
