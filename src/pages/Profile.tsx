@@ -27,6 +27,8 @@ import PushNotificationCard from "@/components/settings/PushNotificationCard";
 import LineConnectCard from "@/components/settings/LineConnectCard";
 import AppSettingsCard from "@/components/settings/AppSettingsCard";
 import CoinMasterLounge from "@/components/CoinMasterLounge";
+import NftAvatar from "@/components/profile/NftAvatar";
+import NftGalleryDialog from "@/components/profile/NftGalleryDialog";
 
 export default function Profile() {
   const { t } = useTranslation("profile");
@@ -48,6 +50,7 @@ export default function Profile() {
   const [newPass2, setNewPass2] = useState("");
   const [nickname, setNickname] = useState("");
   const [busy, setBusy] = useState(false);
+  const [nftGalleryOpen, setNftGalleryOpen] = useState(false);
 
   if (!user) return null;
   const u = user;
@@ -144,15 +147,20 @@ export default function Profile() {
           <div className="absolute -top-20 -right-20 w-44 h-44 rounded-full bg-gradient-primary blur-3xl opacity-40" />
           <div className="relative flex items-center gap-4">
             <div className="relative">
-              <div className="w-20 h-20 rounded-2xl bg-gradient-cyber flex items-center justify-center font-imperial font-black text-3xl text-foreground glow-primary">
-                {u.nickname[0]?.toUpperCase()}
-              </div>
+              <NftAvatar size="xl" showBadge onClick={() => setNftGalleryOpen(true)} />
               <div className="absolute -bottom-2 -right-2 px-2 py-0.5 rounded-full bg-gold text-gold-foreground text-[10px] font-black tabular-nums">Lv.{u.level}</div>
             </div>
             <div className="flex-1 min-w-0">
               <h2 className="font-imperial font-black text-xl sm:text-2xl truncate tracking-[0.02em]">{u.nickname}</h2>
               <p className="text-xs text-muted-foreground truncate">{u.email}</p>
               <div className="text-[10px] text-gold font-bold mt-0.5 flex items-center gap-1"><Crown className="w-3 h-3 shrink-0" /> {t("tier", { t: u.tier })}</div>
+              <button
+                onClick={() => setNftGalleryOpen(true)}
+                className="mt-1 text-[10px] text-primary hover:text-primary/80 underline-offset-2 hover:underline inline-flex items-center gap-1"
+              >
+                <Crown className="w-3 h-3" />
+                {t("nft.changeMain")}
+              </button>
               <div className="mt-2">
                 <div className="flex justify-between text-[10px] text-muted-foreground mb-1 tabular-nums">
                   <span>XP {u.xp.toLocaleString()}</span><span>{xpToNext.toLocaleString()}</span>
