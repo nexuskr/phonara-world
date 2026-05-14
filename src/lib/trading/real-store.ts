@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { supabase } from "@/integrations/supabase/client";
 import { notify } from "@/lib/notify";
 import { subscribePostgres } from "@/lib/realtime-bus";
+import { mapTradingError } from "@/lib/trading/errors";
 import type { LivePosition, LiveTrade, MarginMode, Side } from "./types";
 
 function reasonLabel(reason: string): { title: string; variant: "success" | "error" | "info" } {
