@@ -5,6 +5,7 @@ import Layout from "@/components/Layout";
 import { useDB } from "@/lib/store";
 import { supabase } from "@/integrations/supabase/client";
 import { useRequireAuth } from "@/hooks/use-require-auth";
+import { useRealtimeChannel } from "@/hooks/use-realtime-channel";
 import { Send, MessageSquare, ChevronDown, BookOpen, Sparkles } from "lucide-react";
 import { LuxButton, LuxInput, LuxChip } from "@/components/ui/lux";
 
