@@ -82,17 +82,11 @@ function LiveKpi() {
   const { isAal2, hasFactor } = useMfaLevel();
   const [admins, setAdmins] = useState(0);
 
-  // Lightweight presence channel — counts online admin sessions on this panel.
-  useRealtimeChannel({
-    key: "admin:presence:godmode",
-    bindings: [],
-    onEvent: () => { /* presence handled via channel state below */ },
-    enabled: true,
-    onStatus: () => { /* noop */ },
-  });
-
-  // Presence (separate, simple) — uses supabase channel presence API. We avoid
-  // adding new infra: just count distinct user IDs joining this room.
+  // Presence — Supabase Realtime presence API는 postgres_changes와 별개이며
+  // useRealtimeChannel 단일 진입점이 presence를 wrapping 하지 않으므로
+  // 이 한 곳만 직접 supabase.channel() 사용을 허용한다 (whitelisted exception).
+  // 이전 버전에는 같은 위치에 빈 bindings의 useRealtimeChannel이 함께 있었으나
+  // 채널 1개만 낭비될 뿐 어떤 이벤트도 받지 못해 제거.
   useEffect(() => {
     let mounted = true;
     const ch = supabase.channel("admin-presence-godmode", {
