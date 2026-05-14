@@ -95,25 +95,46 @@ export const useRealStore = create<State>()((set, get) => ({
   },
 
   async open(args) {
-    const { data, error } = await supabase.rpc("live_open_position", {
-      p_symbol: args.symbol,
-      p_side: args.side,
-      p_leverage: args.leverage,
-      p_margin: args.margin,
-      p_mark_price: args.mark,
-      p_tp_pct: args.tpPct ?? null,
-      p_sl_pct: args.slPct ?? null,
-      p_trailing_pct: args.trailingPct ?? null,
-      p_margin_mode: args.marginMode ?? "isolated",
-      p_allocated_margin: args.allocatedMargin ?? null,
-      p_tp_price: args.tpPrice ?? null,
-      p_sl_price: args.slPrice ?? null,
-      p_trailing_offset: args.trailingOffset ?? null,
-    } as never);
-    if (error) return { error: mapTradingError(error.message) };
-    await get().load();
-    if (typeof window !== "undefined") window.dispatchEvent(new Event("wallet:refresh"));
-    return { id: data as string };
+    // v3.2: 1 click = 1 crid. Caller may pass clientRequestId to reuse across retries.
+    const crid =
+      args.clientRequestId ??
+      (typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2)}`);
+
+    // 8s hard timeout via AbortController to prevent indefinite hangs.
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 8000);
+
+    try {
+      const { data, error } = await supabase.rpc(
+        "live_open_position",
+        {
+          p_symbol: args.symbol,
+          p_side: args.side,
+          p_leverage: args.leverage,
+          p_margin: args.margin,
+          p_mark_price: args.mark,
+          p_tp_pct: args.tpPct ?? null,
+          p_sl_pct: args.slPct ?? null,
+          p_trailing_pct: args.trailingPct ?? null,
+          p_margin_mode: args.marginMode ?? "isolated",
+          p_allocated_margin: args.allocatedMargin ?? null,
+          p_tp_price: args.tpPrice ?? null,
+          p_sl_price: args.slPrice ?? null,
+          p_trailing_offset: args.trailingOffset ?? null,
+          p_client_request_id: crid,
+        } as never,
+      ).abortSignal(ctrl.signal);
+      if (error) return { error: mapTradingError(error.message) };
+      await get().load();
+      if (typeof window !== "undefined") window.dispatchEvent(new Event("wallet:refresh"));
+      return { id: data as string };
+    } catch (e: any) {
+      return { error: mapTradingError(e?.message ?? "AbortError") };
+    } finally {
+      clearTimeout(timer);
+    }
   },
 
   async setTriggers(id, t) {
