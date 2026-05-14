@@ -4,6 +4,7 @@ import { Flame, X, ArrowRight } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useFomoNotifications } from "@/hooks/use-fomo-notifications";
+import { useDocumentVisible } from "@/lib/util/visible-interval";
 
 const kindAccent: Record<string, string> = {
   recovery: "from-destructive/15 to-primary/10 border-destructive/40",
