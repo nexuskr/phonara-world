@@ -42,6 +42,7 @@ const ReplayShareGlobal = lazy(() => import("./empire/ReplayShareGlobal"));
 const CrownWarFinaleModal = lazy(() => import("./empire/CrownWarFinaleModal"));
 const PowerHeader = lazy(() => import("./empire/PowerHeader"));
 const FirstEmperorBurst = lazy(() => import("./empire/FirstEmperorBurst"));
+const CrownThroneOverlay = lazy(() => import("./empire/CrownThroneOverlay"));
 
 function useIdleMount(delayMs = 1500) {
   const [ready, setReady] = useStateIdle(false);
@@ -387,6 +388,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <EmpireConcierge />
           <ReplayShareGlobal />
           <CrownWarFinaleModal />
+          <CrownThroneOverlay />
           <PowerHeader />
           <FirstEmperorBurst onCta={() => {
             try {
