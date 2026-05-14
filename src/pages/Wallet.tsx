@@ -96,6 +96,8 @@ export default function Wallet() {
   const [amlLevel, setAmlLevel] = useState<1 | 2 | 3>(2);
   const [receiptPath, setReceiptPath] = useState<string | null>(null);
   const [depositReceiptUrl, setDepositReceiptUrl] = useState<string | null>(null);
+  // C1 (Track 3): 중복 클릭 / double-tap 방지 — 모든 RPC 진행 중 버튼 disable
+  const [submitting, setSubmitting] = useState(false);
   // 어드민에서 관리하는 코인 입금 주소 목록
   const [coinAddrs, setCoinAddrs] = useState<Array<{ network: string; address: string; label: string | null; memo: string | null }>>([]);
   useEffect(() => {
