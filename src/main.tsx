@@ -2,7 +2,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 import i18n from "i18next";
-import "./lib/i18n";
+import { i18nReady } from "./lib/i18n";
 import { detectPreferredLocale } from "./hooks/use-preferred-locale";
 import { installViewportLock } from "./lib/viewport-lock";
 import { installLayoutShiftMonitor } from "./lib/layout-shift-monitor";
@@ -27,7 +27,7 @@ watchMotionClass();
 // Diagnose layout shifts (toasts in dev / when phonara:debug-cls=1).
 installLayoutShiftMonitor();
 
-createRoot(document.getElementById("root")!).render(<App />);
-
-// Catalog prefetch deferred — only loaded on routes that need it (Achievements / Missions / Packages).
-// Removed eager prefetchCatalog() call to cut boot cost on Guide/Auth/Dashboard.
+// P5 — wait for active locale chunk to resolve before first paint to avoid
+// flash-of-keys. Fail-open: if it errors, render anyway (i18n returns keys).
+const boot = () => createRoot(document.getElementById("root")!).render(<App />);
+i18nReady.then(boot, boot);
