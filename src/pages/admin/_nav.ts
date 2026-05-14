@@ -9,7 +9,7 @@ import {
   HeartHandshake, ScrollText, Flame, Lock, Users, Wallet,
   Gauge, KeyRound, FlaskConical, Bot, HeartPulse, BarChart3,
   Target, MessageSquare, LifeBuoy, Zap, AlertTriangle, Send, Sliders,
-  Gem, Megaphone, Bell, FileSearch, Sparkles, Rocket,
+  Gem, Megaphone, Bell, FileSearch, Sparkles, Rocket, LifeBuoy as LifeBuoyAlt,
 } from "lucide-react";
 
 export type AdminBadgeSource =
