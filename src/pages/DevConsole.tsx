@@ -61,8 +61,8 @@ export default function DevConsole() {
     <Layout>
       <SEOHead
         title="Phonara Developer Console — Trading Sim API"
-        description="Free trading simulation API for developers. Get realistic crypto quotes with one HTTP call. Built for backtesting, demos, and B2B integrations."
-        canonical="/dev/console"
+        description="Free trading simulation API for developers. Realistic crypto quotes for backtesting, demos, B2B integrations."
+        path="/dev/console"
       />
       <div className="container py-8 space-y-8 animate-liquid-in">
         <header className="space-y-2">
