@@ -31,7 +31,9 @@ export default function MfaChallengeDialog({ open, factorId, onClose, onVerified
       if (error) throw error;
       notify.success("강력 인증 완료");
       setCode("");
+      window.dispatchEvent(new CustomEvent("phonara:mfa-verified"));
       onVerified();
+      void supabase.auth.refreshSession().catch(() => undefined);
     } catch (e: any) {
       notify.error("인증 실패", { description: e?.message });
     } finally {
