@@ -48,9 +48,8 @@ export default function AdminRevenue() {
   useEffect(() => {
     if (!user?.isAdmin) return;
     void load();
-    const id = window.setInterval(load, 60_000);
-    return () => window.clearInterval(id);
   }, [user?.isAdmin]);
+  useVisibleInterval(() => { if (user?.isAdmin) void load(); }, 60_000, !!user?.isAdmin);
 
   if (!user) return null;
   if (!user.isAdmin) {
