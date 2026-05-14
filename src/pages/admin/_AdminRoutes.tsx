@@ -20,6 +20,7 @@ const LegacyAdmin = lazy(() => import("../Admin"));
 // Treasury
 const DepositRequestsAdmin   = lazy(() => import("@/components/admin/DepositRequestsAdmin"));
 const WithdrawRequestsAdmin  = lazy(() => import("@/components/admin/WithdrawRequestsAdmin"));
+const AdminTreasuryWithdrawals = lazy(() => import("./treasury/Withdrawals"));
 const PackagePurchasesAdmin  = lazy(() => import("@/components/admin/PackagePurchasesAdmin"));
 const CoinAddressAdmin       = lazy(() => import("@/components/admin/CoinAddressAdmin"));
 const OperatorAccounting     = lazy(() => import("@/components/admin/OperatorAccounting"));
@@ -159,7 +160,7 @@ export default function AdminRoutes() {
 
         {/* TREASURY */}
         <Route path="treasury/deposits"    element={<Section title="Deposits"><DepositRequestsAdmin /></Section>} />
-        <Route path="treasury/withdrawals" element={<Section title="Withdrawals"><WithdrawRequestsAdmin /></Section>} />
+        <Route path="treasury/withdrawals" element={<Section title="Withdrawals"><AdminTreasuryWithdrawals /></Section>} />
         <Route path="treasury/packages"    element={<Section title="Packages"><PackagePurchasesAdmin /></Section>} />
         <Route path="treasury/coin"        element={<Section title="Coin Addresses"><CoinAddressAdmin /></Section>} />
         <Route path="treasury/accounting"  element={<Section title="Accounting (Zero-Loss)"><OperatorAccounting /></Section>} />

@@ -21,6 +21,7 @@ const InsuranceFundDashboard = lazy(() => import("@/components/InsuranceFundDash
 import WithdrawIntentInterceptor from "@/components/conversion/WithdrawIntentInterceptor";
 import AMLGate from "@/components/wallet/AMLGate";
 import WithdrawQueueStatus from "@/components/wallet/WithdrawQueueStatus";
+import WithdrawSimpleStatus from "@/components/wallet/WithdrawSimpleStatus";
 import WithdrawReceiptUpload from "@/components/wallet/WithdrawReceiptUpload";
 import DepositReceiptUpload from "@/components/wallet/DepositReceiptUpload";
 import WithdrawETABadge from "@/components/wallet/WithdrawETABadge";
@@ -423,7 +424,12 @@ export default function Wallet() {
           </div>
         )}
 
-        {action === "withdraw" && <WithdrawQueueStatus />}
+        {action === "withdraw" && (
+          <>
+            <WithdrawQueueStatus />
+            <WithdrawSimpleStatus />
+          </>
+        )}
 
         {action !== "history" && (
           <div className="glass-strong rounded-2xl p-5 sm:p-6 space-y-5 border border-primary/20">
