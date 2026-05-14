@@ -91,6 +91,7 @@ export const ADMIN_NAV: AdminNavSection[] = [
       { id: "observability", name: "관측 (옵저버빌리티)", to: "/admin/ops/observability", icon: Activity },
       { id: "errors",        name: "에러 · 이상감지",     to: "/admin/ops/errors",        icon: AlertTriangle, badge: "anomalies_unack" },
       { id: "audit",         name: "📜 감사 로그",        to: "/admin/ops/audit",         icon: FileSearch },
+      { id: "audit-log",     name: "🔍 감사 검색 + RLS",  to: "/admin/ops/audit-log",     icon: FileSearch },
       { id: "notify",        name: "🔔 공지 센터",        to: "/admin/ops/notify",        icon: Bell },
       { id: "recovery",      name: "🔐 관리자 복구",      to: "/admin/ops/recovery",      icon: KeyRound },
       { id: "security",      name: "보안 감사",           to: "/admin/ops/security",      icon: ShieldCheck },

@@ -70,6 +70,7 @@ const GameConfigPanel       = lazy(() => import("@/components/admin/game/GameCon
 const AuditLogTable       = lazy(() => import("@/components/admin/ops/AuditLogTable"));
 const NotificationCenter  = lazy(() => import("@/components/admin/ops/NotificationCenter"));
 const AdminRecovery       = lazy(() => import("./AdminRecovery"));
+const AdminAudit          = lazy(() => import("./AdminAudit"));
 const MarketingTools      = lazy(() => import("@/components/admin/growth/MarketingTools"));
 const SimRealConversion   = lazy(() => import("@/components/admin/growth/SimRealConversion"));
 
@@ -178,6 +179,7 @@ export default function AdminRoutes() {
         <Route path="ops/observability" element={<Section title="Observability"><ObservabilityCockpit /></Section>} />
         <Route path="ops/errors"        element={<Section title="Errors / Anomalies"><AnomalyAckQueue /><div className="h-2" /><ErrorMonitorAdmin /></Section>} />
         <Route path="ops/audit"         element={<Section><AuditLogTable /></Section>} />
+        <Route path="ops/audit-log"     element={<Suspense fallback={<LoadingList rows={4} />}><AdminAudit /></Suspense>} />
         <Route path="ops/notify"        element={<Section><NotificationCenter /></Section>} />
         <Route path="ops/recovery"      element={<Section><AdminRecovery /></Section>} />
         <Route path="ops/security"      element={<Section title="Security Audit"><SecurityAuditAdmin /></Section>} />

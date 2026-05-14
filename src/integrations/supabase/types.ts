@@ -4830,6 +4830,33 @@ export type Database = {
         }
         Relationships: []
       }
+      service_key_rotations: {
+        Row: {
+          id: string
+          key_kind: string
+          notes: string | null
+          reason: string | null
+          rotated_at: string
+          rotated_by: string | null
+        }
+        Insert: {
+          id?: string
+          key_kind: string
+          notes?: string | null
+          reason?: string | null
+          rotated_at?: string
+          rotated_by?: string | null
+        }
+        Update: {
+          id?: string
+          key_kind?: string
+          notes?: string | null
+          reason?: string | null
+          rotated_at?: string
+          rotated_by?: string | null
+        }
+        Relationships: []
+      }
       spans: {
         Row: {
           created_at: string
@@ -6833,9 +6860,24 @@ export type Database = {
         Args: { _ids: string[] }
         Returns: number
       }
+      admin_bulk_freeze_users: {
+        Args: { _hours?: number; _reason?: string; _user_ids: string[] }
+        Returns: Json
+      }
       admin_bulk_reject_withdrawals: {
         Args: { _ids: string[]; _reason: string }
         Returns: number
+      }
+      admin_bulk_set_tier: {
+        Args: {
+          _tier: Database["public"]["Enums"]["user_tier"]
+          _user_ids: string[]
+        }
+        Returns: Json
+      }
+      admin_bulk_unfreeze_users: {
+        Args: { _user_ids: string[] }
+        Returns: Json
       }
       admin_cockpit_metrics: { Args: never; Returns: Json }
       admin_create_campaign: {
@@ -7108,6 +7150,10 @@ export type Database = {
           total_balance: number
         }[]
       }
+      admin_log_key_rotation: {
+        Args: { _kind: string; _notes?: string; _reason: string }
+        Returns: string
+      }
       admin_operator_pnl: {
         Args: { p_from?: string; p_to?: string }
         Returns: Json
@@ -7202,6 +7248,7 @@ export type Database = {
             Returns: Json
           }
       admin_run_ev_health_now: { Args: never; Returns: Json }
+      admin_run_rls_smoke: { Args: never; Returns: Json }
       admin_search_users: {
         Args: { _limit?: number; _q: string }
         Returns: {
