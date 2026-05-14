@@ -117,7 +117,7 @@ function bindAndSubscribe(e: Entry) {
           // Supabase가 같은 이름의 이전 채널 핸들을 재사용해 ".on() after subscribe()" 에러를 던지는 것을 방지한다.
           try { if (cur.channel) await supabase.removeChannel(cur.channel); } catch { /* swallow */ }
           cur.channel = null;
-          if (REGISTRY.get(e.key) !== cur || cur.status === "removed") return;
+          if (REGISTRY.get(e.key) !== cur || (cur.status as string) === "removed") return;
           bindAndSubscribe(cur);
         }, delay);
       }
