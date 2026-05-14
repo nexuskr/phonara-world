@@ -12,6 +12,8 @@ import { usePaperStore } from "@/lib/paper-trading/store";
 import type { LivePosition, LiveTrade, Mode, Side } from "@/lib/trading/types";
 import { applySlippage, computeSize, liquidationPrice } from "@/lib/trading/engine";
 import { FEE_RATE } from "@/lib/trading/types";
+import { preTradeValidate } from "@/lib/trading/risk-engine";
+import { mapTradingError } from "@/lib/trading/errors";
 
 import ChartWithHeader from "@/components/trading/ChartWithHeader";
 import MegaOrderPanel from "@/components/trading/MegaOrderPanel";
