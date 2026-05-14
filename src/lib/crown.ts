@@ -63,6 +63,27 @@ export async function awardCrown(
       : `예측 ${r.expected.toLocaleString()} · 실제 ${r.awarded.toLocaleString()} (RPE ${(ratio * 100).toFixed(0)}%)`,
   });
 
+  // Week 3 Viral — Forced Share triggers
+  try {
+    const { useForcedShare } = await import("@/lib/viralShare");
+    if (r.level_up && r.level >= 7) {
+      useForcedShare.getState().fire({
+        trigger: "baron_promotion",
+        title: `👑 BARON 승급! Level ${r.level}`,
+        subtitle: "제국에 자랑할 시간입니다 — 1탭으로 친구를 초대하면 +Crown",
+        hashtag: "#PhonaraEmpire #BaronPromoted",
+      });
+    } else if (r.awarded >= 50 && ratio >= 0.8) {
+      useForcedShare.getState().fire({
+        trigger: "crown_jackpot",
+        title: `🔥 ${r.awarded.toLocaleString()} Crown JACKPOT!`,
+        subtitle: "방금 폭발한 보상을 1탭으로 공유하세요",
+        hashtag: "#PhonaraEmpire #CrownJackpot",
+      });
+    }
+  } catch { /* non-fatal */ }
+
+
   // PR-F Viral Loop v2 — auto-mint replay for variance >= 2.0
   if ((r.variance ?? 0) >= 2.0) {
     try {
