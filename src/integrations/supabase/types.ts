@@ -4667,6 +4667,42 @@ export type Database = {
         }
         Relationships: []
       }
+      risk_engine_events: {
+        Row: {
+          created_at: string
+          id: string
+          leverage: number
+          reason: string | null
+          rpi: number
+          safety_distance: number
+          status: string
+          symbol: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          leverage: number
+          reason?: string | null
+          rpi: number
+          safety_distance: number
+          status: string
+          symbol: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          leverage?: number
+          reason?: string | null
+          rpi?: number
+          safety_distance?: number
+          status?: string
+          symbol?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       roulette_spins: {
         Row: {
           amount: number
@@ -7014,6 +7050,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      admin_get_risk_engine_stats: { Args: never; Returns: Json }
       admin_get_risk_feed: {
         Args: { _limit?: number; _only_unack?: boolean }
         Returns: {
@@ -8275,6 +8312,7 @@ export type Database = {
         }
         Returns: string
       }
+      live_pre_trade_validate: { Args: { p_symbol: string }; Returns: Json }
       live_set_position_triggers: {
         Args: {
           p_position_id: string
@@ -8559,6 +8597,17 @@ export type Database = {
       }
       resolve_support_thread: {
         Args: { _note?: string; _thread_id: string }
+        Returns: undefined
+      }
+      risk_engine_log: {
+        Args: {
+          p_leverage: number
+          p_reason?: string
+          p_rpi: number
+          p_safety_distance: number
+          p_status: string
+          p_symbol: string
+        }
         Returns: undefined
       }
       roulette_daily_limit: {
