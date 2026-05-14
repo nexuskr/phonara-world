@@ -137,6 +137,11 @@ function GuideDetail() {
   // detail 모드 전용 — starter는 위 가드에서 이미 리턴됨
   return (
     <Layout>
+      <SEOHead
+        title="Guide — 3초 만에 이해하는 Phonara"
+        description="처음 방문하셨나요? 3초 히어로 → 실제 수익 시뮬레이터 → 첫 입금까지. Phonara가 어떻게 돌아가는지 한 번에."
+        path="/guide"
+      />
       <div className="sticky top-0 z-30 px-3 pt-2 pb-1 bg-background/85 backdrop-blur-md">
         <ThreeSecondHero />
       </div>
