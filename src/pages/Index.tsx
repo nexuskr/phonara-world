@@ -253,6 +253,9 @@ export default function Index() {
         </div>
       </section>
 
+      {/* Phase D Week 1 — World Domination Wall */}
+      <Suspense fallback={null}><WorldDominationWall /></Suspense>
+
       {/* Live payout ticker + Council */}
       <section className="relative z-10 container py-12">
         <div className="mb-5"><Suspense fallback={null}><WhaleStrikeRailV3 /></Suspense></div>
