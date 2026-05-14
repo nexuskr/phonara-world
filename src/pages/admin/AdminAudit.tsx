@@ -39,15 +39,13 @@ export default function AdminAudit() {
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [hours, actionFilter]);
 
-  // Realtime updates
-  useEffect(() => {
-    const ch = supabase.channel("admin-audit-live")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "admin_audit_log" }, (p) => {
-        setRows((r) => [p.new as Row, ...r].slice(0, 500));
-      })
-      .subscribe();
-    return () => { void supabase.removeChannel(ch); };
-  }, []);
+  useRealtimeChannel({
+    key: "admin-audit-live",
+    bindings: [{ event: "INSERT", table: "admin_audit_log" }],
+    onEvent: (p) => {
+      setRows((r) => [p.new as unknown as Row, ...r].slice(0, 500));
+    },
+  });
 
   const filtered = useMemo(() => {
     if (!q) return rows;
