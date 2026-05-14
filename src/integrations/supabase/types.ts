@@ -1319,6 +1319,42 @@ export type Database = {
         }
         Relationships: []
       }
+      competitor_benchmarks: {
+        Row: {
+          active: boolean
+          competitor: string
+          id: string
+          metric_key: string
+          metric_value: number
+          source_label: string | null
+          source_url: string
+          unit: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          competitor: string
+          id?: string
+          metric_key: string
+          metric_value: number
+          source_label?: string | null
+          source_url: string
+          unit?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          competitor?: string
+          id?: string
+          metric_key?: string
+          metric_value?: number
+          source_label?: string | null
+          source_url?: string
+          unit?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       concierge_events: {
         Row: {
           booster_active: boolean | null
@@ -1666,6 +1702,36 @@ export type Database = {
           rewarded_at?: string | null
           steps?: Json
           user_id?: string
+        }
+        Relationships: []
+      }
+      daily_headlines: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          locale: string
+          source_stats: Json | null
+          text: string
+          tone: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          locale?: string
+          source_stats?: Json | null
+          text: string
+          tone?: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          locale?: string
+          source_stats?: Json | null
+          text?: string
+          tone?: string
         }
         Relationships: []
       }
@@ -8821,7 +8887,26 @@ export type Database = {
       get_bot_online_count: { Args: never; Returns: number }
       get_bot_total_users: { Args: never; Returns: number }
       get_cockpit_snapshot: { Args: never; Returns: Json }
+      get_competitor_compare: {
+        Args: never
+        Returns: {
+          competitor: string
+          metric_key: string
+          metric_value: number
+          source_label: string
+          source_url: string
+          unit: string
+        }[]
+      }
       get_crown_war_snapshot: { Args: never; Returns: Json }
+      get_daily_headlines: {
+        Args: { _limit?: number; _locale?: string }
+        Returns: {
+          created_at: string
+          text: string
+          tone: string
+        }[]
+      }
       get_empire_seats_remaining: { Args: never; Returns: number }
       get_error_stats: {
         Args: { _hours?: number }
@@ -9111,6 +9196,7 @@ export type Database = {
       }
       get_phon_balance: { Args: never; Returns: number }
       get_public_crown_replay: { Args: { _token: string }; Returns: Json }
+      get_public_stats_json: { Args: never; Returns: Json }
       get_queue_sla_stats: { Args: never; Returns: Json }
       get_recent_errors: {
         Args: { _limit?: number }
@@ -9172,6 +9258,15 @@ export type Database = {
           tier: Database["public"]["Enums"]["user_tier"]
           total_balance: number
           users: number
+        }[]
+      }
+      get_top_emperor_24h: {
+        Args: never
+        Returns: {
+          empire_level: number
+          flag: string
+          total_crown: number
+          user_mask: string
         }[]
       }
       get_top_users: {
