@@ -7117,6 +7117,28 @@ export type Database = {
           user_id: string
         }[]
       }
+      admin_get_kernel_drift_24h: {
+        Args: never
+        Returns: {
+          bucket_hour: string
+          cnt: number
+          error_code: string
+        }[]
+      }
+      admin_get_kernel_inflight: {
+        Args: { _limit?: number }
+        Returns: {
+          client_request_id: string
+          created_at: string
+          is_expired: boolean
+          lease_owner: string
+          lease_until: string
+          params_hash: string
+          seconds_to_expire: number
+          user_id: string
+        }[]
+      }
+      admin_get_kernel_summary: { Args: never; Returns: Json }
       admin_get_monthly_revenue_progress: { Args: never; Returns: Json }
       admin_get_recent_errors: {
         Args: { _limit?: number; _only_unresolved?: boolean }
@@ -7371,6 +7393,29 @@ export type Database = {
           }
       admin_run_ev_health_now: { Args: never; Returns: Json }
       admin_run_rls_smoke: { Args: never; Returns: Json }
+      admin_search_kernel_audit: {
+        Args: {
+          _crid?: string
+          _error_code?: string
+          _limit?: number
+          _offset?: number
+          _outcome?: string
+          _since?: string
+          _user_id?: string
+        }
+        Returns: {
+          client_request_id: string
+          created_at: string
+          entry_price: number
+          error_code: string
+          id: string
+          oracle_snapshot: Json
+          outcome: string
+          position_id: string
+          request_meta: Json
+          user_id: string
+        }[]
+      }
       admin_search_users: {
         Args: { _limit?: number; _q: string }
         Returns: {
@@ -8557,6 +8602,7 @@ export type Database = {
           read_ct: number
         }[]
       }
+      reclaim_stale_intents: { Args: never; Returns: number }
       recompute_daily_whale_leaderboard: { Args: never; Returns: undefined }
       recompute_empire_level: { Args: { _user_id: string }; Returns: number }
       record_chaos_run:
