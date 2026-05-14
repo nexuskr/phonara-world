@@ -8,6 +8,7 @@ import {
   Wand2, Crown, Rocket, Image as ImageIcon, Megaphone, ShieldCheck,
 } from "lucide-react";
 import RiskEngineDashboard from "./RiskEngineDashboard";
+import StressTestDashboard from "./StressTestDashboard";
 
 type Action = {
   to: string;
@@ -102,6 +103,7 @@ export function GodModePanel() {
         </div>
         <div className="mt-4">
           <RiskEngineDashboard />
+          <StressTestDashboard />
         </div>
         <p className="mt-3 text-[10px] text-muted-foreground/70 leading-relaxed">
           민감한 작업은 해당 페이지의 AAL2 게이트와 <code>require_admin()</code> 가드로

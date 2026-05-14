@@ -4670,6 +4670,7 @@ export type Database = {
       risk_engine_events: {
         Row: {
           created_at: string
+          event_type: string
           id: string
           leverage: number
           reason: string | null
@@ -4681,6 +4682,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          event_type?: string
           id?: string
           leverage: number
           reason?: string | null
@@ -4692,6 +4694,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          event_type?: string
           id?: string
           leverage?: number
           reason?: string | null
@@ -7074,6 +7077,7 @@ export type Database = {
         }
       }
       admin_get_sim_real_conversion: { Args: { _days?: number }; Returns: Json }
+      admin_get_stress_test_stats: { Args: never; Returns: Json }
       admin_get_telegram_bot_status: { Args: never; Returns: Json }
       admin_get_today_crown_total: { Args: never; Returns: Json }
       admin_get_trust_v2_stats: { Args: never; Returns: Json }
@@ -8601,6 +8605,18 @@ export type Database = {
       }
       risk_engine_log: {
         Args: {
+          p_leverage: number
+          p_reason?: string
+          p_rpi: number
+          p_safety_distance: number
+          p_status: string
+          p_symbol: string
+        }
+        Returns: undefined
+      }
+      risk_engine_log_sim: {
+        Args: {
+          p_event_type: string
           p_leverage: number
           p_reason?: string
           p_rpi: number
