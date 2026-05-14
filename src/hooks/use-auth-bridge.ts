@@ -97,27 +97,34 @@ async function ensureValidSession(session: any): Promise<boolean> {
   }
 }
 
+function isOnGuide(): boolean {
+  return typeof window !== "undefined" && window.location.pathname.startsWith("/guide");
+}
+
 export function useAuthBridge() {
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       // Defer to avoid deadlock
-      setTimeout(() => { syncFromSession(session); }, 0);
-      if (event === "SIGNED_IN" && session?.user) {
+      setTimeout(() => { if (!isOnGuide()) syncFromSession(session); }, 0);
+      if (event === "SIGNED_IN" && session?.user && !isOnGuide()) {
         resetSessionCircuitBreakers();
-        setTimeout(() => { void registerCurrentDevice(); }, 500);
-        setTimeout(() => { void assignPersonaSafely(); }, 800);
+        setTimeout(() => { if (!isOnGuide()) void registerCurrentDevice(); }, 500);
+        setTimeout(() => { if (!isOnGuide()) void assignPersonaSafely(); }, 800);
       }
     });
-    supabase.auth.getSession().then(async ({ data }) => {
-      const ok = await ensureValidSession(data.session);
-      if (!ok) { syncFromSession(null); return; }
-      syncFromSession(data.session);
-      if (data.session?.user) {
-        resetSessionCircuitBreakers();
-        setTimeout(() => { void registerCurrentDevice(); }, 500);
-        setTimeout(() => { void assignPersonaSafely(); }, 800);
-      }
-    });
+    if (!isOnGuide()) {
+      supabase.auth.getSession().then(async ({ data }) => {
+        if (isOnGuide()) return;
+        const ok = await ensureValidSession(data.session);
+        if (!ok) { syncFromSession(null); return; }
+        syncFromSession(data.session);
+        if (data.session?.user) {
+          resetSessionCircuitBreakers();
+          setTimeout(() => { if (!isOnGuide()) void registerCurrentDevice(); }, 500);
+          setTimeout(() => { if (!isOnGuide()) void assignPersonaSafely(); }, 800);
+        }
+      });
+    }
     return () => sub.subscription.unsubscribe();
   }, []);
 }
