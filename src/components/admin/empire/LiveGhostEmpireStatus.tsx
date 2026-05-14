@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Globe } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 type Stats = {
   live_users: number;
@@ -18,10 +19,10 @@ export function LiveGhostEmpireStatus() {
       if (on && data) setS(data as any);
     };
     load();
-    const id = setInterval(load, 30_000);
+    const stop = setVisibleInterval(load, 30_000);
     return () => {
       on = false;
-      clearInterval(id);
+      stop();
     };
   }, []);
 

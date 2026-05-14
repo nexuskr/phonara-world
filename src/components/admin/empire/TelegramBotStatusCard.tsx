@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Bot } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 export function TelegramBotStatusCard() {
   const [d, setD] = useState<any>(null);
@@ -12,8 +13,8 @@ export function TelegramBotStatusCard() {
       if (on) setD(data);
     };
     load();
-    const id = setInterval(load, 60_000);
-    return () => { on = false; clearInterval(id); };
+    const stop = setVisibleInterval(load, 60_000);
+    return () => { on = false; stop(); };
   }, []);
 
   return (

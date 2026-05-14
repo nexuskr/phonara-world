@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { formatKRW } from "@/lib/store";
 import { Gift, Wallet as WalletIcon, Sparkles } from "lucide-react";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 type Stats = {
   today_bonus_count: number;
@@ -17,7 +18,6 @@ export default function TrustCounter() {
 
   useEffect(() => {
     let mounted = true;
-    let timer: number | undefined;
     const load = async () => {
       try {
         const { data } = await supabase.rpc("get_starter_trust_stats");
@@ -28,10 +28,10 @@ export default function TrustCounter() {
       }
     };
     void load();
-    timer = window.setInterval(load, 30_000);
+    const stop = setVisibleInterval(load, 30_000);
     return () => {
       mounted = false;
-      if (timer) clearInterval(timer);
+      stop();
     };
   }, []);
 

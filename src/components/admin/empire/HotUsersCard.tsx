@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Flame } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 import { EmptyState } from "@/components/ui/empty-state";
 
 type Row = { user_id: string; total_amount: number; deposit_count: number };
@@ -15,8 +16,8 @@ export function HotUsersCard() {
       if (on) setRows((data as any) ?? []);
     };
     load();
-    const id = setInterval(load, 60_000);
-    return () => { on = false; clearInterval(id); };
+    const stop = setVisibleInterval(load, 60_000);
+    return () => { on = false; stop(); };
   }, []);
 
   return (

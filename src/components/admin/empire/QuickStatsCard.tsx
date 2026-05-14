@@ -6,6 +6,7 @@
 import { useEffect, useState } from "react";
 import { ArrowUpRight, Coins, Activity } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 import { useCountUp } from "@/hooks/use-count-up";
 
 type Row = {
@@ -36,8 +37,8 @@ export function QuickStatsCard() {
       });
     };
     load();
-    const id = setInterval(load, 60_000);
-    return () => { on = false; clearInterval(id); };
+    const stop = setVisibleInterval(load, 60_000);
+    return () => { on = false; stop(); };
   }, []);
 
   const dep = useCountUp(d?.deposits_krw ?? 0);

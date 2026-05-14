@@ -21,6 +21,7 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Crown, Zap, Users, TrendingUp, Activity } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 import { LoadingCard } from "@/components/ui/loading-state";
 import { useCountUp } from "@/hooks/use-count-up";
 import { LiveGhostEmpireStatus } from "./LiveGhostEmpireStatus";
@@ -62,8 +63,8 @@ export default function EmpireOverview() {
       if (!r3.error && r3.data) setRealtime(r3.data as any);
     };
     refresh();
-    const id = setInterval(refresh, 60_000);
-    return () => { on = false; clearInterval(id); };
+    const stop = setVisibleInterval(refresh, 60_000);
+    return () => { on = false; stop(); };
   }, []);
 
   const pct = useMemo(() => Math.min(100, revenue?.progress_pct ?? 0), [revenue]);

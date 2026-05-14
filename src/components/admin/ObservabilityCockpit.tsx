@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Activity, Webhook, Snowflake, FlaskConical, RefreshCw, Gauge, ListTree } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { getSpanMetrics, getLastAlert, getPersistedQueueSize } from "@/lib/spans";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 import RecentActivity from "./RecentActivity";
 
 type Sub = "activity" | "slow" | "spanq" | "webhook" | "freeze" | "chaos";
@@ -42,12 +43,11 @@ function SpanQuality() {
   const [persisted, setPersisted] = useState<number>(0);
   const [alert, setAlert] = useState(getLastAlert());
   useEffect(() => {
-    const id = setInterval(async () => {
+    return setVisibleInterval(async () => {
       setM(getSpanMetrics());
       setAlert(getLastAlert());
       setPersisted(await getPersistedQueueSize());
     }, 1000);
-    return () => clearInterval(id);
   }, []);
   const total = m.flushed_ok + m.flushed_fail + m.dropped;
   const successRate = total > 0 ? (m.flushed_ok / total) * 100 : 100;

@@ -4,6 +4,7 @@ import { Crown, Flame, ArrowDownToLine, Zap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { SimChip } from "@/components/sim/SimChip";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 type Strike = {
   kind: "crown" | "baron" | "withdraw";
@@ -99,10 +100,10 @@ export default function WhaleStrikeRailV3() {
       if (alive) setLoaded(true);
     }
     void load();
-    const id = setInterval(load, 8000);
+    const stop = setVisibleInterval(load, 8000);
     return () => {
       alive = false;
-      clearInterval(id);
+      stop();
     };
   }, []);
 

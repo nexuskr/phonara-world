@@ -5,6 +5,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { notify } from "@/lib/notify";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 import { LoadingList } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Bot, ToggleLeft, ToggleRight, Users, Activity } from "lucide-react";
@@ -52,8 +53,7 @@ export default function BotStrengthAdmin() {
 
   useEffect(() => {
     void load();
-    const t = setInterval(load, 15_000);
-    return () => clearInterval(t);
+    return setVisibleInterval(load, 15_000);
   }, []);
 
   async function apply(enabled: boolean, pct: number, baseOverride?: number, jitterOverride?: number) {

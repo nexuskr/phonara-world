@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { notify } from "@/lib/notify";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 import { LoadingList } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Activity, Gauge, RefreshCw, Sparkles, Zap } from "lucide-react";
@@ -50,8 +51,7 @@ export default function BotMixMonitor() {
 
   useEffect(() => {
     void load();
-    const t = setInterval(load, 30_000);
-    return () => clearInterval(t);
+    return setVisibleInterval(load, 30_000);
   }, []);
 
   async function runAutoAdjust() {

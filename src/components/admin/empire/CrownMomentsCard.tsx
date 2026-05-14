@@ -6,6 +6,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Crown, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 import { EmptyState } from "@/components/ui/empty-state";
 
 type Moment = {
@@ -33,8 +34,8 @@ export function CrownMomentsCard() {
       if (on) setRows((data as any) ?? []);
     };
     load();
-    const id = setInterval(load, 60_000);
-    return () => { on = false; clearInterval(id); };
+    const stop = setVisibleInterval(load, 60_000);
+    return () => { on = false; stop(); };
   }, []);
 
   return (

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { KeyRound, Users, TrendingUp, Ticket } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { LoadingList } from "@/components/ui/loading-state";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 type Stats = {
   invites_issued: number;
@@ -28,8 +29,8 @@ export default function BetaFunnelPanel() {
       setLoading(false);
     }
     void load();
-    const id = setInterval(load, 60_000);
-    return () => { alive = false; clearInterval(id); };
+    const stop = setVisibleInterval(load, 60_000);
+    return () => { alive = false; stop(); };
   }, []);
 
   const seatPct = s && s.seats_total > 0 ? (s.seats_used / s.seats_total) * 100 : 0;

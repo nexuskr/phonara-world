@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Crown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 export function TodaysCrownExplosionCard() {
   const [d, setD] = useState<{ count: number; total_awarded: number; explosions: number } | null>(null);
@@ -12,8 +13,8 @@ export function TodaysCrownExplosionCard() {
       if (on && data) setD(data as any);
     };
     load();
-    const id = setInterval(load, 30_000);
-    return () => { on = false; clearInterval(id); };
+    const stop = setVisibleInterval(load, 30_000);
+    return () => { on = false; stop(); };
   }, []);
 
   return (

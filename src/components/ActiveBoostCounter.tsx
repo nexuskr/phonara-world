@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Activity } from "lucide-react";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 export default function ActiveBoostCounter() {
   const [count, setCount] = useState<number | null>(null);
@@ -12,8 +13,8 @@ export default function ActiveBoostCounter() {
       if (mounted && typeof data === "number") setCount(data);
     };
     void load();
-    const i = setInterval(load, 15_000);
-    return () => { mounted = false; clearInterval(i); };
+    const stop = setVisibleInterval(load, 15_000);
+    return () => { mounted = false; stop(); };
   }, []);
 
   if (count === null) return null;
