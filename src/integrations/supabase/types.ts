@@ -7699,6 +7699,7 @@ export type Database = {
         Args: { _action: string; _id: string }
         Returns: Json
       }
+      admin_resolve_all_anomalies: { Args: never; Returns: Json }
       admin_resolve_aml: {
         Args: { _action: string; _id: string; _reason?: string }
         Returns: Json
@@ -7707,6 +7708,7 @@ export type Database = {
         Args: { _id: string; _note?: string }
         Returns: undefined
       }
+      admin_resolve_anomaly_rule: { Args: { _rule: string }; Returns: Json }
       admin_resolve_deposit:
         | {
             Args: { _action: string; _reason: string; _request_id: string }

@@ -37,6 +37,8 @@ const PermissionsAudit       = lazy(() => import("@/components/admin/Permissions
 const ObservabilityCockpit = lazy(() => import("@/components/admin/ObservabilityCockpit"));
 const ErrorMonitorAdmin    = lazy(() => import("@/components/admin/ErrorMonitorAdmin"));
 const AnomalyAckQueue      = lazy(() => import("@/components/admin/AnomalyAckQueue"));
+const AnomalyAutoFixPanel  = lazy(() => import("@/components/admin/AnomalyAutoFixPanel"));
+const AnomalyNotifSettings = lazy(() => import("@/components/admin/AnomalyNotificationSettings"));
 const SecurityAuditAdmin   = lazy(() => import("@/components/admin/compliance/audit/SecurityAuditAdmin"));
 const CronJobsCard         = lazy(() => import("@/components/admin/CronJobsCard"));
 const OpsReport            = lazy(() => import("./OpsReport"));
@@ -182,7 +184,7 @@ export default function AdminRoutes() {
         {/* OPERATIONS */}
         <Route path="ops/self-heal"     element={<Suspense fallback={<LoadingList rows={4} />}><SelfHeal /></Suspense>} />
         <Route path="ops/observability" element={<Section title="Observability"><ObservabilityCockpit /></Section>} />
-        <Route path="ops/errors"        element={<Section title="Errors / Anomalies"><AnomalyAckQueue /><div className="h-2" /><ErrorMonitorAdmin /></Section>} />
+        <Route path="ops/errors"        element={<Section title="Errors / Anomalies"><AnomalyNotifSettings /><div className="h-2" /><AnomalyAutoFixPanel /><div className="h-2" /><AnomalyAckQueue /><div className="h-2" /><ErrorMonitorAdmin /></Section>} />
         <Route path="ops/audit"         element={<Section><AuditLogTable /></Section>} />
         <Route path="ops/audit-log"     element={<Suspense fallback={<LoadingList rows={4} />}><AdminAudit /></Suspense>} />
         <Route path="ops/notify"        element={<Section><NotificationCenter /></Section>} />
