@@ -20,6 +20,7 @@ const LegacyAdmin = lazy(() => import("../Admin"));
 // Treasury
 const DepositRequestsAdmin   = lazy(() => import("@/components/admin/DepositRequestsAdmin"));
 const WithdrawRequestsAdmin  = lazy(() => import("@/components/admin/WithdrawRequestsAdmin"));
+const AdminTreasuryWithdrawals = lazy(() => import("./treasury/Withdrawals"));
 const PackagePurchasesAdmin  = lazy(() => import("@/components/admin/PackagePurchasesAdmin"));
 const CoinAddressAdmin       = lazy(() => import("@/components/admin/CoinAddressAdmin"));
 const OperatorAccounting     = lazy(() => import("@/components/admin/OperatorAccounting"));
