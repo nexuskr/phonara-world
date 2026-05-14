@@ -37,9 +37,10 @@ export default function Whales() {
       .channel("whales-lb")
       .on("postgres_changes", { event: "*", schema: "public", table: "daily_whale_leaderboard" }, () => load())
       .subscribe();
-    const t = window.setInterval(load, 60_000);
-    return () => { supabase.removeChannel(ch); window.clearInterval(t); };
+    return () => { supabase.removeChannel(ch); };
   }, []);
+  // 60s 폴링 — 탭 숨김 시 정지.
+  useVisibleInterval(() => load(), 60_000);
 
   return (
     <Layout>
