@@ -45,3 +45,5 @@ project_id = "ketlqzfaplppmupaiwft"
     verify_jwt = false
   [functions.sim-api]
     verify_jwt = false
+  [functions.reactivation-cron]
+    verify_jwt = false
