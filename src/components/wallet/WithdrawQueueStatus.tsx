@@ -209,7 +209,7 @@ export default function WithdrawQueueStatus() {
   );
 }
 
-function ConnBadge({ state, onRetry, t }: { state: ConnState; onRetry: () => void; t: (k: string) => string }) {
+function ConnBadge({ state, onRetry, t }: { state: ConnBadgeState; onRetry: () => void; t: (k: string) => string }) {
   if (state === "live") {
     return (
       <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-secondary/15 text-secondary">
