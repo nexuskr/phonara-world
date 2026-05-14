@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { getMyFoundingSeat, getMyFoundingSeatHistory } from "@/lib/foundingSeason";
 import { LoadingList } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
-import { supabase } from "@/integrations/supabase/client";
+import { useRealtimeChannel } from "@/hooks/use-realtime-channel";
 
 const EVENT_LABEL: Record<string, string> = {
   claim: "좌석 점유",
@@ -28,14 +28,16 @@ export default function MyFoundingSeat() {
     } finally { setLoading(false); }
   }
 
-  useEffect(() => {
-    load();
-    const ch = supabase.channel("my:fs")
-      .on("postgres_changes", { event: "*", schema: "public", table: "founding_season_seats" }, load)
-      .on("postgres_changes", { event: "*", schema: "public", table: "founding_seat_events" }, load)
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
-  }, []);
+  useEffect(() => { void load(); }, []);
+
+  useRealtimeChannel({
+    key: "my:fs",
+    bindings: [
+      { event: "*", table: "founding_season_seats" },
+      { event: "*", table: "founding_seat_events" },
+    ],
+    onEvent: () => void load(),
+  });
 
   return (
     <Layout>

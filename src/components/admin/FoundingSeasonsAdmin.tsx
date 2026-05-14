@@ -9,7 +9,7 @@ import {
   adminUpdateFoundingSeason, adminEndFoundingSeason,
   adminReleaseFoundingSeat, type FoundingSeasonAdminRow,
 } from "@/lib/foundingSeason";
-import { supabase } from "@/integrations/supabase/client";
+import { useRealtimeChannel } from "@/hooks/use-realtime-channel";
 
 export default function FoundingSeasonsAdmin() {
   const [rows, setRows] = useState<FoundingSeasonAdminRow[] | null>(null);
@@ -21,14 +21,16 @@ export default function FoundingSeasonsAdmin() {
     try { setRows(await adminListFoundingSeasons()); }
     catch (e: any) { notify.error("로드 실패", { description: e.message }); }
   }
-  useEffect(() => {
-    load();
-    const ch = supabase.channel("admin:fs")
-      .on("postgres_changes", { event: "*", schema: "public", table: "founding_seasons" }, load)
-      .on("postgres_changes", { event: "*", schema: "public", table: "founding_season_seats" }, load)
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
-  }, []);
+  useEffect(() => { void load(); }, []);
+
+  useRealtimeChannel({
+    key: "admin:fs",
+    bindings: [
+      { event: "*", table: "founding_seasons" },
+      { event: "*", table: "founding_season_seats" },
+    ],
+    onEvent: () => void load(),
+  });
 
   async function endSeason(s: FoundingSeasonAdminRow) {
     if (!confirm(`"${s.title}" 시즌을 종료하고 자동 정산할까요?`)) return;
