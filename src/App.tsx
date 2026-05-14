@@ -17,6 +17,7 @@ import { ReviewerGuard } from "./components/ReviewerGuard";
 import { ReviewerMaskRoot } from "./components/ReviewerMaskRoot";
 import ReviewerBadge from "./components/ReviewerBadge";
 import { AdultGate } from "./components/AdultGate";
+import MaintenanceGate from "./components/MaintenanceGate";
 
 installGlobalErrorLogging();
 // Heavy instrumentation only when explicitly enabled — avoids per-fetch wrapping cost on every visit.
