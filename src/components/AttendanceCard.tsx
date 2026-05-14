@@ -66,12 +66,7 @@ export default function AttendanceCard() {
     }
   }
 
-  // streak loss aversion countdown
-  const [now, setNow] = useState(Date.now());
-  useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 1000 * 30);
-    return () => clearInterval(t);
-  }, []);
+  // (countdown hooks moved above early return)
   const midnight = new Date(); midnight.setHours(24, 0, 0, 0);
   const msLeft = midnight.getTime() - now;
   const hLeft = Math.max(0, Math.floor(msLeft / 3_600_000));
