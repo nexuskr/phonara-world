@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useVisibleInterval } from "@/lib/util/visible-interval";
 import { supabase } from "@/integrations/supabase/client";
 import Layout from "@/components/Layout";
 import { useRequireAdmin } from "@/hooks/use-require-auth";
