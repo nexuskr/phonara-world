@@ -24,6 +24,7 @@ const VipArrivalsTicker = lazy(() => import("@/components/empire/VipArrivalsTick
 const TournamentCountdownBar = lazy(() => import("@/components/landing/TournamentCountdownBar"));
 const LiveCounterStrip = lazy(() => import("@/components/empire/LiveCounterStrip"));
 const GhostPulseGlobe = lazy(() => import("@/components/empire/GhostPulseGlobe"));
+const AsSeenOnRail = lazy(() => import("@/components/landing/AsSeenOnRail").then(m => ({ default: m.AsSeenOnRail })));
 import { useOnline, useTotalPayout, useTodayPayout, useTotalUsers } from "@/components/LiveStats.tsx";
 import { useAuthReady } from "@/hooks/use-auth-ready";
 import EmpireFoundingCounter from "@/components/EmpireFoundingCounter";
@@ -277,6 +278,7 @@ export default function Index() {
 
       {/* Phase D Week 1 — World Domination Wall + VIP Arrivals */}
       <Suspense fallback={null}><VipArrivalsTicker /></Suspense>
+      <Suspense fallback={null}><AsSeenOnRail /></Suspense>
       <Suspense fallback={null}><WorldDominationWall /></Suspense>
 
       {/* Live payout ticker + Council */}
