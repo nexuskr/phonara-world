@@ -26,8 +26,8 @@ export default function RiskEngineDashboard() {
   useEffect(() => {
     let alive = true;
     const load = async () => {
-      const { data } = await supabase.rpc("admin_get_risk_engine_stats" as never);
-      if (alive && data) setS(data as Stats);
+      const { data } = await supabase.rpc("admin_get_risk_engine_stats");
+      if (alive && data) setS(data as unknown as Stats);
       if (alive) setLoading(false);
     };
     load();
