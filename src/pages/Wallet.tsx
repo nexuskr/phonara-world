@@ -657,15 +657,20 @@ export default function Wallet() {
                 {(handle) => (
                   <button
                     onClick={(e) => { handle(e); if (!e.defaultPrevented) void submitWithdraw(); }}
-                    className="w-full min-h-[56px] py-4 rounded-xl bg-gradient-imperial text-primary-foreground font-black text-base tracking-wider glow-imperial hover:scale-[1.01] transition press">
-                    {t("submitWithdraw")}
+                    disabled={submitting}
+                    aria-busy={submitting}
+                    className="w-full min-h-[56px] py-4 rounded-xl bg-gradient-imperial text-primary-foreground font-black text-base tracking-wider glow-imperial hover:scale-[1.01] transition press disabled:opacity-60 disabled:pointer-events-none">
+                    {submitting ? "처리 중…" : t("submitWithdraw")}
                   </button>
                 )}
               </WithdrawIntentInterceptor>
             ) : (
-              <button onClick={() => { void submitDeposit(); }}
-                className="w-full min-h-[56px] py-4 rounded-xl bg-gradient-imperial text-primary-foreground font-black text-base tracking-wider glow-imperial hover:scale-[1.01] transition press">
-                {t("submitDeposit")}
+              <button
+                onClick={() => { void submitDeposit(); }}
+                disabled={submitting}
+                aria-busy={submitting}
+                className="w-full min-h-[56px] py-4 rounded-xl bg-gradient-imperial text-primary-foreground font-black text-base tracking-wider glow-imperial hover:scale-[1.01] transition press disabled:opacity-60 disabled:pointer-events-none">
+                {submitting ? "처리 중…" : t("submitDeposit")}
               </button>
             )}
             <p className="text-[10px] text-muted-foreground text-center pt-1">{t("formFooter")}</p>
