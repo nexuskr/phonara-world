@@ -584,6 +584,77 @@ export type Database = {
         }
         Relationships: []
       }
+      api_keys: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          key_hash: string
+          last_used_at: string | null
+          name: string
+          prefix: string
+          rate_limit_per_min: number
+          revoked_at: string | null
+          scopes: string[]
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          key_hash: string
+          last_used_at?: string | null
+          name: string
+          prefix: string
+          rate_limit_per_min?: number
+          revoked_at?: string | null
+          scopes?: string[]
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          key_hash?: string
+          last_used_at?: string | null
+          name?: string
+          prefix?: string
+          rate_limit_per_min?: number
+          revoked_at?: string | null
+          scopes?: string[]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      api_usage_counters: {
+        Row: {
+          count: number
+          id: number
+          key_id: string
+          minute_bucket: string
+        }
+        Insert: {
+          count?: number
+          id?: number
+          key_id: string
+          minute_bucket: string
+        }
+        Update: {
+          count?: number
+          id?: number
+          key_id?: string
+          minute_bucket?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_usage_counters_key_id_fkey"
+            columns: ["key_id"]
+            isOneToOne: false
+            referencedRelation: "api_keys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       arena_pool: {
         Row: {
           balance: number
@@ -9040,6 +9111,18 @@ export type Database = {
         Returns: boolean
       }
       count_admin_backup_codes: { Args: never; Returns: number }
+      create_api_key: {
+        Args: {
+          _name: string
+          _rate_limit_per_min?: number
+          _scopes?: string[]
+        }
+        Returns: {
+          id: string
+          prefix: string
+          secret: string
+        }[]
+      }
       create_crown_replay: { Args: { _event_id: string }; Returns: Json }
       create_crypto_deposit_intent: {
         Args: { _amount: number; _receive_address: string }
@@ -9448,6 +9531,13 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_my_api_usage_24h: {
+        Args: { _key_id: string }
+        Returns: {
+          count: number
+          minute_bucket: string
+        }[]
+      }
       get_my_bequests: {
         Args: never
         Returns: {
@@ -9851,6 +9941,20 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      list_my_api_keys: {
+        Args: never
+        Returns: {
+          active: boolean
+          created_at: string
+          id: string
+          last_used_at: string
+          name: string
+          prefix: string
+          rate_limit_per_min: number
+          revoked_at: string
+          scopes: string[]
+        }[]
+      }
       list_nft: {
         Args: { _nft_id: string; _price_phon: number }
         Returns: Json
@@ -10072,6 +10176,7 @@ export type Database = {
       pin_record_attempt: { Args: { _success: boolean }; Returns: Json }
       policy_assertions_status: { Args: never; Returns: Json }
       progress_daily_combo: { Args: { _step: string }; Returns: Json }
+      prune_api_usage_counters: { Args: never; Returns: number }
       public_live_pulse: { Args: never; Returns: Json }
       public_trust_history: {
         Args: { _days?: number }
@@ -10288,6 +10393,7 @@ export type Database = {
         Args: { _note?: string; _thread_id: string }
         Returns: undefined
       }
+      revoke_api_key: { Args: { _id: string }; Returns: undefined }
       risk_engine_log: {
         Args: {
           p_leverage: number
@@ -10545,6 +10651,19 @@ export type Database = {
       validate_profile_input: {
         Args: { _birth_date: string; _phone: string; _real_name: string }
         Returns: Json
+      }
+      verify_and_meter_api_key: {
+        Args: { _full_secret: string; _prefix: string }
+        Returns: {
+          allowed: boolean
+          current_count: number
+          key_id: string
+          rate_limit_per_min: number
+          reason: string
+          remaining: number
+          scopes: string[]
+          user_id: string
+        }[]
       }
       verify_weekly_pass_finalize: {
         Args: { _iso_week?: string }

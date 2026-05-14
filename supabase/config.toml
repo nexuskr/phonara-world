@@ -43,3 +43,5 @@ project_id = "ketlqzfaplppmupaiwft"
     verify_jwt = false
   [functions.recovery-fomo-trigger]
     verify_jwt = false
+  [functions.sim-api]
+    verify_jwt = false

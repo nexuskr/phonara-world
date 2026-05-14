@@ -84,6 +84,7 @@ const LegalDoc = lazy(() => import("./pages/LegalDoc.tsx"));
 const LiveOverlay = lazy(() => import("./pages/LiveOverlay.tsx"));
 const InfluencerLanding = lazy(() => import("./pages/InfluencerLanding.tsx"));
 const Vip = lazy(() => import("./pages/Vip.tsx"));
+const DevConsole = lazy(() => import("./pages/DevConsole.tsx"));
 const ForcedShareDialog = lazy(() => import("./components/share/ForcedShareDialog.tsx"));
 const VipArrivalAnnouncer = lazy(() => import("./components/empire/VipArrivalAnnouncer.tsx"));
 import { PracticeModeBanner } from "./components/practice/PracticeModeBanner";
@@ -257,6 +258,7 @@ const App = () => (
               <Route path="/r/:token" element={<ReplayLanding />} />
               <Route path="/i/:code" element={<InfluencerLanding />} />
               <Route path="/live/:token" element={<LiveOverlay />} />
+              <Route path="/dev/console" element={<DevConsole />} />
               <Route path="/global-intelligence" element={<Navigate to="/" replace />} />
               <Route path="/infrastructure" element={<Navigate to="/" replace />} />
               <Route path="/intelligence-loop" element={<Navigate to="/" replace />} />
