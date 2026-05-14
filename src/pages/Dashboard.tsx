@@ -26,6 +26,8 @@ import { useState } from "react";
 import DashboardHeroV3 from "@/components/dashboard/v3/DashboardHeroV3";
 import TradingEntryCard from "@/components/dashboard/v3/TradingEntryCard";
 import ImperialJourneyMap from "@/components/journey/ImperialJourneyMap";
+import ImperialStoryRail from "@/components/empire/ImperialStoryRail";
+import JourneyClaimPanel from "@/components/journey/JourneyClaimPanel";
 import KpiGridV3 from "@/components/dashboard/v3/KpiGridV3";
 import MoreSection, { type MoreSectionHandle } from "@/components/dashboard/v3/MoreSection";
 import { useMyPower } from "@/hooks/use-my-power";
@@ -116,8 +118,14 @@ export default function Dashboard() {
       <DashboardHeroV3 phon={phon} nfts={nfts} online={online} />
 
       <div className="container relative pt-6 pb-12 space-y-6">
+        {/* 📣 Imperial Stories — 자동 서사 라이브 */}
+        <ImperialStoryRail />
+
         {/* 👑 Imperial Journey — 100단계 진행 + 다음 행동 1개 */}
         <ImperialJourneyMap />
+
+        {/* 🎁 100-Stage Claim Panel */}
+        <JourneyClaimPanel />
 
         {/* ⚡ 핵심 베팅 진입 카드 */}
         <TradingEntryCard />

@@ -2038,6 +2038,36 @@ export type Database = {
         }
         Relationships: []
       }
+      emperor_dividend_log: {
+        Row: {
+          dedupe_key: string | null
+          dividend_phon: number
+          emperor_nickname: string | null
+          emperor_user_id: string | null
+          id: number
+          paid_at: string
+          pool_snapshot: number
+        }
+        Insert: {
+          dedupe_key?: string | null
+          dividend_phon: number
+          emperor_nickname?: string | null
+          emperor_user_id?: string | null
+          id?: number
+          paid_at?: string
+          pool_snapshot: number
+        }
+        Update: {
+          dedupe_key?: string | null
+          dividend_phon?: number
+          emperor_nickname?: string | null
+          emperor_user_id?: string | null
+          id?: number
+          paid_at?: string
+          pool_snapshot?: number
+        }
+        Relationships: []
+      }
       empire_battles: {
         Row: {
           created_at: string
@@ -2602,6 +2632,77 @@ export type Database = {
         }
         Relationships: []
       }
+      galaxy_bid_history: {
+        Row: {
+          bid_phon: number
+          bidder_user_id: string
+          created_at: string
+          id: number
+          prev_holder: string | null
+          refund_phon: number
+          seat_no: number
+        }
+        Insert: {
+          bid_phon: number
+          bidder_user_id: string
+          created_at?: string
+          id?: number
+          prev_holder?: string | null
+          refund_phon?: number
+          seat_no: number
+        }
+        Update: {
+          bid_phon?: number
+          bidder_user_id?: string
+          created_at?: string
+          id?: number
+          prev_holder?: string | null
+          refund_phon?: number
+          seat_no?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "galaxy_bid_history_seat_no_fkey"
+            columns: ["seat_no"]
+            isOneToOne: false
+            referencedRelation: "galaxy_seats"
+            referencedColumns: ["seat_no"]
+          },
+        ]
+      }
+      galaxy_seats: {
+        Row: {
+          bid_count: number
+          booster_expires_at: string | null
+          current_bid: number
+          holder_nickname: string | null
+          holder_user_id: string | null
+          last_bid_at: string | null
+          seat_no: number
+          updated_at: string
+        }
+        Insert: {
+          bid_count?: number
+          booster_expires_at?: string | null
+          current_bid?: number
+          holder_nickname?: string | null
+          holder_user_id?: string | null
+          last_bid_at?: string | null
+          seat_no: number
+          updated_at?: string
+        }
+        Update: {
+          bid_count?: number
+          booster_expires_at?: string | null
+          current_bid?: number
+          holder_nickname?: string | null
+          holder_user_id?: string | null
+          last_bid_at?: string | null
+          seat_no?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       game_config: {
         Row: {
           crown_particle_intensity: number
@@ -3138,6 +3239,74 @@ export type Database = {
         }
         Relationships: []
       }
+      imperial_journey_claims: {
+        Row: {
+          claimed_at: string
+          id: number
+          reward_crown: number
+          reward_phon: number
+          stage_no: number
+          user_id: string
+        }
+        Insert: {
+          claimed_at?: string
+          id?: number
+          reward_crown: number
+          reward_phon: number
+          stage_no: number
+          user_id: string
+        }
+        Update: {
+          claimed_at?: string
+          id?: number
+          reward_crown?: number
+          reward_phon?: number
+          stage_no?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "imperial_journey_claims_stage_no_fkey"
+            columns: ["stage_no"]
+            isOneToOne: false
+            referencedRelation: "imperial_journey_stages"
+            referencedColumns: ["stage_no"]
+          },
+        ]
+      }
+      imperial_journey_stages: {
+        Row: {
+          act_id: number
+          description: string | null
+          requirement_kind: string
+          requirement_value: number
+          reward_crown: number
+          reward_phon: number
+          stage_no: number
+          title: string
+        }
+        Insert: {
+          act_id: number
+          description?: string | null
+          requirement_kind: string
+          requirement_value: number
+          reward_crown?: number
+          reward_phon?: number
+          stage_no: number
+          title: string
+        }
+        Update: {
+          act_id?: number
+          description?: string | null
+          requirement_kind?: string
+          requirement_value?: number
+          reward_crown?: number
+          reward_phon?: number
+          stage_no?: number
+          title?: string
+        }
+        Relationships: []
+      }
       imperial_score_events: {
         Row: {
           base: number
@@ -3201,6 +3370,48 @@ export type Database = {
           user_id?: string
           weekly_is?: number
           weekly_key?: string
+        }
+        Relationships: []
+      }
+      imperial_stories: {
+        Row: {
+          created_at: string
+          dedupe_key: string | null
+          expires_at: string
+          headline: string
+          hero_nickname: string | null
+          hero_user_id: string | null
+          id: number
+          kind: string
+          payload: Json
+          pin_until: string | null
+          subline: string | null
+        }
+        Insert: {
+          created_at?: string
+          dedupe_key?: string | null
+          expires_at?: string
+          headline: string
+          hero_nickname?: string | null
+          hero_user_id?: string | null
+          id?: number
+          kind: string
+          payload?: Json
+          pin_until?: string | null
+          subline?: string | null
+        }
+        Update: {
+          created_at?: string
+          dedupe_key?: string | null
+          expires_at?: string
+          headline?: string
+          hero_nickname?: string | null
+          hero_user_id?: string | null
+          id?: number
+          kind?: string
+          payload?: Json
+          pin_until?: string | null
+          subline?: string | null
         }
         Relationships: []
       }
@@ -8246,6 +8457,10 @@ export type Database = {
         Returns: number
       }
       award_xp: { Args: { _amount: number; _source?: Json }; Returns: Json }
+      bid_galaxy_seat: {
+        Args: { _bid_phon: number; _seat_no: number }
+        Returns: Json
+      }
       bulk_acknowledge_anomalies: {
         Args: { _ids: string[]; _note?: string }
         Returns: number
@@ -8301,6 +8516,7 @@ export type Database = {
       claim_founding_seat: { Args: { _purchase_id: string }; Returns: Json }
       claim_handbook_bonus: { Args: never; Returns: Json }
       claim_idle_growth: { Args: never; Returns: Json }
+      claim_journey_stage: { Args: { _stage_no: number }; Returns: Json }
       claim_loss_protection: {
         Args: never
         Returns: {
@@ -8471,6 +8687,19 @@ export type Database = {
           _user_id: string
         }
         Returns: string
+      }
+      enqueue_imperial_story: {
+        Args: {
+          _dedupe?: string
+          _headline: string
+          _hero_nick: string
+          _hero_user: string
+          _kind: string
+          _payload?: Json
+          _subline: string
+          _ttl_hours?: number
+        }
+        Returns: number
       }
       ensure_settlement_audit_partition: {
         Args: { _when?: string }
@@ -8651,6 +8880,18 @@ export type Database = {
           total_contribution: number
         }[]
       }
+      get_imperial_stories: {
+        Args: { _limit?: number }
+        Returns: {
+          created_at: string
+          headline: string
+          hero_nickname: string
+          id: number
+          kind: string
+          payload: Json
+          subline: string
+        }[]
+      }
       get_main_nft: {
         Args: { _user_id: string }
         Returns: {
@@ -8779,6 +9020,7 @@ export type Database = {
           weighted_entry: number
         }[]
       }
+      get_my_journey_claims: { Args: never; Returns: Json }
       get_my_journey_progress: { Args: never; Returns: Json }
       get_my_legal_consent_status: { Args: never; Returns: Json }
       get_my_main_nft_status: { Args: never; Returns: Json }
@@ -9225,6 +9467,7 @@ export type Database = {
         }
         Returns: string
       }
+      pay_emperor_daily_dividend: { Args: never; Returns: Json }
       pay_weekly_leaderboard: { Args: never; Returns: Json }
       pay_weekly_leaderboard_dry_run: { Args: never; Returns: Json }
       pin_lockout_status: { Args: { _user?: string }; Returns: Json }
