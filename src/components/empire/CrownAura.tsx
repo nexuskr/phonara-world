@@ -2,6 +2,7 @@
 // 1~6: 정적 그라디언트 링. 7(Baron)+: 회전 광채 + 펄스. 10(Emperor): 마그마 + 별빛.
 import { ReactNode } from "react";
 import { motion } from "framer-motion";
+import { useDocumentVisible } from "@/lib/util/visible-interval";
 
 type Props = {
   level: number;
@@ -48,6 +49,8 @@ export default function CrownAura({ level, size = 48, className = "", children }
   const isEmperor = lv >= 10;
   const ringPad = lv >= 8 ? 4 : lv >= 5 ? 3 : 2;
   const outer = size + ringPad * 2;
+  // Pause expensive corona/pulse animations while tab is hidden — saves GPU.
+  const tabVisible = useDocumentVisible();
 
   return (
     <div
@@ -68,7 +71,7 @@ export default function CrownAura({ level, size = 48, className = "", children }
             background: `conic-gradient(from 0deg, transparent 0%, rgba(${glow}) 25%, transparent 50%, rgba(${glow}) 75%, transparent 100%)`,
             filter: "blur(4px)",
           }}
-          animate={{ rotate: 360 }}
+          animate={tabVisible ? { rotate: 360 } : false}
           transition={{ duration: 8, ease: "linear", repeat: Infinity }}
         />
       )}
@@ -77,7 +80,7 @@ export default function CrownAura({ level, size = 48, className = "", children }
         <motion.div
           className="absolute inset-[-6px] rounded-full pointer-events-none"
           style={{ boxShadow: `0 0 28px 6px rgba(${glow})` }}
-          animate={{ opacity: [0.4, 1, 0.4], scale: [1, 1.06, 1] }}
+          animate={tabVisible ? { opacity: [0.4, 1, 0.4], scale: [1, 1.06, 1] } : false}
           transition={{ duration: 2.4, ease: "easeInOut", repeat: Infinity }}
         />
       )}

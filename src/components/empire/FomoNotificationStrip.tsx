@@ -4,6 +4,7 @@ import { Flame, X, ArrowRight } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useFomoNotifications } from "@/hooks/use-fomo-notifications";
+import { useDocumentVisible } from "@/lib/util/visible-interval";
 
 const kindAccent: Record<string, string> = {
   recovery: "from-destructive/15 to-primary/10 border-destructive/40",
@@ -19,6 +20,7 @@ const kindAccent: Record<string, string> = {
 export function FomoNotificationStrip() {
   const nav = useNavigate();
   const { unread, markRead } = useFomoNotifications();
+  const tabVisible = useDocumentVisible();
   const top = unread.slice(0, 3);
 
   if (top.length === 0) return null;
@@ -40,7 +42,7 @@ export function FomoNotificationStrip() {
             >
               <div className="flex items-start gap-3">
                 <motion.div
-                  animate={{ scale: [1, 1.15, 1] }}
+                  animate={tabVisible ? { scale: [1, 1.15, 1] } : false}
                   transition={{ duration: 1.6, repeat: Infinity }}
                   className="mt-1 text-primary"
                 >
