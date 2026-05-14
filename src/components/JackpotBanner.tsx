@@ -134,12 +134,23 @@ export default function JackpotBanner({ compact = false }: { compact?: boolean }
         </div>
 
         <div className="mt-2 flex items-end gap-2">
-          <div className="font-display font-black text-3xl sm:text-5xl text-money-strong tabular-nums leading-none">
-            {formatKRW(j.amount)}
-          </div>
+          <CountUp
+            value={j.amount}
+            duration={1100}
+            decimals={0}
+            prefix="₩"
+            className="font-display font-black text-3xl sm:text-5xl text-money-strong tabular-nums leading-none"
+          />
         </div>
         <div className="text-[10px] text-muted-foreground mt-1 break-keep">
           {t("mini")} <span className="text-secondary font-bold tabular-nums">{formatKRW(j.mini)}</span> · {t("nextExplode")} <span className="text-primary font-bold tabular-nums">{h}h {m}m</span>
+        </div>
+        <div className="text-[10px] mt-1 flex items-center gap-2">
+          <span className="text-muted-foreground">오늘 총 당첨금</span>
+          <CountUp value={todayTotal} duration={900} decimals={0} prefix="₩" className="text-gold font-black tabular-nums" />
+          <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-gold/15 text-gold font-bold">
+            {j.recentWins.filter((w) => w.when >= Date.now() - 86_400_000).length}명 당첨
+          </span>
         </div>
 
         <div className="mt-3">
@@ -153,18 +164,30 @@ export default function JackpotBanner({ compact = false }: { compact?: boolean }
           </div>
         </div>
 
-        <div className="mt-3 grid grid-cols-1 gap-1.5">
-          {j.recentWins.slice(0, 3).map((w, i) => (
-            <div key={i} className="glass rounded-xl px-3 py-2 flex items-center justify-between text-[11px]">
-              <div className="flex items-center gap-2">
-                {w.type === "main" ? <Trophy className="w-3.5 h-3.5 text-gold" /> : <Sparkles className="w-3.5 h-3.5 text-secondary" />}
-                <span className="font-bold">{w.nickname}</span>
-                <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold ${w.tier === "EMPIRE" ? "bg-gold/20 text-gold" : w.tier === "GOD" ? "bg-accent/20 text-accent" : w.tier === "VIP" ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"}`}>{w.tier}</span>
-              </div>
-              <div className="font-display font-black text-money-strong tabular-nums">+{formatKRW(w.amount)}</div>
+        {/* 최근 당첨자 마키 — 무한 스크롤 */}
+        {j.recentWins.length > 0 && (
+          <div className="mt-3 overflow-hidden rounded-xl bg-background/40 border border-border/40 py-1.5">
+            <div className="flex gap-4 animate-[aurora-shift_30s_linear_infinite] whitespace-nowrap" style={{ animationName: "marquee", animationDuration: "30s", animationTimingFunction: "linear", animationIterationCount: "infinite" }}>
+              {[...j.recentWins, ...j.recentWins].map((w, i) => (
+                <div key={i} className="inline-flex items-center gap-2 text-[11px] px-2">
+                  {w.type === "main" ? <Trophy className="w-3 h-3 text-gold" /> : <Sparkles className="w-3 h-3 text-secondary" />}
+                  <span className="font-bold">{w.nickname}</span>
+                  <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold ${w.tier === "EMPIRE" ? "bg-gold/20 text-gold" : w.tier === "GOD" ? "bg-accent/20 text-accent" : w.tier === "VIP" ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"}`}>{w.tier}</span>
+                  <span className="font-display font-black text-money-strong tabular-nums">+{formatKRW(w.amount)}</span>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </div>
+        )}
+
+        <Link
+          to="/roulette"
+          className="mt-3 group flex items-center justify-center gap-2 w-full rounded-xl bg-gradient-gold text-gold-foreground font-black py-2.5 text-sm shadow-neon-gold hover:shadow-[0_0_30px_hsl(44_95%_65%/0.9)] transition-all"
+        >
+          <Crown className="w-4 h-4" />
+          지금 룰렛 돌리기
+          <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+        </Link>
       </div>
     </div>
   );
