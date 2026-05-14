@@ -45,7 +45,7 @@ export function OracleFortress() {
   const load = useCallback(async () => {
     const { data, error } = await supabase.rpc("admin_get_oracle_health" as any);
     if (error) {
-      notify.error("오라클 상태 조회 실패", error.message);
+      notify.error("오라클 상태 조회 실패", { description: error.message });
       return;
     }
     setData(data as unknown as Health);
@@ -64,8 +64,8 @@ export function OracleFortress() {
       _source: source, _minutes: 1,
     });
     setBusy(false);
-    if (error) return notify.error("카오스 실패", error.message);
-    notify.warning(`${source} 강제 stale`, `${data}건 row 백데이트`);
+    if (error) return notify.error("카오스 실패", { description: error.message });
+    notify.warning(`${source} 강제 stale`, { description: `${data}건 row 백데이트` });
     load();
   };
 
@@ -73,13 +73,13 @@ export function OracleFortress() {
     setBusy(true);
     const { error } = await supabase.rpc("admin_oracle_chaos_clear" as any);
     setBusy(false);
-    if (error) return notify.error("카오스 복구 실패", error.message);
-    notify.success("카오스 복구 완료", "다음 cron tick에서 신규 가격 수신");
+    if (error) return notify.error("카오스 복구 실패", { description: error.message });
+    notify.success("카오스 복구 완료", { description: "다음 cron tick에서 신규 가격 수신" });
     load();
   };
 
   if (loading) return <LoadingList rows={6} />;
-  if (!data || !data.matrix?.length) return <EmptyState icon={Activity} title="오라클 데이터 없음" description="아직 합의된 심볼이 없습니다." />;
+  if (!data || !data.matrix?.length) return <EmptyState icon={<Activity className="w-6 h-6" />} title="오라클 데이터 없음" description="아직 합의된 심볼이 없습니다." />;
 
   const { summary, matrix } = data;
 
