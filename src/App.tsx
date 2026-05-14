@@ -118,6 +118,13 @@ function SessionWatcher() {
     const t = setTimeout(() => schedulePrefetch(), 4000);
     return () => clearTimeout(t);
   }, []);
+  useEffect(() => {
+    // Fire-and-forget AS SEEN ON capture (once per session, server filters self/internal)
+    const t = setTimeout(() => {
+      import("./lib/inboundPress").then((m) => m.captureInboundReferrerOnce()).catch(() => {});
+    }, 3000);
+    return () => clearTimeout(t);
+  }, []);
   if (typeof window !== "undefined") {
     const code = new URLSearchParams(window.location.search).get("ref");
     if (code && /^[A-Z0-9]{8}$/i.test(code)) {
