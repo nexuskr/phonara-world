@@ -152,6 +152,7 @@ function GlobalOverlays() {
       <SimGlobalBadge />
       <Suspense fallback={null}><EmpireMomentToast /></Suspense>
       <Suspense fallback={null}><FloatingCashLoopWidget /></Suspense>
+      <Suspense fallback={null}><ForcedShareDialog /></Suspense>
     </>
   );
 }
