@@ -1,24 +1,28 @@
 import { useEffect, useRef } from "react";
+import { useReducedMotionPref } from "@/lib/app-settings";
 
 /**
- * CosmicBackdrop — 깊은 우주 + 은하수 + 미세한 Crown nebula 입자
- * - mobile 25 / desktop 80 자동
- * - prefers-reduced-motion → 정적 별빛으로 fallback
- * - GPU 친화적: 단일 canvas, additive composite
+ * CosmicBackdrop — 정적 그라디언트 + (옵션) 부드러운 별 입자.
+ * - 기본은 정적 (animated=false). 메인/대시보드 등에서 CPU/배터리 절약.
+ * - prefers-reduced-motion 또는 모바일 → 강제 정적.
+ * - animated=true 일 때만 RAF 루프 가동 (PC/desktop).
  */
-export default function CosmicBackdrop({ className = "" }: { className?: string }) {
+export default function CosmicBackdrop({
+  className = "",
+  animated = false,
+}: { className?: string; animated?: boolean }) {
   const ref = useRef<HTMLCanvasElement>(null);
+  const reduced = useReducedMotionPref();
+
   useEffect(() => {
     const cvs = ref.current;
     if (!cvs) return;
     const ctx = cvs.getContext("2d", { alpha: true });
     if (!ctx) return;
 
-    const reduced =
-      typeof window !== "undefined" &&
-      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
-    const COUNT = reduced ? 0 : isMobile ? 25 : 80;
+    const allowAnim = animated && !reduced && !isMobile;
+    const COUNT = allowAnim ? 60 : 0;
     const dpr = Math.min(2, window.devicePixelRatio || 1);
 
     let w = 0, h = 0, raf = 0;
@@ -32,8 +36,7 @@ export default function CosmicBackdrop({ className = "" }: { className?: string 
       cvs.width = Math.floor(w * dpr);
       cvs.height = Math.floor(h * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      // Static background star field (cheap)
-      const bgCount = isMobile ? 80 : 180;
+      const bgCount = isMobile ? 60 : 140;
       bgStars = Array.from({ length: bgCount }, () => ({
         x: Math.random() * w,
         y: Math.random() * h,
@@ -43,16 +46,15 @@ export default function CosmicBackdrop({ className = "" }: { className?: string 
       stars = Array.from({ length: COUNT }, () => ({
         x: Math.random() * w,
         y: Math.random() * h,
-        vx: (Math.random() - 0.5) * 0.06,
-        vy: (Math.random() - 0.5) * 0.06,
-        r: Math.random() * 1.6 + 0.6,
+        vx: (Math.random() - 0.5) * 0.05,
+        vy: (Math.random() - 0.5) * 0.05,
+        r: Math.random() * 1.4 + 0.5,
         hue: Math.random() < 0.65 ? 44 : Math.random() < 0.5 ? 258 : 200,
-        a: Math.random() * 0.6 + 0.25,
+        a: Math.random() * 0.55 + 0.2,
       }));
     };
 
-    const draw = () => {
-      // Cosmic gradient base
+    const drawBase = () => {
       const g = ctx.createRadialGradient(w * 0.5, h * 0.25, 0, w * 0.5, h * 0.5, Math.max(w, h));
       g.addColorStop(0, "hsla(258, 50%, 12%, 1)");
       g.addColorStop(0.5, "hsla(240, 40%, 5%, 1)");
@@ -60,7 +62,6 @@ export default function CosmicBackdrop({ className = "" }: { className?: string 
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, w, h);
 
-      // Faint milky-way band (diagonal soft glow)
       const band = ctx.createLinearGradient(0, h * 0.2, w, h * 0.8);
       band.addColorStop(0, "hsla(258, 80%, 45%, 0)");
       band.addColorStop(0.45, "hsla(258, 80%, 50%, 0.10)");
@@ -69,50 +70,59 @@ export default function CosmicBackdrop({ className = "" }: { className?: string 
       ctx.fillStyle = band;
       ctx.fillRect(0, 0, w, h);
 
-      // Background static stars
       ctx.globalCompositeOperation = "lighter";
       for (const s of bgStars) {
         ctx.fillStyle = `hsla(45, 100%, 90%, ${s.a})`;
         ctx.fillRect(s.x, s.y, s.r, s.r);
       }
+      ctx.globalCompositeOperation = "source-over";
+    };
 
-      // Active nebula particles
+    const drawAnimatedFrame = () => {
+      drawBase();
+      ctx.globalCompositeOperation = "lighter";
       for (const s of stars) {
-        s.x += s.vx;
-        s.y += s.vy;
+        s.x += s.vx; s.y += s.vy;
         if (s.x < -10) s.x = w + 10;
         if (s.x > w + 10) s.x = -10;
         if (s.y < -10) s.y = h + 10;
         if (s.y > h + 10) s.y = -10;
-
-        const grd = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.r * 8);
+        const grd = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.r * 7);
         grd.addColorStop(0, `hsla(${s.hue}, 100%, 70%, ${s.a})`);
         grd.addColorStop(1, `hsla(${s.hue}, 100%, 60%, 0)`);
         ctx.fillStyle = grd;
         ctx.beginPath();
-        ctx.arc(s.x, s.y, s.r * 8, 0, Math.PI * 2);
+        ctx.arc(s.x, s.y, s.r * 7, 0, Math.PI * 2);
         ctx.fill();
       }
       ctx.globalCompositeOperation = "source-over";
-
-      raf = requestAnimationFrame(draw);
+      raf = requestAnimationFrame(drawAnimatedFrame);
     };
 
     resize();
-    if (reduced) {
-      // Single static frame
-      draw();
-      cancelAnimationFrame(raf);
+    if (allowAnim) {
+      raf = requestAnimationFrame(drawAnimatedFrame);
     } else {
-      raf = requestAnimationFrame(draw);
+      drawBase();
     }
-    const onResize = () => resize();
+    const onResize = () => {
+      resize();
+      if (!allowAnim) drawBase();
+    };
     window.addEventListener("resize", onResize);
+    // Stop animation when tab is hidden
+    const onVis = () => {
+      if (!allowAnim) return;
+      if (document.visibilityState === "hidden") cancelAnimationFrame(raf);
+      else raf = requestAnimationFrame(drawAnimatedFrame);
+    };
+    document.addEventListener("visibilitychange", onVis);
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", onResize);
+      document.removeEventListener("visibilitychange", onVis);
     };
-  }, []);
+  }, [animated, reduced]);
 
   return (
     <canvas

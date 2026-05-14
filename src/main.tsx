@@ -4,7 +4,6 @@ import "./index.css";
 import i18n from "i18next";
 import "./lib/i18n";
 import { detectPreferredLocale } from "./hooks/use-preferred-locale";
-import { prefetchCatalog } from "./lib/catalog-cache";
 import { installViewportLock } from "./lib/viewport-lock";
 import { installLayoutShiftMonitor } from "./lib/layout-shift-monitor";
 import { watchMotionClass } from "./lib/app-settings";
@@ -30,4 +29,5 @@ installLayoutShiftMonitor();
 
 createRoot(document.getElementById("root")!).render(<App />);
 
-prefetchCatalog();
+// Catalog prefetch deferred — only loaded on routes that need it (Achievements / Missions / Packages).
+// Removed eager prefetchCatalog() call to cut boot cost on Guide/Auth/Dashboard.

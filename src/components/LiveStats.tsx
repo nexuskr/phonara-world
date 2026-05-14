@@ -11,6 +11,8 @@ function useJitter(initial: number, { min = -200, max = 800, every = 1500 }: any
     if (initial <= 0) { setV(0); return; }
     setV(initial);
     const t = setInterval(() => {
+      // Pause when tab hidden — saves CPU + battery on background tabs.
+      if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
       setV(prev => Math.max(0, prev + Math.floor(Math.random() * (max - min)) + min));
     }, every);
     return () => clearInterval(t);
@@ -24,30 +26,49 @@ export function useFluctuate(initial: number, opts: any = {}) {
 }
 
 /**
- * 서버 단일 진실값: bot_settings.online_base + 30초 윈도우 결정론 변동.
- * 클라이언트는 30초마다 RPC를 폴링 + 그 사이는 작은 jitter로 살아 있게.
+ * 서버 단일 진실값 + 모듈 싱글톤. 첫 useOnline 호출이 30초 폴링을 가동하고,
+ * 이후의 모든 컴포넌트는 같은 값을 받는다 (RPC dedupe).
  * Reviewer Mode → 0.
  */
+let ONLINE_BASE = 0;
+let ONLINE_TIMER: number | null = null;
+let ONLINE_REFCOUNT = 0;
+const ONLINE_SUBS = new Set<() => void>();
+function emitOnline() { ONLINE_SUBS.forEach((fn) => { try { fn(); } catch {} }); }
+async function tickOnline() {
+  if (isReviewerMode()) { ONLINE_BASE = 0; emitOnline(); return; }
+  try {
+    const { data } = await supabase.rpc("get_bot_online_count");
+    ONLINE_BASE = typeof data === "number" && data > 0 ? data : 2847;
+  } catch {
+    ONLINE_BASE = 2847;
+  }
+  emitOnline();
+}
 export function useOnline() {
-  const [base, setBase] = useState<number>(0);
+  const [base, setBase] = useState<number>(ONLINE_BASE);
   useEffect(() => {
-    if (isReviewerMode()) { setBase(0); return; }
-    let cancelled = false;
-    async function tick() {
-      try {
-        const { data } = await supabase.rpc("get_bot_online_count");
-        if (!cancelled) setBase(typeof data === "number" && data > 0 ? data : 2847);
-      } catch {
-        if (!cancelled) setBase(2847); // fallback when realtime/RPC unreachable
-      }
+    const fn = () => setBase(ONLINE_BASE);
+    ONLINE_SUBS.add(fn);
+    ONLINE_REFCOUNT++;
+    if (ONLINE_REFCOUNT === 1) {
+      void tickOnline();
+      ONLINE_TIMER = window.setInterval(tickOnline, 30_000);
+    } else {
+      setBase(ONLINE_BASE);
     }
-    void tick();
-    const t = setInterval(tick, 30_000);
-    return () => { cancelled = true; clearInterval(t); };
+    return () => {
+      ONLINE_SUBS.delete(fn);
+      ONLINE_REFCOUNT = Math.max(0, ONLINE_REFCOUNT - 1);
+      if (ONLINE_REFCOUNT === 0 && ONLINE_TIMER) {
+        clearInterval(ONLINE_TIMER);
+        ONLINE_TIMER = null;
+      }
+    };
   }, []);
-  // base 기준 ±10% 범위에서 자연 변동 (15,000 → 12,000~18,000)
+  // base 기준 ±10% 범위에서 자연 변동 — 단, jitter 주기를 12s로 늘려 CPU 부담 최소화
   const span = Math.max(20, Math.floor(base * 0.10));
-  return useJitter(base, { min: -span, max: span, every: 6000 });
+  return useJitter(base, { min: -span, max: span, every: 12000 });
 }
 
 export function useTotalPayout() {

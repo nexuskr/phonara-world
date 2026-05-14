@@ -65,6 +65,11 @@ export default function ActivityEventTicker({
 
     const tick = () => {
       if (cancelled || !window_) return;
+      // Pause on background tabs.
+      if (typeof document !== "undefined" && document.visibilityState === "hidden") {
+        timer = window.setTimeout(tick, 2000);
+        return;
+      }
       setFeed((prev) => [makeEvent(), ...prev].slice(0, limit));
       const span = Math.max(0, window_[1] - window_[0]);
       const next = window_[0] + Math.floor(Math.random() * (span + 1));

@@ -27,6 +27,8 @@ import DashboardHeroV3 from "@/components/dashboard/v3/DashboardHeroV3";
 import TradingEntryCard from "@/components/dashboard/v3/TradingEntryCard";
 import KpiGridV3 from "@/components/dashboard/v3/KpiGridV3";
 import MoreSection, { type MoreSectionHandle } from "@/components/dashboard/v3/MoreSection";
+import { useMyPower } from "@/hooks/use-my-power";
+import { useOnline } from "@/components/LiveStats";
 
 // 접힘 영역에 들어가는 기존 컴포넌트들 — 모두 lazy
 const LiveRanking = lazy(() => import("@/components/LiveRanking"));
@@ -92,6 +94,11 @@ export default function Dashboard() {
 
   if (!user) return null;
 
+  // Single shared subscription — passed down to Hero & KpiGrid as props
+  // to eliminate duplicate RPC + realtime channels.
+  const { phon, nfts } = useMyPower();
+  const online = useOnline();
+
   return (
     <Layout>
       <Suspense fallback={null}>
@@ -104,14 +111,14 @@ export default function Dashboard() {
       <EmpireSignature />
 
       {/* 🌌 100vh Cosmic Hero — 단일 CTA */}
-      <DashboardHeroV3 />
+      <DashboardHeroV3 phon={phon} nfts={nfts} online={online} />
 
       <div className="container relative pt-6 pb-12 space-y-6">
         {/* ⚡ 핵심 베팅 진입 카드 */}
         <TradingEntryCard />
 
         {/* 📊 KPI 4개 */}
-        <KpiGridV3 />
+        <KpiGridV3 nfts={nfts} online={online} />
 
         {/* 📦 더 보기 — 기존 카드 전부 보존 */}
         <MoreSection ref={moreRef}>

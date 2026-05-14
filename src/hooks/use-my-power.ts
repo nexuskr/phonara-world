@@ -170,17 +170,66 @@ function detach(uid: string, instanceKey: string) {
   if (e.listeners.size === 0) teardown(uid, "last consumer left");
 }
 
+// ---------- shared snapshot cache (dedupe RPC across consumers) ----------
+interface Snapshot {
+  uid: string | null;
+  phon: number;
+  nfts: NFTRow[];
+  boostPct: number;
+  maxLeverage: number;
+  nextThreshold: NextThreshold | null;
+  loaded: boolean;
+}
+let SNAPSHOT: Snapshot = { uid: null, phon: 0, nfts: [], boostPct: 0, maxLeverage: 10, nextThreshold: null, loaded: false };
+let INFLIGHT: Promise<void> | null = null;
+let SNAP_FETCHED_AT = 0;
+const SNAP_TTL_MS = 8_000;
+const SUBS = new Set<() => void>();
+function emit() { SUBS.forEach((fn) => { try { fn(); } catch {} }); }
+
+async function refreshSnapshot(force = false): Promise<void> {
+  if (INFLIGHT) return INFLIGHT;
+  if (!force && SNAPSHOT.loaded && Date.now() - SNAP_FETCHED_AT < SNAP_TTL_MS) return;
+  INFLIGHT = (async () => {
+    try {
+      const { data: ses } = await supabase.auth.getSession();
+      const uid = ses?.session?.user?.id ?? null;
+      if (!uid) {
+        SNAPSHOT = { uid: null, phon: 0, nfts: [], boostPct: 0, maxLeverage: 10, nextThreshold: null, loaded: true };
+        SNAP_FETCHED_AT = Date.now();
+        emit();
+        return;
+      }
+      const [{ data: bal }, { data: nftRows }, { data: boost }, { data: lev }, { data: nx }] = await Promise.all([
+        supabase.rpc("get_phon_balance"),
+        supabase.rpc("get_my_nft_collection"),
+        supabase.rpc("get_my_total_boost_pct"),
+        supabase.rpc("get_my_max_leverage"),
+        supabase.rpc("get_next_nft_threshold"),
+      ]);
+      SNAPSHOT = {
+        uid,
+        phon: Number(bal ?? 0),
+        nfts: (nftRows as any) || [],
+        boostPct: Number(boost ?? 0),
+        maxLeverage: Number(lev ?? 10),
+        nextThreshold: (nx as any) ?? null,
+        loaded: true,
+      };
+      SNAP_FETCHED_AT = Date.now();
+      emit();
+    } finally {
+      INFLIGHT = null;
+    }
+  })();
+  return INFLIGHT;
+}
+
 // ---------- hook ----------
 let __instanceCounter = 0;
 
 export function useMyPower(): PowerState {
-  const [phon, setPhon] = useState(0);
-  const [nfts, setNfts] = useState<NFTRow[]>([]);
-  const [boostPct, setBoostPct] = useState(0);
-  const [maxLeverage, setMaxLeverage] = useState(10);
-  const [nextThreshold, setNextThreshold] = useState<NextThreshold | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [userId, setUserId] = useState<string | null>(null);
+  const [, force] = useState(0);
 
   // Stable per-mount key — survives StrictMode double-mount cycles cleanly.
   const instanceKeyRef = useRef<string>("");
@@ -192,42 +241,31 @@ export function useMyPower(): PowerState {
     return () => { aliveRef.current = false; };
   }, []);
 
-  const fetchAll = useCallback(async () => {
-    const { data: ses } = await supabase.auth.getSession();
-    const uid = ses?.session?.user?.id ?? null;
-    if (!aliveRef.current) return;
-    setUserId(uid);
-    if (!uid) {
-      setPhon(0); setNfts([]); setBoostPct(0); setMaxLeverage(10); setNextThreshold(null);
-      setLoading(false);
-      return;
-    }
-    const [{ data: bal }, { data: nftRows }, { data: boost }, { data: lev }, { data: nx }] = await Promise.all([
-      supabase.rpc("get_phon_balance"),
-      supabase.rpc("get_my_nft_collection"),
-      supabase.rpc("get_my_total_boost_pct"),
-      supabase.rpc("get_my_max_leverage"),
-      supabase.rpc("get_next_nft_threshold"),
-    ]);
-    if (!aliveRef.current) return;
-    setPhon(Number(bal ?? 0));
-    setNfts((nftRows as any) || []);
-    setBoostPct(Number(boost ?? 0));
-    setMaxLeverage(Number(lev ?? 10));
-    setNextThreshold((nx as any) ?? null);
-    setLoading(false);
+  // Subscribe to shared snapshot
+  useEffect(() => {
+    const fn = () => { if (aliveRef.current) force((n) => n + 1); };
+    SUBS.add(fn);
+    void refreshSnapshot();
+    return () => { SUBS.delete(fn); };
   }, []);
-
-  useEffect(() => { void fetchAll(); }, [fetchAll]);
 
   // Idempotent realtime attach per (uid, instanceKey).
   useEffect(() => {
-    if (!userId) return;
+    const uid = SNAPSHOT.uid;
+    if (!uid) return;
     const key = instanceKeyRef.current;
-    const listener: Listener = () => { if (aliveRef.current) void fetchAll(); };
-    attach(userId, key, listener);
-    return () => { detach(userId, key); };
-  }, [userId, fetchAll]);
+    const listener: Listener = () => { void refreshSnapshot(true); };
+    attach(uid, key, listener);
+    return () => { detach(uid, key); };
+  }, [SNAPSHOT.uid]);
 
-  return { phon, nfts, boostPct, maxLeverage, nextThreshold, loading, refresh: fetchAll };
+  return {
+    phon: SNAPSHOT.phon,
+    nfts: SNAPSHOT.nfts,
+    boostPct: SNAPSHOT.boostPct,
+    maxLeverage: SNAPSHOT.maxLeverage,
+    nextThreshold: SNAPSHOT.nextThreshold,
+    loading: !SNAPSHOT.loaded,
+    refresh: () => { void refreshSnapshot(true); },
+  };
 }

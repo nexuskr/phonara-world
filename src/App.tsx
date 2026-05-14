@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { MotionConfig } from "framer-motion";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
@@ -19,8 +19,15 @@ import ReviewerBadge from "./components/ReviewerBadge";
 import { AdultGate } from "./components/AdultGate";
 
 installGlobalErrorLogging();
-installFetchInstrument();
-installWebVitals();
+// Heavy instrumentation only when explicitly enabled — avoids per-fetch wrapping cost on every visit.
+const __dev = (import.meta as any).env?.DEV;
+const __debugPerf =
+  typeof window !== "undefined" &&
+  (() => { try { return localStorage.getItem("phonara:debug-perf") === "1"; } catch { return false; } })();
+if (__dev || __debugPerf) {
+  installFetchInstrument();
+  installWebVitals();
+}
 
 const Index = lazy(() => import("./pages/Index.tsx"));
 const Auth = lazy(() => import("./pages/Auth.tsx"));
@@ -84,7 +91,19 @@ function SessionWatcher() {
   useAdultGate();
   const loc = useLocation();
   useEffect(() => { recordRouteChange(loc.pathname); recordNavigation(loc.pathname); }, [loc.pathname]);
-  useEffect(() => { schedulePrefetch(); }, []);
+  useEffect(() => {
+    // Skip prefetch on light/auth/guide entry pages and low-end / mobile devices.
+    if (typeof window === "undefined") return;
+    const p = window.location.pathname;
+    const skipRoutes = ["/guide", "/auth", "/secure-auth", "/forgot-password", "/reset-password", "/auth/callback", "/legal", "/unsubscribe"];
+    if (skipRoutes.some((r) => p.startsWith(r))) return;
+    const isMobile = window.innerWidth < 768;
+    const lowMem = (navigator as any).deviceMemory && (navigator as any).deviceMemory <= 4;
+    if (isMobile || lowMem) return;
+    // Defer prefetch well past first paint so it never competes with hero render.
+    const t = setTimeout(() => schedulePrefetch(), 4000);
+    return () => clearTimeout(t);
+  }, []);
   if (typeof window !== "undefined") {
     const code = new URLSearchParams(window.location.search).get("ref");
     if (code && /^[A-Z0-9]{8}$/i.test(code)) {
@@ -94,10 +113,26 @@ function SessionWatcher() {
   return null;
 }
 
-/** /guide 경로에서는 전역 부착 위젯을 전부 미마운트해서 RPC/실시간 0건 유지. */
+/** Mount global overlays late, and never on auth/guide/landing routes. */
 function GlobalOverlays() {
   const loc = useLocation();
-  if (loc.pathname.startsWith("/guide")) return null;
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const cb = () => setReady(true);
+    // @ts-ignore
+    if (typeof window.requestIdleCallback === "function") {
+      // @ts-ignore
+      const id = window.requestIdleCallback(cb, { timeout: 3500 });
+      // @ts-ignore
+      return () => window.cancelIdleCallback?.(id);
+    }
+    const t = setTimeout(cb, 2500);
+    return () => clearTimeout(t);
+  }, []);
+  const HIDDEN = ["/guide", "/auth", "/secure-auth", "/forgot-password", "/reset-password", "/auth/callback", "/", "/unsubscribe", "/legal"];
+  if (HIDDEN.some((r) => r === loc.pathname || (r !== "/" && loc.pathname.startsWith(r)))) return null;
+  if (!ready) return null;
   return (
     <>
       <PracticeModeBanner />
