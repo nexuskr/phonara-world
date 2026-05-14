@@ -1901,6 +1901,9 @@ export type Database = {
           id: string
           level: string
           message: string
+          resolution_note: string | null
+          resolved_at: string | null
+          resolved_by: string | null
           stack: string | null
           url: string | null
           user_agent: string | null
@@ -1912,6 +1915,9 @@ export type Database = {
           id?: string
           level?: string
           message: string
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
           stack?: string | null
           url?: string | null
           user_agent?: string | null
@@ -1923,6 +1929,9 @@ export type Database = {
           id?: string
           level?: string
           message?: string
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
           stack?: string | null
           url?: string | null
           user_agent?: string | null
@@ -6679,6 +6688,22 @@ export type Database = {
           severity: string
         }[]
       }
+      admin_get_recent_errors: {
+        Args: { _limit?: number; _only_unresolved?: boolean }
+        Returns: {
+          context: Json
+          created_at: string
+          id: string
+          level: string
+          message: string
+          resolved_at: string
+          resolved_by: string
+          stack: string
+          url: string
+          user_agent: string
+          user_id: string
+        }[]
+      }
       admin_get_trust_v2_stats: { Args: never; Returns: Json }
       admin_get_user_email: { Args: { _user_id: string }; Returns: string }
       admin_list_beta_invites: {
@@ -6759,6 +6784,10 @@ export type Database = {
             }
             Returns: Json
           }
+      admin_resolve_errors: {
+        Args: { _ids: string[]; _note?: string }
+        Returns: number
+      }
       admin_resolve_package:
         | {
             Args: { _action: string; _purchase_id: string; _reason?: string }
@@ -7545,6 +7574,9 @@ export type Database = {
           id: string
           level: string
           message: string
+          resolution_note: string | null
+          resolved_at: string | null
+          resolved_by: string | null
           stack: string | null
           url: string | null
           user_agent: string | null
