@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { TrendingUp, TrendingDown, Zap, Flame, ShieldCheck, Target } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,8 @@ import { ARENA_SYMBOLS, MAX_LEVERAGE, FEE_RATE, type Mode } from "@/lib/trading/
 import { applySlippage, computeSize, liquidationPrice, openFee } from "@/lib/trading/engine";
 import { sfx } from "@/lib/trading/sounds";
 import { unitForMode, fmtMoney, approxCross } from "@/lib/trading/currency";
+import { loadSymbolLeverage, saveSymbolLeverage } from "@/lib/trading/errors";
+import MarginModeDialog from "./MarginModeDialog";
 
 export interface OrderTriggers {
   /** Take-profit ROI percent (e.g. 50 means +50% ROI). */
