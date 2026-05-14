@@ -23,30 +23,31 @@ type Founding = {
 /** 1M 카운터 — get_bot_total_users RPC + 60s 폴링 + 부드러운 카운트업 */
 function useTotalUsers() {
   const [n, setN] = useState<number>(0);
+  const mountedRef = (function(){ const r = useRef(true); useEffect(()=>()=>{r.current=false;},[]); return r; })();
+  const rafRef = useRef(0);
+
+  const refresh = async () => {
+    const { data } = await supabase.rpc("get_bot_total_users" as any);
+    if (!mountedRef.current) return;
+    const target = Number(data ?? 0);
+    const start = performance.now();
+    const from = n;
+    const dur = 1200;
+    const tick = (t: number) => {
+      const p = Math.min(1, (t - start) / dur);
+      const eased = 1 - Math.pow(1 - p, 3);
+      setN(Math.floor(from + (target - from) * eased));
+      if (p < 1) rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+  };
   useEffect(() => {
-    let mounted = true;
-    let target = 0;
-    let raf = 0;
-    async function refresh() {
-      const { data } = await supabase.rpc("get_bot_total_users" as any);
-      if (!mounted) return;
-      target = Number(data ?? 0);
-      const start = performance.now();
-      const from = n;
-      const dur = 1200;
-      const tick = (t: number) => {
-        const p = Math.min(1, (t - start) / dur);
-        const eased = 1 - Math.pow(1 - p, 3);
-        setN(Math.floor(from + (target - from) * eased));
-        if (p < 1) raf = requestAnimationFrame(tick);
-      };
-      raf = requestAnimationFrame(tick);
-    }
     void refresh();
-    const id = setInterval(refresh, 60_000);
-    return () => { mounted = false; clearInterval(id); cancelAnimationFrame(raf); };
+    return () => cancelAnimationFrame(rafRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  // 60s — 탭 숨김 시 정지.
+  useVisibleInterval(() => { void refresh(); }, 60_000);
   return n;
 }
 
