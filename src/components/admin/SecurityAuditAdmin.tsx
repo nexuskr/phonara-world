@@ -186,93 +186,51 @@ export default function SecurityAuditAdmin() {
 
   // Realtime subscription with admin verification + auto-resubscribe + auth-change re-validation
   const [rtStatus, setRtStatus] = useState<"connecting" | "live" | "down">("connecting");
-  useEffect(() => {
-    let channel: ReturnType<typeof supabase.channel> | null = null;
-    let cancelled = false;
-    let retryTimer: ReturnType<typeof setTimeout> | null = null;
-    let attempts = 0;
-
-    function teardown() {
-      if (retryTimer) { clearTimeout(retryTimer); retryTimer = null; }
-      if (channel) { supabase.removeChannel(channel); channel = null; }
-    }
-
-    async function connect() {
-      teardown();
-      if (cancelled) return;
-      setRtStatus("connecting");
-      const { data: userData } = await supabase.auth.getUser();
-      const uid = userData.user?.id;
-      if (!uid) { if (!cancelled) setRtStatus("down"); return; }
-      const { data: isAdmin, error: roleErr } = await (supabase as any)
-        .rpc("has_role", { _user_id: uid, _role: "admin" });
-      if (roleErr || !isAdmin) {
-        if (!cancelled) setRtStatus("down");
-        return;
-      }
-      if (cancelled) return;
-
-      channel = supabase
-        .channel(`anomaly_events_admin_${uid}_${Date.now()}`)
-        .on("postgres_changes",
-          { event: "INSERT", schema: "public", table: "anomaly_events" },
-          (payload) => {
-            const row = payload.new as AnomalyEvent;
-            setAnomalies((prev) => {
-              if (prev.find((p) => p.id === row.id)) return prev;
-              return [row, ...prev].slice(0, 100);
-            });
-            const isHigh = row.severity === "high" || row.severity === "critical";
-            toast({
-              title: isHigh ? "🚨 심각 이상치 탐지" : "⚠ 이상치 탐지",
-              description: `${row.rule}${row.user_id ? ` · ${String(row.user_id).slice(0, 8)}…` : ""}`,
-            });
-            if (isHigh) {
-              try {
-                const Ctx = (window as any).AudioContext || (window as any).webkitAudioContext;
-                if (Ctx) {
-                  const ctx = new Ctx();
-                  const o = ctx.createOscillator(); const g = ctx.createGain();
-                  o.type = "sine"; o.frequency.value = 880; g.gain.value = 0.05;
-                  o.connect(g).connect(ctx.destination);
-                  o.start(); o.stop(ctx.currentTime + 0.2);
-                  setTimeout(() => ctx.close(), 400);
-                }
-              } catch {}
-              try { (navigator as any).vibrate?.([120, 60, 120]); } catch {}
-            }
-          })
-        .subscribe((status) => {
-          if (cancelled) return;
-          if (status === "SUBSCRIBED") { setRtStatus("live"); attempts = 0; }
-          else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
-            setRtStatus("down");
-            const backoff = Math.min(30_000, 1000 * Math.pow(2, attempts++));
-            retryTimer = setTimeout(() => { void connect(); }, backoff);
-          }
-        });
-    }
-    void connect();
-
-    // Re-verify subscription on any auth change (sign-in/out, role refresh)
-    const { data: authSub } = supabase.auth.onAuthStateChange((_event, _session) => {
-      attempts = 0;
-      void connect();
-    });
-
-    // Refresh on tab focus to recover from stale connections
-    const onFocus = () => { if (rtStatusRef.current !== "live") void connect(); };
-    window.addEventListener("focus", onFocus);
-
-    return () => {
-      cancelled = true;
-      window.removeEventListener("focus", onFocus);
-      authSub.subscription.unsubscribe();
-      teardown();
-    };
-  }, []);
   const rtStatusRef = useRef<"connecting" | "live" | "down">("connecting");
   useEffect(() => { rtStatusRef.current = rtStatus; }, [rtStatus]);
+
+  // 통합 realtime: preflight(admin 검증) + 자동 재연결 + 인증 변경 재구독 + 포커스 재개
+  useRealtimeChannel({
+    key: "anomaly_events_admin",
+    bindings: [{ event: "INSERT", table: "anomaly_events" }],
+    preflight: async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      const uid = userData.user?.id;
+      if (!uid) return false;
+      const { data: isAdmin, error } = await (supabase as any)
+        .rpc("has_role", { _user_id: uid, _role: "admin" });
+      return !error && !!isAdmin;
+    },
+    onStatus: (s: ConnState) => setRtStatus(s),
+    onEvent: (payload) => {
+      const row = (payload as any).new as AnomalyEvent;
+      setAnomalies((prev) => {
+        if (prev.find((p) => p.id === row.id)) return prev;
+        return [row, ...prev].slice(0, 100);
+      });
+      const isHigh = row.severity === "high" || row.severity === "critical";
+      toast({
+        title: isHigh ? "🚨 심각 이상치 탐지" : "⚠ 이상치 탐지",
+        description: `${row.rule}${row.user_id ? ` · ${String(row.user_id).slice(0, 8)}…` : ""}`,
+      });
+      if (isHigh) {
+        try {
+          const Ctx = (window as any).AudioContext || (window as any).webkitAudioContext;
+          if (Ctx) {
+            const ctx = new Ctx();
+            const o = ctx.createOscillator(); const g = ctx.createGain();
+            o.type = "sine"; o.frequency.value = 880; g.gain.value = 0.05;
+            o.connect(g).connect(ctx.destination);
+            o.start(); o.stop(ctx.currentTime + 0.2);
+            setTimeout(() => ctx.close(), 400);
+          }
+        } catch {}
+        try { (navigator as any).vibrate?.([120, 60, 120]); } catch {}
+      }
+    },
+    resumeOnFocus: true,
+    resumeOnAuthChange: true,
+  });
 
 
 
