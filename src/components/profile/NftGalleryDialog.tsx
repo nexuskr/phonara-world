@@ -33,6 +33,10 @@ export default function NftGalleryDialog({ open, onOpenChange, onChanged }: Prop
   const [status, setStatus] = useState<MainNftStatus | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
 
+  const [db] = useDB();
+  const isAdmin = !!db.user?.isAdmin;
+  const [adminBusy, setAdminBusy] = useState<string | null>(null);
+
   useEffect(() => { if (open) getMainNftStatus().then(setStatus); }, [open]);
 
   const cooldownActive =
@@ -40,6 +44,19 @@ export default function NftGalleryDialog({ open, onOpenChange, onChanged }: Prop
   const cooldownStr = cooldownActive
     ? new Date(status!.cooldown_until!).toLocaleString()
     : null;
+
+  async function adminPick(type: "crown"|"emperor"|"founder", level: "bronze"|"gold"|"diamond") {
+    const key = `${type}:${level}`;
+    setAdminBusy(key);
+    const res = await adminGrantSelfNft(type, level);
+    setAdminBusy(null);
+    if (!res.ok) { notify.error(res.error ?? "failed"); return; }
+    invalidateMainNftCache();
+    notify.success(`${type.toUpperCase()} ${level.toUpperCase()} 적용됨`);
+    refresh();
+    getMainNftStatus().then(setStatus);
+    onChanged?.();
+  }
 
   async function pick(nftId: string) {
     if (!status) return;
