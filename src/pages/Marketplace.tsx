@@ -258,20 +258,24 @@ export default function Marketplace() {
                   <div className="mt-2 text-base font-black tabular-nums text-amber-200">
                     {Number(l.price_phon).toLocaleString()} <span className="text-[10px] opacity-70">PHON</span>
                   </div>
-                  <Button
-                    size="sm"
-                    className="w-full mt-2 bg-amber-400 text-black font-bold hover:bg-amber-300"
-                    onClick={() => setConfirmBuy(l)}
-                  >
-                    구매
-                  </Button>
-                  <button
-                    onClick={() => cancelListing(l.id)}
-                    className="absolute top-1 right-1 p-1 rounded-full bg-background/50 hover:bg-destructive/30 text-muted-foreground hidden data-[mine=true]:block"
-                    data-mine={false}
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
+                  {l.seller_id === uid ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full mt-2"
+                      onClick={() => cancelListing(l.id)}
+                    >
+                      <X className="h-3 w-3 mr-1" /> 판매 취소
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      className="w-full mt-2 bg-amber-400 text-black font-bold hover:bg-amber-300"
+                      onClick={() => setConfirmBuy(l)}
+                    >
+                      구매
+                    </Button>
+                  )}
                 </motion.div>
               );
             })}
