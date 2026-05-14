@@ -12,7 +12,7 @@ import { useVipPass } from "@/hooks/use-vip-pass";
 import { useMyPower } from "@/hooks/use-my-power";
 import { notify } from "@/lib/notify";
 import SEOHead from "@/components/seo/SEOHead";
-import LoadingState from "@/components/ui/loading-state";
+import { LoadingCard } from "@/components/ui/loading-state";
 
 const COST_PHON = 30000;
 
