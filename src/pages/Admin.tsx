@@ -158,6 +158,7 @@ export default function Admin() {
     { id: "beta", label: "베타 코드", icon: KeyRound },
     { id: "trust_v2", label: "Trust v2 (환불·손실보호)", icon: HeartHandshake },
     { id: "founding", label: "Founding 시즌", icon: Crown },
+    { id: "kernel", label: "Kernel (v3.2)", icon: Cpu },
   ];
 
   return (
