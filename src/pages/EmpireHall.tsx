@@ -75,6 +75,11 @@ export default function EmpireHall() {
 
   return (
     <Layout>
+      <SEOHead
+        title="Empire Hall — 황제의 대전"
+        description="당신의 Empire 티어, Crown War 랭킹, Booster 상태를 한눈에. 24시간 살아있는 제국."
+        path="/empire/hall"
+      />
       <div className="relative min-h-[calc(100vh-4rem)] bg-gradient-to-b from-background via-background to-black">
         {/* Hero — 3D castle stage */}
         <div className="relative w-full" style={{ height: "min(70vh, 540px)" }}>
