@@ -1,102 +1,59 @@
-## 목표
-`/secure-auth` 로그인 페이지를 6번 레퍼런스 + 사용자 첨부 "서울 야경" 이미지를 배경으로 하는 풀스크린 다크 영화적 화면으로 리뉴얼. 좌측 = 진입(이메일/소셜 로그인 카드), 우측·배경 = 글로벌 제국 사회적 증명(LIVE FEED · TOP 5 · CROWN EXPLOSION · 신뢰 배지). 기존 백엔드 RPC만 사용 — 신규 마이그레이션 0건.
+# /secure-auth 정밀 정비 플랜
 
-## 배경 처리 (변경된 핵심)
-**사용자 첨부 서울 야경 이미지를 그대로 배경 베이스로 사용 + 6번 사진 스타일로 업그레이드.**
+## 1. 메인/서브 타이틀 교체 (SecureAuth.tsx Hero)
+- "지금, 당신이 합류할 때 / 제국은 완성됩니다" → 한 줄 메인:
+  - **메인 타이틀**: "폰 하나로 시작하는 새로운 수익 경험"
+  - **서브 타이틀**: "오늘도 전세계 사람들이 잔고를 축적하고 있습니다"
+- 메인은 `font-imperial text-gradient-gold`, 서브는 `text-foreground/85`. 모바일 28→데스크톱 56px 스케일 유지.
 
-레이어 스택(아래 → 위):
-1. `bg-[url('/auth-seoul-night.jpg')] bg-cover bg-center` — 첨부된 서울 야경 사진을 `public/auth-seoul-night.jpg`로 저장해 그대로 사용.
-2. 디밍 그라디언트 오버레이 — `bg-gradient-to-b from-background/40 via-background/70 to-background/95` (상단 살짝 비치고 하단으로 갈수록 가독성 확보).
-3. 골드 비네트 — `radial-gradient(ellipse at 70% 30%, hsl(var(--gold)/0.18), transparent 60%)` (6번 사진의 골드 무드).
-4. SVG 도트 그리드 + 가는 위경도 라인 (불투명 8%) — 6번 사진의 "데이터 시티" 느낌.
-5. 라이브 펄스 마커 — `LiveFeedPulses.tsx`(신규)가 `get_whale_strikes_24h` 결과의 country를 위경도로 매핑(`src/lib/countryLatLng.ts` 신규 ~60개국 정적 테이블)해서 화면 위에 골드/시안 ring 펄스. 신규 LIVE FEED row마다 새 펄스 1.6s 트리거. `prefers-reduced-motion` 시 정적 dot.
-6. 모바일(<md)에서는 배경 이미지 더 강하게 dim(`bg-background/85`)해서 폼 가독성 우선.
+## 2. 회원가입(Email+Password) 활성화 + 추가정보 입력 화면
+**Entry 카드 안에 탭 전환 추가**: `Magic Link` / `이메일 회원가입` / `로그인`.
+- Magic Link: 기존 그대로 (`signInWithOtp`).
+- 회원가입: `email + password(8자+) + confirm` → `supabase.auth.signUp({ email, password, options:{ emailRedirectTo:`${origin}/complete-profile` } })`. 성공 시 안내 토스트(이메일 확인 메일 발송).
+- 로그인: `signInWithPassword`.
+- 소셜 3개(Google/Apple/Kakao) 버튼 그리드는 그대로 유지.
+- **추가 정보 화면**: `src/pages/CompleteProfile.tsx` 가 이미 존재 → 그곳을 회원가입 후 진입 지점으로 사용. 라우팅은 이미 `/complete-profile` 로 redirect 중. 부족한 필드(닉네임/추천인코드/국가/마케팅 동의)가 빠져 있으면 보강. (CompleteProfile 현재 내용 먼저 확인 후 보강)
 
-three.js/3D 의존성 **추가하지 않음** — 첨부 사진 자체가 도시 스카이라인이므로 3D 글로브는 중복. 펄스만 SVG로 오버레이해서 6번 사진의 "글로벌 라이브" 효과를 더 가볍게 구현.
+## 3. LIVE FEED 국기 이미지가 안 보이는 문제
+원인: 일부 OS(특히 Windows Chromium DevTools 기기 에뮬레이션)에선 emoji 국기(`🇰🇷` 등)가 폰트가 없어 빈칸/박스로 렌더링됨. 해결:
+- `flag` 출력부를 **emoji + SVG fallback** 으로 변경.
+- `src/lib/countryFlag.ts` 신설: `flagSvgUrl(cc)` → `https://flagcdn.com/w40/{cc.toLowerCase()}.png` (캐시 가능, 외부 의존 1곳).
+- LIVE FEED / TOP5 / Map pulse 라벨에서 `<img src={flagSvgUrl(cc)} width=14 height=10 loading="lazy" decoding="async" alt="" />` 사용.
+- 기존 emoji 필드는 유지(접근성 fallback) 하지만 화면에는 SVG `<img>` 우선.
 
-## 데이터 소스 (기존 RPC만, 신규 0)
-- `get_world_domination_stats()` → 상단 KPI 4개(총 사용자 / 온라인 / 24h 거래량 / 누적 지급액). 30s 폴링 + `useCountUp` 부드럽게 변동.
-- `get_whale_strikes_24h(40)` → LIVE FEED 마키(국기 + 마스킹 닉 + 이벤트 + 금액 + "Xs ago"). 60s 폴링 + `crown_events` realtime 신규 row prepend.
-- `get_weekly_referral_leaderboard(5)` → TOP 5 EMPERORS THIS WEEK 우측 패널. 60s 폴링.
-- `crown_events`(realtime) → 24h CROWN EXPLOSION 카운터(`useCountUp`) + 신규 이벤트 시 파티클 버스트 + 배경 펄스 트리거.
+## 4. GLOBAL EMPIRE MAP 빈 화면 문제
+원인: 현재 맵은 "feed 가 새로 들어올 때만" pulse 1개를 짧게 그려서, 첫 로드 시 거의 비어 보임. 또한 실제 세계지도가 없어 도트 패턴만 깜박임.
+수정:
+- `public/world-dots.svg`(또는 inline SVG) 형식의 **실제 세계지도 도트 실루엣**을 배경으로 깔기. (간단한 점 매트릭스 SVG를 컴포넌트 내 인라인 생성 — 외부 자산 없이 ~150 도트로 대륙 윤곽).
+- 초기 마운트 시 feed 상위 6개에 대해 즉시 pulse 6개 시드 → 빈 화면 제거.
+- pulse 동시 표시 6개 유지(이미 cap), 1.6s ease-out CSS keyframe 그대로.
+- pulse 옆에 `flagSvgUrl(cc)` 미니 칩 표시(국기 + 닉 첫 6자) → 시각적 풍부함 + "어느 나라가 들어왔는가" 명확.
 
-## 화면 레이아웃
-```text
-┌──────────────────── 풀스크린 (배경: 서울야경 + 오버레이 + 라이브 펄스) ────────────────────┐
-│ TOP BAR  [PHONARA 로고]   KPI 4개(실시간 카운트업)        [Lang ▾]                       │
-│                                                                                          │
-│ ┌────────── 좌측 (5/12, md+) ──────────┐    ┌────────── 우측 (7/12) ──────────────────┐ │
-│ │ H1 "당신의 제국이 지금 시작됩니다"     │    │ ▣ LIVE FEED — 세로 무한 마키            │ │
-│ │ sub: "글로벌 12만 황제 · 실시간 가동"  │    │   🇰🇷 KIM**  Crown ×2.4  +12,400 PHON  │ │
-│ │                                       │    │   🇺🇸 JOH**  Withdraw   $48,200         │ │
-│ │ [로그인 / 회원가입 탭]                 │    │   🇯🇵 SAT**  Baron 승급                  │ │
-│ │  · 이메일 / 비밀번호                   │    │   …                                      │ │
-│ │  · Google 로그인 버튼                  │    │ ▣ TOP 5 EMPERORS THIS WEEK              │ │
-│ │  · "5초 매직링크" 보조 링크            │    │   1. 🥇 LEE**   1,240 RP                │ │
-│ │                                       │    │   2. 🥈 PAR**     980 RP                │ │
-│ │ ─ 신뢰 배지 6칩 (강화)                │    │ ▣ CROWN EXPLOSION COUNTER ×N           │ │
-│ │   100% Anonymous · AAL2 · KYC-Free   │    │   (24h 누적 + 폭발 파티클)              │ │
-│ │   AES-256 · 24/7 Ops · Bank-grade    │    │                                          │ │
-│ │                                       │    │                                          │ │
-│ │ ── 폼 하단 한 줄 ─────────────────── │    │                                          │ │
-│ │ "PHONARA EMPIRE는 만 19세 이상       │    │                                          │ │
-│ │  성인만 이용 가능한 서비스입니다."    │    │                                          │ │
-│ └───────────────────────────────────────┘    └──────────────────────────────────────────┘
-│                                                                                          │
-│ BOTTOM 마키: Crown War · NFT Atelier · AI Coach · Galaxy Auction · Empire Booster · ... │
-└──────────────────────────────────────────────────────────────────────────────────────────┘
-```
+## 5. 성능/렉 제거 (모바일 발열 0)
+현재 측정: Main thread 458ms, Scripting 648ms, 5종 setInterval(2.5s/4s/5s/30s/60s) + realtime 1ch + count-up 다중. 모바일에서 하단 카드들 끊김의 원인은 (a) 보이지 않을 때도 setInterval 이 setState 를 계속 트리거 → 전체 트리 리렌더, (b) `useCountUp` 가 카드마다 rAF 돌림.
+수정:
+- **document.hidden 가드 강화**: 이미 있음 → 유지.
+- **IntersectionObserver 가드 추가**: `useAuthLiveData()` 가 마운트된 메인 영역이 화면 밖일 때 모든 timer pause. `useInViewport` 훅 이미 존재 → 재사용.
+- **drift interval 통합**: KPI(2.5s) + feed(4s) + top5(5s) 3개 setInterval → 단일 `setInterval(1000)` tick + 카운터 모듈로 통합 (타이머 3→1).
+- **count-up 최적화**: `useCountUp` 의 rAF 를 변화량이 < 0.5% 일 때 즉시 setState 로 단축. KPI 5셀이 동시에 rAF 5개 돌리는 것을 방지.
+- **AuthLiveFeedTicker** 의 marquee `animation-duration` 을 60s 그대로 두되, `feed.length===0` 또는 `prefers-reduced-motion` 시 정지(이미 있음). loop 배열 슬라이스 30→16으로 축소.
+- **AuthGlobalMap**: pulse `setTimeout` 누적 → `useRef<Map>` 으로 교체해 GC 압박 줄이고, `pulses` cap 6 유지.
+- **realtime 채널 1개** 그대로 유지.
+- 효과: setInterval 5→1, rAF 동시 5→1(공유 tick), DOM 노드 cap.
 
-## 컴포넌트 계획 (신규는 모두 `src/components/auth/`)
-1. `AuthSeoulBackdrop.tsx` — `public/auth-seoul-night.jpg` + 그라디언트 오버레이 + 골드 비네트 + 도트그리드 SVG. `<LiveFeedPulses/>` 자식으로 렌더.
-2. `LiveFeedPulses.tsx` — 부모로부터 받은 최근 LIVE FEED 이벤트의 country → 위경도 → SVG `<circle>` 펄스. framer-motion `AnimatePresence`로 1.6s 후 자연 소멸. reduced-motion fallback.
-3. `LiveFeedRail.tsx` — `get_whale_strikes_24h(40)` 60s 폴링 + `crown_events` realtime prepend, framer-motion 무한 세로 마키, 국기 이모지 + 마스킹 닉 + 이벤트 + 금액 + 상대시간(매초 갱신은 `use-now-tick` 훅 재활용). 부모(SecureAuth)에 onNewEvent 콜백을 통해 펄스 트리거.
-4. `Top5EmperorsCard.tsx` — `get_weekly_referral_leaderboard(5)` 60s 폴링.
-5. `CrownExplosionCounter.tsx` — `crown_events` realtime + `useCountUp` + 신규 시 골드 파티클 버스트(framer-motion).
-6. `LiveKpiBar.tsx` — `get_world_domination_stats()` 30s 폴링 + `useCountUp`(기존 `src/hooks/use-count-up.ts` 재사용).
-7. `TrustBadgeStrip6.tsx` — 6칩 (100% Anonymous · AAL2 Secured · 24/7 Live Ops · Bank-grade AES-256 · KYC-Free · SOC2-aligned).
+## 6. 변경/생성 파일
+- 수정: `src/pages/SecureAuth.tsx` (타이틀 + Entry 카드 탭 + 회원가입/로그인 핸들러).
+- 수정: `src/hooks/use-auth-live-data.ts` (단일 tick + IO 가드).
+- 수정: `src/components/auth/AuthLiveFeedTicker.tsx` (SVG 국기, loop 16).
+- 수정: `src/components/auth/AuthTop5Card.tsx` (SVG 국기).
+- 수정: `src/components/auth/AuthGlobalMap.tsx` (세계지도 인라인 SVG + 초기 시드 + 국기칩).
+- 수정: `src/components/auth/AuthLiveNowBar.tsx` (count-up 임계값).
+- 수정: `src/hooks/use-count-up.ts` (작은 변화 즉시 적용).
+- 신설: `src/lib/countryFlag.ts` (flagcdn URL 헬퍼).
+- (필요 시) `src/pages/CompleteProfile.tsx` 부족 필드 보강.
 
-기존 파일 수정:
-- `src/pages/SecureAuth.tsx` — 레이아웃 전면 교체. **로그인/회원가입/Google OAuth 로직과 zod 스키마는 그대로 보존**, 좌측 카드 안으로 이동. 폼 하단에 사용자가 지정한 한 줄 문구 추가.
-- `index.css` — 필요 시 `.auth-vignette`, `.auth-dotgrid` 유틸 추가(HSL 토큰만 사용).
+## 7. 백엔드/DB
+- 마이그레이션 없음. 기존 RPC 그대로.
+- Supabase Auth 의 Email/Password 는 기본 활성. 이메일 확인은 사용자 명시 요청 없으므로 기본값 유지(확인 메일 → /complete-profile 로 들어오면 추가정보 입력).
 
-`src/lib/countryLatLng.ts` (신규, 정적 ~60개국 lookup table) — 펄스 좌표 매핑.
-
-## 자산
-사용자 첨부 서울 야경 이미지를 `public/auth-seoul-night.jpg`로 저장(빌드 시 정적 서빙). 이미지가 무거울 경우 `bun add sharp`(이미 있음) 활용해 ≤300KB로 압축.
-
-## 의존성
-**신규 패키지 0건**. three/R3F 추가 안 함. framer-motion / lucide-react / supabase-js / zod 모두 기존 사용중.
-
-## 실시간 변동 매핑 (요구사항 점검)
-- ✅ KPI 4숫자 → `useCountUp` + 30s 폴링.
-- ✅ CROWN EXPLOSION 카운터 → `crown_events` realtime + `useCountUp`.
-- ✅ LIVE FEED → 60s 폴링 + realtime prepend + 매초 "Xs ago" 갱신 + 무한 마키.
-- ✅ TOP 5 RP 숫자 → 60s 폴링 + `useCountUp`.
-- ✅ 배경 글로벌 펄스 → LIVE FEED 신규 row마다 해당 국가 좌표에 ring 트리거.
-- ✅ LIVE FEED 국기 이모지 — 기존 `get_whale_strikes_24h` 응답에 country 코드가 있으므로 `🇰🇷` 등 그대로 표시. 누락 시 `🌐` 폴백.
-
-## 폼 하단 한 줄 (사용자 지정 문구)
-```
-PHONARA EMPIRE는 만 19세 이상 성인만 이용 가능한 서비스입니다.
-```
-- 위치: 로그인/회원가입 카드 폼 가장 아래, 신뢰 배지 6칩 위.
-- 스타일: `text-[11px] text-muted-foreground text-center break-keep`, `lucide-react ShieldAlert` 아이콘 좌측.
-- 기존 상단 `<AdultOnlyBanner/>`는 유지(중복 OK — 상단 경고 + 하단 안내).
-
-## 범위 외 (이번 PR에서 안 함)
-- 신규 마이그레이션 / RPC / 엣지 함수 0건.
-- `Auth.tsx` 리다이렉트 셸·라우팅 변경 없음.
-- 결제 / 관리자 페이지 / 모바일 네이티브 변경 없음.
-- 3D 글로브(R3F) 도입 안 함 — 첨부 사진이 도시 스카이라인이라 중복.
-
-## 검수 절차
-1. 빌드 통과(신규 패키지 0건 → 번들 사이즈 동일).
-2. 미인증 상태로 `/secure-auth` 진입:
-   - 서울 야경 배경 + 골드 비네트 + 도트그리드 + 라이브 펄스 노출.
-   - KPI 4개 카운트업, LIVE FEED 마키, TOP 5, CROWN EXPLOSION, 6칩 신뢰 배지, 폼 하단 19+ 문구 노출.
-   - LIVE FEED 신규 row마다 배경 좌표에 펄스 트리거.
-3. 로그인 / 회원가입 / Google OAuth 모두 정상(기존 회귀 없음).
-4. `prefers-reduced-motion` ON 시 마키 정지 + 펄스 정적 dot.
-5. 모바일(<md): 배경 더 강하게 dim, 우측 패널은 폼 아래로 스택 — 폼 가독성 우선.
-6. Lighthouse: LCP < 2.5s 유지(배경 이미지 압축 + `loading="eager" fetchpriority="high"`).
+진행해도 될까요?
