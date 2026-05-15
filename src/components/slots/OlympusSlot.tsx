@@ -159,6 +159,12 @@ export default function OlympusSlot({ theme = OLYMPUS_THEME }: { theme?: SlotThe
     if (!spinning) setDisplayBalance(rawBalance);
   }, [rawBalance, spinning]);
 
+  // Load Howler theme pack for this game (assets fall back to procedural if missing)
+  useEffect(() => {
+    const themeKey = GAME_TO_THEME[GAME_CODE];
+    if (themeKey) SoundManager.loadPack(themeKey);
+  }, [GAME_CODE]);
+
   useEffect(() => {
     if (!isReady) return;
     getDemoBalance().then((b) => {
