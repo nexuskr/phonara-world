@@ -1,18 +1,21 @@
-import CasinoLayout from "@/components/casino/CasinoLayout";
-import OlympusSlot from "@/components/slots/OlympusSlot";
+import SlotSignatureWrapper from "@/components/slots/SlotSignatureWrapper";
 import { DRAGON_THEME } from "@/components/slots/themes";
-import Disclaimer from "@/components/Disclaimer";
-import { useRequireAuth } from "@/hooks/use-require-auth";
+import DragonEmberCanvas from "@/components/slots/DragonEmberCanvas";
+import DragonPaytableSheet from "@/components/slots/DragonPaytableSheet";
+import DragonMaxWinOverlay from "@/components/celebration/DragonMaxWinOverlay";
 
 export default function DragonEmpirePage() {
-  const user = useRequireAuth();
-  if (!user) return null;
   return (
-    <CasinoLayout backTo="/casino" backLabel="슬롯 로비로">
-      <div className="container py-4 space-y-4">
-        <OlympusSlot theme={DRAGON_THEME} />
-        <Disclaimer />
-      </div>
-    </CasinoLayout>
+    <SlotSignatureWrapper
+      slotId="dragon_empire"
+      theme={DRAGON_THEME}
+      Background={DragonEmberCanvas}
+      PaytableSheet={DragonPaytableSheet}
+      MaxWinOverlay={DragonMaxWinOverlay}
+      flareColors={{ left: "rgba(239,68,68,0.20)", right: "rgba(251,191,36,0.20)" }}
+      signatureLabel="Dragon Empire · Signature"
+      accentDotColor="rgba(249,115,22,1)"
+      themeKey="dragon"
+    />
   );
 }
