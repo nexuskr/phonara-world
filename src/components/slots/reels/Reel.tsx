@@ -56,7 +56,7 @@ function ReelInner({
   return (
     <div
       className="relative overflow-hidden rounded-lg bg-black/50 border border-amber-900/40"
-      style={{ height: `${visibleHeight}px` }}
+      style={{ height: `${visibleHeight}px`, contain: "strict", contentVisibility: "auto" }}
     >
       <div
         key={seed}
