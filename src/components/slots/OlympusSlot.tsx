@@ -129,7 +129,7 @@ export default function OlympusSlot({ theme = OLYMPUS_THEME }: { theme?: SlotThe
   const [scatterCount, setScatterCount] = useState(0);
   const [showScatter, setShowScatter] = useState(false);
   const [showBonusIntro, setShowBonusIntro] = useState(false);
-  const [bonusWheel, setBonusWheel] = useState<{ mult: number } | null>(null);
+  const [bonusWheel, setBonusWheel] = useState<{ mult: number; onDone?: (winAmount: number) => void } | null>(null);
 
   // Auto-spin
   const [autoActive, setAutoActive] = useState(false);
