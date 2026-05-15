@@ -11,12 +11,38 @@ export type SpinResult = {
   balance_chips?: number;
   bonus_triggered: boolean;
   bonus_multiplier: number | null;
+  /** Which bonus mechanic to render (sticky_multi / hold88 / crash_cannon / pick_reveal / three_path / cluster_tumble / mission_trail / wheel). null when no bonus. */
+  bonus_kind?: string | null;
+  /** Deterministic seed for the bonus overlay so visuals reproduce server math. */
+  bonus_seed?: number | null;
   server_seed_hash?: string;
   server_seed?: string;
   client_seed?: string;
   nonce?: number;
   rtp_boost_pct?: number;
 };
+
+export type BuyBonusQuote = {
+  game_code: string;
+  name: string;
+  bet_phon: number;
+  buy_bonus_multiplier: number;
+  cost_phon: number;
+  max_multiplier: number;
+  bonus_kind: string;
+};
+
+export async function getBuyBonusQuote(
+  gameCode: string,
+  betPhon: number
+): Promise<BuyBonusQuote> {
+  const { data, error } = await supabase.rpc("get_slot_buy_bonus_quote" as any, {
+    _game_code: gameCode,
+    _bet_phon: betPhon,
+  });
+  if (error) throw error;
+  return data as BuyBonusQuote;
+}
 
 function genClientSeed() {
   return crypto.getRandomValues(new Uint32Array(2)).join("-");
