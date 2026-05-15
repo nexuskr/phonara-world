@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Crown, Loader2, Play, RefreshCw, ShieldCheck, Square, Zap } from "lucide-react";
+import { Crown, Loader2, Play, RefreshCw, ShieldCheck, Volume2, VolumeX, Zap } from "lucide-react";
 import { spinReal, spinDemo, getDemoBalance, claimDemoRefill, type SpinResult } from "@/lib/slots-rpc";
 import { notify } from "@/lib/notify";
 import { useDB } from "@/lib/store";
@@ -17,20 +17,28 @@ import AutoSpinControls, { type AutoSpinSettings } from "./AutoSpinControls";
 import GameInfoSheet from "./GameInfoSheet";
 import { useCurrencyPref } from "@/hooks/use-currency-pref";
 import { formatFromPhon } from "@/lib/displayCurrency";
+import { getSymbolImages, type SymbolPack } from "./symbolMap";
+import { playSlotCue, unlockSlotAudio, isSlotMuted, setSlotMuted, type SoundPack } from "@/lib/slotSound";
 
 import bgOlympus from "@/assets/slots/olympus/bg.jpg";
 import logoOlympus from "@/assets/slots/olympus/logo.png";
 
 // Theme contract — Olympus/Wizard/Dragon all flow through this single shell.
 // Engine, RPCs, mode separation are identical; only paytable (server-side)
-// + visual theme (here) differ.
+// + visual/audio theme (here) differ.
 export type SlotTheme = {
-  gameCode: string;       // matches public.slot_games.game_code
-  bg: string;             // background image
-  logo: string;           // logo PNG
-  title: string;          // human label, e.g. "Wizard 2000"
+  gameCode: string;          // matches public.slot_games.game_code
+  bg: string;                // background image
+  logo: string;              // logo PNG
+  title: string;             // human label, e.g. "Wizard 2000"
+  rtpLabel?: string;         // header subtitle e.g. "96.0%"
   volatility: "low" | "mid" | "high";
-  maxMultiplier: number;  // for UI badge (DB still authoritative)
+  maxMultiplier: number;     // for UI badge (DB still authoritative)
+  symbolPack?: SymbolPack;   // which 11-symbol art pack to use
+  soundPack?: SoundPack;     // which procedural sound pack to use
+  cardFilter?: string;       // CSS filter for shared card art (10/J/Q/K/A)
+  reelFrameClass?: string;   // tailwind class for the reel frame container
+  spinStreakClass?: string;  // tailwind class for the spinning gradient overlay
 };
 
 const OLYMPUS_THEME: SlotTheme = {
@@ -38,8 +46,12 @@ const OLYMPUS_THEME: SlotTheme = {
   bg: bgOlympus,
   logo: logoOlympus,
   title: "Olympus 1000",
+  rtpLabel: "96.0%",
   volatility: "mid",
   maxMultiplier: 1000,
+  symbolPack: "olympus",
+  soundPack: "olympus",
+  cardFilter: "none",
 };
 
 const REELS = 5;
