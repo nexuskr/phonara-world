@@ -89,13 +89,13 @@ export const GAMES: GameConfig[] = [
     maxMultiplier: 2500,
     reels: 5, rows: 3,
     symbolWeights: W_MID,
-    paytable: pt(0.7, 1.7, 3.5, 7.0),
+    paytable: pt(0.85, 2.0, 4.2, 8.5),
     scatterTrigger: 3,
     bonus: {
       kind: "pick_reveal",
-      picks: 3,
+      picks: 4,
       prizeWeights: [
-        [2, 60], [5, 35], [12, 18], [30, 8], [80, 3], [200, 1.2], ["JACKPOT", 0.25],
+        [2, 55], [5, 32], [12, 16], [30, 7], [80, 2.5], [200, 1.0], ["JACKPOT", 0.20],
       ],
       jackpotWeights: [[40, 65], [120, 25], [400, 8], [1200, 1.7], [2500, 0.3]],
       morePicksAdd: 0,
