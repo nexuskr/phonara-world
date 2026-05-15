@@ -6178,6 +6178,132 @@ export type Database = {
         }
         Relationships: []
       }
+      slot_demo_balances: {
+        Row: {
+          balance_chips: number
+          last_refill_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          balance_chips?: number
+          last_refill_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          balance_chips?: number
+          last_refill_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      slot_games: {
+        Row: {
+          active: boolean
+          buy_bonus_multiplier: number
+          created_at: string
+          game_code: string
+          id: string
+          max_bet_phon: number
+          max_multiplier: number
+          min_bet_phon: number
+          name: string
+          paylines: number
+          reels: number
+          rows: number
+          rtp: number
+          studio: string
+        }
+        Insert: {
+          active?: boolean
+          buy_bonus_multiplier?: number
+          created_at?: string
+          game_code: string
+          id?: string
+          max_bet_phon?: number
+          max_multiplier?: number
+          min_bet_phon?: number
+          name: string
+          paylines?: number
+          reels?: number
+          rows?: number
+          rtp?: number
+          studio?: string
+        }
+        Update: {
+          active?: boolean
+          buy_bonus_multiplier?: number
+          created_at?: string
+          game_code?: string
+          id?: string
+          max_bet_phon?: number
+          max_multiplier?: number
+          min_bet_phon?: number
+          name?: string
+          paylines?: number
+          reels?: number
+          rows?: number
+          rtp?: number
+          studio?: string
+        }
+        Relationships: []
+      }
+      slot_spins: {
+        Row: {
+          bet_phon: number
+          bonus_multiplier: number | null
+          bonus_triggered: boolean
+          client_seed: string
+          created_at: string
+          game_code: string
+          id: string
+          is_buy_bonus: boolean
+          nonce: number
+          payout_phon: number
+          server_seed_hash: string
+          server_seed_revealed: string
+          symbols: Json
+          user_id: string
+          win_lines: Json
+        }
+        Insert: {
+          bet_phon: number
+          bonus_multiplier?: number | null
+          bonus_triggered?: boolean
+          client_seed: string
+          created_at?: string
+          game_code: string
+          id?: string
+          is_buy_bonus?: boolean
+          nonce: number
+          payout_phon?: number
+          server_seed_hash: string
+          server_seed_revealed: string
+          symbols: Json
+          user_id: string
+          win_lines?: Json
+        }
+        Update: {
+          bet_phon?: number
+          bonus_multiplier?: number | null
+          bonus_triggered?: boolean
+          client_seed?: string
+          created_at?: string
+          game_code?: string
+          id?: string
+          is_buy_bonus?: boolean
+          nonce?: number
+          payout_phon?: number
+          server_seed_hash?: string
+          server_seed_revealed?: string
+          symbols?: Json
+          user_id?: string
+          win_lines?: Json
+        }
+        Relationships: []
+      }
       spans: {
         Row: {
           created_at: string
@@ -8259,6 +8385,20 @@ export type Database = {
       }
       _mask_nick: { Args: { _n: string }; Returns: string }
       _period_key: { Args: { _period: string }; Returns: string }
+      _slot_compute_spin: {
+        Args: {
+          _client_seed: string
+          _is_buy_bonus: boolean
+          _nonce: number
+          _rtp_boost_pct?: number
+          _server_seed: string
+        }
+        Returns: Json
+      }
+      _slot_mulberry32: {
+        Args: { _index: number; _seed: number }
+        Returns: number
+      }
       accept_dynasty_link: { Args: { _token: string }; Returns: Json }
       accrue_jackpot: { Args: { p_deposit_amount: number }; Returns: Json }
       acknowledge_anomaly: {
@@ -9197,6 +9337,7 @@ export type Database = {
           reward: number
         }[]
       }
+      claim_demo_refill: { Args: never; Returns: Json }
       claim_first_deposit_godmode: {
         Args: { _deposit_krw: number }
         Returns: {
@@ -10677,6 +10818,24 @@ export type Database = {
       spend_phon_for_crown_boost: { Args: never; Returns: Json }
       spend_phon_for_fee_discount: { Args: { _amount: number }; Returns: Json }
       spin_roulette: { Args: { _kind: string }; Returns: Json }
+      spin_slot_demo: {
+        Args: {
+          _bet_chips: number
+          _client_seed: string
+          _game_code: string
+          _is_buy_bonus?: boolean
+        }
+        Returns: Json
+      }
+      spin_slot_real: {
+        Args: {
+          _bet_phon: number
+          _client_seed: string
+          _game_code: string
+          _is_buy_bonus?: boolean
+        }
+        Returns: Json
+      }
       start_ai_bot_run: {
         Args: {
           _kind: Database["public"]["Enums"]["ai_bot_kind"]

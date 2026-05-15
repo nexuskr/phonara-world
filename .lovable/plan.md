@@ -1,59 +1,179 @@
-# /secure-auth 정밀 정비 플랜
+# Phonara Slot MVP — "Olympus 1000 by Phonara"
 
-## 1. 메인/서브 타이틀 교체 (SecureAuth.tsx Hero)
-- "지금, 당신이 합류할 때 / 제국은 완성됩니다" → 한 줄 메인:
-  - **메인 타이틀**: "폰 하나로 시작하는 새로운 수익 경험"
-  - **서브 타이틀**: "오늘도 전세계 사람들이 잔고를 축적하고 있습니다"
-- 메인은 `font-imperial text-gradient-gold`, 서브는 `text-foreground/85`. 모바일 28→데스크톱 56px 스케일 유지.
+Stake.com 스타일 체험판/실제 토글이 붙은 5릴 비디오 슬롯 1개를 자체 테마로 구현합니다. 그래픽은 AI 생성, 수학 모델은 자체 설계, RNG는 서버 검증.
 
-## 2. 회원가입(Email+Password) 활성화 + 추가정보 입력 화면
-**Entry 카드 안에 탭 전환 추가**: `Magic Link` / `이메일 회원가입` / `로그인`.
-- Magic Link: 기존 그대로 (`signInWithOtp`).
-- 회원가입: `email + password(8자+) + confirm` → `supabase.auth.signUp({ email, password, options:{ emailRedirectTo:`${origin}/complete-profile` } })`. 성공 시 안내 토스트(이메일 확인 메일 발송).
-- 로그인: `signInWithPassword`.
-- 소셜 3개(Google/Apple/Kakao) 버튼 그리드는 그대로 유지.
-- **추가 정보 화면**: `src/pages/CompleteProfile.tsx` 가 이미 존재 → 그곳을 회원가입 후 진입 지점으로 사용. 라우팅은 이미 `/complete-profile` 로 redirect 중. 부족한 필드(닉네임/추천인코드/국가/마케팅 동의)가 빠져 있으면 보강. (CompleteProfile 현재 내용 먼저 확인 후 보강)
+> **법적 안전 원칙**: Uppercut Gaming의 Zeus 1000을 픽셀 단위로 카피하지 않습니다. UI 레이아웃과 게임 흐름의 "느낌"만 차용하고, 모든 심볼/배경/사운드는 자체 제작합니다.
 
-## 3. LIVE FEED 국기 이미지가 안 보이는 문제
-원인: 일부 OS(특히 Windows Chromium DevTools 기기 에뮬레이션)에선 emoji 국기(`🇰🇷` 등)가 폰트가 없어 빈칸/박스로 렌더링됨. 해결:
-- `flag` 출력부를 **emoji + SVG fallback** 으로 변경.
-- `src/lib/countryFlag.ts` 신설: `flagSvgUrl(cc)` → `https://flagcdn.com/w40/{cc.toLowerCase()}.png` (캐시 가능, 외부 의존 1곳).
-- LIVE FEED / TOP5 / Map pulse 라벨에서 `<img src={flagSvgUrl(cc)} width=14 height=10 loading="lazy" decoding="async" alt="" />` 사용.
-- 기존 emoji 필드는 유지(접근성 fallback) 하지만 화면에는 SVG `<img>` 우선.
+---
 
-## 4. GLOBAL EMPIRE MAP 빈 화면 문제
-원인: 현재 맵은 "feed 가 새로 들어올 때만" pulse 1개를 짧게 그려서, 첫 로드 시 거의 비어 보임. 또한 실제 세계지도가 없어 도트 패턴만 깜박임.
-수정:
-- `public/world-dots.svg`(또는 inline SVG) 형식의 **실제 세계지도 도트 실루엣**을 배경으로 깔기. (간단한 점 매트릭스 SVG를 컴포넌트 내 인라인 생성 — 외부 자산 없이 ~150 도트로 대륙 윤곽).
-- 초기 마운트 시 feed 상위 6개에 대해 즉시 pulse 6개 시드 → 빈 화면 제거.
-- pulse 동시 표시 6개 유지(이미 cap), 1.6s ease-out CSS keyframe 그대로.
-- pulse 옆에 `flagSvgUrl(cc)` 미니 칩 표시(국기 + 닉 첫 6자) → 시각적 풍부함 + "어느 나라가 들어왔는가" 명확.
+## 1. 게임 사양 — "Olympus 1000 by Phonara"
 
-## 5. 성능/렉 제거 (모바일 발열 0)
-현재 측정: Main thread 458ms, Scripting 648ms, 5종 setInterval(2.5s/4s/5s/30s/60s) + realtime 1ch + count-up 다중. 모바일에서 하단 카드들 끊김의 원인은 (a) 보이지 않을 때도 setInterval 이 setState 를 계속 트리거 → 전체 트리 리렌더, (b) `useCountUp` 가 카드마다 rAF 돌림.
-수정:
-- **document.hidden 가드 강화**: 이미 있음 → 유지.
-- **IntersectionObserver 가드 추가**: `useAuthLiveData()` 가 마운트된 메인 영역이 화면 밖일 때 모든 timer pause. `useInViewport` 훅 이미 존재 → 재사용.
-- **drift interval 통합**: KPI(2.5s) + feed(4s) + top5(5s) 3개 setInterval → 단일 `setInterval(1000)` tick + 카운터 모듈로 통합 (타이머 3→1).
-- **count-up 최적화**: `useCountUp` 의 rAF 를 변화량이 < 0.5% 일 때 즉시 setState 로 단축. KPI 5셀이 동시에 rAF 5개 돌리는 것을 방지.
-- **AuthLiveFeedTicker** 의 marquee `animation-duration` 을 60s 그대로 두되, `feed.length===0` 또는 `prefers-reduced-motion` 시 정지(이미 있음). loop 배열 슬라이스 30→16으로 축소.
-- **AuthGlobalMap**: pulse `setTimeout` 누적 → `useRef<Map>` 으로 교체해 GC 압박 줄이고, `pulses` cap 6 유지.
-- **realtime 채널 1개** 그대로 유지.
-- 효과: setInterval 5→1, rAF 동시 5→1(공유 tick), DOM 노드 cap.
+- **레이아웃**: **5릴 × 3행** (MVP) — `ROWS` 상수화로 Phase 1.5에서 5×4 즉시 전환
+- **20 고정 페이라인**
+- **심볼 9종** (모두 imagegen 자체 생성):
+  - Premium 4종: 황제(Phonara crown), 여신, 황금 반지, 헬멧
+  - Low 5종: A · K · Q · J · 10 (자체 폰트)
+  - Wild: "PHONARA W" 로고
+  - Scatter/Bonus: 신전 아이콘
+- **테마**: 그리스 신전 + 오로라 배경, 황금 기둥 프레임
+- **수학 모델**:
+  - RTP 96.0% (Cosmic Emperor NFT 보유 시 +0.5%)
+  - 변동성 Medium-High
+  - 최대 배수 1,000×
+  - **Bonus Wheel 8 세그먼트**: 2× / 3× / 5× / 10× / 20× / 50× / 100× / **1000×** (극소 확률, FOMO 코어)
+  - **Buy Bonus**: MVP는 ×100 고정. 버튼 라벨은 `Buy Bonus {multiplier}×` 동적 — Phase 1.5에서 80×/100×/150× 옵션 활성화 시 코드 수정 불필요
 
-## 6. 변경/생성 파일
-- 수정: `src/pages/SecureAuth.tsx` (타이틀 + Entry 카드 탭 + 회원가입/로그인 핸들러).
-- 수정: `src/hooks/use-auth-live-data.ts` (단일 tick + IO 가드).
-- 수정: `src/components/auth/AuthLiveFeedTicker.tsx` (SVG 국기, loop 16).
-- 수정: `src/components/auth/AuthTop5Card.tsx` (SVG 국기).
-- 수정: `src/components/auth/AuthGlobalMap.tsx` (세계지도 인라인 SVG + 초기 시드 + 국기칩).
-- 수정: `src/components/auth/AuthLiveNowBar.tsx` (count-up 임계값).
-- 수정: `src/hooks/use-count-up.ts` (작은 변화 즉시 적용).
-- 신설: `src/lib/countryFlag.ts` (flagcdn URL 헬퍼).
-- (필요 시) `src/pages/CompleteProfile.tsx` 부족 필드 보강.
+---
 
-## 7. 백엔드/DB
-- 마이그레이션 없음. 기존 RPC 그대로.
-- Supabase Auth 의 Email/Password 는 기본 활성. 이메일 확인은 사용자 명시 요청 없으므로 기본값 유지(확인 메일 → /complete-profile 로 들어오면 추가정보 입력).
+## 2. 두 가지 모드 (Stake.com 방식)
 
-진행해도 될까요?
+| 모드 | 베팅 통화 | 결과 저장 | 배지 |
+|------|----------|----------|------|
+| **체험판 플레이** | 가상 칩 (10,000 무료, 1일 1회 충전) | `slot_demo_balances` | 회색 "DEMO" |
+| **실제 플레이** | PHON 토큰 (`phon_balances`) | DB `slot_spins` 전수 감사 | 골드 "REAL" |
+
+상단 우측 토글로 즉시 전환. 실제 모드에서 PHON 0이면 자동 잠금 + "충전" CTA.
+
+---
+
+## 3. 화면 구성
+
+```text
+┌─────────────────────────────────────────────────┐
+│ 시간 · Olympus 1000              PHONARA GAMING │
+├─────────────────────────────────────────────────┤
+│  ╔══════[황금 신전 프레임]══════╗                │
+│  ║                              ║                │
+│ LOGO  [ 5×3 릴 그리드 + 심볼 ]  ║   배경          │
+│  ║                              ║                │
+│  ╚══════════════════════════════╝                │
+├─────────────────────────────────────────────────┤
+│ [Buy     [ ⓘ 잔액      [베팅       [SPIN]       │
+│  Bonus    $1,866.50 ]   $5.00 ▲▼]   ⚡          │
+│  100×]                                           │
+├─────────────────────────────────────────────────┤
+│ ⛶ ▢ 📈 ↗     오직 Phonara에서   [체험판][실제]  │
+└─────────────────────────────────────────────────┘
+   Phonara Gaming · {N} 플레이 중       ♡ 팔로우
+   Olympus 1000 [VIP 2배]               🏆 1,000.00×
+```
+
+- "플레이 중 N": MVP는 **200~300 랜덤 시드**(`useMemo` + 30s마다 ±2 드리프트). Phase 2에서 Realtime presence 채널로 교체.
+
+---
+
+## 4. 기술 스택
+
+- **렌더링**: PixiJS v8 (Canvas + WebGL, 모바일 60fps)
+- **애니메이션**: `requestAnimationFrame` + `document.hidden` 가드, blur/backdrop-filter 절대 금지, idle 시 `ticker.stop()`
+- **사운드**: Howler.js (옵션, 기본 OFF)
+- **상태**: zustand (`useSlotGame`)
+- **라우트**: `/casino` (로비) + `/casino/olympus-1000`
+
+---
+
+## 5. 백엔드 (Lovable Cloud)
+
+### 새 테이블
+- `slot_games` — 메타 (코드, 이름, RTP, 최대배수, 활성)
+- `slot_spins` — 실제 플레이 전수 감사 (user_id, game_code, bet_phon, payout_phon, symbols jsonb, mode, server_seed_hash, server_seed_revealed, client_seed, nonce, created_at)
+- `slot_demo_balances` — 데모 칩 잔액 + 마지막 충전 시각
+
+### 새 RPC (SECURITY DEFINER, internal `auth.uid()` 가드, permission baseline 등록)
+- `spin_slot_real(_game_code, _bet_phon, _client_seed)` — PHON 차감 → 서버 RNG → payout 지급 → 감사 기록 → seed reveal
+  - 가드: `is_account_frozen()`, kill switch `trading_halt`, 베팅 한도, Cosmic Emperor RTP +0.5%
+- `spin_slot_demo(_game_code, _bet_chips, _client_seed)` — 동일 RNG, 데모 칩만 차감, DB 미기록
+- `claim_demo_refill()` — 잔액 < 5,000이면 10,000 충전 (1일 1회)
+
+### Provably-Fair RNG
+- 서버 Mulberry32 + crypto-secure seed
+- 스핀 전 `server_seed_hash` 공개 → 스핀 후 `server_seed` reveal → 사용자 검증 가능
+
+---
+
+## 6. UI 컴포넌트 (모두 신규)
+
+```
+src/pages/casino/
+  CasinoLobby.tsx          — 게임 목록 (현재 1개)
+  OlympusSlot.tsx          — 메인 게임 페이지
+src/components/casino/
+  SlotCanvas.tsx           — PixiJS 마운트 + ROWS 상수
+  SlotControls.tsx         — Buy Bonus / 잔액 / 베팅 / Spin
+  SlotHeader.tsx           — 시간 + 게임명 + 스튜디오
+  SlotFooter.tsx           — 줌·차트 아이콘 + 모드 토글
+  SlotGameInfo.tsx         — Phonara Gaming · 플레이중 · 팔로우
+  ModeToggle.tsx           — 체험판/실제
+  WinOverlay.tsx           — Epic Win만 (MVP), Big/Mega는 Phase 1.5
+  FreeSpinWheel.tsx        — 8 세그먼트 휠 (1000× 포함)
+  BuyBonusButton.tsx       — `Buy Bonus {multiplier}×` 동적 라벨
+src/lib/slot/
+  reels.ts                 — 릴 strip + ROWS 상수
+  paytable.ts              — 페이라인 + 배당표
+  rng.ts                   — 서버 시드 검증
+src/hooks/
+  useSlotGame.ts           — zustand
+  useFakePlayerCount.ts    — 200~300 드리프트 (Phase 2에서 realtime 교체)
+```
+
+---
+
+## 7. 자산 생성 (imagegen)
+
+**1단계 (MVP)**: 12장 모두 **standard** 생성
+- 배경 1: "그리스 신전 + 워터폴 + 오로라, 시네마틱, 가로"
+- 황금 프레임 1: 투명 PNG, 페디먼트 + 양 기둥
+- 심볼 9: 정사각 256×256, 통일된 광택
+- 로고 1: **"OLYMPUS 1000 by Phonara"** 황금 엠블럼
+
+**2단계 (QA 후)**: 마음에 안 드는 3~4개만 **premium** 재생성
+
+---
+
+## 8. Empire / NFT 시너지 (MVP)
+
+- Cosmic Emperor NFT 보유 → 실제 모드 RTP +0.5% (`spin_slot_real`이 `get_my_total_boost_pct()` 참조)
+- Phase 1.5: Bonus 트리거 +X%, Buy Bonus 가격 -10% 등 강한 부스트로 확장
+
+---
+
+## 9. 모바일 성능 가드
+
+- `backdrop-filter` 일체 금지
+- 무한 blur/glow 금지 — 정적 그라디언트만
+- PixiJS `resolution: Math.min(devicePixelRatio, 2)` 캡
+- 탭 비활성/모달 오픈 시 `ticker.stop()`
+- 릴 회전 중에만 rAF, idle 시 캔버스 freeze
+- 텍스처 스프라이트시트 1장으로 합쳐 드로우콜 최소화
+
+---
+
+## 10. 진입 경로
+
+`/dashboard`에 **"카지노" 카드** 추가 → `/casino` 로비 → `Olympus 1000` 카드 → 게임 진입
+
+---
+
+## 11. MVP에서 안 하는 것
+
+- ❌ Uppercut 에셋/사운드 직접 사용
+- ❌ 라이선스 받지 않은 슬롯 엔진
+- ❌ 5×4 업그레이드 (Phase 1.5)
+- ❌ Buy Bonus 다중 가격 노출 (Phase 1.5, UI prop은 준비)
+- ❌ Big Win / Mega Win 연출 (Phase 1.5, Epic Win만 MVP)
+- ❌ 실시간 플레이어 수 (Phase 2, MVP는 가짜 드리프트)
+- ❌ 2번째 게임 (Phase 2)
+- ❌ 실제 카지노 라이선스 (사업 결정)
+
+---
+
+## 12. 작업 순서
+
+1. DB 마이그레이션 (3 테이블 + 3 RPC + RLS + permission baseline 등록)
+2. PixiJS / Howler 설치
+3. imagegen 12개 자산 생성 (standard, ~3분)
+4. SlotCanvas 엔진 + 컨트롤 UI
+5. Practice/Real 토글 + Buy Bonus + Free Spin Wheel + Epic Win 오버레이
+6. `/casino` + `/casino/olympus-1000` 라우트 + Dashboard 카드
+7. 모바일 60fps QA (릴 / Epic Win / 모드 전환 / 휠)
+8. QA 후 자산 3~4개 premium 재생성
