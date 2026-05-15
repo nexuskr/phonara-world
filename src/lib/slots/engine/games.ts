@@ -56,9 +56,9 @@ export const GAMES: GameConfig[] = [
       kind: "hold88",
       spins: 3,
       respinReset: 3,
-      coinChance: 0.0655,
+      coinChance: 0.0648,
       coinWeights: [
-        [2, 53.5], [4, 28], [8, 12.4], [15, 4.85], [40, 1.52], [88, 0.58], ["GRAND", 0.042],
+        [2, 53.8], [4, 28], [8, 12.35], [15, 4.82], [40, 1.5], [88, 0.57], ["GRAND", 0.0355],
       ],
       grandValue: 8888,
       cells: 15,
