@@ -16,6 +16,7 @@ import BonusWheel, { snapToSegment } from "./overlays/BonusWheel";
 import BonusRouter, { type BonusKind } from "./overlays/BonusRouter";
 import AutoSpinControls, { type AutoSpinSettings } from "./AutoSpinControls";
 import GameInfoSheet from "./GameInfoSheet";
+import SpinHistorySheet from "./SpinHistorySheet";
 import { useCurrencyPref } from "@/hooks/use-currency-pref";
 import { formatFromPhon } from "@/lib/displayCurrency";
 import { getSymbolImages, type SymbolPack } from "./symbolMap";
@@ -455,6 +456,7 @@ export default function OlympusSlot({ theme = OLYMPUS_THEME }: { theme?: SlotThe
             >
               {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
             </button>
+            <SpinHistorySheet gameCode={GAME_CODE} />
             <GameInfoSheet />
           </div>
         </div>
