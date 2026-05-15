@@ -155,7 +155,7 @@ function GlobalOverlays() {
     const t = setTimeout(cb, 2500);
     return () => clearTimeout(t);
   }, []);
-  const HIDDEN = ["/guide", "/auth", "/secure-auth", "/forgot-password", "/reset-password", "/auth/callback", "/", "/unsubscribe", "/legal", "/live", "/i"];
+  const HIDDEN = ["/guide", "/auth", "/secure-auth", "/forgot-password", "/reset-password", "/auth/callback", "/", "/unsubscribe", "/legal", "/live", "/i", "/casino"];
   if (HIDDEN.some((r) => r === loc.pathname || (r !== "/" && loc.pathname.startsWith(r)))) return null;
   if (!ready) return null;
   return (

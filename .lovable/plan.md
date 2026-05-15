@@ -1,111 +1,108 @@
-## 확인 결과
+# Olympus 1000 — 트럼프×머스크급 완성 계획
 
-현재 상태는 사용자가 승인한 계획과 완전히 일치하지 않습니다.
+## 목표
+- 잔존 오류/렉 제거 (모바일 FCP 10.2s → 정상화)
+- 자동 스핀(Auto Spin) 구현
+- 잔액 실시간 반영 (스핀 직후 차감 → 당첨 시 카운트업, 손실/이득 모두)
+- Pragmatic Play / Stake.com 스타일 **스캐터 트리거 연출 → 보너스 화면 전환**
+- 게임 룰/페이테이블 인게임 패널
+- 슬롯 회전 자체를 매끄럽게 재구성 (릴 단위 감속)
 
-### 확정된 오류 원인
-- `src/lib/slots-rpc.ts`
-  - `const rpc = supabase.rpc as any` 로 메서드를 떼어 호출하고 있어 `this` 바인딩이 깨집니다.
-  - 그 결과 보충/스핀 시 내부적으로 `Cannot read properties of undefined (reading 'rest')` 가 발생합니다.
-  - 즉, 보충 실패/스핀 실패는 백엔드 자체보다 클라이언트 호출 방식 버그입니다.
+## 확인된 현재 상태
+- 백엔드는 정상: `slot_games(olympus_1000)` 정상 등록, `spin_slot_demo` / `claim_demo_refill` 살아 있음
+- 렉 1차 원인 = **에셋 과대**: logo.png 2.4MB / sym_helmet 1MB / sym_emperor 882KB / frame.png 905KB
+- 회전 미숙 = 통그리드 일괄 교체식, 릴별 감속 없음
+- 자동스핀/룰/스캐터 연출/보너스 전환/실시간 잔액 카운트업 모두 미구현
+- `/casino` 경로에서도 전역 위젯이 일부 잔존해 슬롯 집중도가 깨짐
 
-### 계획 대비 실제 어긋난 점
-- 원 계획: PixiJS 기반 슬롯 엔진
-- 실제 구현: React state + interval 기반 간이 애니메이션
-- 원 계획: `SlotCanvas`, `SlotControls`, `SlotHeader`, `SlotFooter`, `SlotGameInfo`, `ModeToggle`, `WinOverlay`, `FreeSpinWheel`, `BuyBonusButton`, `useSlotGame`, `useFakePlayerCount`
-- 실제 구현: 대부분 단일 `OlympusSlot.tsx`에 뭉쳐 있음
-- 원 계획: Bonus Wheel 8세그먼트 UI 포함
-- 실제 구현: 휠 UI 없음
-- 원 계획: `/dashboard` 에 카지노 진입 카드 추가
-- 실제 구현: 라우트/메뉴는 생겼지만 대시보드 진입 카드는 없음
-- 원 계획: 모바일 60fps QA 반영
-- 실제 구현: 슬롯 페이지에서도 전역 오버레이/위젯이 그대로 마운트되어 초기 로드가 무거움
+## 구현 계획
 
-### 렉 원인
-- 슬롯 애니메이션이 80ms interval로 전체 그리드를 계속 리렌더함
-- 슬롯 페이지가 일반 `Layout`을 그대로 써서 카지노와 무관한 전역 위젯/오버레이/실시간 영역까지 함께 로드함
-- 브라우저 측정 기준:
-  - DOMContentLoaded 약 7.3s
-  - FCP 약 9.5s
-- 즉, 렉은 슬롯 자체만의 문제가 아니라 “슬롯 + 전체 레이아웃 과적재” 문제입니다.
+### 1) 렉/오류 즉시 제거
+- 슬롯 에셋 전면 재최적화 (logo/frame/심볼 11종) — 모바일 픽셀 기준 리사이즈 + 압축
+- `/casino` 계열은 `CasinoLayout`만 마운트, 전역 오버레이/프리패치/세션성 호출 차단 강화
+- `slots-rpc` 에러 매핑 보강 (`auth_required` / `bet_invalid` / `account_frozen` / `trading_halted` 분기 명확화)
 
-### 메뉴 구조 확인
-- 기존 `Imperial Zeus`는 현재 코드 검색상 남아 있지 않습니다.
-- 별도 `슬롯` 메뉴와 하위 `슬롯 로비` / `Olympus 1000` 구조는 이미 들어가 있습니다.
+### 2) 슬롯 회전 매끄럽게 재구성
+- 릴 단위 컴포넌트로 분리, 각 릴이 **순차 감속(0.6s → 0.9s → 1.2s → 1.5s → 1.8s)** 후 정착
+- CSS `transform: translateY` + `cubic-bezier(.15,.85,.35,1)` 감속 곡선
+- 멈추는 순간 **bounce + 셰이크** + 살짝의 블러 → 클리어
+- 셀/릴 메모이제이션, prefers-reduced-motion 존중
 
-## 수정 계획
+### 3) 자동 스핀 (Auto Spin)
+- 회수 옵션: **10 / 25 / 50 / 100 / ∞**
+- 정지 조건 토글
+  - 잔액 ≤ X일 때
+  - 단일 승리 ≥ Y배일 때
+  - **보너스 트리거 시 즉시 정지** (Pragmatic 표준)
+- 진행 중 SPIN 버튼이 STOP으로 전환 + 라운드 카운터 표시
+- 연속 실패 자동 정지 (`useAutoBet` 패턴 재사용)
 
-### 1) 슬롯 오류 즉시 복구
-- `src/lib/slots-rpc.ts`
-  - 분리된 `rpc` 참조 제거
-  - 모든 호출을 `supabase.rpc(...)` 직접 호출로 교체
-  - 응답 타입/에러 매핑 정리
-- `src/components/slots/OlympusSlot.tsx`
-  - 보충/스핀 실패 메시지 세분화
-  - `auth_required`, `game_not_found`, `bet_invalid` 등 누락 케이스 추가
+### 4) 실시간 잔액 연출
+- 스핀 직후 즉시 베팅액 **차감 애니메이션** (잔액 빨간 펄스)
+- 결과 도착 시 승리액을 잔액에 **카운트업 합산** (RAF 기반, ~600ms)
+- 패배는 차감 상태 그대로 유지 + 잔액 텍스트 미세 셰이크
+- 상단 잔액과 마지막 결과 패널이 동일 소스에서 동기화
+- REAL 모드는 `phon_balances` realtime 채널 구독으로 다른 화면 변경분도 즉시 반영
 
-### 2) 슬롯 페이지를 전용 경량 레이아웃으로 분리
-- 목표: 슬롯 페이지에서 불필요한 HUD, 오버레이, 실시간 위젯, 플로팅 요소를 제거
-- 변경 방향
-  - `Layout` 재사용을 줄이거나
-  - 슬롯 전용 `CasinoLayout` / `GameShell`을 만들어 `/casino`, `/casino/olympus-1000`에 적용
-- 효과
-  - 초기 로드 단축
-  - 슬롯 화면 집중도 상승
-  - unrelated RPC/렌더 비용 제거
+### 5) Pragmatic / Stake 스타일 스캐터 → 보너스 전환 ★핵심
+- **스캐터 등장 단계**:
+  1. 스캐터 심볼이 멈출 때마다 카운트업 사운드 + 골드 글로우 펄스
+  2. 3개 도달 순간 **화면 전체 골드 플래시 + 진동(haptic) + “SCATTER!” 빅 텍스트 줌인**
+  3. 스캐터 심볼들이 화면 중앙으로 모이는 **마그넷 애니메이션** (framer-motion layoutId)
+- **보너스 인트로 오버레이** (전체 화면, ~3s):
+  - 검은 페이드 → 골드 빛줄기 스윕 → "FREE SPINS / BONUS UNLOCKED"
+  - 기둥/번개/Zeus 모티프 백드롭 (이미 있는 frame/bg 자산 재활용)
+  - 카운트다운 후 보너스 화면으로 슬라이드 전환
+- **보너스 화면** = 8세그먼트 **Bonus Wheel**
+  - 세그먼트: 2× / 3× / 5× / 10× / 20× / 50× / 100× / **1000× (희귀)**
+  - 휠 회전 → 감속 → 포인터 락 → 당첨 칸 펄스 → 승리액 카운트업
+  - 결과는 서버 `bonus_multiplier`에 정확히 정착하도록 회전각 계산
+- **종료 후**: Epic Win 오버레이로 매끄럽게 이어짐 → 잔액 카운트업
 
-### 3) 슬롯 UI를 계획한 구조로 재정렬
-- `OlympusSlot.tsx`를 분해해 원 계획 구조에 가깝게 재구성
-  - `SlotHeader`
-  - `SlotControls`
-  - `ModeToggle`
-  - `WinOverlay`
-  - `BuyBonusButton`
-  - `SlotGameInfo`
-- MVP 범위만 유지
-  - Epic Win만 유지
-  - Buy Bonus는 100x만 노출하되 prop 구조는 다중 옵션 확장 가능하게 정리
+### 6) 승리 강도별 연출 단계
+- Win < 10× : 간단한 글로우 + 라인 트레이스
+- 10× ~ 50× : **BIG WIN** 골드 카운트업
+- 50× ~ 200× : **MEGA WIN** + 코인 파티클
+- 200× 이상 : **EPIC WIN** + 화면 진동 + 풀스크린 골드 폭발
 
-### 4) 렌더링 구조 최적화
-- 릴 애니메이션 중 전체 그리드 재생성 방식 제거
-- 최소 변경 원칙
-  - reel/row 셀을 memo 처리
-  - spinning 중에는 시각 효과만 움직이고 실제 결과 반영은 마지막 1회만 적용
-  - 불필요한 `reelKey` 전체 재마운트 축소
-- `prefers-reduced-motion` 반영
-- 과한 glow/overlay 연산 정리
+### 7) 게임 룰 / 페이테이블 패널
+- 슬롯 우상단 ⓘ 아이콘 → 풀스크린 시트
+- 탭 구성:
+  - **규칙**: 5×3 / 20라인 / Wild / Scatter / Buy Bonus 100× / RTP 96%
+  - **심볼 배당표**: 11종 심볼 × 3/4/5매치 배수 (서버 payouts 배열 그대로 노출)
+  - **보너스 휠**: 8세그먼트 확률·배수표
+  - **Practice vs Real**: DEMO 무료 / REAL은 PHON / NFT 부스트 +0.5% RTP
 
-### 5) 계획 누락분 보완
-- `FreeSpinWheel` MVP UI 추가
-  - 8 세그먼트 표시
-  - 실제 당첨 multiplier와 연결
-- `useFakePlayerCount` 분리
-  - 현재 인라인 로직을 훅으로 이동
-- `/dashboard`에 카지노 진입 카드 추가
-  - `/casino`로 연결
-  - 현재 IA와 일관되게 배치
-
-### 6) 계획과 실제 구현 차이 정리
-- 승인된 계획 기준으로 “완료 / 부분완료 / 미완료”를 코드 기준 체크리스트로 정리
-- 사용자가 다시 확인할 수 있게 결과를 명확히 보고
+### 8) 구조 정리 (계획 일치화)
+- `OlympusSlot.tsx` 분해
+  - `SlotHeader` / `ReelBoard` (릴별) / `SlotControls` / `AutoSpinControls`
+  - `WinOverlay` (Big/Mega/Epic) / `ScatterTriggerOverlay` / `BonusIntroOverlay` / `BonusWheel`
+  - `BalanceTicker` (카운트업 잔액) / `GameInfoSheet`
+- 훅: `useSlotEngine`, `useAutoSpin`, `useBalanceCountUp`, `useScatterChoreography`
 
 ## 기술 상세
-- 수정 파일 후보
-  - `src/lib/slots-rpc.ts`
-  - `src/components/slots/OlympusSlot.tsx`
-  - `src/components/Layout.tsx` 또는 신규 `src/components/casino/CasinoLayout.tsx`
-  - `src/pages/Casino.tsx`
-  - `src/pages/casino/Olympus1000.tsx`
-  - `src/pages/Dashboard.tsx`
-  - 신규 보조 컴포넌트/훅 파일들
-- 백엔드 상태
-  - 슬롯 관련 RPC는 실제로 존재함
-  - 호스팅 백엔드는 정상 응답 상태
-  - 이번 핵심 오류는 프론트 호출 방식이 원인
+- 핵심 파일
+  - `src/components/slots/OlympusSlot.tsx` (분해)
+  - `src/components/slots/reels/*` (Reel, Cell)
+  - `src/components/slots/overlays/*` (Scatter/BonusIntro/Wheel/WinOverlay)
+  - `src/components/slots/BalanceTicker.tsx`
+  - `src/components/slots/GameInfoSheet.tsx`
+  - `src/hooks/use-slot-engine.ts`, `use-auto-spin.ts`, `use-balance-countup.ts`
+  - `src/lib/slots-rpc.ts` (에러 매핑 강화)
+  - `src/components/casino/CasinoLayout.tsx` (전역 위젯 차단 강화)
+  - 슬롯 에셋 12종 재압축
+- 잔액 동기화
+  - DEMO: RPC 응답의 `balance_chips` 즉시 반영 + 카운트업
+  - REAL: RPC 응답 + `phon_balances` realtime 구독으로 이중 보장
+- 스캐터/보너스 결정성
+  - 회전 결과는 항상 서버 `bonus_multiplier`에 정확히 락 — 휠 각도 = `(targetIndex × 45°) + (회전수 × 360°)` 계산 후 정착
+- 사운드/햅틱
+  - 스캐터 진입·휠 정지·Epic Win에 짧은 SFX + `navigator.vibrate` (모바일)
 
 ## 완료 기준
-- DEMO 보충 정상 동작
-- DEMO 스핀 정상 동작
-- REAL 스핀 호출 오류 제거
-- 슬롯 진입 시 초기 로드/프레임 저하 눈에 띄게 감소
-- 승인된 MVP 계획과 실제 구조 차이를 최소화
-- 대시보드 → 카지노 → Olympus 1000 진입 동선 완성
+- 슬롯 진입 FCP 정상화, 회전 60fps 체감
+- 스핀 시 잔액이 즉시 차감 → 승리 시 카운트업으로 합산되는 게 한 화면에서 보임
+- 스캐터 3개 등장 시 Pragmatic 스타일 풀스크린 인트로 → 보너스 휠 → 결과 정착 → Epic Win이 끊김 없이 이어짐
+- 자동 스핀이 보너스 트리거 시 자동 정지
+- 룰/배당표/보너스 확률이 인게임에서 확인 가능
+- 승인된 MVP 구조와 코드 분해가 일치
