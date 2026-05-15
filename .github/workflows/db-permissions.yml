@@ -26,6 +26,14 @@ jobs:
         run: node scripts/check-sim-badge.mjs
       - name: Run RLS + permission baseline tests
         run: bunx vitest run src/test/rls-integrity.test.ts src/test/db-permissions.test.ts src/test/referral-window.test.ts
+      - name: Setup Deno (for RPC drift guard)
+        uses: denoland/setup-deno@v1
+        with:
+          deno-version: v1.x
+      - name: RPC Drift Guard (client .rpc() ↔ DB pg_proc)
+        env:
+          SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+        run: deno run --allow-read --allow-net --allow-env scripts/check-rpc-drift.ts
       - name: Supabase CLI linter
         if: ${{ secrets.SUPABASE_ACCESS_TOKEN != '' }}
         env:
