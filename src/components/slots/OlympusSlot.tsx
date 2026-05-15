@@ -28,6 +28,7 @@ import { getSymbolImages, type SymbolPack } from "./symbolMap";
 import { playSlotCue, unlockSlotAudio, isSlotMuted, type SoundPack } from "@/lib/slotSound";
 import { SoundManager } from "@/lib/sound/SoundManager";
 import { GAME_TO_THEME } from "@/lib/sound/themes";
+import { WinCelebrationManager } from "@/lib/celebration/WinCelebrationManager";
 import { logSlotAnomaly } from "@/lib/slots/anomaly";
 import { haptics } from "@/lib/haptics";
 
@@ -367,6 +368,11 @@ export default function OlympusSlot({ theme = OLYMPUS_THEME }: { theme?: SlotThe
         SoundManager.playWinTier(payout, bet);
         playSlotCue(soundPack, mult >= 50 ? "bigwin" : "win");
         if (mult >= 50) haptics.bigWin(); else haptics.win();
+        // Dramatic celebration overlay (50x+ tiers: big/mega/epic/legendary)
+        WinCelebrationManager.triggerWin(mult, payout, {
+          unitLabel: balanceLabel,
+          themeKey: soundPack,
+        });
         if (tier) {
           setWinOverlay({ tier, amount: payout });
         } else {
