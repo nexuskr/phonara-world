@@ -1,18 +1,22 @@
-import CasinoLayout from "@/components/casino/CasinoLayout";
-import OlympusSlot from "@/components/slots/OlympusSlot";
+// PiratesCurse1500 — Signature Slot 셸 (in-place 교체, 라우트 영향 0).
+import SlotSignatureWrapper from "@/components/slots/SlotSignatureWrapper";
 import { PIRATE_CURSE_THEME } from "@/components/slots/themes";
-import Disclaimer from "@/components/Disclaimer";
-import { useRequireAuth } from "@/hooks/use-require-auth";
+import PirateOceanCanvas from "@/components/slots/PirateOceanCanvas";
+import PiratePaytableSheet from "@/components/slots/PiratePaytableSheet";
+import PirateMaxWinOverlay from "@/components/celebration/PirateMaxWinOverlay";
 
 export default function PiratesCurse1500Page() {
-  const user = useRequireAuth();
-  if (!user) return null;
   return (
-    <CasinoLayout backTo="/casino" backLabel="슬롯 로비로">
-      <div className="container py-4 space-y-4">
-        <OlympusSlot theme={PIRATE_CURSE_THEME} />
-        <Disclaimer />
-      </div>
-    </CasinoLayout>
+    <SlotSignatureWrapper
+      slotId="pirate_curse"
+      theme={PIRATE_CURSE_THEME}
+      Background={PirateOceanCanvas}
+      PaytableSheet={PiratePaytableSheet}
+      MaxWinOverlay={PirateMaxWinOverlay}
+      flareColors={{ left: "rgba(185,28,28,0.22)", right: "rgba(234,179,8,0.18)" }}
+      signatureLabel="Pirate's Curse · Signature"
+      accentDotColor="rgba(234,179,8,1)"
+      themeKey="pirate"
+    />
   );
 }
