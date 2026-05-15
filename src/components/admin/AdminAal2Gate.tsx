@@ -1,4 +1,4 @@
-import { ReactNode, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { useMfaLevel } from "@/hooks/use-mfa-level";
 import { useStepUp } from "@/hooks/use-step-up";
 import StepUpGate from "@/components/security/StepUpGate";
@@ -24,6 +24,10 @@ export default function AdminAal2Gate({ protectedTabs, currentTab, children }: P
   const { loading, isAal2, hasFactor } = useMfaLevel();
   const { requireStepUp, dialogProps } = useStepUp();
   const [elevated, setElevated] = useState(false);
+
+  useEffect(() => {
+    if (isAal2) setElevated(false);
+  }, [isAal2]);
 
   if (loading) return <>{children}</>;
 
