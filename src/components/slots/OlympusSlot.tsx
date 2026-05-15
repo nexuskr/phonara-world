@@ -10,6 +10,8 @@ import { useMyPower } from "@/hooks/use-my-power";
 import Reel from "./reels/Reel";
 import BalanceTicker from "./BalanceTicker";
 import WinOverlay, { classifyWin, type WinTier } from "./overlays/WinOverlay";
+import JackpotWinOverlay from "./overlays/JackpotWinOverlay";
+import { supabase } from "@/integrations/supabase/client";
 import ScatterTriggerOverlay from "./overlays/ScatterTriggerOverlay";
 import BonusIntroOverlay from "./overlays/BonusIntroOverlay";
 import BonusWheel, { snapToSegment } from "./overlays/BonusWheel";
@@ -130,6 +132,7 @@ export default function OlympusSlot({ theme = OLYMPUS_THEME }: { theme?: SlotThe
 
   const [lastResult, setLastResult] = useState<SpinResult | null>(null);
   const [winOverlay, setWinOverlay] = useState<{ tier: WinTier; amount: number } | null>(null);
+  const [jackpotWin, setJackpotWin] = useState<{ amount: number } | null>(null);
 
   // Bonus pipeline
   const [scatterCount, setScatterCount] = useState(0);
@@ -247,6 +250,37 @@ export default function OlympusSlot({ theme = OLYMPUS_THEME }: { theme?: SlotThe
       } else if (mode === "real") {
         await refreshWallet();
         refreshPower();
+
+        // Progressive jackpot roll — server decides; idempotent on spin_id.
+        // We look up our most recent spin row (RLS-scoped to caller) and pass it.
+        try {
+          const { data: latestSpin } = await supabase
+            .from("slot_spins")
+            .select("id")
+            .eq("game_code", GAME_CODE)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          if (latestSpin?.id) {
+            const { data: jp } = await supabase.rpc("try_jackpot_hit", {
+              _game_code: GAME_CODE,
+              _spin_id: latestSpin.id,
+              _bet_phon: bet,
+            });
+            const row = Array.isArray(jp) ? jp[0] : jp;
+            if (row?.hit && Number(row.amount_phon) > 0) {
+              const amt = Number(row.amount_phon);
+              setJackpotWin({ amount: amt });
+              SoundManager.playWinTier(amt, bet);
+              haptics.bigWin();
+              await refreshWallet();
+              refreshPower();
+            }
+          }
+        } catch (jpErr) {
+          // Silent — jackpot is purely additive UX, never blocks spin flow.
+          console.warn("[jackpot] roll skipped", jpErr);
+        }
       }
 
       // BONUS PIPELINE
@@ -546,6 +580,12 @@ export default function OlympusSlot({ theme = OLYMPUS_THEME }: { theme?: SlotThe
               onClose={() => setWinOverlay(null)}
             />
           )}
+          <JackpotWinOverlay
+            open={!!jackpotWin}
+            amount={jackpotWin?.amount ?? 0}
+            gameTitle={theme.title}
+            onClose={() => setJackpotWin(null)}
+          />
         </div>
 
         {/* Bet controls */}

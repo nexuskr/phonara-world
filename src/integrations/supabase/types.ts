@@ -11271,6 +11271,14 @@ export type Database = {
         }
       }
       trust_record_snapshot: { Args: never; Returns: string }
+      try_jackpot_hit: {
+        Args: { _bet_phon: number; _game_code: string; _spin_id: string }
+        Returns: {
+          amount_phon: number
+          hit: boolean
+          pool_after: number
+        }[]
+      }
       unfreeze_expired: { Args: never; Returns: Json }
       unlock_achievement: { Args: { _key: string }; Returns: Json }
       update_bot_ratio_phase: { Args: never; Returns: undefined }
