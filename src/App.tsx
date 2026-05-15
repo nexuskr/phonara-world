@@ -49,6 +49,8 @@ const Dynasty = lazy(() => import("./pages/Dynasty.tsx"));
 const Lounge = lazy(() => import("./pages/Lounge.tsx"));
 const Whales = lazy(() => import("./pages/Whales.tsx"));
 const Roulette = lazy(() => import("./pages/Roulette.tsx"));
+const CasinoLobby = lazy(() => import("./pages/Casino.tsx"));
+const Olympus1000 = lazy(() => import("./pages/casino/Olympus1000.tsx"));
 const Missions = lazy(() => import("./pages/Missions.tsx"));
 const Packages = lazy(() => import("./pages/Packages.tsx"));
 const Wallet = lazy(() => import("./pages/Wallet.tsx"));
@@ -219,6 +221,8 @@ const App = () => (
               <Route path="/lounge" element={<Lounge />} />
               <Route path="/whales" element={<Whales />} />
               <Route path="/jackpot" element={<Roulette />} />
+              <Route path="/casino" element={<CasinoLobby />} />
+              <Route path="/casino/olympus-1000" element={<Olympus1000 />} />
               {/* /wallet 는 이미 존재 */}
 
               {/* 기존 라우트 — 그대로 작동 (HubTabs 통해 통합 UX) */}

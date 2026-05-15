@@ -78,7 +78,15 @@ const GROUPS: NavGroup[] = [
     icon: TrendingUp,
     children: [
       { to: "/arena", label: "Long/Short Arena", icon: TrendingUp },
-      { to: "/roulette", label: "Imperial Zeus 슬롯", icon: Zap },
+    ],
+  },
+  {
+    id: "slots",
+    label: "슬롯",
+    icon: Zap,
+    children: [
+      { to: "/casino", label: "슬롯 로비", icon: Zap },
+      { to: "/casino/olympus-1000", label: "Olympus 1000", icon: Crown },
     ],
   },
   {
@@ -119,7 +127,7 @@ type BottomItem = { to: string; matches: string[]; icon: typeof LayoutDashboard;
 const BOTTOM_NAV: BottomItem[] = [
   { to: "/command",  matches: ["/command", "/dashboard"], icon: LayoutDashboard, label: "대시보드" },
   { to: "/arena",    matches: ["/arena"],                 icon: TrendingUp,      label: "트레이딩" },
-  { to: "/roulette", matches: ["/roulette"],              icon: Zap,             label: "슬롯", fab: true },
+  { to: "/casino",   matches: ["/casino"],                icon: Zap,             label: "슬롯", fab: true },
   { to: "/empire",   matches: ["/empire", "/packages"],   icon: Crown,           label: "광장" },
   { to: "/profile",  matches: ["/profile", "/wallet"],    icon: UserIcon,        label: "내 제국" },
 ];
