@@ -33,8 +33,6 @@ interface Props {
  * Routes the right per-game bonus cinematic. Server is still authoritative for
  * the final payout; each overlay narrates the same total via its mechanic.
  */
-export default function BonusRouter(props: Props) {
-  const { kind = "wheel", ...rest } = props;
 const KIND_CUES: Record<BonusKind, MechCue[]> = {
   wheel: [],
   sticky_multi: ["sticky_lock", "respin_start"],
