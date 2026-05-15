@@ -128,13 +128,13 @@ export const GAMES: GameConfig[] = [
     maxMultiplier: 1200,
     reels: 5, rows: 3,
     symbolWeights: W_MID,
-    paytable: pt(0.55, 1.3, 2.8, 5.6),
+    paytable: pt(0.78, 1.85, 3.9, 7.8),
     scatterTrigger: 3,
     bonus: {
       kind: "cluster_tumble",
-      spins: 6,
+      spins: 8,
       cellMultLadder: [2, 3, 5, 8, 16, 32],
-      tumbleClearMult: 0.55,
+      tumbleClearMult: 0.85,
     },
   },
   {
