@@ -41,6 +41,8 @@ export default function Particles({ density = 60, className = "" }: { density?: 
     window.addEventListener("resize", onResize);
 
     function tick(ts: number) {
+      // Pause entirely when tab is hidden — saves CPU/battery on mobile.
+      if (typeof document !== "undefined" && document.hidden) { raf = 0; return; }
       raf = requestAnimationFrame(tick);
       if (ts - last < FRAME_MS) return;
       last = ts;
@@ -49,15 +51,25 @@ export default function Particles({ density = 60, className = "" }: { density?: 
         p.x += p.vx; p.y += p.vy;
         if (p.x < 0 || p.x > w) p.vx *= -1;
         if (p.y < 0 || p.y > h) p.vy *= -1;
-        // Cheap solid fill (no gradient) — visually similar at small radii
         ctx.fillStyle = `rgba(${p.c},${p.a})`;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r * 2.2, 0, Math.PI * 2);
         ctx.fill();
       }
     }
+    const onVis = () => {
+      if (!document.hidden && !raf && !reduce) {
+        last = 0;
+        raf = requestAnimationFrame(tick);
+      }
+    };
+    document.addEventListener("visibilitychange", onVis);
     if (!reduce) raf = requestAnimationFrame(tick);
-    return () => { cancelAnimationFrame(raf); window.removeEventListener("resize", onResize); };
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", onResize);
+      document.removeEventListener("visibilitychange", onVis);
+    };
   }, [density]);
 
   return <canvas ref={ref} className={`absolute inset-0 pointer-events-none ${className}`} />;
