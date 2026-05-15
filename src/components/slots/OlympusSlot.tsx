@@ -262,6 +262,8 @@ export default function OlympusSlot({ theme = OLYMPUS_THEME }: { theme?: SlotThe
 
         const mult = bet > 0 ? payout / bet : 0;
         const tier = classifyWin(mult);
+        // Sound: bigwin for ≥50× else regular win
+        playSlotCue(soundPack, mult >= 50 ? "bigwin" : "win");
         if (tier) {
           setWinOverlay({ tier, amount: payout });
         } else {
@@ -285,7 +287,7 @@ export default function OlympusSlot({ theme = OLYMPUS_THEME }: { theme?: SlotThe
     } finally {
       setSpinning(false);
     }
-  }, [bet, mode, spinning, phonBalance, demoBalance, balanceLabel, rawBalance, hasSession]);
+  }, [bet, mode, spinning, phonBalance, demoBalance, balanceLabel, rawBalance, hasSession, soundPack, GAME_CODE]);
 
   // ref-trick to peek showBonusIntro inside async wait without re-render churn
   const showBonusIntroRefVal = useRef(false);
