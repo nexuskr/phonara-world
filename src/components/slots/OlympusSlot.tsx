@@ -18,6 +18,7 @@ import AutoSpinControls, { type AutoSpinSettings } from "./AutoSpinControls";
 import GameInfoSheet from "./GameInfoSheet";
 import SpinHistorySheet from "./SpinHistorySheet";
 import SlotLeaderboard from "./SlotLeaderboard";
+import JackpotMeter from "./JackpotMeter";
 import { useCurrencyPref } from "@/hooks/use-currency-pref";
 import { formatFromPhon } from "@/lib/displayCurrency";
 import { getSymbolImages, type SymbolPack } from "./symbolMap";
