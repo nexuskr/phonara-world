@@ -6,7 +6,7 @@ interface Props { value: number }
 export default function AuthCrownExplosionCard({ value }: Props) {
   const v = useCountUp(value, 1100);
   return (
-    <div className="relative rounded-2xl border border-gold/45 bg-gradient-to-br from-gold/15 via-background/70 to-background/85 backdrop-blur-md p-3 sm:p-4 overflow-hidden">
+    <div className="relative rounded-2xl border border-gold/45 bg-gradient-to-br from-gold/15 via-background/95 to-background/95 p-3 sm:p-4 overflow-hidden">
       <div className="flex items-center justify-between mb-2">
         <div className="inline-flex items-center gap-1.5">
           <Crown className="w-3.5 h-3.5 text-gold" />

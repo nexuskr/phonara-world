@@ -77,12 +77,19 @@ export default function CompleteProfile() {
   }
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center px-4 py-10 overflow-hidden">
+    <div className="relative min-h-screen flex items-center justify-center px-4 py-10 overflow-hidden bg-background">
       <AdultOnlyBanner className="absolute top-0 left-0 right-0 z-20" />
-      <div className="absolute inset-0 bg-grid opacity-20" />
-      <div className="absolute -top-32 -right-32 w-[520px] h-[520px] bg-accent/25 blur-3xl blob" />
+      {/* Static accent glow — no animation, no backdrop-filter (mobile perf) */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -top-32 -right-32 w-[420px] h-[420px] rounded-full opacity-30"
+        style={{ background: "radial-gradient(closest-side, hsl(var(--accent)/0.45), transparent 70%)" }}
+      />
 
-      <div className="relative w-full max-w-md glass-strong neon-border rounded-3xl p-6 sm:p-7">
+      <div
+        className="relative w-full max-w-md rounded-3xl p-6 sm:p-7 border border-border/60"
+        style={{ background: "linear-gradient(135deg, hsl(230 30% 14% / 0.96), hsl(230 30% 8% / 0.94))" }}
+      >
         <div className="flex items-center gap-2 mb-1">
           <ShieldCheck className="w-5 h-5 text-secondary" />
           <span className="text-[11px] tracking-[0.3em] text-muted-foreground font-bold">{t("tag")}</span>

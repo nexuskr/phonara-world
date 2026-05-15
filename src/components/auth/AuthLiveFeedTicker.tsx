@@ -10,7 +10,7 @@ function AuthLiveFeedTicker({ feed }: Props) {
   const loop = items.length > 0 ? [...items, ...items] : [];
 
   return (
-    <div className="relative w-full rounded-xl border border-gold/30 bg-background/70 backdrop-blur-sm overflow-hidden">
+    <div className="relative w-full rounded-xl border border-gold/30 bg-background/95 overflow-hidden">
       <style>{`
         @keyframes auth-marquee {
           from { transform: translateX(0); }

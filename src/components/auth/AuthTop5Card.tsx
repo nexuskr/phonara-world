@@ -6,7 +6,7 @@ interface Props { rows: Top5Item[] }
 
 export default function AuthTop5Card({ rows }: Props) {
   return (
-    <div className="rounded-2xl border border-gold/35 bg-background/75 backdrop-blur-md p-3 sm:p-4">
+    <div className="rounded-2xl border border-gold/35 bg-background/95 p-3 sm:p-4">
       <div className="flex items-center justify-between mb-2">
         <div className="inline-flex items-center gap-1.5">
           <Trophy className="w-3.5 h-3.5 text-gold" />

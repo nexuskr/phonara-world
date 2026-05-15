@@ -30,7 +30,7 @@ export default function AuthLiveNowBar({ kpi }: Props) {
     <div className="relative w-full">
       <div
         className="
-          relative rounded-2xl border border-gold/35 bg-background/75 backdrop-blur-md
+          relative rounded-2xl border border-gold/35 bg-background/95
           px-3 py-3 sm:px-5 sm:py-4
           shadow-[0_0_40px_-12px_hsl(var(--gold)/0.45)]
         "

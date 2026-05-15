@@ -200,18 +200,18 @@ export function useAuthLiveData() {
       if (document.hidden) return;
       tickRef.current += 1;
       const n = tickRef.current;
-      // KPI drift every 3s
+      // KPI drift every 6s (slower → fewer rAF count-up bursts)
       if (n % 3 === 0) setKpi((p) => driftKpi(p));
-      // synthetic feed every 4s
-      if (n % 4 === 0) setFeed((prev) => [syntheticFeedItem(), ...prev].slice(0, 20));
-      // top5 jitter every 5s
+      // synthetic feed every 8s
+      if (n % 4 === 0) setFeed((prev) => [syntheticFeedItem(), ...prev].slice(0, 16));
+      // top5 jitter every 10s
       if (n % 5 === 0) {
         setTop5((rows) => rows.map((r) => ({
           ...r,
           score: r.score + Math.floor(Math.random() * 4500),
         })));
       }
-    }, 1000);
+    }, 2000);
     return () => clearInterval(id);
   }, []);
 

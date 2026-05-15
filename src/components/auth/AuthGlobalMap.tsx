@@ -53,7 +53,7 @@ export default function AuthGlobalMap({ feed }: Props) {
   }, [pulses.length]);
 
   return (
-    <div className="relative rounded-2xl border border-gold/35 bg-background/75 backdrop-blur-md overflow-hidden">
+    <div className="relative rounded-2xl border border-gold/35 bg-background/95 overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-gold/20">
         <div className="inline-flex items-center gap-1.5">
