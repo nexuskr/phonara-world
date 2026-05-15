@@ -10,6 +10,8 @@ import { useMyPower } from "@/hooks/use-my-power";
 import Reel from "./reels/Reel";
 import BalanceTicker from "./BalanceTicker";
 import WinOverlay, { classifyWin, type WinTier } from "./overlays/WinOverlay";
+import JackpotWinOverlay from "./overlays/JackpotWinOverlay";
+import { supabase } from "@/integrations/supabase/client";
 import ScatterTriggerOverlay from "./overlays/ScatterTriggerOverlay";
 import BonusIntroOverlay from "./overlays/BonusIntroOverlay";
 import BonusWheel, { snapToSegment } from "./overlays/BonusWheel";
