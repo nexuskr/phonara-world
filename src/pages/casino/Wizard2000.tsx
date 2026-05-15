@@ -1,18 +1,21 @@
-import CasinoLayout from "@/components/casino/CasinoLayout";
-import OlympusSlot from "@/components/slots/OlympusSlot";
-import { WIZARD_THEME } from "@/components/slots/themes";
-import Disclaimer from "@/components/Disclaimer";
-import { useRequireAuth } from "@/hooks/use-require-auth";
+import SlotSignatureWrapper from "@/components/slots/SlotSignatureWrapper";
+import { WIZARD_2000_THEME } from "@/components/slots/themes";
+import WizardMagicCanvas from "@/components/slots/WizardMagicCanvas";
+import WizardPaytableSheet from "@/components/slots/WizardPaytableSheet";
+import WizardMaxWinOverlay from "@/components/celebration/WizardMaxWinOverlay";
 
 export default function Wizard2000Page() {
-  const user = useRequireAuth();
-  if (!user) return null;
   return (
-    <CasinoLayout backTo="/casino" backLabel="슬롯 로비로">
-      <div className="container py-4 space-y-4">
-        <OlympusSlot theme={WIZARD_THEME} />
-        <Disclaimer />
-      </div>
-    </CasinoLayout>
+    <SlotSignatureWrapper
+      slotId="wizard_2000"
+      theme={WIZARD_2000_THEME}
+      Background={WizardMagicCanvas}
+      PaytableSheet={WizardPaytableSheet}
+      MaxWinOverlay={WizardMaxWinOverlay}
+      flareColors={{ left: "rgba(139,92,246,0.20)", right: "rgba(251,191,36,0.18)" }}
+      signatureLabel="Wizard 2000 · Signature"
+      accentDotColor="rgba(139,92,246,1)"
+      themeKey="wizard"
+    />
   );
 }
