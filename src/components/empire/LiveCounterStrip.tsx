@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Crown, Flame, Globe2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { SimChip } from "@/components/sim/SimChip";
+import { useReducedMotionPref } from "@/lib/app-settings";
 
 type Pulse = {
   live_users: number;
@@ -27,6 +28,7 @@ function fmtKRW(n: number) {
 }
 
 export default function LiveCounterStrip() {
+  const reduce = useReducedMotionPref();
   const [pulse, setPulse] = useState<Pulse | null>(null);
   const displayedRef = useRef<{ users: number; wd: number }>({ users: 0, wd: 0 });
   const [users, setUsers] = useState(0);
@@ -97,7 +99,7 @@ export default function LiveCounterStrip() {
       <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
         <SimChip />
         <div className="flex items-center gap-2 min-w-0">
-          <Crown className="w-4 h-4 text-sim-gold animate-pulse" />
+          <Crown className={`w-4 h-4 text-sim-gold ${reduce ? "" : "animate-pulse"}`} />
           <span className="font-black tabular-nums text-foreground text-base sm:text-lg">
             {users.toLocaleString("ko-KR")}
           </span>
@@ -119,10 +121,10 @@ export default function LiveCounterStrip() {
           <AnimatePresence mode="wait">
             <motion.span
               key={lineIdx}
-              initial={{ y: 16, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: -16, opacity: 0 }}
-              transition={{ duration: 0.35 }}
+              initial={reduce ? { opacity: 0 } : { y: 16, opacity: 0 }}
+              animate={reduce ? { opacity: 1 } : { y: 0, opacity: 1 }}
+              exit={reduce ? { opacity: 0 } : { y: -16, opacity: 0 }}
+              transition={{ duration: reduce ? 0.15 : 0.35 }}
               className="block text-[11px] sm:text-xs font-bold tracking-wider uppercase text-sim-gold"
             >
               ⚡ {TRUMP_LINES[lineIdx]}
