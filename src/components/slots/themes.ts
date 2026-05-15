@@ -123,6 +123,9 @@ export const WIZARD_THEME: SlotTheme = {
   bgOverlay: SHEER_OVERLAY, reelPattern: WIZARD_PATTERN,
 };
 
+// Alias — Signature Slot 생산라인 네이밍 컨벤션 (cosmic_forge_5000, neon_tokyo_88 …)
+export const WIZARD_2000_THEME = WIZARD_THEME;
+
 export const DRAGON_THEME: SlotTheme = {
   gameCode: "dragon_500",
   bg: bgDragon, logo: logoDragon, title: "Dragon Empire",
