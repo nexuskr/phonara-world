@@ -374,15 +374,15 @@ export default function OlympusSlot({ theme = OLYMPUS_THEME }: { theme?: SlotThe
           <div className="flex items-center gap-3">
             <img
               src={logoImage}
-              alt="Olympus 1000"
+              alt={theme.title}
               className="h-12 sm:h-14 w-auto drop-shadow-[0_0_18px_rgba(255,200,80,0.5)]"
             />
             <div>
               <div className="font-imperial text-base sm:text-lg text-gradient-imperial tracking-[0.2em] leading-none">
-                OLYMPUS 1000
+                {titleText}
               </div>
               <div className="text-[10px] text-muted-foreground tracking-[0.25em] mt-1">
-                BY PHONARA · RTP 96.0% · MAX 1000×
+                BY PHONARA · RTP {rtpLabel} · MAX {theme.maxMultiplier.toLocaleString()}×
               </div>
             </div>
           </div>
