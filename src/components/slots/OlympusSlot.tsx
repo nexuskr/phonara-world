@@ -53,7 +53,8 @@ function describeError(msg: string) {
 export default function OlympusSlot() {
   const [db] = useDB();
   const { hasSession, isReady } = useAuthReady();
-  const phonBalance = (db.user as any)?.phon_balance ?? 0;
+  const { phon: phonFromPower, refresh: refreshPower } = useMyPower();
+  const phonBalance = phonFromPower ?? (db.user as any)?.phon_balance ?? 0;
 
   const [mode, setMode] = useState<Mode>("demo");
   const [bet, setBet] = useState(10);
