@@ -67,7 +67,7 @@ export default function SpinHistorySheet({ gameCode }: { gameCode: string }) {
       notify.success("Provably Fair 검증 통과", { description: "서버 시드 해시 = 공개 시드의 SHA-256" });
     } else {
       setVerdicts((m) => ({ ...m, [row.id]: "bad" }));
-      notify.error("검증 실패", { description: v.reason });
+      notify.error("검증 실패", { description: (v as { reason: string }).reason });
     }
   };
 
