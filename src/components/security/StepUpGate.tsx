@@ -33,6 +33,13 @@ export default function StepUpGate({ open, scope = "민감 작업", onClose, onV
   const [emailSentAt, setEmailSentAt] = useState<number | null>(null);
   const [secondsLeft, setSecondsLeft] = useState(0);
 
+  async function finalizeStepUpSuccess(message: string) {
+    await supabase.auth.refreshSession();
+    window.dispatchEvent(new CustomEvent("phonara:mfa-verified"));
+    notify.success(message);
+    onVerified();
+  }
+
   useEffect(() => {
     if (!open) {
       setCode("");
@@ -74,11 +81,8 @@ export default function StepUpGate({ open, scope = "민감 작업", onClose, onV
       if (chErr) throw chErr;
       const { error } = await supabase.auth.mfa.verify({ factorId, challengeId: ch.id, code });
       if (error) throw error;
-      notify.success("강력 인증 완료");
       setCode("");
-      window.dispatchEvent(new CustomEvent("phonara:mfa-verified"));
-      onVerified();
-      void supabase.auth.refreshSession().catch(() => undefined);
+      await finalizeStepUpSuccess("강력 인증 완료");
     } catch (e: any) {
       notify.error("인증 실패", { description: e?.message });
     } finally {
@@ -109,8 +113,8 @@ export default function StepUpGate({ open, scope = "민감 작업", onClose, onV
     try {
       const { error } = await supabase.rpc("verify_withdraw_otp" as any, { _code: code });
       if (error) throw error;
-      notify.success("본인확인 완료");
-      onVerified();
+      setCode("");
+      await finalizeStepUpSuccess("본인확인 완료");
     } catch (e: any) {
       const map: Record<string, string> = {
         invalid_code: "코드가 일치하지 않습니다.",
