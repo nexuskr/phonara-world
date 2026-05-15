@@ -32,14 +32,14 @@ export const GAMES: GameConfig[] = [
     maxMultiplier: 5000,
     reels: 5, rows: 3,
     symbolWeights: W_HIGH,
-    paytable: pt(0.62, 1.55, 3.10, 6.20),
+    paytable: pt(0.665, 1.66, 3.32, 6.65),
     scatterTrigger: 3,
     bonus: {
       kind: "sticky_multi",
-      spins: 12,
-      multWeights: [[2, 48], [3, 28], [5, 14], [10, 7], [25, 2.5], [100, 0.5]],
-      collectChance: 0.40,
-      maxCells: 12,
+      spins: 13,
+      multWeights: [[2, 47.5], [3, 28], [5, 14.9], [10, 7.2], [25, 2.4], [100, 0.50]],
+      collectChance: 0.42,
+      maxCells: 13,
     },
   },
   {
@@ -50,15 +50,15 @@ export const GAMES: GameConfig[] = [
     maxMultiplier: 8888,
     reels: 5, rows: 3,
     symbolWeights: W_VERY_HIGH,
-    paytable: pt(1.05, 2.70, 5.40, 10.30),
+    paytable: pt(1.14, 2.88, 5.78, 11.05),
     scatterTrigger: 3,
     bonus: {
       kind: "hold88",
       spins: 3,
       respinReset: 3,
-      coinChance: 0.054,
+      coinChance: 0.065,
       coinWeights: [
-        [2, 55], [4, 28], [8, 12], [15, 4.5], [40, 1.4], [88, 0.5], ["GRAND", 0.03],
+        [2, 53.7], [4, 28], [8, 12.4], [15, 4.83], [40, 1.51], [88, 0.575], ["GRAND", 0.040],
       ],
       grandValue: 8888,
       cells: 15,
@@ -78,7 +78,7 @@ export const GAMES: GameConfig[] = [
       kind: "crash_cannon",
       growthPerTick: 0.105,
       crashHazard: 0.012,
-      autoCashoutMult: 32.0,
+      autoCashoutMult: 28.0,
     },
   },
   {
@@ -114,7 +114,7 @@ export const GAMES: GameConfig[] = [
     bonus: {
       kind: "three_path",
       paths: [
-        { name: "Asgard", spins: 7, startMult: 7, wildBoostX: 1.8 },
+        { name: "Asgard", spins: 7, startMult: 7.6, wildBoostX: 1.85 },
         { name: "Midgard", spins: 12, startMult: 3.4, wildBoostX: 1.25 },
         { name: "Helheim", spins: 16, startMult: 1.0, wildBoostX: 0.7, xbombChance: 0.11 },
       ],
@@ -134,7 +134,7 @@ export const GAMES: GameConfig[] = [
       kind: "cluster_tumble",
       spins: 8,
       cellMultLadder: [2, 3, 5, 8, 16, 32],
-      tumbleClearMult: 0.82,
+      tumbleClearMult: 0.78,
     },
   },
   {
