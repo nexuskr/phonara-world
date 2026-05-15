@@ -72,13 +72,13 @@ export const GAMES: GameConfig[] = [
     maxMultiplier: 1500,
     reels: 5, rows: 3,
     symbolWeights: W_MID,
-    paytable: pt(1.0, 2.4, 5.0, 10.0),
+    paytable: pt(1.05, 2.5, 5.2, 10.4),
     scatterTrigger: 3,
     bonus: {
       kind: "crash_cannon",
       growthPerTick: 0.10,
-      crashHazard: 0.012,
-      autoCashoutMult: 25.0,
+      crashHazard: 0.011,
+      autoCashoutMult: 30.0,
     },
   },
   {
