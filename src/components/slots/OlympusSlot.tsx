@@ -130,6 +130,7 @@ export default function OlympusSlot({ theme = OLYMPUS_THEME }: { theme?: SlotThe
 
   const [lastResult, setLastResult] = useState<SpinResult | null>(null);
   const [winOverlay, setWinOverlay] = useState<{ tier: WinTier; amount: number } | null>(null);
+  const [jackpotWin, setJackpotWin] = useState<{ amount: number } | null>(null);
 
   // Bonus pipeline
   const [scatterCount, setScatterCount] = useState(0);
