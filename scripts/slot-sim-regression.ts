@@ -180,7 +180,7 @@ function runOne(cfg: GameConfig, rounds: number, seed: number): FullReport {
     maxDrawdown: maxDd,
     durationMs: Date.now() - t0,
     pass,
-    notes,
+    notes: allNotes,
   };
 }
 
