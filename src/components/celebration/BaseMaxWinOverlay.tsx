@@ -118,15 +118,24 @@ export default function BaseMaxWinOverlay({
       typeof window !== "undefined" &&
       window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
+    // reduced-motion 정책을 facade에 전파 — voice 채널 자동 mute 가드
+    try { soundManager.setReducedMotionMute(!!reduced); } catch { /* */ }
+
+    // BGM ducking — legendary 셀러브레이션 동안 -6dB 부드럽게
+    try { soundManager.duckBgm(-6, 400); } catch { /* */ }
+    const restoreId = window.setTimeout(() => {
+      try { soundManager.restoreBgm(400); } catch { /* */ }
+    }, Math.max(400, durationMs - 200));
+
     // Facade — 누락 키는 facade 내부 fallback이 처리
     try {
-      soundManager.play(soundKeys.primary, 1.0);
+      soundManager.play(soundKeys.primary, 1.0, { channel: "sfx" });
     } catch {
       /* */
     }
-    if (soundKeys.voice) {
+    if (soundKeys.voice && !reduced) {
       try {
-        soundManager.play(soundKeys.voice, 0.95);
+        soundManager.play(soundKeys.voice, 1.0, { channel: "voice" });
       } catch {
         /* */
       }
