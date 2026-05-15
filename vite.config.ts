@@ -54,14 +54,13 @@ export default defineConfig(({ mode }) => ({
             id.includes("/src/lib/empireConfig")
           ) return "signature-engine";
 
+          // 사운드 매니저(소스) — 7개 슬롯이 공유
+          if (id.includes("/src/lib/sounds/") || id.includes("/src/lib/sound/")) return "audio";
+
           if (!id.includes("node_modules")) return;
 
-          // Audio 라이브러리 + 사운드 매니저
-          if (
-            id.includes("howler") ||
-            id.includes("/src/lib/sounds/") ||
-            id.includes("/src/lib/sound/")
-          ) return "audio";
+          // howler — audio 청크에 함께 포함
+          if (id.includes("howler")) return "audio";
           if (id.includes("@supabase")) return "supabase";
           if (id.includes("recharts") || id.includes("d3-")) return "charts";
           if (id.includes("lightweight-charts")) return "lwcharts";
