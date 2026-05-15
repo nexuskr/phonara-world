@@ -46,7 +46,7 @@ export default function SlotLeaderboard({ gameCode }: { gameCode?: string }) {
     let alive = true;
     setRows(null);
     (async () => {
-      const { data, error } = await supabase.rpc("get_slot_leaderboard", {
+      const { data, error } = await (supabase.rpc as any)("get_slot_leaderboard", {
         _window: windowKey,
         _game_code: gameCode ?? null,
         _metric: metric,
