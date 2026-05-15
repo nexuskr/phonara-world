@@ -96,7 +96,7 @@ export function useAuthBridge() {
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       // Defer to avoid deadlock
       setTimeout(() => { if (!isOnGuide()) syncFromSession(session); }, 0);
-      if (event === "SIGNED_IN" && session?.user && !isOnGuide()) {
+      if ((event === "SIGNED_IN" || event === "TOKEN_REFRESHED") && session?.user && !isOnGuide()) {
         resetSessionCircuitBreakers();
         setTimeout(() => { if (!isOnGuide()) void registerCurrentDevice(); }, 500);
         setTimeout(() => { if (!isOnGuide()) void assignPersonaSafely(); }, 800);
