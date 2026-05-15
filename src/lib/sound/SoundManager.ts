@@ -22,6 +22,14 @@ const CHANNEL_VOLUME: Record<Channel, number> = {
   bgm: 0.35, reel: 0.45, stop: 0.55, win: 0.7, bigwin: 0.85,
   scatter: 0.7, bonus_trigger: 0.9, bonus_loop: 0.4, mech: 0.6, vo: 0.85,
 };
+// 외부(volumeStore)가 곱하는 게인 — 1.0 = 기본
+const channelGain: Record<Channel, number> = {
+  bgm: 1, reel: 1, stop: 1, win: 1, bigwin: 1,
+  scatter: 1, bonus_trigger: 1, bonus_loop: 1, mech: 1, vo: 1,
+};
+function effVol(ch: Channel) {
+  return Math.max(0, Math.min(1, CHANNEL_VOLUME[ch] * channelGain[ch]));
+}
 
 const PROC_PACK: Record<SlotThemeKey, ProcPack> = {
   olympus: "olympus", wizard: "wizard", dragon: "dragon",
