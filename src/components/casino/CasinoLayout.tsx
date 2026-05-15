@@ -2,7 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { ChevronLeft, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useDB } from "@/lib/store";
-import FreezeBanner from "./FreezeBanner";
+import FreezeBanner from "@/components/FreezeBanner";
 
 /**
  * Lightweight shell for /casino routes.
