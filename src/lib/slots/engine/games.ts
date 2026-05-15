@@ -37,8 +37,8 @@ export const GAMES: GameConfig[] = [
     bonus: {
       kind: "sticky_multi",
       spins: 13,
-      multWeights: [[2, 48], [3, 28], [5, 14.7], [10, 7.0], [25, 2.3], [100, 0.42]],
-      collectChance: 0.41,
+      multWeights: [[2, 47.5], [3, 28], [5, 14.9], [10, 7.2], [25, 2.4], [100, 0.50]],
+      collectChance: 0.42,
       maxCells: 13,
     },
   },
@@ -56,9 +56,9 @@ export const GAMES: GameConfig[] = [
       kind: "hold88",
       spins: 3,
       respinReset: 3,
-      coinChance: 0.0645,
+      coinChance: 0.0655,
       coinWeights: [
-        [2, 54], [4, 28], [8, 12.3], [15, 4.8], [40, 1.5], [88, 0.57], ["GRAND", 0.038],
+        [2, 53.5], [4, 28], [8, 12.4], [15, 4.85], [40, 1.52], [88, 0.58], ["GRAND", 0.042],
       ],
       grandValue: 8888,
       cells: 15,
