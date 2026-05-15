@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { hasVerifiedSession } from "@/lib/auth-recovery";
 
 export type SpinResult = {
   symbols: number[][]; // [row][reel] 3x5, values 0-10
@@ -43,6 +44,8 @@ export async function spinDemo(
   betChips: number,
   isBuyBonus = false
 ): Promise<SpinResult> {
+  const ok = await hasVerifiedSession();
+  if (!ok) throw new Error("auth_required");
   const { data, error } = await supabase.rpc("spin_slot_demo" as any, {
     _game_code: gameCode,
     _bet_chips: betChips,
@@ -54,6 +57,8 @@ export async function spinDemo(
 }
 
 export async function getDemoBalance(): Promise<number> {
+  const ok = await hasVerifiedSession();
+  if (!ok) return 10000;
   const { data, error } = await (supabase as any)
     .from("slot_demo_balances")
     .select("balance_chips")
@@ -63,6 +68,8 @@ export async function getDemoBalance(): Promise<number> {
 }
 
 export async function claimDemoRefill() {
+  const ok = await hasVerifiedSession();
+  if (!ok) throw new Error("auth_required");
   const { data, error } = await supabase.rpc("claim_demo_refill" as any);
   if (error) throw error;
   return data as { refilled: boolean; balance_chips: number; reason?: string };

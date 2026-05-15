@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { hasVerifiedSession } from "@/lib/auth-recovery";
 
 type Arrival = { arrived_at: string; nick: string };
 
@@ -17,8 +18,8 @@ export default function VipArrivalsTicker() {
     let mounted = true;
     async function load() {
       try {
-        const { data: sess } = await supabase.auth.getSession();
-        if (!sess.session) return;
+        const ok = await hasVerifiedSession();
+        if (!ok) return;
         const { data, error } = await supabase.rpc("get_recent_vip_arrivals", { _limit: 6 });
         if (error || !mounted) return;
         setArrivals((data as Arrival[]) ?? []);

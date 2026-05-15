@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { notify } from "@/lib/notify";
 import { shouldTripCircuit, tripCircuit, isCircuitTripped } from "@/lib/rpc-circuit";
+import { getVerifiedUser } from "@/lib/auth-recovery";
 
 const ACHIEVEMENT_RPC_DISABLED_KEY = "phonara_disable_achievement_rpc";
 
@@ -19,8 +20,7 @@ export function useAchievementWatcher(trigger?: unknown) {
       if (isCircuitTripped(ACHIEVEMENT_RPC_DISABLED_KEY)) return;
       if (typeof window !== "undefined" && window.location.pathname.startsWith("/guide")) return;
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        const user = session?.user ?? null;
+        const user = await getVerifiedUser();
         if (!user || cancelled) return;
         const { data, error } = await supabase.rpc("check_achievements", { _user_id: user.id });
         if (error || !data) {

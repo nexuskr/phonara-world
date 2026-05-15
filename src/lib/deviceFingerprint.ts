@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { getVerifiedUser } from "@/lib/auth-recovery";
 
 const STORAGE_KEY = "phonara.device.fp.v1";
 const SESSION_FLAG = "phonara.device.registered";
@@ -53,8 +54,8 @@ export async function registerCurrentDevice(): Promise<void> {
   try {
     if (sessionStorage.getItem(DISABLED_FLAG) === "1") return;
     if (sessionStorage.getItem(SESSION_FLAG) === "1") return;
-    const { data: u } = await supabase.auth.getUser();
-    if (!u.user) return;
+    const user = await getVerifiedUser();
+    if (!user) return;
     const fp = await getFingerprint();
     const { error } = await (supabase as any).rpc("register_device", {
       _fp: fp,
