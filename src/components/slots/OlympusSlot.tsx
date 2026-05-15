@@ -502,7 +502,10 @@ export default function OlympusSlot({ theme = OLYMPUS_THEME }: { theme?: SlotThe
               targetMultiplier={bonusWheel.mult}
               betAmount={bet}
               unitLabel={balanceLabel}
-              onComplete={() => setBonusWheel(null)}
+              onComplete={(winAmount: number) => {
+                bonusWheel.onDone?.(winAmount);
+                setBonusWheel(null);
+              }}
             />
           )}
           {winOverlay && (
