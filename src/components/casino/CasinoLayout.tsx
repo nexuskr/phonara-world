@@ -3,6 +3,7 @@ import { ChevronLeft, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useDB } from "@/lib/store";
 import FreezeBanner from "@/components/FreezeBanner";
+import SoundController from "@/components/sound/SoundController";
 
 /**
  * Lightweight shell for /casino routes.
@@ -59,6 +60,7 @@ export default function CasinoLayout({
           </button>
         </div>
       </header>
+      <SoundController />
       <main className="relative">{children}</main>
     </div>
   );

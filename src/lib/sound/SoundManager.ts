@@ -22,6 +22,14 @@ const CHANNEL_VOLUME: Record<Channel, number> = {
   bgm: 0.35, reel: 0.45, stop: 0.55, win: 0.7, bigwin: 0.85,
   scatter: 0.7, bonus_trigger: 0.9, bonus_loop: 0.4, mech: 0.6, vo: 0.85,
 };
+// 외부(volumeStore)가 곱하는 게인 — 1.0 = 기본
+const channelGain: Record<Channel, number> = {
+  bgm: 1, reel: 1, stop: 1, win: 1, bigwin: 1,
+  scatter: 1, bonus_trigger: 1, bonus_loop: 1, mech: 1, vo: 1,
+};
+function effVol(ch: Channel) {
+  return Math.max(0, Math.min(1, CHANNEL_VOLUME[ch] * channelGain[ch]));
+}
 
 const PROC_PACK: Record<SlotThemeKey, ProcPack> = {
   olympus: "olympus", wizard: "wizard", dragon: "dragon",
@@ -104,7 +112,7 @@ class SoundManagerImpl {
       sound.loop(true);
       sound.volume(0);
       sound.play();
-      sound.fade(0, CHANNEL_VOLUME.bgm, opts.fadeMs ?? 800);
+      sound.fade(0, effVol("bgm"), opts.fadeMs ?? 800);
       return;
     }
     // 자산 없음 → 절차 BGM
@@ -173,7 +181,7 @@ class SoundManagerImpl {
     const sound = this.cache.get(cue);
     if (sound) {
       try {
-        sound.volume(CHANNEL_VOLUME[channel]);
+        sound.volume(effVol(channel));
         sound.play();
         return;
       } catch (e) {
@@ -197,6 +205,20 @@ class SoundManagerImpl {
     Howler.volume(1);
     if (this.bgm && !this.bgm.playing()) try { this.bgm.play(); } catch { /* */ }
     else if (this.bgmIsProc && this.theme) startProcBGM(PROC_PACK[this.theme]);
+  }
+
+  /** 마스터 볼륨 (0..1). volumeStore가 단일 소스. */
+  setMasterVolume(v: number) {
+    const c = Math.max(0, Math.min(1, v));
+    try { Howler.volume(c); } catch { /* */ }
+    // BGM 재생 중이면 즉시 게인 반영
+    if (this.bgm) try { this.bgm.volume(effVol("bgm")); } catch { /* */ }
+  }
+
+  /** 채널별 게인 곱 (0..1+). */
+  setChannelVolume(channel: Channel, v: number) {
+    channelGain[channel] = Math.max(0, Math.min(1, v));
+    if (channel === "bgm" && this.bgm) try { this.bgm.volume(effVol("bgm")); } catch { /* */ }
   }
 }
 
