@@ -20,6 +20,8 @@ import { useCurrencyPref } from "@/hooks/use-currency-pref";
 import { formatFromPhon } from "@/lib/displayCurrency";
 import { getSymbolImages, type SymbolPack } from "./symbolMap";
 import { playSlotCue, unlockSlotAudio, isSlotMuted, setSlotMuted, type SoundPack } from "@/lib/slotSound";
+import { SoundManager } from "@/lib/sound/SoundManager";
+import { GAME_TO_THEME } from "@/lib/sound/themes";
 import { logSlotAnomaly } from "@/lib/slots/anomaly";
 
 import bgOlympus from "@/assets/slots/olympus/bg.jpg";
@@ -157,6 +159,12 @@ export default function OlympusSlot({ theme = OLYMPUS_THEME }: { theme?: SlotThe
     if (!spinning) setDisplayBalance(rawBalance);
   }, [rawBalance, spinning]);
 
+  // Load Howler theme pack for this game (assets fall back to procedural if missing)
+  useEffect(() => {
+    const themeKey = GAME_TO_THEME[GAME_CODE];
+    if (themeKey) SoundManager.loadPack(themeKey);
+  }, [GAME_CODE]);
+
   useEffect(() => {
     if (!isReady) return;
     getDemoBalance().then((b) => {
@@ -189,9 +197,11 @@ export default function OlympusSlot({ theme = OLYMPUS_THEME }: { theme?: SlotThe
 
     // Sound: spin start + reel-stop staccato (best-effort, never blocks gameplay)
     unlockSlotAudio();
+    SoundManager.unlock();
+    SoundManager.playReelSpin("normal");
     playSlotCue(soundPack, "spin");
     REEL_DELAYS.forEach((d, i) => {
-      setTimeout(() => playSlotCue(soundPack, "stop"), d + REEL_DURATIONS[i] - 60);
+      setTimeout(() => { SoundManager.playReelStop(); playSlotCue(soundPack, "stop"); }, d + REEL_DURATIONS[i] - 60);
     });
 
     // Immediate balance debit animation
@@ -237,11 +247,13 @@ export default function OlympusSlot({ theme = OLYMPUS_THEME }: { theme?: SlotThe
         const bonusMult = useMechanic ? result.bonus_multiplier : snapToSegment(result.bonus_multiplier);
 
         if (scatters >= 3) {
+          SoundManager.playScatter();
           setShowScatter(true);
           await new Promise((r) => setTimeout(r, 1700));
           setShowScatter(false);
         }
 
+        SoundManager.playBonusTrigger();
         setShowBonusIntro(true);
         await new Promise<void>((res) => {
           const id = setInterval(() => {
@@ -289,7 +301,8 @@ export default function OlympusSlot({ theme = OLYMPUS_THEME }: { theme?: SlotThe
 
         const mult = bet > 0 ? payout / bet : 0;
         const tier = classifyWin(mult);
-        // Sound: bigwin for ≥50× else regular win
+        // Sound: tier-aware win cue (Howler asset → procedural fallback)
+        SoundManager.playWinTier(payout, bet);
         playSlotCue(soundPack, mult >= 50 ? "bigwin" : "win");
         if (tier) {
           setWinOverlay({ tier, amount: payout });

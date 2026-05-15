@@ -128,6 +128,7 @@ export const ADMIN_NAV: AdminNavSection[] = [
       { id: "nearmiss",      name: "Near-Miss 확률",      to: "/admin/game/nearmiss",      icon: Target },
       { id: "particles",     name: "Crown 파티클 강도",   to: "/admin/game/particles",     icon: Sparkles },
       { id: "crown-trigger", name: "👑 Manual Crown",     to: "/admin/game/crown-trigger", icon: Rocket },
+      { id: "slot-sfx",      name: "🔊 슬롯 사운드 SFX",  to: "/admin/game/slot-sfx",      icon: Sparkles },
     ],
   },
   {

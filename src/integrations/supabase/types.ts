@@ -6343,6 +6343,75 @@ export type Database = {
         }
         Relationships: []
       }
+      slot_sound_assets: {
+        Row: {
+          bytes: number | null
+          created_at: string
+          cue: string
+          duration_ms: number | null
+          id: string
+          prompt: string | null
+          theme: string
+          updated_at: string
+          url: string
+          version: number
+        }
+        Insert: {
+          bytes?: number | null
+          created_at?: string
+          cue: string
+          duration_ms?: number | null
+          id?: string
+          prompt?: string | null
+          theme: string
+          updated_at?: string
+          url: string
+          version?: number
+        }
+        Update: {
+          bytes?: number | null
+          created_at?: string
+          cue?: string
+          duration_ms?: number | null
+          id?: string
+          prompt?: string | null
+          theme?: string
+          updated_at?: string
+          url?: string
+          version?: number
+        }
+        Relationships: []
+      }
+      slot_sound_gen_log: {
+        Row: {
+          created_at: string
+          cue: string
+          error: string | null
+          id: string
+          meta: Json | null
+          status: string
+          theme: string
+        }
+        Insert: {
+          created_at?: string
+          cue: string
+          error?: string | null
+          id?: string
+          meta?: Json | null
+          status: string
+          theme: string
+        }
+        Update: {
+          created_at?: string
+          cue?: string
+          error?: string | null
+          id?: string
+          meta?: Json | null
+          status?: string
+          theme?: string
+        }
+        Relationships: []
+      }
       slot_spins: {
         Row: {
           bet_phon: number
@@ -10269,6 +10338,14 @@ export type Database = {
       get_slot_buy_bonus_quote: {
         Args: { _bet_phon: number; _game_code: string }
         Returns: Json
+      }
+      get_slot_sound_pack: {
+        Args: { _theme: string }
+        Returns: {
+          cue: string
+          url: string
+          version: number
+        }[]
       }
       get_starter_trust_stats: { Args: never; Returns: Json }
       get_tier_distribution: {
