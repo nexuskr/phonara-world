@@ -12,6 +12,7 @@ import BetaFunnelPanel from "@/components/admin/BetaFunnelPanel";
 import WhaleStrikeFunnelPanel from "@/components/admin/WhaleStrikeFunnelPanel";
 import PhaseCMetricsPanel from "@/components/admin/PhaseCMetricsPanel";
 import ReactivationFunnelPanel from "@/components/admin/ReactivationFunnelPanel";
+import SlotAnomalyPanel from "@/components/admin/SlotAnomalyPanel";
 
 type Kpi = {
   mau: number;
