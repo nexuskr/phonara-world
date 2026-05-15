@@ -17,8 +17,25 @@ const SYMBOLS = [
   "PEPEUSDT","SHIB1000USDT","WIFUSDT","BONKUSDT","FLOKIUSDT",
 ];
 
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let m = 0;
+  for (let i = 0; i < a.length; i++) m |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return m === 0;
+}
+function isAuthorizedCron(req: Request): boolean {
+  const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "").trim();
+  const svc = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  return !!token && !!svc && token.length === svc.length && timingSafeEqual(token, svc);
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (!isAuthorizedCron(req)) {
+    return new Response(JSON.stringify({ error: "forbidden" }), {
+      status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
   try {
     const r = await fetch("https://api.bybit.com/v5/market/tickers?category=linear", {
