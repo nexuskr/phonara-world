@@ -13,6 +13,7 @@ import WinOverlay, { classifyWin, type WinTier } from "./overlays/WinOverlay";
 import ScatterTriggerOverlay from "./overlays/ScatterTriggerOverlay";
 import BonusIntroOverlay from "./overlays/BonusIntroOverlay";
 import BonusWheel, { snapToSegment } from "./overlays/BonusWheel";
+import BonusRouter, { type BonusKind } from "./overlays/BonusRouter";
 import AutoSpinControls, { type AutoSpinSettings } from "./AutoSpinControls";
 import GameInfoSheet from "./GameInfoSheet";
 import { useCurrencyPref } from "@/hooks/use-currency-pref";
@@ -42,6 +43,7 @@ export type SlotTheme = {
   bgOverlay?: string;        // CSS gradient layered above bg image
   bgPosition?: string;       // background-position, default "center"
   reelPattern?: string;      // CSS background pattern shown inside the reel frame
+  bonusKind?: BonusKind;     // which mechanic-specific bonus cinematic to play
 };
 
 const DEFAULT_BG_OVERLAY =
@@ -229,8 +231,9 @@ export default function OlympusSlot({ theme = OLYMPUS_THEME }: { theme?: SlotThe
 
       // BONUS PIPELINE
       if (result.bonus_triggered && result.bonus_multiplier && result.bonus_multiplier > 0) {
-        // Without payout-from-bonus we replay the cinematic, then count up
-        const bonusMult = snapToSegment(result.bonus_multiplier);
+        // For the legacy wheel we snap to its 8 segments; mechanic overlays use raw value.
+        const useMechanic = !!theme.bonusKind && theme.bonusKind !== "wheel";
+        const bonusMult = useMechanic ? result.bonus_multiplier : snapToSegment(result.bonus_multiplier);
 
         if (scatters >= 3) {
           setShowScatter(true);
@@ -240,22 +243,17 @@ export default function OlympusSlot({ theme = OLYMPUS_THEME }: { theme?: SlotThe
 
         setShowBonusIntro(true);
         await new Promise<void>((res) => {
-          // BonusIntro auto-completes after ~2.4s
           const id = setInterval(() => {
-            if (!showBonusIntroRefVal.current) {
-              clearInterval(id);
-              res();
-            }
+            if (!showBonusIntroRefVal.current) { clearInterval(id); res(); }
           }, 100);
-          // Fallback
           setTimeout(() => { clearInterval(id); res(); }, 4000);
         });
 
-        // Wheel
+        // Mechanic-specific or fallback wheel
         await new Promise<void>((res) => {
           setBonusWheel({ mult: bonusMult });
-          // BonusWheel calls onComplete after ~6.8s
-          setTimeout(res, 7200);
+          // Each overlay calls onComplete; 12s is the hard ceiling guard.
+          setTimeout(res, 12000);
         });
         setBonusWheel(null);
       }
@@ -475,7 +473,8 @@ export default function OlympusSlot({ theme = OLYMPUS_THEME }: { theme?: SlotThe
           <ScatterTriggerOverlay show={showScatter} count={scatterCount} />
           <BonusIntroOverlay show={showBonusIntro} onComplete={() => setShowBonusIntro(false)} />
           {bonusWheel && (
-            <BonusWheel
+            <BonusRouter
+              kind={theme.bonusKind ?? "wheel"}
               show={!!bonusWheel}
               targetMultiplier={bonusWheel.mult}
               betAmount={bet}
