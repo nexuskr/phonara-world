@@ -3,7 +3,7 @@
 // Engine is lazy-initialised on first user gesture (autoplay-policy safe) and
 // respects a localStorage mute toggle (`phonara:slot_mute:v1`).
 
-export type SoundPack = "olympus" | "wizard" | "dragon";
+export type SoundPack = "olympus" | "wizard" | "dragon" | "cosmic" | "neon" | "pirate" | "pharaoh" | "viking" | "aztec" | "sakura";
 export type Cue = "spin" | "stop" | "win" | "bigwin";
 
 const MUTE_KEY = "phonara:slot_mute:v1";
