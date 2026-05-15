@@ -6,6 +6,7 @@ import { useDB } from "@/lib/store";
 import { refreshWallet } from "@/lib/missions-rpc";
 import { useFakePlayerCount } from "@/hooks/use-fake-player-count";
 import { useAuthReady } from "@/hooks/use-auth-ready";
+import { useMyPower } from "@/hooks/use-my-power";
 import Reel from "./reels/Reel";
 import BalanceTicker from "./BalanceTicker";
 import WinOverlay, { classifyWin, type WinTier } from "./overlays/WinOverlay";
@@ -52,7 +53,8 @@ function describeError(msg: string) {
 export default function OlympusSlot() {
   const [db] = useDB();
   const { hasSession, isReady } = useAuthReady();
-  const phonBalance = (db.user as any)?.phon_balance ?? 0;
+  const { phon: phonFromPower, refresh: refreshPower } = useMyPower();
+  const phonBalance = phonFromPower ?? (db.user as any)?.phon_balance ?? 0;
 
   const [mode, setMode] = useState<Mode>("demo");
   const [bet, setBet] = useState(10);
@@ -162,6 +164,7 @@ export default function OlympusSlot() {
         setDemoBalance(result.balance_chips);
       } else if (mode === "real") {
         await refreshWallet();
+        refreshPower();
       }
 
       // BONUS PIPELINE
