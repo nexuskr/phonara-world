@@ -214,7 +214,7 @@ export function useAuthLiveData() {
             id: `rt-${r.id ?? Date.now()}`,
             flag, cc, nick,
             text: `Whale ${nick}님이 Crown Explosion +${amount.toLocaleString()}!`,
-            amount, kind: "crown", ts: Date.now(),
+            amount, kind: "crown" as const, ts: Date.now(),
           }, ...prev].slice(0, 24));
           setKpi((p) => ({ ...p, crown_explosion: p.crown_explosion + amount }));
         }
