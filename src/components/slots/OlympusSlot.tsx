@@ -611,6 +611,9 @@ export default function OlympusSlot({ theme = OLYMPUS_THEME }: { theme?: SlotThe
             </div>
           )}
         </div>
+
+        {/* Leaderboard — 24h/7d, 누적/최고/순이익 */}
+        <SlotLeaderboard gameCode={GAME_CODE} />
       </div>
     </div>
   );
