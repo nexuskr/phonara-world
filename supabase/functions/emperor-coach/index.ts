@@ -43,7 +43,21 @@ Deno.serve(async (req) => {
   let userId = "";
 
   if (targetUserId) {
-    // Service-mode: use payload + minimal lookup
+    // Service-mode: REQUIRE service-role bearer token to prevent anonymous
+    // briefing injection / AI credit exhaustion.
+    const auth = req.headers.get("authorization") ?? "";
+    const token = auth.replace(/^Bearer\s+/i, "").trim();
+    const tsEq = (a: string, b: string) => {
+      if (a.length !== b.length) return false;
+      let m = 0;
+      for (let i = 0; i < a.length; i++) m |= a.charCodeAt(i) ^ b.charCodeAt(i);
+      return m === 0;
+    };
+    if (!token || token.length !== SR.length || !tsEq(token, SR)) {
+      return new Response(JSON.stringify({ error: "forbidden" }), {
+        status: 403, headers: { ...corsHeaders, "content-type": "application/json" },
+      });
+    }
     userId = targetUserId;
     context = body?.context as any ?? {
       user_id: targetUserId, nickname: "Emperor", phon: 0, level: 1, crown_24h: 0, jackpot_24h: 0,
