@@ -149,6 +149,7 @@ export const COSMIC_FORGE_THEME: SlotTheme = {
   spinStreakClass:
     "pointer-events-none absolute inset-0 bg-gradient-to-b from-cyan-100/0 via-violet-300/12 to-cyan-100/0",
   bgOverlay: SHEER_OVERLAY, reelPattern: COSMIC_PATTERN,
+  bonusKind: "sticky_multi",
 };
 
 export const NEON_TOKYO_THEME: SlotTheme = {
@@ -162,6 +163,7 @@ export const NEON_TOKYO_THEME: SlotTheme = {
   spinStreakClass:
     "pointer-events-none absolute inset-0 bg-gradient-to-b from-cyan-200/0 via-pink-200/12 to-cyan-200/0",
   bgOverlay: SHEER_OVERLAY, reelPattern: NEON_PATTERN,
+  bonusKind: "hold88",
 };
 
 export const PIRATE_CURSE_THEME: SlotTheme = {
@@ -175,6 +177,7 @@ export const PIRATE_CURSE_THEME: SlotTheme = {
   spinStreakClass:
     "pointer-events-none absolute inset-0 bg-gradient-to-b from-amber-100/0 via-teal-200/10 to-amber-100/0",
   bgOverlay: SHEER_OVERLAY, reelPattern: PIRATE_PATTERN,
+  bonusKind: "crash_cannon",
 };
 
 export const PHARAOH_VAULT_THEME: SlotTheme = {
@@ -188,6 +191,7 @@ export const PHARAOH_VAULT_THEME: SlotTheme = {
   spinStreakClass:
     "pointer-events-none absolute inset-0 bg-gradient-to-b from-blue-200/0 via-amber-200/12 to-blue-200/0",
   bgOverlay: SHEER_OVERLAY, reelPattern: PHARAOH_PATTERN,
+  bonusKind: "pick_reveal",
 };
 
 export const VIKING_THUNDER_THEME: SlotTheme = {
@@ -201,6 +205,7 @@ export const VIKING_THUNDER_THEME: SlotTheme = {
   spinStreakClass:
     "pointer-events-none absolute inset-0 bg-gradient-to-b from-cyan-100/0 via-blue-200/12 to-cyan-100/0",
   bgOverlay: SHEER_OVERLAY, reelPattern: VIKING_PATTERN,
+  bonusKind: "three_path",
 };
 
 export const AZTEC_SUN_THEME: SlotTheme = {
@@ -214,6 +219,7 @@ export const AZTEC_SUN_THEME: SlotTheme = {
   spinStreakClass:
     "pointer-events-none absolute inset-0 bg-gradient-to-b from-amber-100/0 via-emerald-200/10 to-amber-100/0",
   bgOverlay: SHEER_OVERLAY, reelPattern: AZTEC_PATTERN,
+  bonusKind: "cluster_tumble",
 };
 
 export const CHERRY_SAKURA_THEME: SlotTheme = {
@@ -227,4 +233,5 @@ export const CHERRY_SAKURA_THEME: SlotTheme = {
   spinStreakClass:
     "pointer-events-none absolute inset-0 bg-gradient-to-b from-pink-100/0 via-pink-200/12 to-teal-100/0",
   bgOverlay: SHEER_OVERLAY, reelPattern: SAKURA_PATTERN,
+  bonusKind: "mission_trail",
 };
