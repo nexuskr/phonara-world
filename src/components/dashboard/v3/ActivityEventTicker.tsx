@@ -4,10 +4,10 @@
  * - realtime: bot_activity_events INSERT 구독 (있을 때만 우선)
  * - variant: "hero" (3줄 stack) / "strip" (1줄 마키)
  */
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { supabase } from "@/integrations/supabase/client";
 import { useAppSettings, tickerIntervalFor } from "@/lib/app-settings";
+import { useRealtimeChannel } from "@/hooks/use-realtime-channel";
 
 const NAMES = ["K***", "J***", "S***", "P***", "L***", "M***", "H***", "C***", "Y***", "B***", "T***", "R***", "D***", "N***", "W***"];
 const TEMPLATES: Array<(n: string) => { icon: string; text: string }> = [
@@ -53,19 +53,18 @@ export default function ActivityEventTicker({
   );
   const idRef = useRef(1_000_000);
 
+  // Client-side fallback ticker (visibility-aware, unchanged behavior).
   useEffect(() => {
     let cancelled = false;
-
-    // Resolve effective interval window
     let window_: [number, number] | null;
     if (intervalMs === "off") window_ = null;
     else if (typeof intervalMs === "number") window_ = [intervalMs, intervalMs];
     else if (Array.isArray(intervalMs)) window_ = intervalMs;
     else window_ = tickerIntervalFor(settings.tickerSpeed);
 
+    let timer = 0;
     const tick = () => {
       if (cancelled || !window_) return;
-      // Pause on background tabs.
       if (typeof document !== "undefined" && document.visibilityState === "hidden") {
         timer = window.setTimeout(tick, 2000);
         return;
@@ -75,31 +74,33 @@ export default function ActivityEventTicker({
       const next = window_[0] + Math.floor(Math.random() * (span + 1));
       timer = window.setTimeout(tick, next);
     };
-    let timer = 0;
     if (window_) timer = window.setTimeout(tick, window_[0]);
-
-    const ch = realtime
-      ? supabase
-          .channel(`ghost-feed-${Math.random().toString(36).slice(2, 8)}`)
-          .on(
-            "postgres_changes",
-            { event: "INSERT", schema: "public", table: "bot_activity_events" },
-            (payload: any) => {
-              const text: string = payload?.new?.event_text ?? "";
-              if (!text) return;
-              const icon = pickIconForType(payload?.new?.event_type);
-              setFeed((prev) => [{ id: ++idRef.current, icon, text: maskText(text) }, ...prev].slice(0, limit));
-            },
-          )
-          .subscribe()
-      : null;
-
     return () => {
       cancelled = true;
       if (timer) window.clearTimeout(timer);
-      if (ch) supabase.removeChannel(ch);
     };
-  }, [limit, intervalMs, settings.tickerSpeed, realtime]);
+  }, [limit, intervalMs, settings.tickerSpeed]);
+
+  // Realtime via unified channel — single shared subscription across all mounts
+  // (replaces previous per-mount `supabase.channel(`ghost-feed-${random}`)` which
+  // leaked a fresh channel every remount and violated the "no direct supabase.channel"
+  // project core rule).
+  const onInsert = useCallback(
+    (payload: any) => {
+      const text: string = payload?.new?.event_text ?? "";
+      if (!text) return;
+      const icon = pickIconForType(payload?.new?.event_type);
+      setFeed((prev) => [{ id: ++idRef.current, icon, text: maskText(text) }, ...prev].slice(0, limit));
+    },
+    [limit],
+  );
+
+  useRealtimeChannel({
+    key: "bot_activity_events",
+    bindings: [{ event: "INSERT", schema: "public", table: "bot_activity_events" }],
+    onEvent: onInsert,
+    enabled: realtime,
+  });
 
   if (variant === "strip") {
     return (

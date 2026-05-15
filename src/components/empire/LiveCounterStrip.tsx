@@ -58,22 +58,29 @@ export default function LiveCounterStrip() {
     };
   }, []);
 
-  // RAF interp toward target
+  // RAF interp toward target — visibility-gated + integer-delta to stop
+  // mobile battery/heat drain when banner is offscreen or tab is hidden.
   useEffect(() => {
     let raf = 0;
+    let lastUsers = -1;
+    let lastWd = -1;
     function tick() {
-      if (pulse) {
-        const cur = displayedRef.current;
-        const eu = pulse.live_users - cur.users;
-        const ew = pulse.today_withdrawals - cur.wd;
-        if (Math.abs(eu) > 0.5 || Math.abs(ew) > 0.5) {
-          cur.users += eu * 0.06;
-          cur.wd += ew * 0.06;
-          setUsers(Math.round(cur.users));
-          setWd(Math.round(cur.wd));
-        }
-      }
       raf = requestAnimationFrame(tick);
+      // Skip all work when the tab is hidden — no setState, no Math.round.
+      if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
+      if (!pulse) return;
+      const cur = displayedRef.current;
+      const eu = pulse.live_users - cur.users;
+      const ew = pulse.today_withdrawals - cur.wd;
+      // Threshold ≥1 (full integer) — sub-pixel updates produced ~30 commits/s for nothing.
+      if (Math.abs(eu) < 1 && Math.abs(ew) < 1) return;
+      cur.users += eu * 0.06;
+      cur.wd += ew * 0.06;
+      const nu = Math.round(cur.users);
+      const nw = Math.round(cur.wd);
+      // Only setState when the displayed integer actually changes.
+      if (nu !== lastUsers) { lastUsers = nu; setUsers(nu); }
+      if (nw !== lastWd) { lastWd = nw; setWd(nw); }
     }
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
