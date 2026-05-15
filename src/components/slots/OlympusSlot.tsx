@@ -180,9 +180,9 @@ export default function OlympusSlot({ theme = OLYMPUS_THEME }: { theme?: SlotThe
       window.removeEventListener("touchstart", armAudio);
       window.removeEventListener("click", armAudio);
     };
-    window.addEventListener("pointerdown", armAudio, { once: true });
-    window.addEventListener("touchstart", armAudio, { once: true });
-    window.addEventListener("click", armAudio, { once: true });
+    window.addEventListener("pointerdown", armAudio, { once: true, passive: true });
+    window.addEventListener("touchstart", armAudio, { once: true, passive: true });
+    window.addEventListener("click", armAudio, { once: true, passive: true });
     return () => {
       window.removeEventListener("pointerdown", armAudio);
       window.removeEventListener("touchstart", armAudio);
