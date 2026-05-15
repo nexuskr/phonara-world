@@ -128,7 +128,7 @@ export const GAMES: GameConfig[] = [
     maxMultiplier: 1200,
     reels: 5, rows: 3,
     symbolWeights: W_MID,
-    paytable: pt(0.71, 1.68, 3.55, 7.1),
+    paytable: pt(0.67, 1.58, 3.34, 6.68),
     scatterTrigger: 3,
     bonus: {
       kind: "cluster_tumble",
