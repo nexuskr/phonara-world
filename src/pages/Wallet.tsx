@@ -25,6 +25,7 @@ import WithdrawSimpleStatus from "@/components/wallet/WithdrawSimpleStatus";
 import WithdrawReceiptUpload from "@/components/wallet/WithdrawReceiptUpload";
 import DepositReceiptUpload from "@/components/wallet/DepositReceiptUpload";
 import WithdrawETABadge from "@/components/wallet/WithdrawETABadge";
+import MultiCurrencyBalance from "@/components/wallet/MultiCurrencyBalance";
 import { z } from "zod";
 import Disclaimer from "@/components/Disclaimer";
 import StepUpGate from "@/components/security/StepUpGate";
