@@ -179,6 +179,49 @@ const PACKS: Record<SoundPack, Record<Cue, () => void>> = {
       playNote({ freq: 60, dur: 0.6, type: "sine", gain: 0.28, delay: 0.4 });
     },
   },
+  // === 7 new packs (procedural variants for distinct theme audio) ===
+  cosmic: {
+    spin: () => { playSweep(180, 1400, 0.6, "sine", 0.20); playNote({ freq: 60, dur: 0.5, type: "sine", gain: 0.2, delay: 0.05 }); },
+    stop: () => { playNote({ freq: 1600, dur: 0.06, type: "triangle", gain: 0.12 }); },
+    win: () => { [659.25, 880, 1174.66, 1567.98].forEach((f, i) => playNote({ freq: f, dur: 0.22, type: "sine", gain: 0.22, delay: i * 0.07 })); },
+    bigwin: () => { [659.25, 880, 1174.66, 1567.98, 2093].forEach((f, i) => playNote({ freq: f, dur: 0.4, type: "sine", gain: 0.28, delay: i * 0.1 })); playSweep(2000, 5000, 0.8, "triangle", 0.12, 0.1); },
+  },
+  neon: {
+    spin: () => { playSweep(440, 880, 0.4, "square", 0.15); playNote({ freq: 220, dur: 0.4, type: "sawtooth", gain: 0.12, delay: 0.05 }); },
+    stop: () => { playNote({ freq: 1400, dur: 0.05, type: "square", gain: 0.14 }); },
+    win: () => { [523.25, 698.46, 880, 1174.66].forEach((f, i) => playNote({ freq: f, dur: 0.18, type: "square", gain: 0.20, delay: i * 0.06 })); },
+    bigwin: () => { [523.25, 698.46, 880, 1174.66, 1396.91].forEach((f, i) => playNote({ freq: f, dur: 0.32, type: "square", gain: 0.24, delay: i * 0.08 })); playSweep(880, 1760, 0.5, "sawtooth", 0.16, 0.1); },
+  },
+  pirate: {
+    spin: () => { playNote({ freq: 110, dur: 0.4, type: "sawtooth", gain: 0.22 }); playNoise(0.3, 0.08, 0.05, 600); },
+    stop: () => { playNote({ freq: 200, dur: 0.1, type: "square", gain: 0.16 }); },
+    win: () => { [349.23, 440, 523.25, 698.46].forEach((f, i) => playNote({ freq: f, dur: 0.26, type: "sawtooth", gain: 0.20, delay: i * 0.08 })); },
+    bigwin: () => { [349.23, 440, 523.25, 698.46, 880].forEach((f, i) => playNote({ freq: f, dur: 0.4, type: "sawtooth", gain: 0.24, delay: i * 0.1 })); playNote({ freq: 80, dur: 0.7, type: "sine", gain: 0.3, delay: 0.05 }); },
+  },
+  pharaoh: {
+    spin: () => { playNote({ freq: 440, dur: 0.2, type: "triangle", gain: 0.2 }); playNote({ freq: 130, dur: 0.45, type: "sine", gain: 0.18, delay: 0.05 }); },
+    stop: () => { playNote({ freq: 880, dur: 0.06, type: "triangle", gain: 0.14 }); },
+    win: () => { [466.16, 587.33, 698.46, 932.33].forEach((f, i) => playNote({ freq: f, dur: 0.24, type: "triangle", gain: 0.22, delay: i * 0.07 })); },
+    bigwin: () => { [466.16, 587.33, 698.46, 932.33, 1174.66].forEach((f, i) => playNote({ freq: f, dur: 0.38, type: "triangle", gain: 0.26, delay: i * 0.1 })); playSweep(100, 50, 0.8, "sine", 0.18, 0.05); },
+  },
+  viking: {
+    spin: () => { playNote({ freq: 70, dur: 0.5, type: "sine", gain: 0.32 }); playNoise(0.2, 0.10, 0.1, 400); },
+    stop: () => { playNote({ freq: 160, dur: 0.1, type: "square", gain: 0.18 }); },
+    win: () => { [392, 523.25, 659.25, 783.99].forEach((f, i) => playNote({ freq: f, dur: 0.26, type: "sawtooth", gain: 0.22, delay: i * 0.07 })); },
+    bigwin: () => { [392, 523.25, 659.25, 783.99, 1046.5].forEach((f, i) => playNote({ freq: f, dur: 0.4, type: "sawtooth", gain: 0.26, delay: i * 0.1 })); playSweep(80, 40, 0.9, "sine", 0.22, 0.05); playNoise(0.4, 0.12, 0.2, 800); },
+  },
+  aztec: {
+    spin: () => { playNote({ freq: 90, dur: 0.3, type: "sine", gain: 0.28 }); playNote({ freq: 660, dur: 0.18, type: "triangle", gain: 0.15, delay: 0.1 }); },
+    stop: () => { playNote({ freq: 280, dur: 0.08, type: "square", gain: 0.16 }); },
+    win: () => { [440, 554.37, 659.25, 880].forEach((f, i) => playNote({ freq: f, dur: 0.24, type: "triangle", gain: 0.22, delay: i * 0.07 })); },
+    bigwin: () => { [440, 554.37, 659.25, 880, 1108.73].forEach((f, i) => playNote({ freq: f, dur: 0.38, type: "triangle", gain: 0.26, delay: i * 0.1 })); playNote({ freq: 80, dur: 0.6, type: "sine", gain: 0.28, delay: 0.05 }); },
+  },
+  sakura: {
+    spin: () => { playSweep(660, 1320, 0.5, "sine", 0.16); },
+    stop: () => { playNote({ freq: 1760, dur: 0.05, type: "sine", gain: 0.10 }); },
+    win: () => { [659.25, 783.99, 987.77, 1318.5].forEach((f, i) => playNote({ freq: f, dur: 0.22, type: "sine", gain: 0.20, delay: i * 0.07 })); },
+    bigwin: () => { [659.25, 783.99, 987.77, 1318.5, 1567.98].forEach((f, i) => playNote({ freq: f, dur: 0.36, type: "sine", gain: 0.24, delay: i * 0.1 })); playSweep(2000, 4000, 0.6, "triangle", 0.10, 0.15); },
+  },
 };
 
 export function playSlotCue(pack: SoundPack, cue: Cue) {
