@@ -1,13 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Coins, Crown, Loader2, Play, RefreshCw, ShieldCheck, Zap } from "lucide-react";
 import { SYMBOL_IMAGES, PREMIUM_INDICES } from "./symbolMap";
 import { spinReal, spinDemo, getDemoBalance, claimDemoRefill, type SpinResult } from "@/lib/slots-rpc";
 import { notify } from "@/lib/notify";
-const notifyError = (msg: string, opts?: any) => notify.error(msg, opts);
-const notifySuccess = (msg: string, opts?: any) => notify.success(msg, opts);
 import { useDB } from "@/lib/store";
 import { refreshWallet } from "@/lib/missions-rpc";
+import { useFakePlayerCount } from "@/hooks/use-fake-player-count";
 import bgImage from "@/assets/slots/olympus/bg.jpg";
 import logoImage from "@/assets/slots/olympus/logo.png";
 import frameImage from "@/assets/slots/olympus/frame.png";
@@ -16,9 +15,9 @@ type Mode = "demo" | "real";
 const ROWS = 3;
 const REELS = 5;
 const GAME_CODE = "olympus_1000";
+const BET_OPTIONS = [10, 50, 100, 500, 1000, 5000];
 
-// Random reel filler used during the spin animation
-function randomGrid(): number[][] {
+function makeRandomGrid(): number[][] {
   const g: number[][] = [];
   for (let r = 0; r < ROWS; r++) {
     const row: number[] = [];
@@ -28,7 +27,44 @@ function randomGrid(): number[][] {
   return g;
 }
 
-const BET_OPTIONS = [10, 50, 100, 500, 1000, 5000];
+const Cell = memo(function Cell({
+  symIdx,
+  highlight,
+}: {
+  symIdx: number;
+  highlight: boolean;
+}) {
+  const isPremium = PREMIUM_INDICES.has(symIdx);
+  return (
+    <div
+      className={`relative aspect-square rounded-lg flex items-center justify-center bg-black/40 border ${
+        highlight && isPremium
+          ? "border-primary/60 shadow-[0_0_12px_rgba(255,200,80,0.4)]"
+          : "border-border/30"
+      }`}
+    >
+      <img
+        src={SYMBOL_IMAGES[symIdx]}
+        alt=""
+        loading="lazy"
+        decoding="async"
+        className="w-full h-full object-contain p-1"
+      />
+    </div>
+  );
+});
+
+function describeSpinError(msg: string): string {
+  if (msg.includes("trading_halted")) return "점검중입니다 — 잠시 후 다시 시도해주세요";
+  if (msg.includes("account_frozen")) return "계정이 일시 동결되었습니다";
+  if (msg.includes("insufficient_phon")) return "PHON 잔고가 부족합니다";
+  if (msg.includes("insufficient_demo_chips")) return "DEMO 칩이 부족합니다 — 보충 버튼을 눌러주세요";
+  if (msg.includes("bet_out_of_range")) return "베팅 금액이 범위를 벗어났습니다";
+  if (msg.includes("bet_invalid")) return "베팅 금액이 올바르지 않습니다";
+  if (msg.includes("game_not_found")) return "게임을 찾을 수 없습니다";
+  if (msg.includes("auth_required")) return "로그인이 필요합니다";
+  return "스핀 실패 — 잠시 후 다시 시도해주세요";
+}
 
 export default function OlympusSlot() {
   const [db] = useDB();
@@ -36,28 +72,22 @@ export default function OlympusSlot() {
 
   const [mode, setMode] = useState<Mode>("demo");
   const [bet, setBet] = useState(10);
-  const [grid, setGrid] = useState<number[][]>(() => randomGrid());
+  const [grid, setGrid] = useState<number[][]>(() => makeRandomGrid());
   const [spinning, setSpinning] = useState(false);
-  const [reelKey, setReelKey] = useState(0);
   const [lastResult, setLastResult] = useState<SpinResult | null>(null);
   const [demoBalance, setDemoBalance] = useState(10000);
-  const [winLines, setWinLines] = useState<Set<string>>(new Set());
   const [bigWinShown, setBigWinShown] = useState<{ mult: number; amount: number } | null>(null);
-  const [playCount] = useState(() => 200 + Math.floor(Math.random() * 100));
+  const livePlay = useFakePlayerCount();
   const reelTimerRef = useRef<number | null>(null);
+  const reduceMotion =
+    typeof window !== "undefined" &&
+    window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
 
-  // Load demo balance
   useEffect(() => {
     getDemoBalance().then(setDemoBalance).catch(() => {});
-  }, []);
-
-  // Drift play count slightly
-  const [livePlay, setLivePlay] = useState(playCount);
-  useEffect(() => {
-    const i = window.setInterval(() => {
-      setLivePlay((p) => Math.max(180, Math.min(320, p + (Math.random() < 0.5 ? -1 : 1) * Math.floor(Math.random() * 4))));
-    }, 30000);
-    return () => clearInterval(i);
+    return () => {
+      if (reelTimerRef.current) clearInterval(reelTimerRef.current);
+    };
   }, []);
 
   const balance = mode === "demo" ? demoBalance : phonBalance;
@@ -66,41 +96,36 @@ export default function OlympusSlot() {
   async function doSpin(buyBonus = false) {
     if (spinning) return;
     const cost = buyBonus ? bet * 100 : bet;
-    if (mode === "real") {
-      if (cost > phonBalance) {
-        notifyError("PHON 잔고가 부족합니다");
-        return;
-      }
-    } else {
-      if (cost > demoBalance) {
-        notifyError("DEMO 칩이 부족합니다 — 보충 버튼을 눌러주세요");
-        return;
-      }
+    if (mode === "real" && cost > phonBalance) {
+      notify.error("PHON 잔고가 부족합니다");
+      return;
+    }
+    if (mode === "demo" && cost > demoBalance) {
+      notify.error("DEMO 칩이 부족합니다 — 보충 버튼을 눌러주세요");
+      return;
     }
 
     setSpinning(true);
-    setWinLines(new Set());
     setBigWinShown(null);
 
-    // Animate reels with random fillers
+    // Spin animation: only swap visible grid every 100ms; cells are memoized.
     let ticks = 0;
-    reelTimerRef.current = window.setInterval(() => {
-      setGrid(randomGrid());
-      setReelKey((k) => k + 1);
-      ticks++;
-    }, 80);
+    if (!reduceMotion) {
+      reelTimerRef.current = window.setInterval(() => {
+        setGrid(makeRandomGrid());
+        ticks++;
+      }, 100);
+    }
 
     try {
-      const result = mode === "real"
-        ? await spinReal(GAME_CODE, bet, buyBonus)
-        : await spinDemo(GAME_CODE, bet, buyBonus);
+      const result =
+        mode === "real"
+          ? await spinReal(GAME_CODE, bet, buyBonus)
+          : await spinDemo(GAME_CODE, bet, buyBonus);
 
-      // Wait for at least 900ms of spin animation for satisfying feel
-      const minSpin = 900;
-      const elapsed = ticks * 80;
-      if (elapsed < minSpin) {
-        await new Promise((r) => setTimeout(r, minSpin - elapsed));
-      }
+      const minSpin = reduceMotion ? 0 : 800;
+      const elapsed = ticks * 100;
+      if (elapsed < minSpin) await new Promise((r) => setTimeout(r, minSpin - elapsed));
 
       if (reelTimerRef.current) {
         clearInterval(reelTimerRef.current);
@@ -108,18 +133,8 @@ export default function OlympusSlot() {
       }
 
       setGrid(result.symbols);
-      setReelKey((k) => k + 1);
       setLastResult(result);
 
-      // Highlight winning cells
-      const wins = new Set<string>();
-      result.win_lines?.forEach((wl: any) => {
-        // mark the whole line for visual (server doesn't return cells, but symbol+line idx is enough for glow)
-        for (let c = 0; c < wl.count; c++) wins.add(`line-${wl.line}-${c}`);
-      });
-      setWinLines(wins);
-
-      // Update balances
       if (mode === "demo") {
         setDemoBalance(result.balance_chips ?? demoBalance);
       } else {
@@ -133,20 +148,17 @@ export default function OlympusSlot() {
         setBigWinShown({ mult, amount: payout });
         setTimeout(() => setBigWinShown(null), 4000);
       } else if (payout > 0) {
-        notifySuccess(`+${payout.toLocaleString()} ${balanceLabel}`, { description: `${mult.toFixed(2)}× 승리` });
+        notify.success(`+${payout.toLocaleString()} ${balanceLabel}`, {
+          description: `${mult.toFixed(2)}× 승리`,
+        });
       }
 
       if (result.bonus_triggered && result.bonus_multiplier) {
-        notifySuccess(`🎰 보너스 ${result.bonus_multiplier}× 당첨!`);
+        notify.success(`🎰 보너스 ${result.bonus_multiplier}× 당첨!`);
       }
     } catch (e: any) {
       const msg = String(e?.message || e || "");
-      if (msg.includes("trading_halted")) notifyError("점검중입니다 — 잠시 후 다시 시도해주세요");
-      else if (msg.includes("account_frozen")) notifyError("계정이 일시 동결되었습니다");
-      else if (msg.includes("insufficient_phon")) notifyError("PHON 잔고가 부족합니다");
-      else if (msg.includes("insufficient_demo_chips")) notifyError("DEMO 칩이 부족합니다");
-      else if (msg.includes("bet_out_of_range")) notifyError("베팅 금액이 범위를 벗어났습니다");
-      else notifyError("스핀 실패", { description: msg });
+      notify.error(describeSpinError(msg));
     } finally {
       if (reelTimerRef.current) {
         clearInterval(reelTimerRef.current);
@@ -161,20 +173,19 @@ export default function OlympusSlot() {
       const r = await claimDemoRefill();
       if (r.refilled) {
         setDemoBalance(r.balance_chips);
-        notifySuccess("DEMO 칩 보충 완료 +10,000");
+        notify.success("DEMO 칩 보충 완료 +10,000");
       } else if (r.reason === "balance_too_high") {
-        notifyError("잔고가 5,000보다 많습니다");
+        notify.error("잔고가 5,000 이상일 때는 보충할 수 없습니다");
       } else {
-        notifyError("24시간 후 다시 보충 가능합니다");
+        notify.error("24시간 후 다시 보충 가능합니다");
       }
     } catch (e: any) {
-      notifyError("보충 실패", { description: String(e?.message || e) });
+      notify.error("보충 실패", { description: describeSpinError(String(e?.message || e)) });
     }
   }
 
   return (
     <div className="relative w-full max-w-3xl mx-auto">
-      {/* Background */}
       <div
         className="absolute inset-0 -z-10 rounded-3xl overflow-hidden"
         style={{
@@ -188,7 +199,11 @@ export default function OlympusSlot() {
         {/* Header */}
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <img src={logoImage} alt="Olympus 1000" className="h-12 sm:h-14 w-auto drop-shadow-[0_0_18px_rgba(255,200,80,0.5)]" />
+            <img
+              src={logoImage}
+              alt="Olympus 1000"
+              className="h-12 sm:h-14 w-auto drop-shadow-[0_0_18px_rgba(255,200,80,0.5)]"
+            />
             <div>
               <div className="font-imperial text-base sm:text-lg text-gradient-imperial tracking-[0.2em] leading-none">
                 OLYMPUS 1000
@@ -221,7 +236,9 @@ export default function OlympusSlot() {
             <button
               onClick={() => setMode("real")}
               className={`px-3 py-1.5 rounded-full text-xs font-bold transition flex items-center gap-1 ${
-                mode === "real" ? "bg-gradient-imperial text-primary-foreground glow-imperial" : "text-muted-foreground"
+                mode === "real"
+                  ? "bg-gradient-imperial text-primary-foreground glow-imperial"
+                  : "text-muted-foreground"
               }`}
             >
               <Crown className="w-3 h-3" /> REAL
@@ -245,36 +262,20 @@ export default function OlympusSlot() {
           >
             <div className="grid grid-cols-5 gap-1 sm:gap-1.5">
               {Array.from({ length: REELS }).map((_, reelIdx) => (
-                <div key={reelIdx} className="space-y-1 sm:space-y-1.5 overflow-hidden">
-                  {Array.from({ length: ROWS }).map((_, rowIdx) => {
-                    const symIdx = grid[rowIdx]?.[reelIdx] ?? 0;
-                    const isPremium = PREMIUM_INDICES.has(symIdx);
-                    return (
-                      <motion.div
-                        key={`${reelKey}-${reelIdx}-${rowIdx}`}
-                        initial={spinning ? { y: -20, opacity: 0.6 } : false}
-                        animate={{ y: 0, opacity: 1 }}
-                        transition={{ duration: 0.18, delay: spinning ? 0 : reelIdx * 0.08 }}
-                        className={`relative aspect-square rounded-lg flex items-center justify-center bg-black/40 border ${
-                          !spinning && isPremium ? "border-primary/60 shadow-[0_0_12px_rgba(255,200,80,0.4)]" : "border-border/30"
-                        }`}
-                      >
-                        <img
-                          src={SYMBOL_IMAGES[symIdx]}
-                          alt=""
-                          loading="lazy"
-                          decoding="async"
-                          className="w-full h-full object-contain p-1"
-                        />
-                      </motion.div>
-                    );
-                  })}
+                <div key={reelIdx} className="space-y-1 sm:space-y-1.5">
+                  {Array.from({ length: ROWS }).map((_, rowIdx) => (
+                    <Cell
+                      key={`${reelIdx}-${rowIdx}`}
+                      symIdx={grid[rowIdx]?.[reelIdx] ?? 0}
+                      highlight={!spinning}
+                    />
+                  ))}
                 </div>
               ))}
             </div>
           </div>
 
-          {/* BIG WIN overlay */}
+          {/* Epic Win overlay */}
           <AnimatePresence>
             {bigWinShown && (
               <motion.div
@@ -285,7 +286,9 @@ export default function OlympusSlot() {
                 className="absolute inset-0 flex items-center justify-center pointer-events-none z-10"
               >
                 <div className="bg-gradient-imperial px-6 py-4 rounded-2xl glow-imperial text-center">
-                  <div className="font-imperial text-xs text-primary-foreground/80 tracking-[0.3em]">EPIC WIN</div>
+                  <div className="font-imperial text-xs text-primary-foreground/80 tracking-[0.3em]">
+                    EPIC WIN
+                  </div>
                   <div className="font-mono text-3xl font-black text-primary-foreground mt-1">
                     {bigWinShown.mult.toFixed(2)}×
                   </div>
@@ -374,7 +377,9 @@ export default function OlympusSlot() {
                 <span className="text-muted-foreground">No win</span>
               )}
               {lastResult.bonus_triggered && lastResult.bonus_multiplier ? (
-                <span className="ml-2 text-primary font-bold">+ Bonus {lastResult.bonus_multiplier}×</span>
+                <span className="ml-2 text-primary font-bold">
+                  + Bonus {lastResult.bonus_multiplier}×
+                </span>
               ) : null}
             </div>
           </div>
