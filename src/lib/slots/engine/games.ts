@@ -32,14 +32,14 @@ export const GAMES: GameConfig[] = [
     maxMultiplier: 5000,
     reels: 5, rows: 3,
     symbolWeights: W_HIGH,
-    paytable: pt(0.72, 1.80, 3.60, 7.20),
+    paytable: pt(0.66, 1.65, 3.30, 6.60),
     scatterTrigger: 3,
     bonus: {
       kind: "sticky_multi",
-      spins: 14,
-      multWeights: [[2, 44], [3, 28], [5, 16], [10, 8], [25, 3.0], [100, 0.7]],
-      collectChance: 0.46,
-      maxCells: 14,
+      spins: 12,
+      multWeights: [[2, 50], [3, 28], [5, 14], [10, 6.5], [25, 2.0], [100, 0.35]],
+      collectChance: 0.40,
+      maxCells: 12,
     },
   },
   {
@@ -50,15 +50,15 @@ export const GAMES: GameConfig[] = [
     maxMultiplier: 8888,
     reels: 5, rows: 3,
     symbolWeights: W_VERY_HIGH,
-    paytable: pt(1.20, 3.00, 6.00, 11.50),
+    paytable: pt(1.10, 2.80, 5.60, 10.70),
     scatterTrigger: 3,
     bonus: {
       kind: "hold88",
       spins: 3,
       respinReset: 3,
-      coinChance: 0.068,
+      coinChance: 0.060,
       coinWeights: [
-        [2, 52], [4, 28], [8, 13], [15, 5.0], [40, 1.6], [88, 0.6], ["GRAND", 0.05],
+        [2, 56], [4, 28], [8, 12], [15, 4.6], [40, 1.4], [88, 0.5], ["GRAND", 0.025],
       ],
       grandValue: 8888,
       cells: 15,
@@ -114,7 +114,7 @@ export const GAMES: GameConfig[] = [
     bonus: {
       kind: "three_path",
       paths: [
-        { name: "Asgard", spins: 8, startMult: 7.5, wildBoostX: 1.85 },
+        { name: "Asgard", spins: 7, startMult: 7.2, wildBoostX: 1.8 },
         { name: "Midgard", spins: 12, startMult: 3.4, wildBoostX: 1.25 },
         { name: "Helheim", spins: 16, startMult: 1.0, wildBoostX: 0.7, xbombChance: 0.11 },
       ],
