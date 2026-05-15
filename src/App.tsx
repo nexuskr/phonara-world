@@ -153,7 +153,15 @@ function GlobalOverlays() {
   const [ready, setReady] = useState(false);
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const cb = () => setReady(true);
+    const cb = () => {
+      setReady(true);
+      // 공통 사운드 1회 preload — 슬롯 진입 전에 캐시 워밍
+      try {
+        void import("@/lib/sounds/SlotSoundManager").then(({ soundManager }) => {
+          soundManager.loadCommonSounds();
+        });
+      } catch { /* */ }
+    };
     // @ts-ignore
     if (typeof window.requestIdleCallback === "function") {
       // @ts-ignore
