@@ -208,6 +208,7 @@ export default function OlympusSlot({ theme = OLYMPUS_THEME }: { theme?: SlotThe
     // Sound: spin start + reel-stop staccato (best-effort, never blocks gameplay)
     unlockSlotAudio();
     SoundManager.unlock();
+    SoundManager.playBGM({ fadeMs: 1200 });
     SoundManager.playReelSpin("normal");
     playSlotCue(soundPack, "spin");
     haptics.spinStart();
