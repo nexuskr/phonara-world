@@ -213,6 +213,7 @@ export default function AdminRoutes() {
         <Route path="game/nearmiss"      element={<Section><GameConfigPanel mode="nearmiss" /></Section>} />
         <Route path="game/particles"     element={<Section><GameConfigPanel mode="particles" /></Section>} />
         <Route path="game/crown-trigger" element={<Section><ManualCrownTrigger /></Section>} />
+        <Route path="game/slot-sfx"      element={<Section title="Slot Sound SFX"><SlotSfxAdmin /></Section>} />
 
         {/* PRODUCT */}
         <Route path="product/users"      element={<Section title="Users"><ServerUserAdmin /></Section>} />
