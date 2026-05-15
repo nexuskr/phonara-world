@@ -167,12 +167,27 @@ export default function OlympusSlot({ theme = OLYMPUS_THEME }: { theme?: SlotThe
     if (!spinning) setDisplayBalance(rawBalance);
   }, [rawBalance, spinning]);
 
-  // Load Howler theme pack for this game (assets fall back to procedural if missing)
-  // BGM은 첫 사용자 제스처(SPIN/뮤트 토글)에서 시작 — autoplay 정책 회피.
+  // Load theme pack and arm first-gesture BGM start.
   useEffect(() => {
     const themeKey = GAME_TO_THEME[GAME_CODE];
     if (themeKey) SoundManager.loadPack(themeKey);
-    return () => { SoundManager.stopBGM(300); };
+    const armAudio = () => {
+      unlockSlotAudio();
+      SoundManager.unlock();
+      SoundManager.playBGM({ fadeMs: 900 });
+      window.removeEventListener("pointerdown", armAudio);
+      window.removeEventListener("touchstart", armAudio);
+      window.removeEventListener("click", armAudio);
+    };
+    window.addEventListener("pointerdown", armAudio, { once: true });
+    window.addEventListener("touchstart", armAudio, { once: true });
+    window.addEventListener("click", armAudio, { once: true });
+    return () => {
+      window.removeEventListener("pointerdown", armAudio);
+      window.removeEventListener("touchstart", armAudio);
+      window.removeEventListener("click", armAudio);
+      SoundManager.stopBGM(300);
+    };
   }, [GAME_CODE]);
 
   useEffect(() => {

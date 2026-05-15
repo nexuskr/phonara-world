@@ -142,7 +142,7 @@ export const COSMIC_FORGE_THEME: SlotTheme = {
   gameCode: "cosmic_forge_5000",
   bg: bgCosmic, logo: logoCosmic, title: "Cosmic Forge 5000",
   rtpLabel: "96.0%", volatility: "high", maxMultiplier: 5000,
-  symbolPack: "wizard", soundPack: "cosmic",
+  symbolPack: "cosmic", soundPack: "cosmic",
   cardFilter: "hue-rotate(265deg) saturate(1.3) brightness(1.1)",
   reelFrameClass:
     "rounded-2xl border-2 border-violet-400/70 bg-gradient-to-b from-indigo-950/30 to-violet-950/55 backdrop-blur-[2px] p-2 sm:p-3 shadow-[inset_0_0_50px_rgba(150,90,255,0.35)]",
@@ -156,7 +156,7 @@ export const NEON_TOKYO_THEME: SlotTheme = {
   gameCode: "neon_tokyo_88",
   bg: bgNeon, logo: logoNeon, title: "Neon Tokyo 88",
   rtpLabel: "96.0%", volatility: "high", maxMultiplier: 8888,
-  symbolPack: "wizard", soundPack: "neon",
+  symbolPack: "neon", soundPack: "neon",
   cardFilter: "hue-rotate(310deg) saturate(1.5) brightness(1.1)",
   reelFrameClass:
     "rounded-2xl border-2 border-pink-400/70 bg-gradient-to-b from-fuchsia-950/30 to-cyan-950/45 backdrop-blur-[2px] p-2 sm:p-3 shadow-[inset_0_0_50px_rgba(255,60,180,0.35)]",
@@ -170,7 +170,7 @@ export const PIRATE_CURSE_THEME: SlotTheme = {
   gameCode: "pirates_curse_1500",
   bg: bgPirate, logo: logoPirate, title: "Pirate's Curse 1500",
   rtpLabel: "96.0%", volatility: "mid", maxMultiplier: 1500,
-  symbolPack: "dragon", soundPack: "pirate",
+  symbolPack: "pirate", soundPack: "pirate",
   cardFilter: "hue-rotate(170deg) saturate(1.2) brightness(0.95)",
   reelFrameClass:
     "rounded-2xl border-2 border-teal-400/60 bg-gradient-to-b from-stone-900/40 to-teal-950/55 backdrop-blur-[2px] p-2 sm:p-3 shadow-[inset_0_0_45px_rgba(40,200,180,0.25)]",
@@ -184,7 +184,7 @@ export const PHARAOH_VAULT_THEME: SlotTheme = {
   gameCode: "pharaohs_vault_2500",
   bg: bgPharaoh, logo: logoPharaoh, title: "Pharaoh's Vault 2500",
   rtpLabel: "96.0%", volatility: "mid", maxMultiplier: 2500,
-  symbolPack: "olympus", soundPack: "pharaoh",
+  symbolPack: "pharaoh", soundPack: "pharaoh",
   cardFilter: "hue-rotate(20deg) saturate(1.3) brightness(1.05)",
   reelFrameClass:
     "rounded-2xl border-2 border-amber-400/70 bg-gradient-to-b from-amber-950/30 to-blue-950/45 backdrop-blur-[2px] p-2 sm:p-3 shadow-[inset_0_0_50px_rgba(255,200,80,0.30)]",
@@ -198,7 +198,7 @@ export const VIKING_THUNDER_THEME: SlotTheme = {
   gameCode: "viking_thunder_4000",
   bg: bgViking, logo: logoViking, title: "Viking Thunder 4000",
   rtpLabel: "96.0%", volatility: "high", maxMultiplier: 4000,
-  symbolPack: "dragon", soundPack: "viking",
+  symbolPack: "viking", soundPack: "viking",
   cardFilter: "hue-rotate(190deg) saturate(1.3) brightness(1.05)",
   reelFrameClass:
     "rounded-2xl border-2 border-blue-400/70 bg-gradient-to-b from-slate-900/40 to-blue-950/55 backdrop-blur-[2px] p-2 sm:p-3 shadow-[inset_0_0_50px_rgba(80,160,255,0.30)]",
@@ -212,7 +212,7 @@ export const AZTEC_SUN_THEME: SlotTheme = {
   gameCode: "aztec_sun_1200",
   bg: bgAztec, logo: logoAztec, title: "Aztec Sun 1200",
   rtpLabel: "96.0%", volatility: "mid", maxMultiplier: 1200,
-  symbolPack: "olympus", soundPack: "aztec",
+  symbolPack: "aztec", soundPack: "aztec",
   cardFilter: "hue-rotate(80deg) saturate(1.4) brightness(1.0)",
   reelFrameClass:
     "rounded-2xl border-2 border-amber-500/70 bg-gradient-to-b from-emerald-950/35 to-amber-950/45 backdrop-blur-[2px] p-2 sm:p-3 shadow-[inset_0_0_50px_rgba(255,180,40,0.28)]",
@@ -226,7 +226,7 @@ export const CHERRY_SAKURA_THEME: SlotTheme = {
   gameCode: "cherry_sakura_500",
   bg: bgSakura, logo: logoSakura, title: "Cherry Sakura 500",
   rtpLabel: "96.0%", volatility: "low", maxMultiplier: 500,
-  symbolPack: "wizard", soundPack: "sakura",
+  symbolPack: "sakura", soundPack: "sakura",
   cardFilter: "hue-rotate(330deg) saturate(1.2) brightness(1.1)",
   reelFrameClass:
     "rounded-2xl border-2 border-pink-300/70 bg-gradient-to-b from-pink-950/25 to-teal-950/40 backdrop-blur-[2px] p-2 sm:p-3 shadow-[inset_0_0_45px_rgba(255,170,200,0.30)]",

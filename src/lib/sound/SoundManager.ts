@@ -74,10 +74,9 @@ class SoundManagerImpl {
   }
 
   async unlock() {
-    if (this.unlocked) return;
-    this.unlocked = true;
     try { await Howler.ctx?.resume?.(); } catch { /* */ }
     await unlockSlotAudio();
+    this.unlocked = true;
   }
 
   isMuted() { return isSlotMuted(); }
@@ -89,7 +88,7 @@ class SoundManagerImpl {
       stopProcBGM(0.2);
     } else {
       if (this.bgm && !this.bgm.playing()) try { this.bgm.play(); } catch { /* */ }
-      else if (this.bgmIsProc && this.theme) startProcBGM(PROC_PACK[this.theme]);
+      else if (this.theme) this.playBGM({ fadeMs: 250 });
     }
   }
 
