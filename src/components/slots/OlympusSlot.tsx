@@ -505,11 +505,28 @@ export default function OlympusSlot({ theme = OLYMPUS_THEME }: { theme?: SlotThe
               )}
             </div>
             <button
-              onClick={() => { const v = !muted; setMuted(v); setSlotMuted(v); if (!v) unlockSlotAudio(); }}
+              onClick={() => {
+                const v = !muted;
+                setMuted(v);
+                SoundManager.setMuted(v);
+                if (!v) {
+                  unlockSlotAudio();
+                  SoundManager.unlock();
+                  SoundManager.playBGM({ fadeMs: 1000 });
+                }
+              }}
               aria-label={muted ? "사운드 켜기" : "사운드 끄기"}
               className="p-2 rounded-lg border border-border/40 hover:bg-muted/40 transition text-muted-foreground"
             >
               {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+            </button>
+            <button
+              onClick={() => { SoundManager.unlock(); SoundManager.setMuted(false); setMuted(false); SoundManager.testAll(); }}
+              aria-label="사운드 테스트"
+              title="사운드 테스트 (모든 cue 순차 재생)"
+              className="p-2 rounded-lg border border-border/40 hover:bg-muted/40 transition text-muted-foreground text-xs"
+            >
+              🎵
             </button>
             <SpinHistorySheet gameCode={GAME_CODE} />
             <GameInfoSheet />
