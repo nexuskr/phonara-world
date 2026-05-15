@@ -36,7 +36,7 @@ const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
 }
 
 // Configuration
-const SITE_NAME = "phonetok"
+const SITE_NAME = "Phonara"
 const SENDER_DOMAIN = "notify.phonara.world"
 const ROOT_DOMAIN = "phonara.world"
 const FROM_DOMAIN = "phonara.world" // Domain shown in From address (may be root or sender subdomain)
