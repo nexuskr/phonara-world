@@ -192,6 +192,7 @@ export type Database = {
           created_at: string
           id: string
           metadata: Json
+          payload: Json
           target_id: string | null
           target_type: string | null
         }
@@ -201,6 +202,7 @@ export type Database = {
           created_at?: string
           id?: string
           metadata?: Json
+          payload?: Json
           target_id?: string | null
           target_type?: string | null
         }
@@ -210,6 +212,7 @@ export type Database = {
           created_at?: string
           id?: string
           metadata?: Json
+          payload?: Json
           target_id?: string | null
           target_type?: string | null
         }
@@ -1092,6 +1095,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      bot_feed_events: {
+        Row: {
+          bot_id: string | null
+          id: string
+          kind: string | null
+          occurred_at: string
+        }
+        Insert: {
+          bot_id?: string | null
+          id?: string
+          kind?: string | null
+          occurred_at?: string
+        }
+        Update: {
+          bot_id?: string | null
+          id?: string
+          kind?: string | null
+          occurred_at?: string
+        }
+        Relationships: []
       }
       bot_mix_log: {
         Row: {
@@ -8583,6 +8607,7 @@ export type Database = {
           created_at: string
           id: string
           metadata: Json
+          payload: Json
           target_id: string | null
           target_type: string | null
         }[]
