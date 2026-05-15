@@ -222,6 +222,7 @@ const App = () => (
               <Route path="/whales" element={<Whales />} />
               <Route path="/jackpot" element={<Roulette />} />
               <Route path="/casino" element={<CasinoLobby />} />
+              <Route path="/casino/olympus1000" element={<Navigate to="/casino/olympus-1000" replace />} />
               <Route path="/casino/olympus-1000" element={<Olympus1000 />} />
               {/* /wallet 는 이미 존재 */}
 
