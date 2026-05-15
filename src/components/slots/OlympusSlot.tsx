@@ -15,6 +15,8 @@ import BonusIntroOverlay from "./overlays/BonusIntroOverlay";
 import BonusWheel, { snapToSegment } from "./overlays/BonusWheel";
 import AutoSpinControls, { type AutoSpinSettings } from "./AutoSpinControls";
 import GameInfoSheet from "./GameInfoSheet";
+import { useCurrencyPref } from "@/hooks/use-currency-pref";
+import { formatFromPhon } from "@/lib/displayCurrency";
 
 import bgOlympus from "@/assets/slots/olympus/bg.jpg";
 import logoOlympus from "@/assets/slots/olympus/logo.png";
@@ -80,6 +82,7 @@ export default function OlympusSlot({ theme = OLYMPUS_THEME }: { theme?: SlotThe
   const phonBalance = phonFromPower ?? (db.user as any)?.phon_balance ?? 0;
 
   const [mode, setMode] = useState<Mode>("demo");
+  const [currencyPref] = useCurrencyPref();
   const [bet, setBet] = useState(10);
   const [grid, setGrid] = useState<Grid>(() => randomGrid());
   const [spinning, setSpinning] = useState(false);
@@ -360,6 +363,11 @@ export default function OlympusSlot({ theme = OLYMPUS_THEME }: { theme?: SlotThe
                 <BalanceTicker value={displayBalance} pulse={balancePulse} />
               </div>
               <div className="text-[10px] text-muted-foreground">{balanceLabel}</div>
+              {mode === "real" && displayBalance > 0 && (
+                <div className="text-[9px] text-muted-foreground/80 tabular-nums">
+                  ≈ {formatFromPhon(displayBalance, currencyPref === "PHON" ? "KRW" : currencyPref)}
+                </div>
+              )}
             </div>
             <GameInfoSheet />
           </div>

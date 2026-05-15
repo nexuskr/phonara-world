@@ -25,6 +25,7 @@ import WithdrawSimpleStatus from "@/components/wallet/WithdrawSimpleStatus";
 import WithdrawReceiptUpload from "@/components/wallet/WithdrawReceiptUpload";
 import DepositReceiptUpload from "@/components/wallet/DepositReceiptUpload";
 import WithdrawETABadge from "@/components/wallet/WithdrawETABadge";
+import MultiCurrencyBalance from "@/components/wallet/MultiCurrencyBalance";
 import { z } from "zod";
 import Disclaimer from "@/components/Disclaimer";
 import StepUpGate from "@/components/security/StepUpGate";
@@ -367,6 +368,9 @@ export default function Wallet() {
             </span>
           </div>
         </div>
+
+        {/* Tri-currency display layer (KRW / USDT / PHON) */}
+        <MultiCurrencyBalance className="mb-5" />
 
         {/* Asset switcher */}
         <div className="grid grid-cols-2 gap-3 mb-5">
