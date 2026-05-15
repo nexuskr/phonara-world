@@ -54,7 +54,7 @@ export function SlotSfxAdmin() {
       <div>
         <h2 className="text-lg font-semibold">슬롯 사운드 자산 (ElevenLabs)</h2>
         <p className="text-xs text-muted-foreground">
-          테마별 cue를 ElevenLabs로 생성해 Storage `slot-sfx/{theme}/{cue}.mp3` 에 업로드합니다.
+          테마별 cue를 ElevenLabs로 생성해 Storage <code>slot-sfx/&lt;theme&gt;/&lt;cue&gt;.mp3</code>에 업로드합니다.
           미생성 자산은 클라이언트에서 자동으로 절차 사운드로 폴백됩니다.
         </p>
       </div>
