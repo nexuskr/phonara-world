@@ -41,10 +41,11 @@ export type SlotTheme = {
   spinStreakClass?: string;  // tailwind class for the spinning gradient overlay
   bgOverlay?: string;        // CSS gradient layered above bg image
   bgPosition?: string;       // background-position, default "center"
+  reelPattern?: string;      // CSS background pattern shown inside the reel frame
 };
 
 const DEFAULT_BG_OVERLAY =
-  "linear-gradient(180deg, hsl(var(--background) / 0.35) 0%, hsl(var(--background) / 0.55) 60%, hsl(var(--background) / 0.88) 100%)";
+  "linear-gradient(180deg, hsl(var(--background) / 0.10) 0%, transparent 30%, transparent 60%, hsl(var(--background) / 0.75) 100%)";
 
 const OLYMPUS_THEME: SlotTheme = {
   gameCode: "olympus_1000",
@@ -445,8 +446,15 @@ export default function OlympusSlot({ theme = OLYMPUS_THEME }: { theme?: SlotThe
 
         {/* Reels */}
         <div className="relative">
-          <div className={reelFrameClass}>
-            <div className="grid grid-cols-5 gap-1 sm:gap-1.5">
+          <div className={`relative overflow-hidden ${reelFrameClass}`}>
+            {theme.reelPattern && (
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-0 opacity-60 mix-blend-screen"
+                style={{ background: theme.reelPattern }}
+              />
+            )}
+            <div className="relative z-10 grid grid-cols-5 gap-1 sm:gap-1.5">
               {reelTargets.map((target, c) => (
                 <Reel
                   key={c}
