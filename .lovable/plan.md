@@ -1,170 +1,98 @@
+# Wizard / Dragon — 풀 테마 패키지 (심볼 + 카드 색조 + 사운드 + 배경 + 페이테이블)
 
-# 슬롯 3종 — Demo/Real 완전 분리 + 변동성 차별화 플랜
+## 전제 (현황 확인)
+- **페이테이블/변동성/보너스 빈도**: 이미 DB 마이그레이션 `20260515071705_…`에서 슬롯별로 분리 완료 (Olympus mid/Wizard high MAX 2000×/Dragon low MAX 500×). **추가 마이그레이션 불필요**.
+- **배경/로고**: `src/assets/slots/wizard|dragon/{bg.jpg,logo.png}` 이미 존재 — 슬롯에 결선만 연결되면 됨.
+- **사운드**: 현재 `OlympusSlot.tsx`에 audio 코드 없음 → 신규 추가.
 
-## 0. 원칙 (절대 위반 금지)
+## 1. 프리미엄 심볼 6종 자체 제작 (×2 테마 = 12장, premium 티어, 1024² 투명 PNG)
 
-| 축 | Demo Mode | Real Mode |
+### Wizard 2000 (딥 바이올렛 + 시안 + 골드)
+| 인덱스 | 파일명 | 컨셉 |
 |---|---|---|
-| 자금 | `slot_demo_balances.balance_chips` (가상) | `phon_balances` (실 PHON 차감) |
-| RPC | `spin_slot_demo` | `spin_slot_real` |
-| RTP 밴드 | 98.5% ~ 101.5% | 94.8% ~ 95.8% |
-| 스트릭 부스트 | 허니문 8스핀 + 연승 +22~38% + 9연승 강제 보너스 | 최근 10스핀 누적 +8% 상한 |
-| 보너스 구매 | 1.85× 페이아웃 부스트 | 정상 배율 (게임별 buy_bonus_multiplier) |
-| 안전 가드 | RTP > 100.5% & payout > 5× → 1~3× 캡 | RTP > 95.8% & payout > 50× → 50× 하드 캡 |
-| 부스트 입력 | 없음 (가상 칩) | NFT boost_pct + VIP 가산 |
-| 히스토리 | `slot_demo_spins` | `slot_spins` |
-| UI 마킹 | `<DemoBadge />` 노란 띠 + "DEMO" 배지 | 골드 PHON 배지 |
-| 모드 전환 | 잔고/스트릭/히스토리 캐시 완전 초기화 | 동일 |
+| 5 | `sym_orb.png` | 시안 에너지 코어가 떠 있는 마법 수정구 |
+| 6 | `sym_amulet.png` | 사파이어 펜타그램 아뮬렛 |
+| 7 | `sym_sorceress.png` | 보랏빛 후드 여마법사 흉상 |
+| 8 | `sym_archmage.png` | 별이 박힌 긴 수염의 대마법사 |
+| 9 | `sym_wild.png` | 회전 룬이 박힌 마법구, "WILD" 룬 각인 |
+| 10 | `sym_scatter.png` | 펼쳐진 마도서 + 별이 쏟아지는 페이지 |
 
-3종 슬롯은 **단 하나의 엔진(`_slot_compute_spin` + `spin_slot_demo/real`)**을 공유. 차이는 **`slot_games` 테이블의 페이테이블/변동성 파라미터**와 **클라 테마(아트/사운드/이펙트)**로만 발생.
+### Dragon Empire (진홍 + 황금 + 옥)
+| 인덱스 | 파일명 | 컨셉 |
+|---|---|---|
+| 5 | `sym_pearl.png` | 황금 구름에 감싸인 야명주 |
+| 6 | `sym_jade.png` | 용이 새겨진 옥패 |
+| 7 | `sym_phoenix.png` | 진홍/황금 봉황 흉상 |
+| 8 | `sym_dragon_king.png` | 다섯 발톱 용왕 정면 두상 |
+| 9 | `sym_wild.png` | 황금 용 발톱 인장 |
+| 10 | `sym_scatter.png` | 진주를 문 양각 용머리 메달 |
 
----
+## 2. 카드 5종(10/J/Q/K/A) 색조 재처리 — 런타임 CSS 필터 (재생성 X)
+Olympus 카드 PNG를 그대로 재사용하되 `theme.cardFilter`(CSS `filter` 문자열)로 색조 변환.
+- Olympus: `none`
+- Wizard: `hue-rotate(255deg) saturate(1.15) brightness(1.05)` → 보라/시안 톤
+- Dragon: `hue-rotate(330deg) saturate(1.4) brightness(0.95)` → 진홍/황금 톤
 
-## 1. 데이터베이스 변경 (마이그레이션 1건)
+`Reel.tsx`에서 인덱스 0–4(`PREMIUM_INDICES`에 포함되지 않은 카드)에만 필터 적용. 프리미엄 6종은 원본 그대로.
 
-### 1-A. `slot_games` 시드 확장
+## 3. 사운드 (테마별 3종 + 공통 1종)
+공통 라이브러리 `src/lib/slotSound.ts` 신설:
+- `spin` (릴 회전 시작)
+- `stop` (릴 정지, 3개 릴 시차 재생)
+- `win` (라인 적중)
+- `bigwin` (×50 이상)
 
-```text
-olympus_1000  | 중변동 | RTP 96 | MAX 1000× | bonus_freq 1/180 | buy_bonus 100×
-wizard_2000   | 고변동 | RTP 96 | MAX 2000× | bonus_freq 1/280 | buy_bonus 150×
-dragon_500    | 저변동 | RTP 96 | MAX 500×  | bonus_freq 1/120 | buy_bonus 60×
+테마별 사운드 파일 (royalty-free, **outbound 다운로드 없이 Web Audio API로 절차 생성**):
+- Olympus: 신탁 종 / 천둥 / 황금 팡파레
+- Wizard: 마법진 차징 휘파람 / 룬 클릭 / 아르페지오 키라
+- Dragon: 동양 북 / 징 / 화려한 트럼펫
+
+> 절차 생성 방식 채택 사유: 외부 파일 의존 없음, 번들 크기 0 증가, 모바일 배터리 영향 최소. `AudioContext` 1회 초기화, 사용자 제스처 후 unlock.
+
+`theme.soundPack: "olympus" | "wizard" | "dragon"`로 분기. 음소거 토글 + `localStorage` 저장.
+
+## 4. 배경 적용
+`OlympusSlot.tsx`의 하드코딩된 `bgOlympus` import → `theme.bgImage`/`theme.logoImage`로 교체. Wizard/Dragon은 이미 존재하는 자산 사용.
+
+## 5. 코드 변경 요약
+
+### `src/components/slots/symbolMap.ts` (리팩토링)
+```ts
+export type SymbolPack = "olympus" | "wizard" | "dragon";
+export const SYMBOL_PACKS: Record<SymbolPack, string[]>;  // 인덱스 0-4 공유, 5-10 팩별
+export function getSymbolImages(pack: SymbolPack): string[];
 ```
 
-신설 컬럼:
-- `volatility_class text` — `low|mid|high`
-- `bonus_frequency int` — 평균 N스핀당 1회
-- `paytable jsonb` — 11심볼 × 3·4·5매치 배율표
-- `symbol_weights jsonb` — 릴 가중치 (저변동=고배율 가중↓, 고변동=고배율 가중↑)
+### `src/components/slots/themes.ts` (확장)
+각 테마에 추가 필드:
+- `symbolPack: SymbolPack`
+- `cardFilter: string` (CSS filter)
+- `soundPack: "olympus" | "wizard" | "dragon"`
+- `bgImage: string`, `logoImage: string`
 
-3행 UPSERT (시드).
+### `src/components/slots/OlympusSlot.tsx`
+- `theme.bgImage`, `theme.logoImage` 사용
+- `getSymbolImages(theme.symbolPack)` → `images` 메모이즈
+- `useSlotSound(theme.soundPack)` 훅 호출
+- spin / 결과 콜백 지점에서 sound trigger
 
-### 1-B. RTP/페이아웃 캡 재조정
+### `src/components/slots/reels/Reel.tsx`
+- `images: string[]`, `cardFilter: string` props 추가
+- `<img>` 렌더 시 인덱스가 카드(0–4)면 `style={{ filter: cardFilter }}`
 
-`spin_slot_demo`: 기존 99.3~100.8 → **98.5~101.5** 밴드, 캡 트리거 조건 갱신.
-`spin_slot_real`: 기존 94.8~95.6 → **94.8~95.8** 밴드, 50× 하드캡 명시 + NFT boost_pct + VIP 보정 합산을 `_slot_compute_spin` 호출 인자로 위임.
+### 신규 파일
+- `src/lib/slotSound.ts` — Web Audio 절차 사운드 엔진
+- `src/assets/slots/wizard/sym_*.png` × 6
+- `src/assets/slots/dragon/sym_*.png` × 6
 
-### 1-C. `_slot_compute_spin` 시그니처 확장
+## QA 체크리스트
+1. `/casino/olympus-1000` 회귀 — 시각/사운드 동일
+2. `/casino/wizard-2000` — 보라+시안 카드, 신규 마법 심볼, 마법 사운드
+3. `/casino/dragon-empire` — 진홍 카드, 신규 용 심볼, 동양 사운드
+4. 음소거 토글 동작 + 모바일 사일런트 모드 충돌 없음
+5. Demo↔Real 전환 시 이미지/사운드 누수 없음
 
-`p_paytable jsonb`, `p_symbol_weights jsonb`, `p_max_multiplier numeric`을 받아 게임별 페이테이블 적용. 기존 호출부 모두 `slot_games` row에서 읽어 전달.
-
-### 1-D. 인덱스
-`slot_spins(user_id, game_code, created_at desc)` 부분 인덱스 (Real 모드 스트릭 계산용).
-
----
-
-## 2. 프론트엔드 — 모드 분리 리팩토링
-
-### 2-A. `OlympusSlot.tsx` 해체 → 4 파일
-
-```
-src/components/slots/
-  ├ engine/
-  │   ├ types.ts             // SpinResult, GameConfig, ModeState
-  │   ├ useSlotDemo.ts       // demo 잔고·스트릭·히스토리·spin
-  │   ├ useSlotReal.ts       // real PHON·NFT부스트 표시·spin·optimistic
-  │   └ useSlotMode.ts       // 모드 전환 + 상태 초기화 단일 책임
-  ├ SlotMachine.tsx          // 공용 셸: 릴 + 잔고 표시 + 베팅 컨트롤
-  ├ themes/
-  │   ├ olympusTheme.ts      // 아트/팔레트/사운드/이펙트 강도
-  │   ├ wizardTheme.ts
-  │   └ dragonTheme.ts
-  └ overlays/ (기존 유지, 테마 prop 받게 변경)
-```
-
-핵심: `<SlotMachine theme={…} gameCode="…" />` 한 컴포넌트 + `mode` 상태에 따라 `useSlotDemo()` 또는 `useSlotReal()` 훅이 활성화. 모드 전환 시 비활성 훅은 cleanup.
-
-### 2-B. 모드 전환 안전성
-
-`useSlotMode`가:
-1. spinning 중이면 전환 차단 (토스트)
-2. 전환 시 `displayBalance`, `winLines`, `winOverlay`, `streak`, `lastResult` 모두 리셋
-3. 활성 RPC 추적 → 모드 변경 후 도착하는 stale response 폐기
-4. `localStorage`에 마지막 모드 기억 (게임별)
-
-### 2-C. `slots-rpc.ts` 분리
-
-```
-src/lib/slots/
-  ├ rpc-demo.ts   // spinDemo, getDemoBalance, claimDemoRefill
-  ├ rpc-real.ts   // spinReal, getPhonBalance(via useMyPower)
-  └ types.ts
-```
-
-기존 `slots-rpc.ts`는 두 모듈을 re-export하여 호환성 유지.
-
----
-
-## 3. 슬롯별 차별화
-
-### Olympus 1000 (중변동) — 기존 유지·리팩토링만
-- 아트: 그대로
-- 사운드: 그대로
-- 페이테이블: 현행 → DB로 이전
-- 부스트 효과: 현행 골드 번개
-
-### Wizard 2000 (고변동) — 신규
-- **AI 심볼 11종 신규 생성**: 10/J/Q/K/A + Crystal Ball / Spell Book / Owl / Wizard Hat / **Wizard(emperor 등가)** / Wild=Pentagram / Scatter=Star Rune
-- 배경/로고 신규
-- 팔레트: 보라+청록 (`hsl 270 / 180`), 보석 글로우
-- 사운드: 영창(chant) 루프 + 스펠 캐스팅 SFX
-- 페이테이블 튜닝: 5매치 최고배율 250×, MAX 2000× (보너스 ×8 발동 시), 보너스 빈도↓
-- "1/280 보너스이지만 터지면 크다" 카피
-
-### Dragon Empire 500 (저변동) — 신규
-- **AI 심볼 11종 신규 생성**: 10/J/Q/K/A + Pearl / Sword / Phoenix / Tiger / **Dragon(emperor 등가)** / Wild=Yin-Yang / Scatter=Drum
-- 배경/로고 신규
-- 팔레트: 적색+금색 (`hsl 0 / 45`), 옻칠 텍스처
-- 사운드: 동양 타악기 + 용 울음
-- 페이테이블 튜닝: 5매치 최고배율 80×, MAX 500×, 보너스 빈도↑(1/120), 잔잔한 연속 당첨
-- "꾸준히 당겨지는 운영형 슬롯" 카피
-
-`themes/*.ts`가 색·이펙트 강도·승리 사운드 트랙·파티클 컬러 토큰을 노출 → `<SlotMachine>`이 디자인 토큰만 swap.
-
----
-
-## 4. 라우팅·로비
-
-```
-/casino                 → Casino.tsx (3종 카드)
-/casino/olympus-1000    → <SlotMachine theme={olympus} gameCode="olympus_1000" />
-/casino/wizard-2000     → <SlotMachine theme={wizard}  gameCode="wizard_2000" />
-/casino/dragon-empire   → <SlotMachine theme={dragon}  gameCode="dragon_500" />
-```
-
-`Casino.tsx` 카드의 `to` 경로를 `/casino/dragon-empire`로 통일(현재 `dragon_500` 코드 노출 제거).
-
----
-
-## 5. QA 체크리스트 (구현 후)
-
-1. Demo→Real 전환 직후 첫 스핀이 실제 PHON을 정확히 차감하는지
-2. Real→Demo 전환 후 demo 잔고 표시가 즉시 정확
-3. 스핀 진행 중 모드 토글 차단 토스트
-4. 3 슬롯 각각 100 spin 시뮬레이션 RPC 호출로 RTP 밴드 들어오는지 (개발 콘솔 스크립트)
-5. Wizard buy-bonus가 Demo에서 1.85× 부스트, Real에서 정상 ×150 만 적용
-6. 50× 하드캡: Real에서 의도적으로 streak boost 풀로 채워도 50× 초과 없는지
-7. 모바일 60fps 유지 (3 테마 모두 파티클 동일 budget)
-
----
-
-## 6. 산출물 및 안내 문구
-
-- Migration 1건 (slot_games 시드 + RPC 갱신 + 인덱스)
-- 신규 파일: 4 hooks/engine + 3 themes + Wizard/Dragon 페이지 2개
-- 아트: `src/assets/slots/wizard/` `src/assets/slots/dragon/` (각 13개 파일: 11 심볼 + bg + logo)
-- `OlympusSlot.tsx`는 thin wrapper (`<SlotMachine theme={olympus} />`)로 축소
-- 완료 후 출력: **"Wizard 2000 and Dragon Empire completed with distinct volatility and paytable while sharing core engine"**
-
----
-
-## 7. 작업 순서 (큰 덩어리)
-
-1. DB 마이그레이션 (paytable jsonb + 시드 + RPC 시그니처)
-2. `engine/` + `SlotMachine.tsx` 추출, Olympus 회귀 테스트
-3. `themes/olympusTheme.ts` 분리
-4. AI 아트 생성 (Wizard 13개 → Dragon 13개, 각 batch)
-5. `themes/wizardTheme.ts` + `themes/dragonTheme.ts` + 페이지 2개
-6. Casino 로비 라우팅 정리
-7. QA 시뮬레이션 + 완료 메시지
-
-승인하시면 위 순서대로 1단계 마이그레이션부터 시작합니다.
+## 비포함 (다음 라운드)
+- 페이테이블 추가 변경 (이미 차별화됨)
+- 슬롯 프레임 SVG 자체 제작 (Olympus 프레임 공유 유지)
+- 보너스 라운드 전용 사운드 트랙

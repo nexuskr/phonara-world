@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Crown, Loader2, Play, RefreshCw, ShieldCheck, Square, Zap } from "lucide-react";
+import { Crown, Loader2, Play, RefreshCw, ShieldCheck, Volume2, VolumeX, Zap } from "lucide-react";
 import { spinReal, spinDemo, getDemoBalance, claimDemoRefill, type SpinResult } from "@/lib/slots-rpc";
 import { notify } from "@/lib/notify";
 import { useDB } from "@/lib/store";
@@ -17,20 +17,28 @@ import AutoSpinControls, { type AutoSpinSettings } from "./AutoSpinControls";
 import GameInfoSheet from "./GameInfoSheet";
 import { useCurrencyPref } from "@/hooks/use-currency-pref";
 import { formatFromPhon } from "@/lib/displayCurrency";
+import { getSymbolImages, type SymbolPack } from "./symbolMap";
+import { playSlotCue, unlockSlotAudio, isSlotMuted, setSlotMuted, type SoundPack } from "@/lib/slotSound";
 
 import bgOlympus from "@/assets/slots/olympus/bg.jpg";
 import logoOlympus from "@/assets/slots/olympus/logo.png";
 
 // Theme contract — Olympus/Wizard/Dragon all flow through this single shell.
 // Engine, RPCs, mode separation are identical; only paytable (server-side)
-// + visual theme (here) differ.
+// + visual/audio theme (here) differ.
 export type SlotTheme = {
-  gameCode: string;       // matches public.slot_games.game_code
-  bg: string;             // background image
-  logo: string;           // logo PNG
-  title: string;          // human label, e.g. "Wizard 2000"
+  gameCode: string;          // matches public.slot_games.game_code
+  bg: string;                // background image
+  logo: string;              // logo PNG
+  title: string;             // human label, e.g. "Wizard 2000"
+  rtpLabel?: string;         // header subtitle e.g. "96.0%"
   volatility: "low" | "mid" | "high";
-  maxMultiplier: number;  // for UI badge (DB still authoritative)
+  maxMultiplier: number;     // for UI badge (DB still authoritative)
+  symbolPack?: SymbolPack;   // which 11-symbol art pack to use
+  soundPack?: SoundPack;     // which procedural sound pack to use
+  cardFilter?: string;       // CSS filter for shared card art (10/J/Q/K/A)
+  reelFrameClass?: string;   // tailwind class for the reel frame container
+  spinStreakClass?: string;  // tailwind class for the spinning gradient overlay
 };
 
 const OLYMPUS_THEME: SlotTheme = {
@@ -38,8 +46,12 @@ const OLYMPUS_THEME: SlotTheme = {
   bg: bgOlympus,
   logo: logoOlympus,
   title: "Olympus 1000",
+  rtpLabel: "96.0%",
   volatility: "mid",
   maxMultiplier: 1000,
+  symbolPack: "olympus",
+  soundPack: "olympus",
+  cardFilter: "none",
 };
 
 const REELS = 5;
@@ -76,6 +88,14 @@ export default function OlympusSlot({ theme = OLYMPUS_THEME }: { theme?: SlotThe
   const GAME_CODE = theme.gameCode;
   const bgImage = theme.bg;
   const logoImage = theme.logo;
+  const titleText = theme.title.toUpperCase();
+  const rtpLabel = theme.rtpLabel ?? "96.0%";
+  const symbolImages = useMemo(() => getSymbolImages(theme.symbolPack ?? "olympus"), [theme.symbolPack]);
+  const cardFilter = theme.cardFilter ?? "none";
+  const soundPack: SoundPack = theme.soundPack ?? "olympus";
+  const reelFrameClass = theme.reelFrameClass ??
+    "rounded-2xl border-2 border-primary/40 bg-gradient-to-b from-amber-950/40 to-stone-950/60 p-2 sm:p-3 shadow-[inset_0_0_40px_rgba(255,200,80,0.15)]";
+
   const [db] = useDB();
   const { hasSession, isReady } = useAuthReady();
   const { phon: phonFromPower, refresh: refreshPower } = useMyPower();
@@ -87,6 +107,7 @@ export default function OlympusSlot({ theme = OLYMPUS_THEME }: { theme?: SlotThe
   const [grid, setGrid] = useState<Grid>(() => randomGrid());
   const [spinning, setSpinning] = useState(false);
   const [demoBalance, setDemoBalance] = useState(10000);
+  const [muted, setMuted] = useState<boolean>(() => isSlotMuted());
 
   // Display balance — separate from raw so we can animate count-up after wins
   const [displayBalance, setDisplayBalance] = useState<number>(0);
@@ -156,6 +177,13 @@ export default function OlympusSlot({ theme = OLYMPUS_THEME }: { theme?: SlotThe
     setShowScatter(false);
     setShowBonusIntro(false);
     setBonusWheel(null);
+
+    // Sound: spin start + reel-stop staccato (best-effort, never blocks gameplay)
+    unlockSlotAudio();
+    playSlotCue(soundPack, "spin");
+    REEL_DELAYS.forEach((d, i) => {
+      setTimeout(() => playSlotCue(soundPack, "stop"), d + REEL_DURATIONS[i] - 60);
+    });
 
     // Immediate balance debit animation
     setBalancePulse("down");
@@ -234,6 +262,8 @@ export default function OlympusSlot({ theme = OLYMPUS_THEME }: { theme?: SlotThe
 
         const mult = bet > 0 ? payout / bet : 0;
         const tier = classifyWin(mult);
+        // Sound: bigwin for ≥50× else regular win
+        playSlotCue(soundPack, mult >= 50 ? "bigwin" : "win");
         if (tier) {
           setWinOverlay({ tier, amount: payout });
         } else {
@@ -257,7 +287,7 @@ export default function OlympusSlot({ theme = OLYMPUS_THEME }: { theme?: SlotThe
     } finally {
       setSpinning(false);
     }
-  }, [bet, mode, spinning, phonBalance, demoBalance, balanceLabel, rawBalance, hasSession]);
+  }, [bet, mode, spinning, phonBalance, demoBalance, balanceLabel, rawBalance, hasSession, soundPack, GAME_CODE]);
 
   // ref-trick to peek showBonusIntro inside async wait without re-render churn
   const showBonusIntroRefVal = useRef(false);
@@ -344,15 +374,15 @@ export default function OlympusSlot({ theme = OLYMPUS_THEME }: { theme?: SlotThe
           <div className="flex items-center gap-3">
             <img
               src={logoImage}
-              alt="Olympus 1000"
+              alt={theme.title}
               className="h-12 sm:h-14 w-auto drop-shadow-[0_0_18px_rgba(255,200,80,0.5)]"
             />
             <div>
               <div className="font-imperial text-base sm:text-lg text-gradient-imperial tracking-[0.2em] leading-none">
-                OLYMPUS 1000
+                {titleText}
               </div>
               <div className="text-[10px] text-muted-foreground tracking-[0.25em] mt-1">
-                BY PHONARA · RTP 96.0% · MAX 1000×
+                BY PHONARA · RTP {rtpLabel} · MAX {theme.maxMultiplier.toLocaleString()}×
               </div>
             </div>
           </div>
@@ -369,6 +399,13 @@ export default function OlympusSlot({ theme = OLYMPUS_THEME }: { theme?: SlotThe
                 </div>
               )}
             </div>
+            <button
+              onClick={() => { const v = !muted; setMuted(v); setSlotMuted(v); if (!v) unlockSlotAudio(); }}
+              aria-label={muted ? "사운드 켜기" : "사운드 끄기"}
+              className="p-2 rounded-lg border border-border/40 hover:bg-muted/40 transition text-muted-foreground"
+            >
+              {muted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+            </button>
             <GameInfoSheet />
           </div>
         </div>
@@ -403,7 +440,7 @@ export default function OlympusSlot({ theme = OLYMPUS_THEME }: { theme?: SlotThe
 
         {/* Reels */}
         <div className="relative">
-          <div className="rounded-2xl border-2 border-primary/40 bg-gradient-to-b from-amber-950/40 to-stone-950/60 p-2 sm:p-3 shadow-[inset_0_0_40px_rgba(255,200,80,0.15)]">
+          <div className={reelFrameClass}>
             <div className="grid grid-cols-5 gap-1 sm:gap-1.5">
               {reelTargets.map((target, c) => (
                 <Reel
@@ -413,6 +450,9 @@ export default function OlympusSlot({ theme = OLYMPUS_THEME }: { theme?: SlotThe
                   delayMs={REEL_DELAYS[c]}
                   durationMs={REEL_DURATIONS[c]}
                   highlightWin={!spinning && !!lastResult?.win_lines?.length}
+                  images={symbolImages}
+                  cardFilter={cardFilter}
+                  spinStreakClass={theme.spinStreakClass}
                 />
               ))}
             </div>

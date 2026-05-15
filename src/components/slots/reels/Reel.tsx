@@ -1,5 +1,5 @@
 import { memo, useEffect, useMemo, useRef, useState } from "react";
-import { SYMBOL_IMAGES, PREMIUM_INDICES } from "../symbolMap";
+import { PREMIUM_INDICES, CARD_INDICES, SYMBOL_IMAGES } from "../symbolMap";
 
 const CELL = 72; // px — actual rendered cell height (responsive via container)
 const BUFFER = 8; // extra random symbols above the final 3 (mobile perf: was 18)
@@ -10,6 +10,8 @@ const BUFFER = 8; // extra random symbols above the final 3 (mobile perf: was 18
  *  - `spinning` true → reel keeps animating
  *  - `delayMs` start delay so reels stagger (left to right)
  *  - `durationMs` how long this reel spins until it locks onto `target`
+ *  - `images` per-theme symbol pack (length 11). Falls back to default Olympus pack.
+ *  - `cardFilter` CSS filter applied ONLY to card symbols (indices 0-4); premium art stays original.
  */
 function ReelInner({
   target,
@@ -17,13 +19,21 @@ function ReelInner({
   delayMs = 0,
   durationMs = 900,
   highlightWin = false,
+  images,
+  cardFilter = "none",
+  spinStreakClass,
 }: {
   target: [number, number, number];
   spinning: boolean;
   delayMs?: number;
   durationMs?: number;
   highlightWin?: boolean;
+  images?: string[];
+  cardFilter?: string;
+  spinStreakClass?: string;
 }) {
+  const pack = images && images.length === 11 ? images : SYMBOL_IMAGES;
+
   // Random buffer regenerated per spin
   const seedRef = useRef(0);
   const [seed, setSeed] = useState(0);
@@ -48,11 +58,6 @@ function ReelInner({
   const visibleHeight = 3 * CELL;
   const finalY = -(stripHeight - visibleHeight);
 
-  // Spinning translation
-  const transform = spinning
-    ? `translateY(${finalY}px)`
-    : `translateY(${finalY}px)`;
-
   return (
     <div
       className="relative overflow-hidden rounded-lg bg-black/50 border border-amber-900/40"
@@ -71,8 +76,8 @@ function ReelInner({
       >
         {strip.map((sym, i) => {
           const isFinal = i >= strip.length - 3;
-          const finalRow = i - (strip.length - 3); // 0..2 for the lock-in row
           const premium = PREMIUM_INDICES.has(sym);
+          const isCard = CARD_INDICES.has(sym);
           return (
             <div
               key={i}
@@ -84,12 +89,13 @@ function ReelInner({
               style={{ height: `${CELL}px` }}
             >
               <img
-                src={SYMBOL_IMAGES[sym]}
+                src={pack[sym]}
                 alt=""
                 loading="lazy"
                 decoding="async"
                 draggable={false}
                 className="w-[88%] h-[88%] object-contain"
+                style={isCard && cardFilter !== "none" ? { filter: cardFilter } : undefined}
               />
             </div>
           );
@@ -98,7 +104,7 @@ function ReelInner({
 
       {/* spin streak overlay while reel is animating */}
       {spinning && (
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-amber-100/0 via-amber-100/5 to-amber-100/0 animate-pulse" />
+        <div className={`${spinStreakClass ?? "pointer-events-none absolute inset-0 bg-gradient-to-b from-amber-100/0 via-amber-100/5 to-amber-100/0"} animate-pulse`} />
       )}
     </div>
   );
