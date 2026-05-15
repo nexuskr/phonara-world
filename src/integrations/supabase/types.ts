@@ -6526,6 +6526,80 @@ export type Database = {
         }
         Relationships: []
       }
+      slot_tournament_payouts: {
+        Row: {
+          id: string
+          paid_at: string
+          prize_phon: number
+          rank: number
+          total_payout: number
+          tournament_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          paid_at?: string
+          prize_phon: number
+          rank: number
+          total_payout: number
+          tournament_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          paid_at?: string
+          prize_phon?: number
+          rank?: number
+          total_payout?: number
+          tournament_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "slot_tournament_payouts_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "slot_tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      slot_tournaments: {
+        Row: {
+          created_at: string
+          ends_at: string
+          id: string
+          prize_pool_phon: number
+          prize_split: Json
+          settled_at: string | null
+          starts_at: string
+          status: string
+          week_start_kst: string
+        }
+        Insert: {
+          created_at?: string
+          ends_at: string
+          id?: string
+          prize_pool_phon?: number
+          prize_split?: Json
+          settled_at?: string | null
+          starts_at: string
+          status?: string
+          week_start_kst: string
+        }
+        Update: {
+          created_at?: string
+          ends_at?: string
+          id?: string
+          prize_pool_phon?: number
+          prize_split?: Json
+          settled_at?: string | null
+          starts_at?: string
+          status?: string
+          week_start_kst?: string
+        }
+        Relationships: []
+      }
       spans: {
         Row: {
           created_at: string
@@ -9843,6 +9917,7 @@ export type Database = {
           enqueued_count: number
         }[]
       }
+      ensure_current_slot_tournament: { Args: never; Returns: string }
       ensure_settlement_audit_partition: {
         Args: { _when?: string }
         Returns: undefined
@@ -9983,6 +10058,19 @@ export type Database = {
         }[]
       }
       get_crown_war_snapshot: { Args: never; Returns: Json }
+      get_current_slot_tournament: {
+        Args: never
+        Returns: {
+          ends_at: string
+          id: string
+          prize_pool_phon: number
+          prize_split: Json
+          seconds_remaining: number
+          starts_at: string
+          status: string
+          week_start_kst: string
+        }[]
+      }
       get_daily_headlines: {
         Args: { _limit?: number; _locale?: string }
         Returns: {
@@ -10416,6 +10504,18 @@ export type Database = {
           cue: string
           url: string
           version: number
+        }[]
+      }
+      get_slot_tournament_leaderboard: {
+        Args: { _limit?: number; _tournament_id?: string }
+        Returns: {
+          is_me: boolean
+          nickname_masked: string
+          prize_estimate: number
+          rank: number
+          spins: number
+          total_payout: number
+          user_id: string
         }[]
       }
       get_starter_trust_stats: { Args: never; Returns: Json }
@@ -11086,6 +11186,7 @@ export type Database = {
         }
       }
       settle_crown_war: { Args: never; Returns: Json }
+      settle_due_slot_tournaments: { Args: never; Returns: number }
       settle_ended_founding_seasons: { Args: never; Returns: number }
       settle_founding_season: { Args: { _season_id: string }; Returns: Json }
       settle_guild_weekly: { Args: { _target_week?: string }; Returns: Json }
