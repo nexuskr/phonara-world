@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import BonusWheel from "./BonusWheel";
 import StickyMultiBonus from "./StickyMultiBonus";
 import Hold88Bonus from "./Hold88Bonus";
@@ -6,6 +7,8 @@ import PickRevealBonus from "./PickRevealBonus";
 import ThreePathBonus from "./ThreePathBonus";
 import ClusterTumbleBonus from "./ClusterTumbleBonus";
 import MissionTrailBonus from "./MissionTrailBonus";
+import { SoundManager } from "@/lib/sound/SoundManager";
+import type { MechCue } from "@/lib/sound/themes";
 
 export type BonusKind =
   | "wheel"
