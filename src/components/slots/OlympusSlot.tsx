@@ -164,6 +164,7 @@ export default function OlympusSlot() {
         setDemoBalance(result.balance_chips);
       } else if (mode === "real") {
         await refreshWallet();
+        refreshPower();
       }
 
       // BONUS PIPELINE
