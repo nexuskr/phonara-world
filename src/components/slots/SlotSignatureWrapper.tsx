@@ -13,6 +13,8 @@ import Disclaimer from "@/components/Disclaimer";
 import DevWinCheats from "@/components/slots/DevWinCheats";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { useSlotSound } from "@/hooks/useSlotSound";
+import { useEmpireCrown } from "@/hooks/useEmpireCrown";
+import type { MaxWinTriggeredPayload } from "@/components/celebration/BaseMaxWinOverlay";
 import type { SlotTheme } from "@/components/slots/OlympusSlot";
 
 export interface SlotSignatureWrapperProps {
