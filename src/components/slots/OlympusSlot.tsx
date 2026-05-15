@@ -5,6 +5,7 @@ import { notify } from "@/lib/notify";
 import { useDB } from "@/lib/store";
 import { refreshWallet } from "@/lib/missions-rpc";
 import { useFakePlayerCount } from "@/hooks/use-fake-player-count";
+import { useAuthReady } from "@/hooks/use-auth-ready";
 import Reel from "./reels/Reel";
 import BalanceTicker from "./BalanceTicker";
 import WinOverlay, { classifyWin, type WinTier } from "./overlays/WinOverlay";
@@ -50,6 +51,7 @@ function describeError(msg: string) {
 
 export default function OlympusSlot() {
   const [db] = useDB();
+  const { hasSession, isReady } = useAuthReady();
   const phonBalance = (db.user as any)?.phon_balance ?? 0;
 
   const [mode, setMode] = useState<Mode>("demo");
@@ -98,14 +100,19 @@ export default function OlympusSlot() {
   }, [rawBalance, spinning]);
 
   useEffect(() => {
+    if (!isReady) return;
     getDemoBalance().then((b) => {
       setDemoBalance(b);
       if (mode === "demo") setDisplayBalance(b);
     }).catch(() => {});
-  }, []); // eslint-disable-line
+  }, [isReady, mode]); // eslint-disable-line
 
   const performSpin = useCallback(async (buyBonus: boolean) => {
     if (spinning) return false;
+    if (mode === "demo" && !hasSession) {
+      notify.error("로그인이 필요합니다");
+      return false;
+    }
     const cost = buyBonus ? bet * 100 : bet;
     if (mode === "real" && cost > phonBalance) {
       notify.error("PHON 잔고가 부족합니다");
@@ -221,7 +228,7 @@ export default function OlympusSlot() {
     } finally {
       setSpinning(false);
     }
-  }, [bet, mode, spinning, phonBalance, demoBalance, balanceLabel, rawBalance]);
+  }, [bet, mode, spinning, phonBalance, demoBalance, balanceLabel, rawBalance, hasSession]);
 
   // ref-trick to peek showBonusIntro inside async wait without re-render churn
   const showBonusIntroRefVal = useRef(false);
@@ -266,6 +273,10 @@ export default function OlympusSlot() {
 
   const handleRefill = async () => {
     try {
+      if (!hasSession) {
+        notify.error("로그인이 필요합니다");
+        return;
+      }
       const r = await claimDemoRefill();
       if (r.refilled) {
         setDemoBalance(r.balance_chips);

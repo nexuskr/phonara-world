@@ -66,11 +66,14 @@ function resetSessionCircuitBreakers() {
 async function assignPersonaSafely() {
   try {
     if (sessionStorage.getItem("phonara_disable_persona_rpc") === "1") return;
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData.session?.access_token) return;
     const user = await getVerifiedUser();
     if (!user) return;
     const { error } = await supabase.rpc("assign_persona" as any);
-    if (error && ((error as { code?: string }).code === "PGRST301" || /401|400|unauthorized|bad request/i.test(error.message ?? ""))) {
+    if (error) {
       sessionStorage.setItem("phonara_disable_persona_rpc", "1");
+      console.warn("[auth-bridge] assign_persona disabled:", error.message ?? error);
     }
   } catch {
     // best-effort only

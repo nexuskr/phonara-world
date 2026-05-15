@@ -54,6 +54,8 @@ export async function registerCurrentDevice(): Promise<void> {
   try {
     if (sessionStorage.getItem(DISABLED_FLAG) === "1") return;
     if (sessionStorage.getItem(SESSION_FLAG) === "1") return;
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData.session?.access_token) return;
     const user = await getVerifiedUser();
     if (!user) return;
     const fp = await getFingerprint();
@@ -61,8 +63,9 @@ export async function registerCurrentDevice(): Promise<void> {
       _fp: fp,
       _ua: (navigator.userAgent ?? "").slice(0, 256),
     });
-    if (error && ((error as { code?: string }).code === "PGRST301" || /401|400|unauthorized|bad request/i.test(error.message ?? ""))) {
+    if (error) {
       sessionStorage.setItem(DISABLED_FLAG, "1");
+      console.warn("[device] register_device disabled:", error.message ?? error);
       return;
     }
     sessionStorage.setItem(SESSION_FLAG, "1");
