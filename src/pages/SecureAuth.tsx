@@ -24,6 +24,9 @@ export default function SecureAuth() {
   const { isReady, hasSession } = useAuthReady();
   const [busy, setBusy] = useState(false);
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [password2, setPassword2] = useState("");
+  const [mode, setMode] = useState<"magic" | "signup" | "signin">("magic");
   const live = useAuthLiveData();
 
   useEffect(() => {
@@ -48,6 +51,60 @@ export default function SecureAuth() {
       toast({ title: "✨ 매직링크 발송 완료", description: `${e} 로 5분 유효 입장 링크를 보냈습니다.` });
     } catch (err: any) {
       toast({ title: "발송 실패", description: err.message, variant: "destructive" });
+    } finally { setBusy(false); }
+  }
+
+  async function signUpWithPassword() {
+    const e = email.trim();
+    if (!emailSchema.safeParse(e).success) {
+      toast({ title: "이메일을 확인해 주세요", description: "유효한 이메일을 입력해 주세요.", variant: "destructive" });
+      return;
+    }
+    if (password.length < 8) {
+      toast({ title: "비밀번호가 너무 짧습니다", description: "8자 이상 입력해 주세요.", variant: "destructive" });
+      return;
+    }
+    if (password !== password2) {
+      toast({ title: "비밀번호가 일치하지 않습니다", variant: "destructive" });
+      return;
+    }
+    setBusy(true);
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: e,
+        password,
+        options: { emailRedirectTo: `${window.location.origin}/complete-profile` },
+      });
+      if (error) throw error;
+      if (data.session) {
+        toast({ title: "🎉 가입 완료", description: "추가 정보를 입력해 주세요." });
+        nav("/complete-profile");
+      } else {
+        toast({ title: "✉️ 인증 메일 발송", description: `${e} 로 가입 확인 메일을 보냈습니다. 메일을 열어 인증해 주세요.` });
+      }
+    } catch (err: any) {
+      toast({ title: "가입 실패", description: err.message, variant: "destructive" });
+    } finally { setBusy(false); }
+  }
+
+  async function signInWithPassword() {
+    const e = email.trim();
+    if (!emailSchema.safeParse(e).success) {
+      toast({ title: "이메일을 확인해 주세요", variant: "destructive" });
+      return;
+    }
+    if (!password) {
+      toast({ title: "비밀번호를 입력해 주세요", variant: "destructive" });
+      return;
+    }
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email: e, password });
+      if (error) throw error;
+      toast({ title: "환영합니다 👑" });
+      nav("/dashboard");
+    } catch (err: any) {
+      toast({ title: "로그인 실패", description: err.message, variant: "destructive" });
     } finally { setBusy(false); }
   }
 
