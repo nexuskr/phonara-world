@@ -44,37 +44,39 @@ export default function JackpotWinOverlay({ open, amount, gameTitle, onClose }: 
           {/* radial god-rays */}
           <motion.div
             className="absolute inset-0 pointer-events-none"
+            aria-hidden
             style={{
               background:
                 "radial-gradient(circle at 50% 50%, hsl(45 95% 60% / 0.35) 0%, transparent 55%)",
             }}
-            animate={{ scale: [1, 1.15, 1], opacity: [0.6, 1, 0.6] }}
+            animate={reduceMotion ? undefined : { scale: [1, 1.15, 1], opacity: [0.6, 1, 0.6] }}
             transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
           />
 
-          {/* confetti */}
-          <div className="absolute left-1/2 top-1/2 pointer-events-none">
-            {SHARDS.map((s) => (
-              <motion.span
-                key={s.id}
-                className="absolute block w-2 h-3 rounded-sm"
-                style={{
-                  background: `hsl(${s.hue} 95% 60%)`,
-                  boxShadow: `0 0 12px hsl(${s.hue} 95% 60% / 0.8)`,
-                }}
-                initial={{ x: 0, y: 0, opacity: 1, rotate: 0, scale: 1 }}
-                animate={{
-                  x: Math.cos(s.angle) * s.dist,
-                  y: Math.sin(s.angle) * s.dist + 200,
-                  opacity: 0,
-                  rotate: s.rot,
-                  scale: 0.4,
-                }}
-                transition={{ duration: 2.6, delay: s.delay, ease: [0.2, 0.6, 0.4, 1] }}
-              />
-            ))}
-          </div>
-
+          {/* confetti — skipped under prefers-reduced-motion */}
+          {!reduceMotion && (
+            <div className="absolute left-1/2 top-1/2 pointer-events-none" aria-hidden>
+              {SHARDS.map((s) => (
+                <motion.span
+                  key={s.id}
+                  className="absolute block w-2 h-3 rounded-sm"
+                  style={{
+                    background: `hsl(${s.hue} 95% 60%)`,
+                    boxShadow: `0 0 12px hsl(${s.hue} 95% 60% / 0.8)`,
+                  }}
+                  initial={{ x: 0, y: 0, opacity: 1, rotate: 0, scale: 1 }}
+                  animate={{
+                    x: Math.cos(s.angle) * s.dist,
+                    y: Math.sin(s.angle) * s.dist + 200,
+                    opacity: 0,
+                    rotate: s.rot,
+                    scale: 0.4,
+                  }}
+                  transition={{ duration: 2.6, delay: s.delay, ease: [0.2, 0.6, 0.4, 1] }}
+                />
+              ))}
+            </div>
+          )}
           {/* main card */}
           <motion.div
             className="relative max-w-md w-[90vw] mx-4 rounded-3xl border border-yellow-400/40 bg-gradient-to-b from-yellow-500/15 via-amber-500/10 to-orange-600/15 p-8 text-center shadow-[0_0_80px_-10px_hsl(45_95%_60%/0.6)]"
