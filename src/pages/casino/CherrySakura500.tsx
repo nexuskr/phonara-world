@@ -1,18 +1,23 @@
-import CasinoLayout from "@/components/casino/CasinoLayout";
-import OlympusSlot from "@/components/slots/OlympusSlot";
+// CherrySakura500 — Signature Slot 셸 (SlotSignatureWrapper 사용).
+// 7번째이자 마지막 Signature Slot. 한국 50-70대 친화적 Low volatility.
+import SlotSignatureWrapper from "@/components/slots/SlotSignatureWrapper";
 import { CHERRY_SAKURA_THEME } from "@/components/slots/themes";
-import Disclaimer from "@/components/Disclaimer";
-import { useRequireAuth } from "@/hooks/use-require-auth";
+import SakuraPetalCanvas from "@/components/slots/SakuraPetalCanvas";
+import SakuraPaytableSheet from "@/components/slots/SakuraPaytableSheet";
+import SakuraMaxWinOverlay from "@/components/celebration/SakuraMaxWinOverlay";
 
 export default function CherrySakura500Page() {
-  const user = useRequireAuth();
-  if (!user) return null;
   return (
-    <CasinoLayout backTo="/casino" backLabel="슬롯 로비로">
-      <div className="container py-4 space-y-4">
-        <OlympusSlot theme={CHERRY_SAKURA_THEME} />
-        <Disclaimer />
-      </div>
-    </CasinoLayout>
+    <SlotSignatureWrapper
+      slotId="cherry_sakura"
+      theme={CHERRY_SAKURA_THEME}
+      Background={SakuraPetalCanvas}
+      PaytableSheet={SakuraPaytableSheet}
+      MaxWinOverlay={SakuraMaxWinOverlay}
+      flareColors={{ left: "rgba(249,168,212,0.22)", right: "rgba(163,230,187,0.18)" }}
+      signatureLabel="Cherry Sakura · Signature"
+      accentDotColor="rgba(249,168,212,1)"
+      themeKey="sakura"
+    />
   );
 }
