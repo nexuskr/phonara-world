@@ -1,4 +1,4 @@
-import Layout from "@/components/Layout";
+import CasinoLayout from "@/components/casino/CasinoLayout";
 import { Link } from "react-router-dom";
 import { Crown, Lock, Sparkles } from "lucide-react";
 import logoImage from "@/assets/slots/olympus/logo.png";
@@ -54,7 +54,7 @@ export default function CasinoLobby() {
   const user = useRequireAuth();
   if (!user) return null;
   return (
-    <Layout>
+    <CasinoLayout>
       <div className="container py-6 space-y-6">
         <div className="flex items-baseline gap-3">
           <h1 className="font-imperial text-2xl md:text-3xl text-gradient-imperial tracking-[0.18em]">
@@ -120,6 +120,6 @@ export default function CasinoLobby() {
           })}
         </div>
       </div>
-    </Layout>
+    </CasinoLayout>
   );
 }
