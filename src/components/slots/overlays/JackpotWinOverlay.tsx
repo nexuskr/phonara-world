@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { Crown, Sparkles, X } from "lucide-react";
 
 type Props = {
@@ -24,6 +24,7 @@ const SHARDS = Array.from({ length: 36 }).map((_, i) => ({
 }));
 
 export default function JackpotWinOverlay({ open, amount, gameTitle, onClose }: Props) {
+  const reduceMotion = useReducedMotion();
   useEffect(() => {
     if (!open) return;
     const t = window.setTimeout(onClose, 8000);
