@@ -48,6 +48,10 @@ export default function ServerUserAdmin() {
   const [q, setQ] = useState(sp.get("q") ?? "");
   const [filter, setFilter] = useState<Filter>("all");
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [selfId, setSelfId] = useState<string | null>(null);
+  useEffect(() => {
+    void supabase.auth.getUser().then(({ data }) => setSelfId(data.user?.id ?? null));
+  }, []);
 
   const toggleOne = useCallback((id: string) => {
     setSelected(prev => {
