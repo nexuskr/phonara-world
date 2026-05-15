@@ -580,6 +580,12 @@ export default function OlympusSlot({ theme = OLYMPUS_THEME }: { theme?: SlotThe
               onClose={() => setWinOverlay(null)}
             />
           )}
+          <JackpotWinOverlay
+            open={!!jackpotWin}
+            amount={jackpotWin?.amount ?? 0}
+            gameTitle={theme.title}
+            onClose={() => setJackpotWin(null)}
+          />
         </div>
 
         {/* Bet controls */}
