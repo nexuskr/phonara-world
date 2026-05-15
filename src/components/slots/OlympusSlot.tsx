@@ -16,17 +16,37 @@ import BonusWheel, { snapToSegment } from "./overlays/BonusWheel";
 import AutoSpinControls, { type AutoSpinSettings } from "./AutoSpinControls";
 import GameInfoSheet from "./GameInfoSheet";
 
-import bgImage from "@/assets/slots/olympus/bg.jpg";
-import logoImage from "@/assets/slots/olympus/logo.png";
+import bgOlympus from "@/assets/slots/olympus/bg.jpg";
+import logoOlympus from "@/assets/slots/olympus/logo.png";
 
-const GAME_CODE = "olympus_1000";
+// Theme contract — Olympus/Wizard/Dragon all flow through this single shell.
+// Engine, RPCs, mode separation are identical; only paytable (server-side)
+// + visual theme (here) differ.
+export type SlotTheme = {
+  gameCode: string;       // matches public.slot_games.game_code
+  bg: string;             // background image
+  logo: string;           // logo PNG
+  title: string;          // human label, e.g. "Wizard 2000"
+  volatility: "low" | "mid" | "high";
+  maxMultiplier: number;  // for UI badge (DB still authoritative)
+};
+
+const OLYMPUS_THEME: SlotTheme = {
+  gameCode: "olympus_1000",
+  bg: bgOlympus,
+  logo: logoOlympus,
+  title: "Olympus 1000",
+  volatility: "mid",
+  maxMultiplier: 1000,
+};
+
 const REELS = 5;
 const BET_OPTIONS = [10, 50, 100, 500, 1000, 5000];
 const REEL_DELAYS = [0, 120, 240, 360, 480];
 const REEL_DURATIONS = [700, 850, 1000, 1150, 1300];
 
 type Mode = "demo" | "real";
-type Grid = number[][]; // [row][reel]
+type Grid = number[][];
 
 function randomGrid(): Grid {
   const g: Grid = [];
@@ -50,7 +70,10 @@ function describeError(msg: string) {
   return "스핀 실패 — 잠시 후 다시 시도해주세요";
 }
 
-export default function OlympusSlot() {
+export default function OlympusSlot({ theme = OLYMPUS_THEME }: { theme?: SlotTheme } = {}) {
+  const GAME_CODE = theme.gameCode;
+  const bgImage = theme.bg;
+  const logoImage = theme.logo;
   const [db] = useDB();
   const { hasSession, isReady } = useAuthReady();
   const { phon: phonFromPower, refresh: refreshPower } = useMyPower();
