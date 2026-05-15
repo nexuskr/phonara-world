@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useDB } from "@/lib/store";
 import FreezeBanner from "@/components/FreezeBanner";
 import SoundController from "@/components/sound/SoundController";
+import WinCelebrationOverlay from "@/components/celebration/WinCelebrationOverlay";
 
 /**
  * Lightweight shell for /casino routes.
@@ -62,6 +63,7 @@ export default function CasinoLayout({
       </header>
       <SoundController />
       <main className="relative">{children}</main>
+      <WinCelebrationOverlay />
     </div>
   );
 }

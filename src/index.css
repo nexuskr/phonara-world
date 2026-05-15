@@ -514,3 +514,22 @@ html.senior-mode [data-senior-text] {
   font-size: 1.375rem !important;
   line-height: 1.6 !important;
 }
+
+/* === Win Celebration screen shake === */
+@keyframes winShakeKf {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  10% { transform: translate3d(calc(var(--win-shake-px, 8px) * -1), 0, 0); }
+  20% { transform: translate3d(var(--win-shake-px, 8px), calc(var(--win-shake-px, 8px) * -0.4), 0); }
+  30% { transform: translate3d(calc(var(--win-shake-px, 8px) * -0.8), var(--win-shake-px, 8px), 0); }
+  45% { transform: translate3d(var(--win-shake-px, 8px), 0, 0); }
+  60% { transform: translate3d(calc(var(--win-shake-px, 8px) * -0.6), calc(var(--win-shake-px, 8px) * -0.6), 0); }
+  75% { transform: translate3d(calc(var(--win-shake-px, 8px) * 0.4), var(--win-shake-px, 8px), 0); }
+  90% { transform: translate3d(calc(var(--win-shake-px, 8px) * -0.3), 0, 0); }
+}
+html.win-shake-active body {
+  animation: winShakeKf 0.6s cubic-bezier(.36,.07,.19,.97) both;
+  will-change: transform;
+}
+@media (prefers-reduced-motion: reduce) {
+  html.win-shake-active body { animation: none !important; }
+}
