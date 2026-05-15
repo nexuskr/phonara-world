@@ -6343,6 +6343,66 @@ export type Database = {
         }
         Relationships: []
       }
+      slot_jackpot_pools: {
+        Row: {
+          contribution_bps: number
+          game_code: string
+          last_amount: number | null
+          last_winner_user_id: string | null
+          last_won_at: string | null
+          pool_phon: number
+          seed_phon: number
+          updated_at: string
+        }
+        Insert: {
+          contribution_bps?: number
+          game_code: string
+          last_amount?: number | null
+          last_winner_user_id?: string | null
+          last_won_at?: string | null
+          pool_phon?: number
+          seed_phon?: number
+          updated_at?: string
+        }
+        Update: {
+          contribution_bps?: number
+          game_code?: string
+          last_amount?: number | null
+          last_winner_user_id?: string | null
+          last_won_at?: string | null
+          pool_phon?: number
+          seed_phon?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      slot_jackpot_wins: {
+        Row: {
+          amount_phon: number
+          game_code: string
+          id: string
+          spin_id: string | null
+          winner_user_id: string
+          won_at: string
+        }
+        Insert: {
+          amount_phon: number
+          game_code: string
+          id?: string
+          spin_id?: string | null
+          winner_user_id: string
+          won_at?: string
+        }
+        Update: {
+          amount_phon?: number
+          game_code?: string
+          id?: string
+          spin_id?: string | null
+          winner_user_id?: string
+          won_at?: string
+        }
+        Relationships: []
+      }
       slot_sound_assets: {
         Row: {
           bytes: number | null
@@ -10010,6 +10070,17 @@ export type Database = {
           channel: string
           code: string
           display_name: string
+        }[]
+      }
+      get_jackpot_pools: {
+        Args: never
+        Returns: {
+          game_code: string
+          last_amount: number
+          last_winner_masked: string
+          last_won_at: string
+          pool_phon: number
+          seed_phon: number
         }[]
       }
       get_live_activity_60s: {
