@@ -8836,6 +8836,15 @@ export type Database = {
         }[]
       }
       admin_get_sim_real_conversion: { Args: { _days?: number }; Returns: Json }
+      admin_get_slot_anomaly_summary_24h: {
+        Args: never
+        Returns: {
+          game_code: string
+          kind: string
+          last_at: string
+          n: number
+        }[]
+      }
       admin_get_stress_test_stats: { Args: never; Returns: Json }
       admin_get_table_counts: { Args: never; Returns: Json }
       admin_get_telegram_bot_status: { Args: never; Returns: Json }
@@ -9006,6 +9015,19 @@ export type Database = {
           reason: string
           resolved_at: string
           status: string
+          user_id: string
+        }[]
+      }
+      admin_list_slot_anomalies: {
+        Args: { _kind?: string; _limit?: number }
+        Returns: {
+          actual: number
+          created_at: string
+          expected: number
+          game_code: string
+          id: string
+          kind: string
+          meta: Json
           user_id: string
         }[]
       }
