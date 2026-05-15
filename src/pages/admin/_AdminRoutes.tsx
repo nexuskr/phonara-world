@@ -69,6 +69,7 @@ const ManualCrownTrigger    = lazy(() => import("@/components/admin/game/ManualC
 const WithdrawalQueueBulk   = lazy(() => import("@/components/admin/treasury/WithdrawalQueueBulk"));
 const RiskCenter            = lazy(() => import("@/components/admin/compliance/RiskCenter"));
 const GameConfigPanel       = lazy(() => import("@/components/admin/game/GameConfigPanel"));
+const SlotSfxAdmin          = lazy(() => import("@/components/admin/SlotSfxAdmin"));
 
 // Day 3 — Audit, Notify, Marketing, SIM→Real
 const AuditLogTable       = lazy(() => import("@/components/admin/ops/AuditLogTable"));
