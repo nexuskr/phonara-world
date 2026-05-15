@@ -88,6 +88,14 @@ export default function OlympusSlot({ theme = OLYMPUS_THEME }: { theme?: SlotThe
   const GAME_CODE = theme.gameCode;
   const bgImage = theme.bg;
   const logoImage = theme.logo;
+  const titleText = theme.title.toUpperCase();
+  const rtpLabel = theme.rtpLabel ?? "96.0%";
+  const symbolImages = useMemo(() => getSymbolImages(theme.symbolPack ?? "olympus"), [theme.symbolPack]);
+  const cardFilter = theme.cardFilter ?? "none";
+  const soundPack: SoundPack = theme.soundPack ?? "olympus";
+  const reelFrameClass = theme.reelFrameClass ??
+    "rounded-2xl border-2 border-primary/40 bg-gradient-to-b from-amber-950/40 to-stone-950/60 p-2 sm:p-3 shadow-[inset_0_0_40px_rgba(255,200,80,0.15)]";
+
   const [db] = useDB();
   const { hasSession, isReady } = useAuthReady();
   const { phon: phonFromPower, refresh: refreshPower } = useMyPower();
@@ -99,6 +107,7 @@ export default function OlympusSlot({ theme = OLYMPUS_THEME }: { theme?: SlotThe
   const [grid, setGrid] = useState<Grid>(() => randomGrid());
   const [spinning, setSpinning] = useState(false);
   const [demoBalance, setDemoBalance] = useState(10000);
+  const [muted, setMuted] = useState<boolean>(() => isSlotMuted());
 
   // Display balance — separate from raw so we can animate count-up after wins
   const [displayBalance, setDisplayBalance] = useState<number>(0);
