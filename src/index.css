@@ -422,6 +422,15 @@
     100% { opacity: 1; transform: translateY(0); }
   }
   .animate-balance-in { animation: balanceCount 0.7s cubic-bezier(0.22,1,0.36,1) both; }
+
+  /* Slot reel — fast continuous scroll while waiting for RPC result */
+  @keyframes reelSpin {
+    0%   { transform: translateY(0); }
+    100% { transform: translateY(calc(var(--reel-final-y, -576px) * 1)); }
+  }
+  .reel-spinning {
+    animation: reelSpin 280ms linear infinite;
+  }
 }
 /* Mobile zoom & touch fixes */
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; touch-action: manipulation; }
