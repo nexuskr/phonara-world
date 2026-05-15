@@ -1,8 +1,19 @@
 import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { PREMIUM_INDICES, CARD_INDICES, SYMBOL_IMAGES } from "../symbolMap";
+import { prefersReducedMotion } from "@/lib/haptics";
 
 const CELL = 72; // px — actual rendered cell height (responsive via container)
-const BUFFER = 8; // extra random symbols above the final 3 (mobile perf: was 18)
+// Mobile perf: smaller buffer = fewer DOM nodes + shorter strip = less paint.
+// We further trim on low-power devices via deviceMemory/hardwareConcurrency hints.
+function pickBuffer(): number {
+  if (typeof navigator === "undefined") return 8;
+  const dm = (navigator as any).deviceMemory ?? 4;
+  const hc = navigator.hardwareConcurrency ?? 4;
+  if (dm <= 2 || hc <= 2) return 5;
+  if (dm <= 4) return 7;
+  return 8;
+}
+const BUFFER = pickBuffer();
 
 /**
  * Single reel column. Sequentially decelerates to target 3 symbols.
@@ -58,20 +69,32 @@ function ReelInner({
   const visibleHeight = 3 * CELL;
   const finalY = -(stripHeight - visibleHeight);
 
+  const reduced = prefersReducedMotion();
+
   return (
     <div
       className="relative overflow-hidden rounded-lg bg-black/50 border border-amber-900/40"
-      style={{ height: `${visibleHeight}px`, contain: "layout paint" }}
+      style={{
+        height: `${visibleHeight}px`,
+        contain: "layout paint style",
+        // Promote container to its own compositor layer to avoid repaints during spin.
+        transform: "translateZ(0)",
+      }}
     >
       <div
         key={seed}
-        className={`will-change-transform ${spinning ? "reel-spinning" : ""}`}
+        className={`will-change-transform ${spinning && !reduced ? "reel-spinning" : ""}`}
         style={{
-          transform: spinning ? undefined : `translateY(${finalY}px)`,
+          // translate3d forces GPU compositing on iOS Safari + Android Chrome.
+          transform: spinning && !reduced ? undefined : `translate3d(0, ${finalY}px, 0)`,
           transition: spinning
             ? `none`
-            : `transform ${durationMs}ms cubic-bezier(.18,.85,.30,1) ${delayMs}ms`,
+            : reduced
+              ? `none`
+              : `transform ${durationMs}ms cubic-bezier(.18,.85,.30,1) ${delayMs}ms`,
           ["--reel-final-y" as any]: `${finalY}px`,
+          backfaceVisibility: "hidden",
+          WebkitBackfaceVisibility: "hidden" as any,
         }}
       >
         {strip.map((sym, i) => {

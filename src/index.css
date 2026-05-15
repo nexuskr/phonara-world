@@ -423,13 +423,19 @@
   }
   .animate-balance-in { animation: balanceCount 0.7s cubic-bezier(0.22,1,0.36,1) both; }
 
-  /* Slot reel — fast continuous scroll while waiting for RPC result */
+  /* Slot reel — fast continuous scroll while waiting for RPC result.
+     translate3d forces GPU compositing → 60fps on mid-tier mobile. */
   @keyframes reelSpin {
-    0%   { transform: translateY(0); }
-    100% { transform: translateY(calc(var(--reel-final-y, -576px) * 1)); }
+    0%   { transform: translate3d(0, 0, 0); }
+    100% { transform: translate3d(0, calc(var(--reel-final-y, -576px) * 1), 0); }
   }
   .reel-spinning {
     animation: reelSpin 280ms linear infinite;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .reel-spinning { animation: none; }
   }
 }
 /* Mobile zoom & touch fixes */
