@@ -103,6 +103,8 @@ const LegalDoc = lazy(() => import("./pages/LegalDoc.tsx"));
 const LiveOverlay = lazy(() => import("./pages/LiveOverlay.tsx"));
 const InfluencerLanding = lazy(() => import("./pages/InfluencerLanding.tsx"));
 const Vip = lazy(() => import("./pages/Vip.tsx"));
+const Landing = lazy(() => import("./pages/Landing.tsx"));
+const OnboardingV3 = lazy(() => import("./components/onboarding/OnboardingV3.tsx"));
 const DevConsole = lazy(() => import("./pages/DevConsole.tsx"));
 const ForcedShareDialog = lazy(() => import("./components/share/ForcedShareDialog.tsx"));
 const VipArrivalAnnouncer = lazy(() => import("./components/empire/VipArrivalAnnouncer.tsx"));
