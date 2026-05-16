@@ -285,22 +285,23 @@ export const OLYMPUS_LEGACY_THEME: SlotTheme = {
 //   import bgSugarFever from "@/assets/slots/sugar-fever/bg.jpg";
 //   import logoSugarFever from "@/assets/slots/sugar-fever/logo.png";
 
-// Pastel dot lattice + warm pink/gold halo + soft mint mist
+// Candy dot lattice (pink + gold + mint + strawberry) + creamy pink/gold halos.
+// Note: this is the in-reel decorative pattern only (the slot frame inner glow).
+// The cinematic background is fully painted in SugarFeverCanvas.
 const SUGAR_FEVER_PATTERN =
-  "radial-gradient(2px 2px at 18% 22%, hsla(340, 95%, 85%, 0.55), transparent 60%), " +
-  "radial-gradient(2.5px 2.5px at 72% 30%, hsla(45, 100%, 78%, 0.55), transparent 60%), " +
-  "radial-gradient(1.8px 1.8px at 44% 70%, hsla(160, 70%, 78%, 0.45), transparent 60%), " +
-  "radial-gradient(2.2px 2.2px at 82% 78%, hsla(350, 95%, 78%, 0.55), transparent 60%), " +
-  "radial-gradient(2px 2px at 28% 88%, hsla(40, 100%, 80%, 0.50), transparent 60%), " +
-  "radial-gradient(circle at 50% 18%, hsla(45, 95%, 70%, 0.20), transparent 55%), " +
-  "radial-gradient(circle at 50% 100%, hsla(340, 90%, 60%, 0.28), transparent 70%)";
+  "radial-gradient(3px 3px at 14% 18%, hsla(350, 100%, 86%, 0.70), transparent 60%), " +   // pink dot
+  "radial-gradient(2.6px 2.6px at 70% 26%, hsla(28, 90%, 80%, 0.70), transparent 60%), " +  // warm gold
+  "radial-gradient(2.2px 2.2px at 40% 64%, hsla(160, 70%, 80%, 0.65), transparent 60%), " + // mint
+  "radial-gradient(3px 3px at 84% 74%, hsla(352, 100%, 72%, 0.70), transparent 60%), " +    // strawberry
+  "radial-gradient(2.4px 2.4px at 26% 86%, hsla(40, 100%, 88%, 0.65), transparent 60%), " + // cream
+  "radial-gradient(circle at 50% 16%, hsla(28, 95%, 80%, 0.32), transparent 55%), " +       // gold halo top
+  "radial-gradient(circle at 50% 100%, hsla(350, 100%, 75%, 0.34), transparent 70%)";       // pink halo bot
 
 export const SUGAR_FEVER_THEME: SlotTheme = {
   gameCode: "sugar_fever_3000",
   // ── Background asset strategy ──────────────────────────────────────────────
-  // Reusing the existing olympus art for an immediate launch. When the new
-  // pastel candy hero assets are ready, just swap these two lines (see comment
-  // block above).
+  // Reusing the olympus art behind the cinematic Canvas (the Canvas covers it
+  // anyway). When dedicated candy hero assets ship, swap these two lines.
   bg: bgOlympus,
   logo: logoOlympus,
   title: "Sugar Fever 3000",
@@ -310,12 +311,14 @@ export const SUGAR_FEVER_THEME: SlotTheme = {
   // Placeholder: reuses olympus symbol/sound pack until dedicated candy assets ship.
   symbolPack: "olympus",
   soundPack: "olympus",
-  // warm pastel tint without breaking the borrowed art
-  cardFilter: "hue-rotate(320deg) saturate(1.25) brightness(1.08)",
+  // Strong pastel-pink hue shift over borrowed art (rotates olympus gold → pink)
+  cardFilter: "hue-rotate(310deg) saturate(1.35) brightness(1.15)",
+  // Pastel pink frame on creamy backdrop with warm gold glow — never dark/cocoa
   reelFrameClass:
-    "rounded-2xl border-2 border-pink-300/70 bg-gradient-to-b from-[#1c0e18]/60 to-[#2a1428]/65 backdrop-blur-[2px] p-2 sm:p-3 shadow-[inset_0_0_60px_rgba(255,182,206,0.38)]",
+    "rounded-2xl border-2 border-pink-300/80 bg-gradient-to-b from-[#ffe4e8]/40 to-[#f8c8a0]/35 backdrop-blur-[2px] p-2 sm:p-3 shadow-[inset_0_0_60px_rgba(255,182,193,0.55)]",
+  // Sweep is pink → gold (warm pastel), not amber
   spinStreakClass:
-    "pointer-events-none absolute inset-0 bg-gradient-to-b from-pink-100/0 via-pink-200/14 to-amber-100/0",
+    "pointer-events-none absolute inset-0 bg-gradient-to-b from-pink-200/0 via-pink-300/18 to-amber-200/0",
   bgOverlay: SHEER_OVERLAY,
   reelPattern: SUGAR_FEVER_PATTERN,
   bonusKind: "cluster_tumble",
