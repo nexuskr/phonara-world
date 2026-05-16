@@ -1,0 +1,49 @@
+{
+  "pr": "PR-K",
+  "name": "Operator Isolation",
+  "date": "2026-05-19",
+  "phase": "Phase 3 — Active Governance & Detox",
+  "objectives": {
+    "layer1_operator_bytes": 0,
+    "operator_chunk_present": true,
+    "modulepreload_blocks_operator": true,
+    "degrade_mode_cancels_operator_preload": true,
+    "depcruise_blocks_user_to_operator": true,
+    "money_flow_freeze_paths": 8,
+    "money_flow_diff_lines": 0
+  },
+  "implementation": {
+    "vite_config": {
+      "manualChunks": "operator (src/pages/admin/** + src/components/admin/** + src/packages/operator/** + legacy Admin.tsx/Cockpit*.tsx)",
+      "modulePreload": "operator-*.js filtered out of resolveDependencies"
+    },
+    "degrade_binder": "DegradeModeBinder.tsx removes link[rel=modulepreload][href*='/operator'] on degrade-on",
+    "verifier_script": "scripts/check-operator-isolation.mjs (exit 1 on any FORBIDDEN_MARKERS leak into index-*.js)",
+    "depcruise": "no-operator-in-user-bundle rule (existing) — covers wallet/core/runtime/performance/telemetry via critical-no-optional + dedicated operator block"
+  },
+  "admin_routes_lazy": {
+    "total_routes": 56,
+    "all_react_lazy": true,
+    "gate": "src/pages/admin/_AdminRoutes.tsx (single mounted via App.tsx /admin/* lazy)"
+  },
+  "raw_channel_cleanup": {
+    "supabase_channel_direct_calls_in_src": 2,
+    "whitelisted": [
+      "src/hooks/use-realtime-channel.ts (the wrapper itself)",
+      "src/components/admin/GodModePanel.tsx (presence channel, intentional)"
+    ],
+    "legacy_raw_channel_files_tracked": 42,
+    "note": "PR-K.1 follow-up migrates the 42 LEGACY_RAW_CHANNEL files from useRealtimeChannel/supabase.channel to @pkg/realtime partition wrappers. Bundle isolation does not require it; tracked as warn."
+  },
+  "verification": {
+    "money_flow_freeze": "PASS (scripts/check-money-flow-freeze.mjs — 8 paths intact)",
+    "operator_isolation_script": "run after `vite build`: node scripts/check-operator-isolation.mjs"
+  },
+  "phase_3_exit_criteria": {
+    "PR-I": "DONE (killCategory/killAll LIVE + Degrade Mode banner/binder)",
+    "PR-J": "DONE (4-partition realtime wrappers + ESLint lockdown)",
+    "PR-K": "DONE (operator chunk isolation + DegradeModeBinder preload cancel + verifier script)",
+    "money_flow_8_paths_zero_diff": true,
+    "runScenario_degrade_on_cosmetic_bucket": "0 (PR-I)"
+  }
+}

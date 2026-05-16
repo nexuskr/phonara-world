@@ -25,6 +25,16 @@ export function DegradeModeBinder() {
           }
         })
         .catch(() => {});
+      // PR-K — Degrade Mode ON: cancel any pre-warmed operator chunk preload
+      // links so the user bundle stays as light as possible under stress.
+      try {
+        const links = document.querySelectorAll<HTMLLinkElement>(
+          'link[rel="modulepreload"][href*="/operator"]',
+        );
+        links.forEach((l) => l.parentNode?.removeChild(l));
+      } catch {
+        /* noop */
+      }
       if (prev.current === false) notify.important(g("degradeBannerOn"));
     } else {
       delete document.body.dataset.degrade;
