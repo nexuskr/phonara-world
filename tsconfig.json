@@ -23,7 +23,15 @@
       "@pkg/referral": ["./src/packages/referral"],
       "@pkg/referral/*": ["./src/packages/referral/*"],
       "@pkg/analytics": ["./src/packages/analytics"],
-      "@pkg/analytics/*": ["./src/packages/analytics/*"]
+      "@pkg/analytics/*": ["./src/packages/analytics/*"],
+      "@pkg/performance": ["./src/packages/performance"],
+      "@pkg/performance/*": ["./src/packages/performance/*"],
+      "@pkg/telemetry": ["./src/packages/telemetry"],
+      "@pkg/telemetry/*": ["./src/packages/telemetry/*"],
+      "@pkg/realtime": ["./src/packages/realtime"],
+      "@pkg/realtime/*": ["./src/packages/realtime/*"],
+      "@pkg/operator": ["./src/packages/operator"],
+      "@pkg/operator/*": ["./src/packages/operator/*"]
     },
     "noImplicitAny": false,
     "noUnusedParameters": false,
