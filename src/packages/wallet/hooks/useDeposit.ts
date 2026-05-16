@@ -87,9 +87,10 @@ export function useDeposit({ onSuccess }: UseDepositOpts = {}) {
   // Load receive address once (lazy on open)
   useEffect(() => {
     if (!open || receiveAddress) return;
-    supabase.rpc("get_pay_receive_address").then(({ data }) => {
+    supabase.rpc("get_pay_receive_address").then(({ data, error }) => {
+      if (error) return;
       setReceiveAddress((data as string | null) ?? null);
-    }).catch(() => { /* noop */ });
+    });
   }, [open, receiveAddress]);
 
   // Snapshot balance before deposit
