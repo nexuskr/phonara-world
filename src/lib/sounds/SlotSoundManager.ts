@@ -58,7 +58,7 @@ class SlotSoundManagerImpl {
   // Ducking 상태 — 다중 호출 시 baseline 보존
   private duckActive = false;
   private duckBaselineBgm = 0.6;
-  private duckTween: number | null = null;
+  private duckTween: (() => void) | null = null;
 
   // reduced-motion mute (voice 채널 한정)
   private reducedMotionMute = false;
