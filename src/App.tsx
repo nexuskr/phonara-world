@@ -103,6 +103,8 @@ const LegalDoc = lazy(() => import("./pages/LegalDoc.tsx"));
 const LiveOverlay = lazy(() => import("./pages/LiveOverlay.tsx"));
 const InfluencerLanding = lazy(() => import("./pages/InfluencerLanding.tsx"));
 const Vip = lazy(() => import("./pages/Vip.tsx"));
+const Landing = lazy(() => import("./pages/Landing.tsx"));
+const OnboardingV3 = lazy(() => import("./components/onboarding/OnboardingV3.tsx"));
 const DevConsole = lazy(() => import("./pages/DevConsole.tsx"));
 const ForcedShareDialog = lazy(() => import("./components/share/ForcedShareDialog.tsx"));
 const VipArrivalAnnouncer = lazy(() => import("./components/empire/VipArrivalAnnouncer.tsx"));
@@ -193,6 +195,7 @@ function GlobalOverlays() {
       <Suspense fallback={null}><ForcedShareDialog /></Suspense>
       <Suspense fallback={null}><VipArrivalAnnouncer /></Suspense>
       <Suspense fallback={null}><ReactivationOfferDialog /></Suspense>
+      <Suspense fallback={null}><OnboardingV3 /></Suspense>
     </>
   );
 }
@@ -212,7 +215,8 @@ const App = () => (
           <Suspense fallback={<RouteFallback />}>
             <MaintenanceGate>
             <Routes>
-              <Route path="/" element={<Index />} />
+              <Route path="/" element={<Landing />} />
+              <Route path="/legacy-index" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
 
               {/* v14.0 — 4탭 슬림 IA */}

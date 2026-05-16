@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
 import { lazy, Suspense } from "react";
-import Layout from "@/components/Layout";
-import PhonaraNav from "@/components/nav/PhonaraNav";
+import SlimShell from "@/components/layout/SlimShell";
 import WorldHero from "@/components/nav/WorldHero";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { Coins, Gamepad2, TrendingUp, Radio, ArrowRight } from "lucide-react";
@@ -54,9 +53,8 @@ export default function Home() {
   if (!user) return null;
 
   return (
-    <Layout>
+    <SlimShell>
       <WorldHero />
-      <PhonaraNav />
 
       <div className="container py-6 space-y-5">
         {/* 4 큰 카드 — 한 화면에 끝남 */}
@@ -98,6 +96,6 @@ export default function Home() {
           <WhaleStrikeRail compact />
         </Suspense>
       </div>
-    </Layout>
+    </SlimShell>
   );
 }

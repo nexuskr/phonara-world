@@ -37,6 +37,11 @@ export default {
           dark: "#A87E18",
           foreground: "hsl(var(--primary-foreground))",
         },
+        // v14.0 — Hot Pink accent
+        pink: {
+          DEFAULT: "hsl(var(--pink))",
+          foreground: "hsl(var(--pink-foreground))",
+        },
         // SIM (시뮬레이션) — gold-saturated, never used for Real money
         "sim-gold": {
           DEFAULT: "hsl(var(--sim-gold))",

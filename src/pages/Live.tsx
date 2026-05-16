@@ -1,7 +1,6 @@
 import { lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
-import Layout from "@/components/Layout";
-import PhonaraNav from "@/components/nav/PhonaraNav";
+import SlimShell from "@/components/layout/SlimShell";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { Crown, Trophy, Users } from "lucide-react";
 
@@ -17,8 +16,7 @@ export default function Live() {
   if (!user) return null;
 
   return (
-    <Layout>
-      <PhonaraNav />
+    <SlimShell>
 
       <div className="container py-5 space-y-5">
         <header>
@@ -73,6 +71,6 @@ export default function Live() {
           <LiveRanking />
         </Suspense>
       </div>
-    </Layout>
+    </SlimShell>
   );
 }

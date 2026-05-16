@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
-import Layout from "@/components/Layout";
-import PhonaraNav from "@/components/nav/PhonaraNav";
+import SlimShell from "@/components/layout/SlimShell";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import {
   CalendarCheck, Target, UserPlus, Sparkles, Share2, Gift,
@@ -59,8 +58,7 @@ export default function Earn() {
   if (!user) return null;
 
   return (
-    <Layout>
-      <PhonaraNav />
+    <SlimShell>
 
       <div className="container py-5 space-y-5">
         <header className="flex items-end justify-between gap-3">
@@ -119,6 +117,6 @@ export default function Earn() {
           </div>
         </div>
       </div>
-    </Layout>
+    </SlimShell>
   );
 }
