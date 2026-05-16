@@ -163,7 +163,6 @@ export default function SecurityTotp() {
           <div className="font-bold text-sm">앱으로 QR 코드 스캔</div>
           <div
             className="flex justify-center bg-white p-4 rounded-xl"
-            // eslint-disable-next-line react/no-danger
             dangerouslySetInnerHTML={{ __html: enroll.qr }}
           />
           <div className="text-xs text-muted-foreground text-center">
