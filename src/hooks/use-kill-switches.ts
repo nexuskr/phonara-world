@@ -35,10 +35,13 @@ function emit(next: KillSwitches) {
   listeners.forEach((l) => l(next));
 }
 
+let inflight = false;
 async function refresh() {
   // PR-H: skip while tab hidden or admin category paused (idle).
   if (typeof document !== "undefined" && document.hidden) return;
   if (isCategoryPaused("admin")) return;
+  if (inflight) return;
+  inflight = true;
   try {
     const { data, error } = await (supabase as any)
       .from("platform_kill_switches")
@@ -55,6 +58,8 @@ async function refresh() {
     emit(next);
   } catch {
     emit({ ...cache, loaded: true });
+  } finally {
+    inflight = false;
   }
 }
 

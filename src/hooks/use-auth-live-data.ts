@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { FLAG_BY_CC, pseudoCountry } from "@/lib/countryLatLng";
 import { setVisibleInterval } from "@/lib/util/visible-interval";
+import { isCategoryPaused } from "@pkg/runtime";
 
 /**
  * Single source of truth for the /secure-auth public live page.
@@ -118,6 +119,8 @@ export function useAuthLiveData() {
   useEffect(() => {
     let alive = true;
     const fetchKpi = async () => {
+      if (typeof document !== "undefined" && document.hidden) return;
+      if (isCategoryPaused("cosmetic")) return;
       try {
         const { data } = await supabase.rpc("get_world_domination_stats" as any);
         if (!alive || !data) return;
@@ -140,6 +143,8 @@ export function useAuthLiveData() {
   useEffect(() => {
     let alive = true;
     const load = async () => {
+      if (typeof document !== "undefined" && document.hidden) return;
+      if (isCategoryPaused("cosmetic")) return;
       try {
         const { data } = await supabase.rpc("get_whale_strikes_24h" as any, { _limit: 30 });
         if (!alive || !Array.isArray(data) || data.length === 0) return;
@@ -173,6 +178,8 @@ export function useAuthLiveData() {
   useEffect(() => {
     let alive = true;
     const load = async () => {
+      if (typeof document !== "undefined" && document.hidden) return;
+      if (isCategoryPaused("cosmetic")) return;
       try {
         const { data } = await supabase.rpc("get_weekly_referral_leaderboard" as any, { _limit: 5 });
         if (!alive || !Array.isArray(data) || data.length === 0) return;
