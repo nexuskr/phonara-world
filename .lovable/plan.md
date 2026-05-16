@@ -1,161 +1,217 @@
-# Phase 2 본작업 — RUNTIME DETOX MIGRATION (Triage-Driven)
+# Phase 2 — EXECUTION LOCK (No-Option Mode)
 
-> Phase 2 Pre-Flight (visibility instrumentation) 완료. 이제 ledger 가 보여주는 entropy 78개를 **money-flow 는 동결한 채** cosmetic / admin / unknown 범주에서 점진 이주.
-> 목표 KPI: `hidden RPC -90%`, `idle RPC -70%`, `coverage ≥ 0.7`.
-> 원칙: "성능은 바꿔도 의미는 바꾸지 않는다."
+> We do not change the system. We force the system to reveal itself until it becomes governable.
+> Ledger is the single source of truth. Money-flow is immutable. Only cosmetic/admin migrate.
 
-## 0. 진입 조건 (이미 충족)
+Phase 2 Pre-Flight (visibility instrumentation) 완료. 본 문서는 다음 8개 PR 의 **변경 불가 실행 계약**.
 
-- `@pkg/runtime` / `@pkg/entropy` / `@pkg/risk` 스캐폴드 존재
-- `runtime.observe` DEV override 가 legacy interval 캡처 중
-- `reports/rpc.surface.2026-05-16.json` baseline 커밋됨
-- Money-flow FREEZE 인벤토리 (8개) — ESLint + CI 가드 작동
-- PR 템플릿에 entropy / coverage / baseline 3줄 강제
+## 0. System Definition (절대 고정)
 
-## 1. 다음 PR 시퀀스 (작업 순서 고정)
+- This system is NOT optimized.
+- This system is NOT refactored.
+- This system is migrated **only** through visibility-driven triage.
 
-PR 단위로 분리. 합치지 말 것. 각 PR 끝나면 `reports/entropy.surface.<date>.json` + `reports/rpc.surface.<date>.json` 갱신 커밋.
+## 1. Execution Hierarchy (우선순위 — 절대 고정)
+
+1. **Money-flow stability** — IMMUTABLE
+2. **Runtime behavior consistency** — DO NOT ALTER
+3. **Visibility improvement** — ONLY ALLOWED CHANGE
+4. **Cosmetic performance tuning** — SAFE ZONE ONLY
+
+상위 순위가 하위를 무조건 선점한다. 충돌 시 상위 보존.
+
+## 2. Workflow Engine — HARD PIPELINE
 
 ```text
-PR-A  Triage Freeze List       (코드 변경 0, 분류만)
-PR-B  Cosmetic Wave 1          (ticker / marquee / countdown 14개)
-PR-C  Cosmetic Wave 2          (rail / pulse / banner 12개)
-PR-D  Admin Panels Wave        (operator / kpi / kernel 8개)
-PR-E  Unknown 잔여 Triage      (남은 entropy 강제 분류 + 이주 또는 명시적 freeze)
-PR-F  Hidden-Tab Suspension    (document.hidden 시 cosmetic 일괄 pause)
-PR-G  Idle Suspension          (60s idle 시 admin 일괄 pause)
-PR-H  Phase 2 Exit Audit       (KPI 검증 + Phase 3 게이트)
+PR-A → PR-B → PR-C → PR-D → PR-E → PR-F → PR-G → PR-H
 ```
 
-Money-flow 8개는 **모든 PR 에서 git diff 0줄**. CI 가드(`check-money-flow-freeze.mjs`)가 자동 차단.
+**RULES (위반 시 PR reject):**
+- 순서 변경 금지
+- 병합 금지 (각 PR 독립 머지)
+- 스킵 금지
+- 재정렬 금지
 
-## 2. PR-A — Triage Freeze List
+| PR | 목적 | 코드 변경 |
+|---|---|---|
+| **A** | Triage Freeze List | 0 줄 (분류 JSON 만) |
+| **B** | Cosmetic Wave 1 (ticker/marquee/countdown) | setInterval → setVisibleInterval |
+| **C** | Cosmetic Wave 2 (rail/pulse/banner) | 동일 |
+| **D** | Admin Panels (operator/kpi/kernel) | 동일 + governor 등록 |
+| **E** | Unknown 잔여 강제 분류 | unknown=0 보장 |
+| **F** | Hidden-Tab Suspension (governor.pauseCategory("cosmetic")) | governor 구현 |
+| **G** | Idle Suspension (60s → admin pause) | governor 확장 |
+| **H** | Exit Audit | 측정 only |
 
-**산출:** `reports/triage.2026-05-17.json` — entropy 78개 각각에 다음 필드:
+## 3. Mutation Rule (변경 허용 범위)
 
-```ts
-{
-  owner: string,          // file:line
-  intervalMs: number,
-  category: "money_flow" | "cosmetic" | "admin" | "unknown",
-  decision: "freeze" | "migrate" | "delete-candidate",
-  ownerPR: "B" | "C" | "D" | "E",
-  notes?: string
-}
+**ONLY ALLOWED TRANSFORMATION:**
+- `setInterval` → `setVisibleInterval` (cosmetic / admin only)
+- interval registration → ledger mapping
+- RPC → observation only (no schema change)
+
+**FORBIDDEN TRANSFORMATION:**
+- business logic change
+- money-flow interval modification
+- RPC payload modification
+- timing behavior change (ms, leading, debounce, throttle)
+
+## 4. Ledger Authority Model
+
+**SINGLE SOURCE OF TRUTH:**
+- `runtime.registry.snapshot()`
+- `entropy.surface.snapshot()`
+- `rpc.surface.snapshot()`
+
+**CATEGORY AUTHORITY:**
+
+| category | authority | rule |
+|---|---|---|
+| `money_flow` | IMMUTABLE | freeze level 0 — never touch |
+| `cosmetic` | migratable | visibility-aware only |
+| `admin` | governor-controlled | pause/resume only |
+| `unknown` | entropy | must resolve before PR-E completion |
+
+## 5. PR Execution Contract (공통)
+
+**REQUIRED BEFORE MERGE (모든 PR):**
+- entropy count updated → `reports/entropy.surface.<date>.json`
+- coverage recalculated (단조 증가)
+- rpc surface baseline attached → `reports/rpc.surface.<date>.json`
+- money-flow git diff = **0 lines** (CI `check-money-flow-freeze.mjs`)
+
+**VALIDATION GATES — PR fails if:**
+- unknown category exists after PR-E
+- coverage does not monotonically increase
+- hidden RPC reduction is not measurable (PR-F)
+- idle RPC reduction is not reproducible (PR-G)
+- production bundle delta > +0.5KB per PR
+
+## 6. Naming Convention (IMMUTABLE SCHEMA)
+
+```text
+@pkg/runtime
+  runtime.registry        # dual ledger
+  runtime.observe         # window.setInterval override (DEV)
+  runtime.governor        # pause/resume/kill category
+  runtime.lattice         # owner/category mapping
+
+@pkg/entropy
+  entropy.surface         # live runtime footprint
+  entropy.capture         # boot capture
+  entropy.map             # stack → owner → category
+
+@pkg/risk
+  risk.reactor / risk.kill-switch / risk.degrade  (Phase 4 stubs)
 ```
 
-**규칙:**
-- `money_flow` → `freeze`, ownerPR 없음
-- `cosmetic` ≤2초 주기 + 화면 보일 때만 의미 → `migrate`, B/C 분배
-- `admin` → `migrate`, D
-- 분류 실패 → `unknown` 유지, E 로
-- **코드 변경 0줄.** triage json + plan 갱신만.
+**RPC SURFACE MODEL:**
+- `rpc.surface.foreground`
+- `rpc.surface.hidden`
+- `rpc.surface.idle`
 
-게이트: 78개 합 = ledger snapshot 수. 누락 1개라도 있으면 PR-A 차단.
+**GOVERNOR ACTIONS:**
+- `pauseCategory(cat)`
+- `resumeCategory(cat)`
+- `killCategory(cat)` ← Phase 4 only (PR-F/G 에서는 호출 안 함)
 
-## 3. PR-B / PR-C — Cosmetic Migration
+## 7. Migration Behavior Rule
 
-각 interval 을 `setVisibleInterval(fn, ms, { meta: { owner, category: "cosmetic" } })` 로 교체.
+- **Cosmetic** → visibility-aware execution only
+- **Admin** → governor-controlled execution only
+- **Unknown** → resolved OR explicitly frozen (이유 기록) before PR-E exit
+- **Money-flow** → NEVER TOUCH
 
-**변경 패턴 (한 PR 안에서 동일 패턴만 묶기):**
+## 8. KPI Interpretation (중요)
 
-```ts
-// BEFORE
-useEffect(() => {
-  const id = setInterval(refresh, 60_000);
-  return () => clearInterval(id);
-}, []);
+```text
+coverage:
+  ≠ performance
+  ≠ optimization
+  = system observability completeness
 
-// AFTER
-useEffect(() => {
-  return setVisibleInterval(refresh, 60_000, {
-    leading: false,
-    catchUpOnVisible: true,
-    meta: { owner: "WhaleStrikeRail", category: "cosmetic" },
-  });
-}, []);
+hidden RPC:
+  = background cost leakage
+  → must converge downward without affecting foreground behavior
+
+idle RPC:
+  = unattended system entropy
+  → must be reduced via suspension only, not deletion
 ```
 
-**금지:**
-- 주기(ms) 변경
-- `refresh` 함수 시그니처 / 내부 로직 변경
-- 동시에 RPC payload 변경
-- money_flow 카테고리 어떤 파일도 건드림
-
-**Exit 게이트 (PR 마다):**
-- `tracked` 만 증가, `untracked` 정확히 N만큼 감소 (N=이주 개수)
-- `coverage` 단조 증가
-- baseline 대비 동일 시나리오(foreground 5min) RPC 카운트 ±5% 이내
-- bundle size delta ≤ +0.5KB
-
-## 4. PR-D — Admin Panels
-
-`/admin/*` 패널들의 폴링(15s/30s) 을 `setVisibleInterval` + `category: "admin"` 으로 이주. 추가로 패널 unmount 시 cleanup 정확성 검증 (현재 leak 의심 4건 — KernelObservability / OracleFortress / TrustV2Admin / WhaleStrikeFunnelPanel).
-
-## 5. PR-E — Unknown 잔여 처리
-
-`untracked` 에 남은 항목 1개라도 있으면:
-1. stack trace 로 owner 재추정 → `entropy.map.ts` 룰 추가
-2. 그래도 unknown → **명시적 freeze 결정**을 triage json 에 기록 (이유 필수)
-
-게이트: PR-E 머지 후 `category: "unknown"` count = 0.
-
-## 6. PR-F — Hidden-Tab Suspension
-
-`@pkg/runtime/runtime.governor.ts` 의 스텁을 구현:
-
-```ts
-document.addEventListener("visibilitychange", () => {
-  if (document.hidden) governor.pauseCategory("cosmetic");
-  else                governor.resumeCategory("cosmetic");
-});
-```
-
-`setVisibleInterval` 자체가 visibility-aware 이지만, 본 PR 은 **governor 가 ledger 전체를 일관 제어**하도록 통합. money_flow / admin 은 영향 없음.
-
-**KPI 측정:** baseline 시나리오 2(백그라운드 5min) 재실행 → hidden RPC -90% 확인. 미달 시 PR 차단.
-
-## 7. PR-G — Idle Suspension
-
-60s 무입력 + foreground → governor 가 `admin` 카테고리 pause. 입력 감지 시 즉시 resume. cosmetic 은 계속 (UX 보존).
-
-**KPI 측정:** idle 5min 시나리오 → idle RPC -70% 확인.
-
-## 8. PR-H — Phase 2 Exit Audit
-
-`scripts/phase2.exit.audit.mjs` 신규:
+**PR-H exit thresholds:**
 
 | 지표 | 기준 |
 |---|---|
 | coverage | ≥ 0.7 |
-| untracked.size | < 5 (장기 freeze 항목만) |
-| category=unknown | 0 |
+| `category=unknown` | 0 |
+| `untracked.size` | < 5 (장기 freeze 만) |
 | hidden RPC | baseline 대비 -90% |
 | idle RPC | baseline 대비 -70% |
-| money-flow git diff (Phase 2 전체) | 0줄 |
-| bundle delta (Phase 2 전체) | ≤ +2KB |
+| money-flow git diff (전체) | 0 줄 |
+| bundle delta (전체) | ≤ +2KB |
 
-전부 통과 → Phase 3 (Realtime Detox) 게이트 오픈.
+## 9. Execution Loop (MANDATORY)
 
-## 9. 비-목표 (Phase 2 본작업 동안 절대 안 함)
+각 PR 내부에서 반드시 이 순서로:
 
-- Money-flow interval 어떤 형태로든 수정 (PHON FREEZE)
-- RPC payload / 응답 schema 변경
-- React Query 옵션(`staleTime` 등) 튜닝 — Phase 5
-- Realtime 채널 통합 — Phase 3
-- Risk reactor 자동 트리거 — Phase 4
-- 컴포넌트 split / lazy load — Phase 6
+1. Snapshot ledger
+2. Classify entropy
+3. Assign PR ownership
+4. Migrate ONLY cosmetic / admin
+5. Recalculate coverage
+6. Validate RPC surfaces (3-mode)
+7. Commit reports
 
-## 10. 즉시 시작할 작업 (이 다음 메시지)
+## 10. System Guarantee (FINAL CONTRACT)
 
-**PR-A 부터.** 사용자 승인 시:
-1. 브라우저 DEV 콘솔에서 entropy ledger snapshot 추출
-2. `entropy.map.ts` 룰로 자동 분류 + 수동 보정
-3. `reports/triage.2026-05-17.json` 커밋
-4. `.lovable/plan.md` 에 PR-B 상세 변경 패턴 채워 넣기
+This phase guarantees:
+- No business logic mutation
+- No money-flow disturbance
+- No hidden execution
+- No uncontrolled interval execution
+- Full runtime observability through ledger only
 
-코드 1줄도 안 바뀜. 분류만.
+## 11. 즉시 시작 — PR-A (Triage Freeze List)
+
+**산출물 1개:** `reports/triage.2026-05-17.json`
+
+```ts
+type TriageEntry = {
+  owner: string;          // file:line
+  intervalMs: number;
+  category: "money_flow" | "cosmetic" | "admin" | "unknown";
+  decision: "freeze" | "migrate" | "delete-candidate";
+  ownerPR: "B" | "C" | "D" | "E" | null;   // freeze 면 null
+  notes?: string;
+};
+```
+
+**규칙:**
+- entropy snapshot 의 모든 항목 → 1:1 매핑 (누락 = PR fail)
+- `money_flow` → `freeze`, `ownerPR=null`
+- `cosmetic` ≤ 2s 주기 + 화면 의존 → `migrate`, B/C 분배
+- `admin` → `migrate`, D
+- 분류 실패 → `unknown` 유지 → E
+- **코드 변경 0 줄.** triage JSON + 본 plan 갱신만.
+
+**게이트:** 78 항목 합 = ledger snapshot 합. 일치하지 않으면 PR-A reject.
+
+## 12. Money-flow FREEZE 인벤토리 (재확인 — 절대 수정 금지)
+
+| 위치 | 주기 |
+|---|---|
+| `packages/wallet/hooks/useDeposit.ts:173` | 30s |
+| `packages/wallet/hooks/useDepositRealtime.ts:69` | — |
+| `packages/wallet/hooks/useDepositCountdown.ts:22` | 1s |
+| `lib/paper-trading/bybit-feed.ts:234/238/376` | ping/pong/5s |
+| `components/crash/hooks/useCrashRound.ts:21` | 1.5s |
+| `components/trading/MegaOrderPanel.tsx:81` | — |
+| `hooks/use-kill-switches.ts:71` | 60s |
+| `hooks/use-auto-bet.ts:26` | 3.5s |
+
+CI `check-money-flow-freeze.mjs` 가 모든 PR 에서 자동 차단.
 
 ## 한 줄
 
-> Phase 2 본작업은 "interval 이주"가 아니라 "ledger 가 시스템을 통제하기 시작하는 순간"이다.
+> 코드를 바꾸는 것이 아니라, runtime 을 ledger 기반으로 분해해 단계적으로 통제 가능한 운영 시스템으로 만든다.
