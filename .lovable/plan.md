@@ -1,115 +1,159 @@
-# 긴급 안정화 패치 — RPC 400/404, 사운드 404, UX 4종
+# Olympus Legacy — Flagship Signature Slot (5000×)
 
-콘솔 에러 폭주(400/404 수십 건)와 사용자 보고 4건의 UX 결함을 한 번에 정리한다. 모든 수정은 **이미 존재하는 메모리 약속**(displayCurrency, notify, EmptyState, RPC 가드 등)을 지킨다.
+Trump 쇼맨십 + Musk 엔지니어링 + 한국 50–70대 따뜻한 럭셔리 감성을 한 슬롯에 응축한 신규 플래그십. 기존 슬롯 7종이 따르는 **SlotSignatureWrapper 컨벤션**을 정확히 지켜 추가한다.
 
 ---
 
-## 0. 진단 (postgres 로그 기준 실측 근거)
+## 0. 아키텍처 결정 (중요)
 
-| 증상 (콘솔) | 실측 원인 |
+요청서의 "별도 폴더 `src/slots/OlympusLegacy/` + 자체 로직 훅" 구조는 **현재 코드베이스 규칙과 충돌**한다.
+
+현재 실측 구조:
+- 모든 슬롯은 단일 엔진(`src/components/slots/OlympusSlot.tsx`)을 공유.
+- 슬롯별 차이는 ① `themes.ts`의 `SlotTheme` 한 줄 ② 배경 캔버스 ③ Paytable ④ MaxWinOverlay ⑤ 페이지 래퍼 ⑥ 사운드 맵 ⑦ Crown 가중치 ⑧ 라우트 — **이게 전부**.
+- "Tumble/Cascade"는 base reel 엔진에는 없고 `cluster_tumble` **보너스 오버레이**만 존재 (Aztec). 6×5 Scatter Pay base grid를 처음부터 만드는 건 OlympusSlot 엔진 전체를 갈아엎는 작업으로, 7개 기존 슬롯 회귀 위험이 매우 크다.
+
+→ **본 플랜은 컨벤션 준수 + 사용자 요구의 실질 효과(쏟아지는 멀티플라이어, Free Spins, Lightning Wild, 5000×)를 보너스 파이프라인 강화로 동등하게 구현**한다. 별도 슬롯 폴더는 만들지 않는다. 이 결정이 마음에 안 들면 알려달라.
+
+---
+
+## 1. 새로 추가할 파일
+
+```text
+src/assets/slots/olympus-legacy/
+  bg.jpg            (Zeus 구름·황금 번개 시네마틱 — placeholder import, 자산 업로드 별도)
+  logo.png
+src/components/slots/
+  OlympusLegacyCanvas.tsx        배경: 황금 번개 + 구름 + 따뜻한 마블 글로우 (useAnimatedCanvas)
+  OlympusLegacyPaytableSheet.tsx 6단 페이테이블 + Free Spins/Lightning Wild 룰 설명
+src/components/celebration/
+  OlympusLegacyMaxWinOverlay.tsx 5000× 풀스크린 시네마 + 4000×+ Crown 자동 트리거
+src/pages/casino/
+  OlympusLegacy5000.tsx          SlotSignatureWrapper 래핑 페이지
+```
+
+수정할 파일:
+```text
+src/components/slots/themes.ts              OLYMPUS_LEGACY_THEME 추가
+src/lib/sounds/soundConfig.ts               SLOT_ID_TO_THEME / SLOT_SOUND_MAP 항목 추가
+src/lib/empireConfig.ts                     EmpireSlotKey 'olympus_legacy' + weight 1.6
+src/App.tsx                                 lazy + Route 추가
+src/pages/Casino.tsx (or lobby)             신상 카드 1개 추가 (있으면)
+```
+
+DB(선택, Phase 2):
+```text
+slot_engine_catalog 또는 game_code 등록 시 'olympus_legacy_5000' 신규 entry
+                                             RTP 96.5, vol high, max_mult 5000
+```
+
+---
+
+## 2. 디자인 컨셉 — "Warm Olympus"
+
+- 팔레트: 깊은 야간 청남 + 황금 (`hsl(45 90% 60%)`), 마블 화이트, 따뜻한 호박빛 글로우. 차가운 푸른 번개 대신 **호박빛 번개**.
+- 폰트/타이포: 기존 `font-imperial` 유지(추가 폰트 X).
+- 배경 캔버스: 구름 패럴랙스 2겹 + 황금 번개 가끔(8~14s 랜덤, reduced-motion 시 정지) + 마블 기둥 실루엣 정적 레이어. 평소 60fps, 번개 burst 시에도 16ms budget 유지.
+- 5000× 시: 화면 셰이크 320ms → 슬로모 0.4× 1.2s → 황금 입자 200개 폭발 → Zeus 실루엣 페이드인 → CROWN 트리거.
+- 4000×+ : Crown 자동 award (idempotent via `useEmpireCrown`).
+
+---
+
+## 3. 게임 룰 매핑 (엔진 변경 없이 동등 효과)
+
+| 사용자 요구 | 구현 매핑 |
 |---|---|
-| `get_my_dashboard_state` 400 | RPC 내부 `record "_score" has no field "score"`. `imperial_scores` 컬럼은 `total_is/daily_is/weekly_is/season_is`이고 `score/level` 없음. |
-| `get_slot_leaderboard` 404 | DB에 해당 함수가 존재하지 않음. `SlotLeaderboard.tsx`만 잘못된 시그니처(`_window/_metric/_game_code/_limit`)로 호출. |
-| `try_jackpot_hit` 400 | 함수는 정상. 400은 `auth_required` raise — 비로그인/세션 만료 사용자가 호출. 단, 동일 회차에 4~5회 연속 호출되는 중복 호출 문제 별도. |
-| `check_achievements` 400 | 비로그인 또는 enum mismatch 캐스케이드. `get_my_dashboard_state` 실패와 동일 세션에서 폭주. |
-| `fomo_notifications?select=…,level,…` 400 | 컬럼 `level` 존재하지 않음 (`id, user_id, kind, title, message, cta_*, payload, priority, read_at, expires_at, dedupe_key, created_at`). `BaronPromotionDialog` select 절 오류. |
-| `/sounds/{slot}/bgm/main.mp3` 404 | `public/sounds/` 디렉토리 자체가 repo에 없음. SlotSoundManager가 404를 console.error로 노출. |
-| 부수적 cron 에러 | `recompute_daily_whale_leaderboard`에 `pp.amount_krw` 컬럼 없음(`package_purchases.amount` 사용해야 함). `update_bot_ratio_phase`에 `p.last_seen_at` 없음. 사용자 체감엔 없지만 로그 오염. |
+| 6×5 Scatter Pay | base는 기존 5-reel(엔진 유지). 보너스 진입 시 `cluster_tumble` 오버레이로 "쏟아짐+멀티 누적" 체감 동일하게 제공 |
+| Zeus Multiplier Orbs 2~500× | `cluster_tumble.ladder` = [2, 5, 12, 30, 80, 200, 500] (체인이 길어질수록 상승) |
+| 4+ Zeus Scatters → Free Spins 10~25 | 기존 scatter 트리거(`scatters >= 3`)에 4-tier 확장 — payload에 freeSpinCount 10/15/20/25 |
+| Super Lightning Wild | 보너스 인트로에서 단발 화면 가득 황금 번개 시네마 1회 (visual-only, 결과는 multiplier ladder가 흡수) |
+| 5000× MAX | `theme.maxMultiplier=5000` + 전용 MaxWinOverlay |
+
+→ 결과적으로 **유저 체감 = "쏟아지는 그리드 + 누적 멀티 + 황금 번개 와일드 + Zeus 무료스핀"**. 엔진 회귀 0.
 
 ---
 
-## 1. 백엔드 마이그레이션 (1회)
+## 4. SlotTheme 엔트리 (themes.ts)
 
-### 1.1 `get_my_dashboard_state` 재정의
-- `imperial_scores._score.score` → `total_is`
-- `_score.level` → `floor(log10(greatest(total_is,1)))` 또는 0
-- 반환 JSON 동일 키 유지 (`imperial_score`, `level`, …) — 프런트 무수정.
+```ts
+export const OLYMPUS_LEGACY_THEME: SlotTheme = {
+  gameCode: "olympus_legacy_5000",
+  bg: bgOlympusLegacy, logo: logoOlympusLegacy,
+  title: "Olympus Legacy 5000",
+  rtpLabel: "96.5%", volatility: "high", maxMultiplier: 5000,
+  symbolPack: "olympus", soundPack: "olympus",
+  cardFilter: "hue-rotate(40deg) saturate(1.2) brightness(1.08)",
+  reelFrameClass:
+    "rounded-2xl border-2 border-amber-400/80 bg-gradient-to-b from-slate-950/55 to-amber-950/55 backdrop-blur-[2px] p-2 sm:p-3 shadow-[inset_0_0_60px_rgba(255,190,80,0.35)]",
+  spinStreakClass:
+    "pointer-events-none absolute inset-0 bg-gradient-to-b from-amber-100/0 via-amber-200/12 to-amber-100/0",
+  bgOverlay: SHEER_OVERLAY,
+  reelPattern: OLYMPUS_LEGACY_PATTERN,
+  bonusKind: "cluster_tumble",
+};
+```
 
-### 1.2 `get_slot_leaderboard(_window text, _game_code text, _metric text, _limit int)` 신규
-- `slot_spins` 집계 (24h/7d), 컬럼: rank, masked_name, game_code, total_bet, total_payout, net, spin_count, max_multiplier, max_payout — 프런트가 기대하는 Row 모양.
-- SECURITY DEFINER, STABLE, 마스킹은 `mask_nickname` 또는 인라인 LEFT 3자 + ****.
-
-### 1.3 cron 오염 정리
-- `recompute_daily_whale_leaderboard`: `pp.amount_krw` → `pp.amount`.
-- `update_bot_ratio_phase`: `p.last_seen_at` 참조 제거(또는 `auth.users.last_sign_in_at` 사용).
-
----
-
-## 2. 프런트 수정
-
-### 2.1 `src/components/empire/BaronPromotionDialog.tsx`
-- `.select("id, kind, level, payload, created_at")` → `.select("id, kind, payload, created_at")`
-- `payload.level`이 필요하면 payload jsonb에서 읽도록 변경.
-
-### 2.2 `src/lib/sounds/SlotSoundManager.ts` (또는 호출 지점)
-- `loadSlotSounds()` BGM/SFX fetch 실패를 try/catch → silent skip. `console.error` 대신 한 번만 `console.debug`. 404가 사용자/제3자 모니터링에 노출되지 않게.
-- 정책: `public/sounds/**`는 음원 업로드 전까지 빈 상태가 정상이므로 silent fallback이 영구 운영 가드.
-
-### 2.3 `src/components/JackpotBanner.tsx` — "지금 룰렛 돌리기"
-- 현재 `<Link to="/roulette">` → `/missions?tab=battle`로 리다이렉트. 이미 같은 페이지면 시각적 반응 0.
-- 변경: `useNavigate()` + 클릭 시 **항상**
-  1. `setSearchParams({ tab: "battle" })`
-  2. 페이지 내 룰렛 카드 id(`#roulette-card`)로 `scrollIntoView({ behavior:"smooth", block:"start" })`
-  3. 카드에 1.5초 골드 펄스 ring (CSS) 강조.
-- `Missions.tsx`의 룰렛 섹션에 `id="roulette-card"` 부여.
-
-### 2.4 `src/components/practice/PracticeModeBanner.tsx` — "실거래 모드 전환"
-- 버그: 클릭 시 `setOn(false)` 후 토스트만. 일부 라우트(/wallet, /packages)는 `<PracticeModeGate>`로 막혀있었기 때문에 사용자 입장에선 "전환 후 어디로 가야 하는지" 단서 부재 → "반응 없음"으로 체감.
-- 변경:
-  1. 클릭 시 `setOn(false)` + 토스트.
-  2. 1초 후 `navigate("/wallet")` (실거래 첫 단계). 현재 경로가 이미 `/wallet`이면 강제 reload.
-  3. PracticeModeGate 통과를 토스트에 "이제 입출금/베팅이 활성화됐어요"로 명시.
-
-### 2.5 `src/components/feed/PersonalizedFeedRail.tsx` — FOR YOU 새로고침 무반응
-- 현재 흐름: load → empty → 자동 generate 1회 → 실패 시 영구 empty.
-- 변경:
-  1. `generate` 실패/타임아웃(8s) 시 fallback으로 `get_trending_videos`(이미 존재) 또는 최근 20개 `videos` SELECT로 시드.
-  2. 새로고침 버튼은 항상 generate를 강제 재호출(쿨다운 3s), 빈 결과면 폴백 시드를 즉시 표기.
-  3. autoGen 한 번 실패해도 사용자가 새로고침 누르면 다시 시도(`setAutoGenTried(false)` after click).
-
-### 2.6 `src/components/empire/JackpotEmpireBanner.tsx` — 실시간 스피너
-- 현재 가짜 봇 닉/금액 + 가끔 `roulette_spins` INSERT 추가.
-- 변경:
-  1. 마운트 시 `roulette_spins` 최근 20개 SELECT로 초기 시드 (RLS가 공개 SELECT 막혀있으면 신규 RPC `get_recent_roulette_spins(_limit)` SECURITY DEFINER로 마스킹된 nick+amount+prize 반환).
-  2. INSERT realtime 시 마스킹된 실유저 닉(`mask_nickname`) + 실제 amount/prize_label 표기.
-  3. 봇 시드는 실데이터가 비어있을 때만 보조 표기하고 "SIM" 칩을 명시. 실데이터가 들어오면 봇은 자연 소실.
-  4. "다음 기회에" 문구: `prize_label`이 NULL이거나 `amount=0`인 행만 "꽝"으로 표기. 실제 당첨 행은 amount/prize_label 그대로.
-  5. 슬롯 `OlympusSlot.tsx`의 `try_jackpot_hit` 호출은 **per spin 1회**로 dedupe(이미 `latestSpin.id` 기반이지만 React strict-mode/이펙트 중복 가능 → useRef 가드 추가).
+페이지 래퍼 (CosmicForge5000와 동형):
+```ts
+<SlotSignatureWrapper
+  slotId="olympus_legacy"
+  theme={OLYMPUS_LEGACY_THEME}
+  Background={OlympusLegacyCanvas}
+  PaytableSheet={OlympusLegacyPaytableSheet}
+  MaxWinOverlay={OlympusLegacyMaxWinOverlay}
+  flareColors={{ left: "rgba(255,190,80,0.20)", right: "rgba(255,225,150,0.18)" }}
+  signatureLabel="Olympus Legacy · Flagship"
+  accentDotColor="rgba(255,200,90,1)"
+  themeKey="olympus_legacy"
+/>
+```
 
 ---
 
-## 3. 메모리 / 회귀 방지
-- mem 새 메모 "RPC drift fixed (2026-05-16)": fomo_notifications 컬럼 셋, imperial_scores 컬럼 셋, get_slot_leaderboard 시그니처. 향후 PostgREST 호출 시 컬럼 셋 검증 필수.
+## 5. 사운드 / Crown / 라우트
+
+- `SLOT_ID_TO_THEME["olympus_legacy"] = "olympus"` 재사용.
+- `SLOT_SOUND_MAP["olympus_legacy"]`: spin_start / reel_stop / tumble / zeus_grant / wild_strike / win_big / win_legendary 키 등록 (파일은 음원 업로드 작업과 분리).
+- `EmpireSlotKey`에 `olympus_legacy` 추가, weight `1.6` (5000× 플래그십).
+- 라우트: `/casino/olympus-legacy-5000` (+ 카지노 로비 카드).
 
 ---
 
-## 4. 범위 외(이번 패치에서 다루지 않음)
-- 실제 음원 파일 업로드 (별도 Audio Director 작업)
-- /admin/perms drift baseline 갱신
-- 음원 BGM seamless loop 검증
+## 6. 성능 가드 (Musk 모드)
+
+- 캔버스는 `useAnimatedCanvas` + `document.hidden` gate + `prefers-reduced-motion` 정지.
+- 모든 파티클 burst는 lifetime 1.2s, 최대 200개, RAF 1개.
+- MaxWinOverlay는 lazy import (`React.lazy`) — 5000× 도달 전까지 0 byte 로드.
+- 페이지 wrapper는 mobile-first; data-fetch는 SlotSignatureWrapper 내부에서만.
+
+---
+
+## 7. 범위 외
+
+- **실제 음원 파일 생성/업로드** — 별도 Audio Director 작업이 처리(현재 음원 디렉토리 비어있음, silent fallback 정상).
+- **이미지 자산(`bg.jpg`/`logo.png`)** — placeholder import. 실자산은 imagegen 또는 사용자 업로드 후 교체.
+- 직전 메시지의 RPC 400/404 패치(다른 플랜)는 본 플랜 범위 밖. 별도 진행.
 
 ---
 
 ## 기술 노트 (개발자용)
 
 ```text
-변경 파일
-  supabase migration (3 fns)
-  src/components/empire/BaronPromotionDialog.tsx
-  src/lib/sounds/SlotSoundManager.ts
-  src/components/JackpotBanner.tsx
-  src/pages/Missions.tsx                    (id 추가)
-  src/components/practice/PracticeModeBanner.tsx
-  src/components/feed/PersonalizedFeedRail.tsx
-  src/components/empire/JackpotEmpireBanner.tsx
-  src/components/slots/OlympusSlot.tsx      (try_jackpot_hit dedupe)
-  mem://features/rpc-drift-fix-2026-05-16   (신규 메모)
-```
+변경 파일 요약
+  + src/components/slots/OlympusLegacyCanvas.tsx
+  + src/components/slots/OlympusLegacyPaytableSheet.tsx
+  + src/components/celebration/OlympusLegacyMaxWinOverlay.tsx
+  + src/pages/casino/OlympusLegacy5000.tsx
+  ~ src/components/slots/themes.ts            (theme entry + pattern)
+  ~ src/lib/sounds/soundConfig.ts             (slot id + sound map)
+  ~ src/lib/empireConfig.ts                   (weight)
+  ~ src/App.tsx                               (lazy + route)
+  ~ src/pages/Casino.tsx                      (lobby card, 있으면)
 
 검증
-- `code--exec` `psql -c "select get_my_dashboard_state();"` 비로그인은 `{}`, 로그인 RPC는 jsonb 키 7개.
-- 브라우저 콘솔에서 4종 RPC 모두 200, fomo GET 200.
-- /missions: "지금 룰렛 돌리기" 클릭 시 카드로 스크롤 + 펄스.
-- /wallet 진입 시 Practice 모드 자동 해제 + 입출금 가용.
-- FOR YOU: 새로고침 → 항상 카드 표기(폴백 포함).
-- 잭팟 배너: 실데이터 들어오면 봇 시드 사라지고 "실유저" 마킹.
+  - /casino/olympus-legacy-5000 진입 → 배경 60fps, 번개 8~14s 간격
+  - DevWinCheats로 cluster_tumble 보너스 트리거 → 멀티 ladder 동작
+  - 5000× MaxWinOverlay 트리거 → Crown award(awardCrown idempotent dedupeKey 검증)
+  - reduced-motion ON → 번개·파티클 0
+  - 7개 기존 슬롯 회귀 없음 (themes.ts diff만)
+```
