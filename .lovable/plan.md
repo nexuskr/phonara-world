@@ -5,6 +5,8 @@
 
 Phase 2 Pre-Flight (visibility instrumentation) 완료. 본 문서는 다음 8개 PR 의 **변경 불가 실행 계약**.
 
+**진행 상태:** PR-A ✅ (`reports/triage.2026-05-17.json`, 78개 entry, money_flow=12 / cosmetic=53 / admin=9 / unknown=0 / false_positive=1) · PR-B ⏳ 대기.
+
 ## 0. System Definition (절대 고정)
 
 - This system is NOT optimized.
