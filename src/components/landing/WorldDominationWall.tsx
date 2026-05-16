@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Crown, Globe2, Sparkles, TrendingUp, Users, Zap } from "lucide-react";
 import TopEmperorBanner from "./TopEmperorBanner";
 import CompetitorCompareTicker from "./CompetitorCompareTicker";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 type Headline = { text: string; tone: string; created_at: string };
 
@@ -109,8 +110,7 @@ export default function WorldDominationWall() {
   // 8초마다 헤드라인 회전
   useEffect(() => {
     if (headlines.length <= 1) return;
-    const id = window.setInterval(() => setHIdx((i) => (i + 1) % headlines.length), 8000);
-    return () => window.clearInterval(id);
+    return setVisibleInterval(() => setHIdx((i) => (i + 1) % headlines.length), 8000, { meta: { owner: "WorldDominationWall:headline-rotator", category: "cosmetic" } });
   }, [headlines.length]);
 
   const activeHeadline = headlines[hIdx];

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Trophy, Clock, Crown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { LoadingList } from "@/components/ui/loading-state";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 type Tournament = {
   id: string;
@@ -68,8 +69,7 @@ export default function SlotTournamentBanner() {
 
   // Local 1s ticker for the countdown
   useEffect(() => {
-    const i = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(i);
+    return setVisibleInterval(() => setNow(Date.now()), 1000, { meta: { owner: "SlotTournamentBanner:tick", category: "cosmetic" } });
   }, []);
 
   if (loading) return <LoadingList rows={3} />;

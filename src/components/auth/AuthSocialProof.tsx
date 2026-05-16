@@ -10,6 +10,7 @@ import {
   pseudoCountry,
 } from "@/lib/countryLatLng";
 import { LiveFeedPulses, type PulseEvent } from "./LiveFeedPulses";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 interface WhaleRow {
   kind: "crown" | "baron" | "withdraw";
@@ -189,8 +190,7 @@ export function AuthSocialProof({
   // tick for "Xs ago"
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(t);
+    return setVisibleInterval(() => setNow(Date.now()), 1000, { meta: { owner: "AuthSocialProof:now-tick", category: "cosmetic" } });
   }, []);
 
   // animated kpi values

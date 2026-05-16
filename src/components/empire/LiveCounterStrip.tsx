@@ -4,6 +4,7 @@ import { Crown, Flame, Globe2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { SimChip } from "@/components/sim/SimChip";
 import { useReducedMotionPref } from "@/lib/app-settings";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 type Pulse = {
   live_users: number;
@@ -90,8 +91,7 @@ export default function LiveCounterStrip() {
 
   // Rotate hype line every 4s
   useEffect(() => {
-    const t = setInterval(() => setLineIdx((i) => (i + 1) % TRUMP_LINES.length), 4000);
-    return () => clearInterval(t);
+    return setVisibleInterval(() => setLineIdx((i) => (i + 1) % TRUMP_LINES.length), 4000, { meta: { owner: "LiveCounterStrip:trump-rotator", category: "cosmetic" } });
   }, []);
 
   return (

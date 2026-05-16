@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { startCashLoop, advanceCashLoop, type CashLoopSession } from "@/lib/cashLoop";
 import { notify } from "@/lib/notify";
 import { cn } from "@/lib/utils";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 interface Props {
   onConvert: () => void;
@@ -48,8 +49,7 @@ export default function ThreeMinuteCashLoop({ onConvert, onDismiss }: Props) {
 
   // 타이머
   useEffect(() => {
-    const t = window.setInterval(() => setElapsed((e) => e + 1), 1000);
-    return () => clearInterval(t);
+    return setVisibleInterval(() => setElapsed((e) => e + 1), 1000, { meta: { owner: "ThreeMinuteCashLoop", category: "cosmetic" } });
   }, []);
 
   // Phase 전이

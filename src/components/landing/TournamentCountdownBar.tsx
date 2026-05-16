@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Trophy, Radio } from "lucide-react";
 import { Link } from "react-router-dom";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 type Tournament = {
   id: string;
@@ -42,8 +43,8 @@ export default function TournamentCountdownBar() {
     };
     load();
     const id = setInterval(load, 30_000);
-    const t2 = setInterval(() => setTick((x) => x + 1), 1000);
-    return () => { mounted = false; clearInterval(id); clearInterval(t2); };
+    const stop2 = setVisibleInterval(() => setTick((x) => x + 1), 1000, { meta: { owner: "TournamentCountdownBar:tick", category: "cosmetic" } });
+    return () => { mounted = false; clearInterval(id); stop2(); };
   }, []);
 
   if (!t) return null;

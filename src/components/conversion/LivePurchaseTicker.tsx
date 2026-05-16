@@ -99,8 +99,7 @@ export default function LivePurchaseTicker() {
 
   useEffect(() => {
     if (merged.length === 0) return;
-    const t = setInterval(() => setIdx((v) => (v + 1) % merged.length), 8000);
-    return () => clearInterval(t);
+    return setVisibleInterval(() => setIdx((v) => (v + 1) % merged.length), 8000, { meta: { owner: "LivePurchaseTicker:rotator", category: "cosmetic" } });
   }, [merged.length]);
 
   // Auto-hide on scroll-down (mobile UX), reveal on scroll-up
