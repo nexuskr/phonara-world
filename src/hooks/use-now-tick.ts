@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from "react";
+import { trackInterval, forgetInterval } from "@pkg/runtime";
 
 /**
  * Global wall-clock tick store.
@@ -37,6 +38,15 @@ function ensureTimer(ms: Bucket) {
     if (typeof document !== "undefined" && document.hidden) return;
     b.listeners.forEach((l) => l());
   }, ms);
+  // Phase 2 PR-B — register shared bucket timer as TRACKED cosmetic.
+  // The interval is intentionally native here (singleton with custom hidden-skip);
+  // we only add ledger registration so coverage reflects reality.
+  trackInterval(b.timer as unknown as number, {
+    owner: `use-now-tick:bucket-${ms}`,
+    intervalMs: ms,
+    category: "cosmetic",
+    createdAt: Date.now(),
+  });
 }
 
 function subscribe(ms: Bucket, listener: () => void) {
@@ -46,6 +56,7 @@ function subscribe(ms: Bucket, listener: () => void) {
   return () => {
     b.listeners.delete(listener);
     if (b.listeners.size === 0 && b.timer) {
+      forgetInterval(b.timer as unknown as number);
       clearInterval(b.timer);
       b.timer = null;
     }

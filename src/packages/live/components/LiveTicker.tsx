@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Flame, ArrowUpRight } from "lucide-react";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 type Strike = {
   kind: string;
@@ -47,8 +48,8 @@ export default function LiveTicker() {
       } catch { /* silent — public RPC */ }
     };
     load();
-    const t = setInterval(load, 60_000);
-    return () => { alive = false; clearInterval(t); };
+    const stop = setVisibleInterval(load, 60_000, { meta: { owner: "LiveTicker", category: "cosmetic" } });
+    return () => { alive = false; stop(); };
   }, []);
 
   if (rows.length === 0) return null;

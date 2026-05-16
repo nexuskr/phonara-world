@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Crown, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
 import { G } from "@/lib/glossary";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 interface Props {
   active: boolean;
@@ -26,8 +27,7 @@ export default function VipBoostCard({ active, multiplier, endsAt }: Props) {
   const [tick, setTick] = useState(0);
   useEffect(() => {
     if (!active || !endsAt) return;
-    const t = setInterval(() => setTick((n) => n + 1), 1000);
-    return () => clearInterval(t);
+    return setVisibleInterval(() => setTick((n) => n + 1), 1000, { meta: { owner: "VipBoostCard", category: "cosmetic" } });
   }, [active, endsAt]);
 
   return (

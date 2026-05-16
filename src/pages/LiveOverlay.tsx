@@ -4,6 +4,7 @@ import { useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Crown, Radio, Trophy } from "lucide-react";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 type Row = { rank: number; masked_name: string; score: number; crown_count: number };
 type T = {
@@ -32,9 +33,9 @@ export default function LiveOverlay() {
       setT(found);
     };
     load();
-    const id = setInterval(load, 5_000);
-    const id2 = setInterval(() => setTick((x) => x + 1), 1000);
-    return () => { mounted = false; clearInterval(id); clearInterval(id2); };
+    const stop1 = setVisibleInterval(load, 5_000, { meta: { owner: "LiveOverlay:35", category: "cosmetic" } });
+    const stop2 = setVisibleInterval(() => setTick((x) => x + 1), 1000, { meta: { owner: "LiveOverlay:36", category: "cosmetic" } });
+    return () => { mounted = false; stop1(); stop2(); };
   }, [token]);
 
   const remaining = t ? Math.max(0, t.seconds_until_end - tick) : 0;

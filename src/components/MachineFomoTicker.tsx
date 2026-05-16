@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { formatKRW } from "@/lib/store";
 import { Bot } from "lucide-react";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 const NICKS = ["Aurora***", "Cyber***K", "Neon***J", "Phantom***", "Tiger***", "Lumi***", "Crow***", "Storm***", "Vio***", "Mira***"];
 const PKGS = [
@@ -19,8 +20,7 @@ function makeFeed() {
 export default function MachineFomoTicker() {
   const [item, setItem] = useState(makeFeed());
   useEffect(() => {
-    const i = setInterval(() => setItem(makeFeed()), 6500);
-    return () => clearInterval(i);
+    return setVisibleInterval(() => setItem(makeFeed()), 6500, { meta: { owner: "MachineFomoTicker", category: "cosmetic" } });
   }, []);
   return (
     <div className="glass rounded-xl px-3 py-2 flex items-center gap-2 overflow-hidden">

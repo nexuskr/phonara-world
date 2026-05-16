@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Clock } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 export default function CountdownLossAversion({
   minutes = 15,
@@ -26,12 +27,11 @@ export default function CountdownLossAversion({
   });
 
   useEffect(() => {
-    const id = setInterval(() => {
+    return setVisibleInterval(() => {
       const raw = sessionStorage.getItem(storageKey);
       const deadline = raw ? Number(raw) : 0;
       setLeft(Math.max(0, Math.floor((deadline - Date.now()) / 1000)));
-    }, 1000);
-    return () => clearInterval(id);
+    }, 1000, { meta: { owner: "CountdownLossAversion", category: "cosmetic" } });
   }, [storageKey]);
 
   const m = Math.floor(left / 60);

@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { hasVerifiedSession } from "@/lib/auth-recovery";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 type Arrival = { arrived_at: string; nick: string };
 
@@ -28,10 +29,10 @@ export default function VipArrivalsTicker() {
       }
     }
     load();
-    const t = setInterval(load, 15_000);
+    const stop = setVisibleInterval(load, 15_000, { meta: { owner: "VipArrivalsTicker", category: "cosmetic" } });
     return () => {
       mounted = false;
-      clearInterval(t);
+      stop();
     };
   }, []);
 

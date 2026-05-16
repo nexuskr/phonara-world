@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { CheckCircle2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { SimChip } from "@/components/sim/SimChip";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 // PR-1: KRW + masked Korean names removed (Hard Constraint C3/C4).
 // Bot/SIM ticker now uses Empire Coin (₡) + abstract guild handles only.
@@ -36,10 +37,9 @@ export default function PayoutTicker() {
   const { t, i18n } = useTranslation("live");
   const [items, setItems] = useState(() => Array.from({ length: 6 }, () => genReceipt(i18n.language)));
   useEffect(() => {
-    const tk = setInterval(() => {
+    return setVisibleInterval(() => {
       setItems(prev => [genReceipt(i18n.language), ...prev].slice(0, 6));
-    }, 4000);
-    return () => clearInterval(tk);
+    }, 4000, { meta: { owner: "PayoutTicker", category: "cosmetic" } });
   }, [i18n.language]);
   return (
     <div className="glass-strong rounded-3xl neon-border overflow-hidden">

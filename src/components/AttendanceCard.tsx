@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { emitEarned } from "@/components/onboarding/EarnedToast";
 import { isFlagOn } from "@/lib/conversion-flags";
 import { refreshWallet } from "@/lib/walletRefresh";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 export default function AttendanceCard() {
   const [db, setDb] = useDB();
@@ -14,8 +15,7 @@ export default function AttendanceCard() {
   // streak loss aversion countdown — hooks MUST run before any early return
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 1000 * 30);
-    return () => clearInterval(t);
+    return setVisibleInterval(() => setNow(Date.now()), 1000 * 30, { meta: { owner: "AttendanceCard", category: "cosmetic" } });
   }, []);
 
   if (!db.user) return null;
