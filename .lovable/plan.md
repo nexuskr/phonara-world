@@ -359,7 +359,7 @@ device.profile = "low" | "mid" | "high"
 
 ---
 
-## 14. 지금 바로 1번 작업
+## 15. 지금 바로 1번 작업
 
 **Week 1 detox 3종 + Ω-Core 12-1/12-4 토대 병렬 착수:**
 - Toast 4-Tier (`notify.critical/important/passive/silent`) + ESLint `no-direct-sonner` 룰
