@@ -35,6 +35,7 @@ import BankAppDeeplinks from "@/components/wallet/BankAppDeeplinks";
 import AmountPresetChips from "@/components/wallet/AmountPresetChips";
 import PhonSpendPanel from "@/components/wallet/PhonSpendPanel";
 import PhonFeeDiscountToggle from "@/components/wallet/PhonFeeDiscountToggle";
+import { WalletTopSection } from "@pkg/wallet";
 
 type AssetTab = "bank" | "coin";
 type ActionTab = "withdraw" | "deposit" | "history";
@@ -368,6 +369,9 @@ export default function Wallet() {
             </span>
           </div>
         </div>
+
+        {/* Sprint 2 — 5초 잔액 인지 + 3스텝 출금 + 진행중/이력 */}
+        <WalletTopSection />
 
         {/* Tri-currency display layer (KRW / USDT / PHON) */}
         <MultiCurrencyBalance className="mb-5" />
