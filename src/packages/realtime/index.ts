@@ -20,7 +20,8 @@ import {
   type ConnState,
   type ChannelBinding,
 } from "@/hooks/use-realtime-channel";
-import { regionalKey } from "./regions";
+import { regionalKey, getRegion } from "./regions";
+import { reportHeartbeat } from "./heartbeat";
 
 export type RealtimePartition = "wallet" | "game" | "chat" | "market";
 export type PartitionOpts = UseRealtimeChannelOpts;
@@ -48,22 +49,47 @@ function buildKey(part: RealtimePartition, key: string): string {
   return regionalKey(part, key);
 }
 
+/**
+ * Wrap onStatus to record one heartbeat sample on first `live` transition (PR-O).
+ * Pure interception — does not alter caller-supplied handler semantics.
+ */
+function withHeartbeat(part: RealtimePartition, finalKey: string, opts: PartitionOpts): PartitionOpts {
+  const startedAt = (typeof performance !== "undefined" ? performance.now() : Date.now());
+  const userOnStatus = opts.onStatus;
+  let reported = false;
+  return {
+    ...opts,
+    onStatus: (state) => {
+      if (!reported && state === "live") {
+        reported = true;
+        const now = (typeof performance !== "undefined" ? performance.now() : Date.now());
+        reportHeartbeat(finalKey, getRegion(), part, now - startedAt);
+      }
+      try { userOnStatus?.(state); } catch { /* swallow */ }
+    },
+  };
+}
+
 /** wallet 채널: phon_balances · withdrawal_requests · deposit_requests · nft_collection 등 */
 export function useWalletChannel(opts: PartitionOpts) {
-  return useRealtimeChannel({ ...opts, key: buildKey("wallet", opts.key) });
+  const key = buildKey("wallet", opts.key);
+  return useRealtimeChannel({ ...withHeartbeat("wallet", key, opts), key });
 }
 
 /** game 채널: live_positions · slot_spins · jackpot · empire 이벤트 등 */
 export function useGameChannel(opts: PartitionOpts) {
-  return useRealtimeChannel({ ...opts, key: buildKey("game", opts.key) });
+  const key = buildKey("game", opts.key);
+  return useRealtimeChannel({ ...withHeartbeat("game", key, opts), key });
 }
 
 /** chat 채널: chat_messages · support_tickets · admin alerts · audit log 등 */
 export function useChatChannel(opts: PartitionOpts) {
-  return useRealtimeChannel({ ...opts, key: buildKey("chat", opts.key) });
+  const key = buildKey("chat", opts.key);
+  return useRealtimeChannel({ ...withHeartbeat("chat", key, opts), key });
 }
 
 /** market 채널: oracle_prices · prediction_markets · 마켓 티커 등 */
 export function useMarketChannel(opts: PartitionOpts) {
-  return useRealtimeChannel({ ...opts, key: buildKey("market", opts.key) });
+  const key = buildKey("market", opts.key);
+  return useRealtimeChannel({ ...withHeartbeat("market", key, opts), key });
 }

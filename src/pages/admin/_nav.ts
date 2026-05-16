@@ -90,6 +90,7 @@ export const ADMIN_NAV: AdminNavSection[] = [
     aal2: true,
     items: [
       { id: "self-heal",     name: "🛟 Self-Heal 콘솔",   to: "/admin/ops/self-heal",     icon: HeartPulse },
+      { id: "region-health", name: "🌍 리전 헬스",         to: "/admin/ops/region-health", icon: Activity },
       { id: "observability", name: "관측 (옵저버빌리티)", to: "/admin/ops/observability", icon: Activity },
       { id: "errors",        name: "에러 · 이상감지",     to: "/admin/ops/errors",        icon: AlertTriangle, badge: "anomalies_unack" },
       { id: "audit",         name: "📜 감사 로그",        to: "/admin/ops/audit",         icon: FileSearch },

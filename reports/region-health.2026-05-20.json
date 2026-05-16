@@ -1,0 +1,27 @@
+{
+  "pr": "PR-O",
+  "title": "Region Health Matrix & Failover",
+  "date": "2026-05-20",
+  "summary": "Per-region realtime latency telemetry + admin matrix UI + manual failover pin. Builds on PR-N region sharding.",
+  "db_objects": [
+    "table public.realtime_region_heartbeats (admin SELECT, owner INSERT, 30d prune)",
+    "rpc public.record_realtime_heartbeat(region, partition, latency_ms) → authenticated+anon, SECURITY DEFINER, sanitized",
+    "rpc public.admin_get_realtime_region_health() → 3-region matrix, last 5min, active_users + avg/p95",
+    "rpc public.admin_broadcast_region_failover(target_region, reason) → upsert platform_kill_switches.realtime_region_pin",
+    "rpc public.prune_realtime_region_heartbeats() → 30d retention"
+  ],
+  "client_changes": [
+    "src/packages/realtime/heartbeat.ts (new) — fire-and-forget reporter, per-channel once, 60s global debounce",
+    "src/packages/realtime/index.ts — withHeartbeat(part, key, opts) wraps onStatus to measure subscribe→live latency",
+    "src/pages/admin/ops/RegionHealth.tsx (new) — 3-region cards, 15s refresh, pin/auto buttons",
+    "src/pages/admin/_AdminRoutes.tsx — /admin/ops/region-health route",
+    "src/pages/admin/_nav.ts — 🌍 리전 헬스 nav item under 운영"
+  ],
+  "money_flow_diff": 0,
+  "raw_channel_calls_added": 0,
+  "verification": {
+    "build": "pass",
+    "operator_isolation": "pass (RegionHealth bundled into operator chunk via pages/admin/** glob)",
+    "money_flow_freeze": "pass"
+  }
+}

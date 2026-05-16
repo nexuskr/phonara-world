@@ -5899,6 +5899,33 @@ export type Database = {
           },
         ]
       }
+      realtime_region_heartbeats: {
+        Row: {
+          id: number
+          latency_ms: number
+          partition: string
+          recorded_at: string
+          region: string
+          user_id: string | null
+        }
+        Insert: {
+          id?: number
+          latency_ms: number
+          partition: string
+          recorded_at?: string
+          region: string
+          user_id?: string | null
+        }
+        Update: {
+          id?: number
+          latency_ms?: number
+          partition?: string
+          recorded_at?: string
+          region?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       recovery_bonus_eligibility: {
         Row: {
           consumed_at: string | null
@@ -9091,6 +9118,10 @@ export type Database = {
         Args: { _reason?: string; _user_id: string }
         Returns: boolean
       }
+      admin_broadcast_region_failover: {
+        Args: { _reason?: string; _target_region: string }
+        Returns: undefined
+      }
       admin_broadcast_send: {
         Args: {
           _audience?: Json
@@ -9337,6 +9368,17 @@ export type Database = {
           phon_credited_30d: number
           sent_30d: number
           title: string
+        }[]
+      }
+      admin_get_realtime_region_health: {
+        Args: never
+        Returns: {
+          active_users: number
+          avg_latency_ms: number
+          last_sample_at: string
+          p95_latency_ms: number
+          region: string
+          samples: number
         }[]
       }
       admin_get_recent_errors: {
@@ -11340,6 +11382,7 @@ export type Database = {
       policy_assertions_status: { Args: never; Returns: Json }
       progress_daily_combo: { Args: { _step: string }; Returns: Json }
       prune_api_usage_counters: { Args: never; Returns: number }
+      prune_realtime_region_heartbeats: { Args: never; Returns: undefined }
       public_live_pulse: { Args: never; Returns: Json }
       public_trust_history: {
         Args: { _days?: number }
@@ -11443,6 +11486,10 @@ export type Database = {
           p_symbol: string
         }
         Returns: Json
+      }
+      record_realtime_heartbeat: {
+        Args: { _latency_ms: number; _partition: string; _region: string }
+        Returns: undefined
       }
       record_recovery_eligibility: {
         Args: {
