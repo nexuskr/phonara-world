@@ -9,7 +9,7 @@
 // `useDocumentVisible()` 훅을 함께 제공한다.
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { trackInterval, forgetInterval } from "@pkg/runtime";
+import { trackInterval, forgetInterval, isCategoryPaused } from "@pkg/runtime";
 import type { RuntimeCategory } from "@pkg/runtime";
 
 type Cleanup = () => void;
@@ -33,10 +33,13 @@ export function setVisibleInterval(
 ): Cleanup {
   const { leading = false, catchUpOnVisible = true, meta } = opts;
   if (typeof window === "undefined") return () => {};
+  const cat: RuntimeCategory = meta?.category ?? "cosmetic";
 
   let lastRun = 0;
   const tick = () => {
     if (typeof document !== "undefined" && document.hidden) return;
+    // PR-G: governor-paused categories skip cooperatively.
+    if (isCategoryPaused(cat)) return;
     lastRun = Date.now();
     try { fn(); } catch (e) { console.error("[visible-interval]", e); }
   };
@@ -48,7 +51,7 @@ export function setVisibleInterval(
   trackInterval(id, {
     owner: meta?.owner ?? "anonymous:setVisibleInterval",
     intervalMs: ms,
-    category: meta?.category ?? "cosmetic",
+    category: cat,
     createdAt: Date.now(),
   });
 

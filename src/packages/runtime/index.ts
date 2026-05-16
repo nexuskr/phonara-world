@@ -13,4 +13,14 @@ export {
 
 export { installRuntimeObserver } from "./runtime.observe";
 export { inferCategoryFromStack, inferOwnerFromStack } from "./runtime.lattice";
-export { previewKillCategory, killCategory, killAll } from "./runtime.governor";
+export {
+  previewKillCategory,
+  killCategory,
+  killAll,
+  pauseCategory,
+  resumeCategory,
+  isCategoryPaused,
+  pausedCategories,
+  subscribeGovernor,
+  installHiddenTabSuspension,
+} from "./runtime.governor";
