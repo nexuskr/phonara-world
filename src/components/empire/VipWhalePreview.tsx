@@ -8,6 +8,7 @@ import { Eye, Crown, ArrowDownToLine } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useVipPass } from "@/hooks/use-vip-pass";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 type Strike = {
   kind: "crown" | "withdraw";
@@ -37,10 +38,10 @@ export default function VipWhalePreview() {
       }
     }
     load();
-    const t = setInterval(load, 10_000);
+    const t = setVisibleInterval(load, 10_000 , { meta: { owner: "VipWhalePreview", category: "cosmetic" } });
     return () => {
       mounted = false;
-      clearInterval(t);
+      t();
     };
   }, [vip.loading, vip.active]);
 

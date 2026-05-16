@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Check, Coins, Gamepad2, Gift, Sparkles, Trophy, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { notify } from "@/lib/notify";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 const KEY = "phonara:onboarding_v3_done";
 
@@ -217,10 +218,10 @@ function StepSlot() {
   const spin = () => {
     setSpinning(true);
     let n = 0;
-    const id = setInterval(() => {
+    const id = setVisibleInterval(() => {
       setReels([symbols[Math.floor(Math.random() * symbols.length)], symbols[Math.floor(Math.random() * symbols.length)], symbols[Math.floor(Math.random() * symbols.length)]]);
-      if (++n > 12) { clearInterval(id); setReels(["7", "7", "7"]); setSpinning(false); }
-    }, 70);
+      if (++n > 12) { id(); setReels(["7", "7", "7"]); setSpinning(false); }
+    }, 70 , { meta: { owner: "OnboardingV3", category: "cosmetic" } });
   };
   return (
     <Frame>

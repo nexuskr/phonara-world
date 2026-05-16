@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, useMotionValue, animate, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 /**
  * Empire FX — Gold & Dark 영화급 프리미티브.
@@ -284,12 +285,12 @@ export function AnimatedCounter({
 
   useEffect(() => {
     if (!jitter || reduce) return;
-    const t = setInterval(() => {
+    const t = setVisibleInterval(() => {
       const cur = mv.get();
       const delta = Math.floor(Math.random() * (jitter * 2 + 1)) - jitter;
       animate(mv, cur + delta, { duration: 0.6 });
-    }, 1800);
-    return () => clearInterval(t);
+    }, 1800 , { meta: { owner: "EmpireFX", category: "cosmetic" } });
+    return () => t();
   }, [jitter, mv, reduce]);
 
   return (

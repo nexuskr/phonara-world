@@ -42,8 +42,8 @@ export function useBotFeedRotator(items: BotFeedItem[], intervalMs = 3500): BotF
   const [idx, setIdx] = useState(0);
   useEffect(() => {
     if (items.length === 0) return;
-    const t = setInterval(() => setIdx(i => (i + 1) % items.length), intervalMs);
-    return () => clearInterval(t);
+    const t = setVisibleInterval(() => setIdx(i => (i + 1) % items.length), intervalMs , { meta: { owner: "use-bot-feed", category: "cosmetic" } });
+    return () => t();
   }, [items.length, intervalMs]);
   return items.length > 0 ? items[idx % items.length] : null;
 }

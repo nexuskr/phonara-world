@@ -6,6 +6,7 @@ import { useRequireAuth } from "@/hooks/use-require-auth";
 import { notify } from "@/lib/notify";
 import { track } from "@/lib/telemetry";
 import { Crown, Rocket, Coins, Sparkles, Flame, CheckCircle2, Sun, TrendingUp, Lock, ChevronRight } from "lucide-react";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 type ActState = {
   id: number;
@@ -61,12 +62,12 @@ export default function ImperialJourneyMap() {
   useEffect(() => {
     let active = true;
     void fetchOnce();
-    const id = window.setInterval(() => {
+    const id = setVisibleInterval(() => {
       if (document.visibilityState === "visible" && active) void fetchOnce();
-    }, 60_000);
+    }, 60_000 , { meta: { owner: "ImperialJourneyMap", category: "cosmetic" } });
     const onFocus = () => { if (active) void fetchOnce(); };
     window.addEventListener("focus", onFocus);
-    return () => { active = false; window.clearInterval(id); window.removeEventListener("focus", onFocus); };
+    return () => { active = false; id(); window.removeEventListener("focus", onFocus); };
   }, [fetchOnce]);
 
   const pct = useMemo(() => {

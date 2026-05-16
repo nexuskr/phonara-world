@@ -5,7 +5,7 @@
 
 Phase 2 Pre-Flight (visibility instrumentation) 완료. 본 문서는 다음 8개 PR 의 **변경 불가 실행 계약**.
 
-**진행 상태:** PR-A ✅ (`reports/triage.2026-05-17.json`, 78 entries) · PR-B ✅ (16 cosmetic intervals migrated → `setVisibleInterval`, raw setInterval 78→62, money-flow diff 0 lines, `reports/entropy.surface.2026-05-17.json` + `reports/rpc.surface.2026-05-17.json`) · PR-C ⏳ 대기 (39 cosmetic Wave 2).
+**진행 상태:** PR-A ✅ (`reports/triage.2026-05-17.json`, 78 entries) · PR-B ✅ (16 cosmetic intervals, 78→62) · PR-C ✅ (40 cosmetic Wave 2 intervals migrated → `setVisibleInterval`, raw setInterval 62→21, money-flow diff 0 lines, `reports/entropy.surface.2026-05-18.json`) · PR-D ⏳ 대기 (9 admin Wave).
 
 ## 0. System Definition (절대 고정)
 

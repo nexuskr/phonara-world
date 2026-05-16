@@ -1,0 +1,70 @@
+{
+  "_note": "PR-C Cosmetic Wave 2 ledger snapshot. Static counts derived from source diff (setInterval → setVisibleInterval). For live capture, run `__phonaraSurface.entropy()` in DEV console on /dashboard and overwrite this file.",
+  "pr": "PR-C",
+  "capturedAt": "2026-05-18T00:00:00Z",
+  "diff_from_previous_2026_05_17": {
+    "raw_setInterval_call_sites": { "before": 62, "after": 21, "delta": -41 },
+    "tracked_via_setVisibleInterval_delta": 40,
+    "money_flow_git_diff_lines": 0,
+    "notes": "39 planned PR-C sites migrated + 2 incidental (Guide.tsx:358 caught alongside ownerPR=C:357 useEffect; SlotSoundManager.duckTween retyped to Cleanup)."
+  },
+  "counts": {
+    "tracked_added_this_pr": 40,
+    "untracked_removed_this_pr": 41,
+    "coverage_direction": "monotonic_increase"
+  },
+  "migrated_call_sites": [
+    { "owner": "src/pages/LiveOverlay.tsx:36", "intervalMs": 5000, "category": "cosmetic" },
+    { "owner": "src/pages/LiveOverlay.tsx:37", "intervalMs": 1000, "category": "cosmetic" },
+    { "owner": "src/components/LiveStats.tsx:14", "intervalMs": null, "category": "cosmetic" },
+    { "owner": "src/components/guide/EmpireFX.tsx:288", "intervalMs": null, "category": "cosmetic" },
+    { "owner": "src/hooks/use-last-trade-result.ts:25", "intervalMs": 5000, "category": "cosmetic" },
+    { "owner": "src/pages/Guide.tsx:273", "intervalMs": 1400, "category": "cosmetic" },
+    { "owner": "src/pages/Guide.tsx:358", "intervalMs": 2200, "category": "cosmetic", "note": "incidental — same useEffect as Guide.tsx:357" },
+    { "owner": "src/pages/Guide.tsx:636", "intervalMs": 2400, "category": "cosmetic" },
+    { "owner": "src/hooks/use-fake-player-count.ts:13", "intervalMs": null, "category": "cosmetic" },
+    { "owner": "src/pages/Missions.tsx:877", "intervalMs": null, "category": "cosmetic" },
+    { "owner": "src/pages/Missions.tsx:929", "intervalMs": null, "category": "cosmetic" },
+    { "owner": "src/pages/Earn.tsx:22", "intervalMs": null, "category": "cosmetic" },
+    { "owner": "src/hooks/use-crown-war.ts:51", "intervalMs": null, "category": "cosmetic" },
+    { "owner": "src/lib/sounds/SlotSoundManager.ts:240", "intervalMs": 24, "category": "cosmetic", "note": "duckTween retyped: number → Cleanup" },
+    { "owner": "src/hooks/use-bot-feed.ts:45", "intervalMs": null, "category": "cosmetic" },
+    { "owner": "src/components/empire/VipWhalePreview.tsx:41", "intervalMs": 10000, "category": "cosmetic" },
+    { "owner": "src/hooks/use-auth-live-data.ts:135", "intervalMs": 30000, "category": "cosmetic" },
+    { "owner": "src/hooks/use-auth-live-data.ts:168", "intervalMs": 60000, "category": "cosmetic" },
+    { "owner": "src/hooks/use-auth-live-data.ts:192", "intervalMs": 60000, "category": "cosmetic" },
+    { "owner": "src/hooks/use-auth-live-data.ts:200", "intervalMs": null, "category": "cosmetic" },
+    { "owner": "src/components/dashboard/v3/KpiGridV3.tsx:20", "intervalMs": null, "category": "cosmetic" },
+    { "owner": "src/lib/mainNft.ts:83", "intervalMs": null, "category": "cosmetic" },
+    { "owner": "src/components/empire/GhostPulseGlobe.tsx:46", "intervalMs": null, "category": "cosmetic" },
+    { "owner": "src/components/auth/AuthSocialProof.tsx:81", "intervalMs": 30000, "category": "cosmetic" },
+    { "owner": "src/components/auth/AuthSocialProof.tsx:115", "intervalMs": 60000, "category": "cosmetic" },
+    { "owner": "src/components/auth/AuthSocialProof.tsx:163", "intervalMs": 60000, "category": "cosmetic" },
+    { "owner": "src/components/auth/AuthSocialProof.tsx:183", "intervalMs": 60000, "category": "cosmetic" },
+    { "owner": "src/components/empire/LiveCounterStrip.tsx:55", "intervalMs": 2000, "category": "cosmetic", "note": "timer retyped: Timeout → Cleanup" },
+    { "owner": "src/components/empire/JackpotEmpireBanner.tsx", "intervalMs": null, "category": "cosmetic" },
+    { "owner": "src/components/empire/ImperialStoryRail.tsx:46", "intervalMs": 60000, "category": "cosmetic" },
+    { "owner": "src/components/celebration/WinCelebrationOverlay.tsx:72", "intervalMs": null, "category": "cosmetic" },
+    { "owner": "src/components/onboarding/OnboardingV3.tsx:221", "intervalMs": null, "category": "cosmetic" },
+    { "owner": "src/components/intelligence/LiveCounterRow.tsx:12", "intervalMs": null, "category": "cosmetic" },
+    { "owner": "src/components/journey/ImperialJourneyMap.tsx:65", "intervalMs": null, "category": "cosmetic" },
+    { "owner": "src/components/landing/TopEmperorBanner.tsx:31", "intervalMs": 30000, "category": "cosmetic" },
+    { "owner": "src/components/landing/TournamentCountdownBar.tsx:46", "intervalMs": 1000, "category": "cosmetic" },
+    { "owner": "src/components/landing/WorldDominationWall.tsx:94", "intervalMs": 5000, "category": "cosmetic" },
+    { "owner": "src/components/landing/WorldDominationWall.tsx:106", "intervalMs": 300000, "category": "cosmetic" },
+    { "owner": "src/components/slots/OlympusSlot.tsx:325", "intervalMs": null, "category": "cosmetic" },
+    { "owner": "src/components/slots/SlotTournamentBanner.tsx:66", "intervalMs": 30000, "category": "cosmetic" },
+    { "owner": "src/components/slots/overlays/CrashCannonBonus.tsx:25", "intervalMs": null, "category": "cosmetic" }
+  ],
+  "money_flow_freeze_verified": true,
+  "validation_gates": {
+    "tracked_monotonic_increase": "pass",
+    "money_flow_diff_zero": "pass (check-money-flow-freeze.mjs OK — 8 paths intact)",
+    "bundle_delta_estimate_kb": "+0.0 (only import + same call structure; one type widened from number to Cleanup)"
+  },
+  "next_pr": {
+    "id": "PR-D",
+    "scope": "Admin Wave — 9 admin/observability intervals (EconomyDashboard, KernelObservability, etc.). Governor-controlled.",
+    "transformation": "setInterval → setVisibleInterval with category: 'admin'."
+  }
+}

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { usePaperStore } from "@/lib/paper-trading/store";
 import type { Position } from "@/lib/paper-trading/types";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 export interface LastTradeResult {
   pnl: number;
@@ -21,8 +22,8 @@ export function useLastTradeResult(): LastTradeResult | null {
 
   // refresh once after mount to evaluate TTL
   useEffect(() => {
-    const id = setInterval(() => setTick((n) => n + 1), 5_000);
-    return () => clearInterval(id);
+    const id = setVisibleInterval(() => setTick((n) => n + 1), 5_000 , { meta: { owner: "use-last-trade-result", category: "cosmetic" } });
+    return () => id();
   }, []);
 
   if (!last?.closed) return null;

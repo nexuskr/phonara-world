@@ -11,12 +11,12 @@ function useJitter(initial: number, { min = -200, max = 800, every = 1500 }: any
   useEffect(() => {
     if (initial <= 0) { setV(0); return; }
     setV(initial);
-    const t = setInterval(() => {
+    const t = setVisibleInterval(() => {
       // Pause when tab hidden — saves CPU + battery on background tabs.
       if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
       setV(prev => Math.max(0, prev + Math.floor(Math.random() * (max - min)) + min));
-    }, every);
-    return () => clearInterval(t);
+    }, every , { meta: { owner: "LiveStats", category: "cosmetic" } });
+    return () => t();
   }, [initial, every, min, max]);
   return v;
 }

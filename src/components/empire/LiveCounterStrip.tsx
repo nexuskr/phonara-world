@@ -38,7 +38,7 @@ export default function LiveCounterStrip() {
 
   useEffect(() => {
     let alive = true;
-    let timer: ReturnType<typeof setInterval>;
+    let timer: (() => void) | undefined;
     async function fetchOnce() {
       const { data } = await supabase.rpc("get_ghost_pulse");
       if (!alive || !data) return;
@@ -52,12 +52,12 @@ export default function LiveCounterStrip() {
       }
     }
     fetchOnce();
-    timer = setInterval(() => {
+    timer = setVisibleInterval(() => {
       if (!document.hidden) fetchOnce();
-    }, 2000);
+    }, 2000 , { meta: { owner: "LiveCounterStrip", category: "cosmetic" } });
     return () => {
       alive = false;
-      clearInterval(timer);
+      timer?.();
     };
   }, []);
 

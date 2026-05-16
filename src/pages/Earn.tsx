@@ -14,17 +14,18 @@ import RouletteCard from "@/components/earn/RouletteCard";
 import VipBoostCard from "@/components/earn/VipBoostCard";
 import ShareChannelsSheet from "@/components/share/ShareChannelsSheet";
 import { G } from "@/lib/glossary";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 function useLiveEarners(min = 1100, max = 1450) {
   const [n, setN] = useState(() => min + Math.floor(Math.random() * (max - min)));
   useEffect(() => {
-    const i = window.setInterval(() => {
+    const i = setVisibleInterval(() => {
       setN((p) => {
         const next = p + (Math.random() < 0.5 ? -1 : 1) * Math.floor(Math.random() * 7);
         return Math.max(min, Math.min(max, next));
       });
-    }, 60_000);
-    return () => clearInterval(i);
+    }, 60_000 , { meta: { owner: "Earn", category: "cosmetic" } });
+    return () => i();
   }, [min, max]);
   return n;
 }

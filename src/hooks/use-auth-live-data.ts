@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { FLAG_BY_CC, pseudoCountry } from "@/lib/countryLatLng";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 /**
  * Single source of truth for the /secure-auth public live page.
  * Mobile-optimised:
- *  - 1 unified setInterval(1000ms) drives KPI/feed/top5 drift (instead of 3).
+ *  - 1 unified setVisibleInterval(1000ms , { meta: { owner: "use-auth-live-data", category: "cosmetic" } }) drives KPI/feed/top5 drift (instead of 3).
  *  - Pauses on document.hidden.
  *  - Realtime crown_events shared channel.
  */
@@ -131,8 +132,8 @@ export function useAuthLiveData() {
       } catch { /* silent */ }
     };
     fetchKpi();
-    const t = setInterval(fetchKpi, 30_000);
-    return () => { alive = false; clearInterval(t); };
+    const t = setVisibleInterval(fetchKpi, 30_000 , { meta: { owner: "use-auth-live-data", category: "cosmetic" } });
+    return () => { alive = false; t(); };
   }, []);
 
   // ---- Real LIVE FEED ----
@@ -164,8 +165,8 @@ export function useAuthLiveData() {
       } catch { /* silent */ }
     };
     load();
-    const t = setInterval(load, 60_000);
-    return () => { alive = false; clearInterval(t); };
+    const t = setVisibleInterval(load, 60_000 , { meta: { owner: "use-auth-live-data", category: "cosmetic" } });
+    return () => { alive = false; t(); };
   }, []);
 
   // ---- Real TOP5 ----
@@ -188,15 +189,15 @@ export function useAuthLiveData() {
       } catch { /* silent */ }
     };
     load();
-    const t = setInterval(load, 60_000);
-    return () => { alive = false; clearInterval(t); };
+    const t = setVisibleInterval(load, 60_000 , { meta: { owner: "use-auth-live-data", category: "cosmetic" } });
+    return () => { alive = false; t(); };
   }, []);
 
   // ---- UNIFIED 1s tick: KPI drift / new feed / top5 jitter ----
   const tickRef = useRef(0);
   useEffect(() => {
     if (typeof document === "undefined") return;
-    const id = setInterval(() => {
+    const id = setVisibleInterval(() => {
       if (document.hidden) return;
       tickRef.current += 1;
       const n = tickRef.current;
@@ -211,8 +212,8 @@ export function useAuthLiveData() {
           score: r.score + Math.floor(Math.random() * 4500),
         })));
       }
-    }, 2000);
-    return () => clearInterval(id);
+    }, 2000 , { meta: { owner: "use-auth-live-data", category: "cosmetic" } });
+    return () => id();
   }, []);
 
   // ---- Realtime crown_events ----

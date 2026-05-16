@@ -9,6 +9,7 @@ import {
   type CelebrationData,
 } from "@/lib/celebration/WinCelebrationManager";
 import { TIER_LABEL, type WinTier } from "@/lib/sounds/soundConfig";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 const TIER_GRADIENT: Record<WinTier, string> = {
   big: "from-amber-300 via-orange-400 to-amber-500",
@@ -68,15 +69,15 @@ function fireConfetti(tier: WinTier, themeKey?: string, prefersReduced = false) 
   if (tier === "epic" || tier === "legendary") {
     // Coin cascade — repeated bursts
     let bursts = tier === "legendary" ? 8 : 5;
-    const interval = window.setInterval(() => {
-      if (--bursts <= 0) { clearInterval(interval); return; }
+    const interval = setVisibleInterval(() => {
+      if (--bursts <= 0) { interval(); return; }
       confetti({
         particleCount: 60, angle: 90, spread: 100,
         origin: { x: Math.random() * 0.8 + 0.1, y: 0 },
         colors, gravity: 1.2, scalar: 1.2, ticks: 200,
         disableForReducedMotion: true,
       });
-    }, 220);
+    }, 220 , { meta: { owner: "WinCelebrationOverlay", category: "cosmetic" } });
   }
 }
 

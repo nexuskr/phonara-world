@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Activity, TrendingUp, Users } from "lucide-react";
 import { usePaperStore } from "@/lib/paper-trading/store";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 export default function LiveCounterRow() {
   const history = usePaperStore((s) => s.history);
@@ -8,10 +9,10 @@ export default function LiveCounterRow() {
   const [traders, setTraders] = useState(() => 1840 + Math.floor(Math.random() * 380));
 
   useEffect(() => {
-    const t = setInterval(() => {
+    const t = setVisibleInterval(() => {
       setTraders((n) => Math.max(1500, n + (Math.random() < 0.5 ? -1 : 1) * Math.floor(Math.random() * 4)));
-    }, 6_000);
-    return () => clearInterval(t);
+    }, 6_000 , { meta: { owner: "LiveCounterRow", category: "cosmetic" } });
+    return () => t();
   }, []);
 
   const totalPnl = history.reduce((s, p) => s + (p.closed?.pnl ?? 0), 0);

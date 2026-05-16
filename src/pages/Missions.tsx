@@ -30,6 +30,7 @@ import { Sparkle } from "lucide-react";
 import MissionDailyCapCard from "@/components/missions/MissionDailyCapCard";
 import BoosterPill from "@/components/imperial/BoosterPill";
 import PaymentStickyCTA from "@/components/missions/PaymentStickyCTA";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 const tierFilters: { key: Tier; tk: string; color: string }[] = [
   { key: "NORMAL", tk: "tierNormal", color: "text-secondary" },
@@ -873,14 +874,14 @@ function DiceGame({ reward, onResult }: { reward: number; onResult: (w: boolean,
   function roll() {
     setRolling(true);
     let n = 0;
-    const i = setInterval(() => {
+    const i = setVisibleInterval(() => {
       setD([1 + Math.floor(Math.random() * 6), 1 + Math.floor(Math.random() * 6)]);
       n++;
       if (n > 12) {
-        clearInterval(i);
+        i();
         setRolling(false);
       }
-    }, 80);
+    }, 80 , { meta: { owner: "Missions", category: "cosmetic" } });
   }
   const sum = d ? d[0] + d[1] : 0;
   const won = sum >= 7;
@@ -925,7 +926,7 @@ function SlotGame({ reward, onResult }: { reward: number; onResult: (w: boolean,
   function spin() {
     setSpinning(true);
     let n = 0;
-    const i = setInterval(() => {
+    const i = setVisibleInterval(() => {
       setReels([
         sym[Math.floor(Math.random() * sym.length)],
         sym[Math.floor(Math.random() * sym.length)],
@@ -933,7 +934,7 @@ function SlotGame({ reward, onResult }: { reward: number; onResult: (w: boolean,
       ]);
       n++;
       if (n > 18) {
-        clearInterval(i);
+        i();
         // weighted: 22% triple match, 35% double
         const r = Math.random();
         let final: string[];
@@ -953,7 +954,7 @@ function SlotGame({ reward, onResult }: { reward: number; onResult: (w: boolean,
         setReels(final);
         setSpinning(false);
       }
-    }, 70);
+    }, 70 , { meta: { owner: "Missions", category: "cosmetic" } });
   }
   const isTriple = reels[0] !== "?" && reels[0] === reels[1] && reels[1] === reels[2];
   const isDouble =

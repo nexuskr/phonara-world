@@ -10,17 +10,18 @@ import { Wallet, Users, Crown, Sparkles } from "lucide-react";
 import { useOnline, useTodayPayout } from "@/components/LiveStats";
 import { useMyPower, topNftLevel, type NFTRow } from "@/hooks/use-my-power";
 import { formatKRW } from "@/lib/store";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 const LEVEL_LABEL: Record<string, string> = { bronze: "BRONZE", gold: "GOLD", diamond: "DIAMOND" };
 
 function useJackpot() {
   const [v, setV] = useState(12_480_000);
   useEffect(() => {
-    const t = setInterval(() => {
+    const t = setVisibleInterval(() => {
       if (document.visibilityState !== "visible") return;
       setV((prev) => Math.max(11_000_000, prev + Math.floor(Math.random() * 80_000) - 20_000));
-    }, 8000);
-    return () => clearInterval(t);
+    }, 8000 , { meta: { owner: "KpiGridV3", category: "cosmetic" } });
+    return () => t();
   }, []);
   return v;
 }

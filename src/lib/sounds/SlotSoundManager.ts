@@ -15,6 +15,7 @@ import {
 import { volumeStore } from "./volumeStore";
 import { playSlotCue, type Cue as ProcCue, type SoundPack as ProcPack } from "@/lib/slotSound";
 import type { SlotThemeKey } from "@/lib/sound/themes";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 const SSR = typeof window === "undefined";
 
@@ -57,7 +58,7 @@ class SlotSoundManagerImpl {
   // Ducking 상태 — 다중 호출 시 baseline 보존
   private duckActive = false;
   private duckBaselineBgm = 0.6;
-  private duckTween: number | null = null;
+  private duckTween: (() => void) | null = null;
 
   // reduced-motion mute (voice 채널 한정)
   private reducedMotionMute = false;
@@ -214,7 +215,7 @@ class SlotSoundManagerImpl {
   private tweenBgm(target: number, rampMs: number, onDone?: () => void) {
     if (SSR) return;
     if (this.duckTween) {
-      window.clearInterval(this.duckTween);
+      this.duckTween();
       this.duckTween = null;
     }
     let current = 0;
@@ -228,7 +229,7 @@ class SlotSoundManagerImpl {
       const t = (performance.now() - t0) / Math.max(1, rampMs);
       if (t >= 1) {
         try { SoundManager.setChannelVolume?.("bgm", target); } catch { /* */ }
-        if (this.duckTween) window.clearInterval(this.duckTween);
+        if (this.duckTween) this.duckTween();
         this.duckTween = null;
         onDone?.();
         return;
@@ -236,7 +237,7 @@ class SlotSoundManagerImpl {
       const v = start + (target - start) * t;
       try { SoundManager.setChannelVolume?.("bgm", v); } catch { /* */ }
     };
-    this.duckTween = window.setInterval(tick, 24);
+    this.duckTween = setVisibleInterval(tick, 24 , { meta: { owner: "SlotSoundManager", category: "cosmetic" } });
   }
 
   // ===== Reduced-motion mute =====

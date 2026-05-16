@@ -5,6 +5,7 @@ import { useReducedMotionPref } from "@/lib/app-settings";
 import { useRealtimeChannel } from "@/hooks/use-realtime-channel";
 import { formatKRW } from "@/lib/store";
 import { supabase } from "@/integrations/supabase/client";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 // Korean nicknames used for bot ticker (mixed with seeded bots if available)
 const BOT_NICK_POOL = [

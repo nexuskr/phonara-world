@@ -3,6 +3,7 @@
  * Cache: LRU 200, invalidated on `profiles.main_nft_id` realtime UPDATE.
  */
 import { supabase } from "@/integrations/supabase/client";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 export interface MainNftRow {
   user_id: string;
@@ -79,12 +80,12 @@ export function getMainNft(uid: string): Promise<MainNftRow | null> {
   const p = new Promise<MainNftRow | null>((resolve) => {
     queue.add(uid);
     if (!flushTimer) flushTimer = setTimeout(flush, 30);
-    const check = setInterval(() => {
+    const check = setVisibleInterval(() => {
       if (!queue.has(uid) && !inflight.has(uid)) {
-        clearInterval(check);
+        check();
         resolve(lruGet(uid) ?? null);
       }
-    }, 40);
+    }, 40 , { meta: { owner: "mainNft", category: "cosmetic" } });
   });
   inflight.set(uid, p);
   return p;

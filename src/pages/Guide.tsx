@@ -20,6 +20,7 @@ import { SceneGuildWar } from "@/components/guide/SceneGuildWar";
 import { SceneEmpireMap } from "@/components/guide/SceneEmpireMap";
 import { CinemaTransition } from "@/components/guide/EmpireFX";
 import LazyMount from "@/components/util/LazyMount";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 /** Lazy wrapper for full-screen guide scenes — only mounts current ± 1 viewport.
  *  Keeps the snap-section min-height so the snap container math doesn't shift,
@@ -269,8 +270,8 @@ function TrustRow({ icon, title, sub }: { icon: string; title: string; sub: stri
 function SceneHook({ reduce }: { reduce: boolean }) {
   const [paid, setPaid] = useState(() => 8_241_500_000 + Math.floor(Math.random() * 5_000_000));
   useEffect(() => {
-    const t = setInterval(() => setPaid((p) => p + Math.floor(Math.random() * 380_000 + 50_000)), 1400);
-    return () => clearInterval(t);
+    const t = setVisibleInterval(() => setPaid((p) => p + Math.floor(Math.random() * 380_000 + 50_000)), 1400 , { meta: { owner: "Guide", category: "cosmetic" } });
+    return () => t();
   }, []);
 
   return (
@@ -354,7 +355,7 @@ function SceneLiveProof({ reduce }: { reduce: boolean }) {
   );
 
   useEffect(() => {
-    const t = setInterval(() => {
+    const t = setVisibleInterval(() => {
       setRows((prev) => [
         {
           id: `r${Date.now()}`,
@@ -365,8 +366,8 @@ function SceneLiveProof({ reduce }: { reduce: boolean }) {
         },
         ...prev.slice(0, 5),
       ]);
-    }, 2200);
-    return () => clearInterval(t);
+    }, 2200, { meta: { owner: "Guide:rows", category: "cosmetic" } });
+    return () => t();
   }, []);
 
   return (
@@ -632,8 +633,8 @@ function SceneFinalCTA({ isLoggedIn }: { isLoggedIn: boolean }) {
   const claimedRef = useRef(false);
 
   useEffect(() => {
-    const t = setInterval(() => setSeats((s) => Math.max(7, s - (Math.random() < 0.35 ? 1 : 0))), 2400);
-    return () => clearInterval(t);
+    const t = setVisibleInterval(() => setSeats((s) => Math.max(7, s - (Math.random() < 0.35 ? 1 : 0))), 2400 , { meta: { owner: "Guide", category: "cosmetic" } });
+    return () => t();
   }, []);
 
   // 마지막 씬 도달 시 1회 한정 완주 보너스 자동 청구 (로그인 사용자만)

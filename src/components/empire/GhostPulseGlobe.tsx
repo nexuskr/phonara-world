@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SimChip } from "@/components/sim/SimChip";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 type Pulse = {
   region_pulses: Record<string, number>;
@@ -42,12 +43,12 @@ export default function GhostPulseGlobe() {
       setPulses(next);
     }
     fetchOnce();
-    const id = setInterval(() => {
+    const id = setVisibleInterval(() => {
       if (!document.hidden) fetchOnce();
-    }, 2500);
+    }, 2500 , { meta: { owner: "GhostPulseGlobe", category: "cosmetic" } });
     return () => {
       alive = false;
-      clearInterval(id);
+      id();
     };
   }, []);
 

@@ -63,8 +63,8 @@ export default function SlotTournamentBanner() {
       if (!cancelled) setLoading(false);
     }
     load();
-    const i = setInterval(load, 30000);
-    return () => { cancelled = true; clearInterval(i); };
+    const i = setVisibleInterval(load, 30000 , { meta: { owner: "SlotTournamentBanner", category: "cosmetic" } });
+    return () => { cancelled = true; i(); };
   }, []);
 
   // Local 1s ticker for the countdown
