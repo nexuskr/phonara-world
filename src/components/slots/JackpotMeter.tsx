@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Sparkles, Crown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { subscribeRealtime } from "@/hooks/use-realtime-channel";
+import { subscribeRealtime } from "@pkg/realtime";
 
 type Pool = {
   game_code: string;

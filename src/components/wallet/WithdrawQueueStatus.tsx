@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useWalletChannel } from "@pkg/realtime";
-import { type ConnState } from "@/hooks/use-realtime-channel";
+import { type ConnState } from "@pkg/realtime";
 import { toast } from "@/hooks/use-toast";
 import { Clock, Crown, CheckCircle2, XCircle, Zap, ArrowRight, RefreshCw, Wifi, WifiOff } from "lucide-react";
 import { useTranslation } from "react-i18next";

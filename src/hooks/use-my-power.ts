@@ -9,7 +9,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useWalletChannel } from "@pkg/realtime";
-import { type ChannelBinding } from "@/hooks/use-realtime-channel";
+import { type ChannelBinding } from "@pkg/realtime";
 
 export interface NFTRow {
   id: string;
