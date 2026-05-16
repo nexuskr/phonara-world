@@ -213,6 +213,7 @@ const App = () => (
           <ReviewerMaskRoot />
           <ReviewerBadge />
           <GlobalOverlays />
+          <Suspense fallback={null}><BigWinShareHost /></Suspense>
           <Suspense fallback={<RouteFallback />}>
             <MaintenanceGate>
             <Routes>
