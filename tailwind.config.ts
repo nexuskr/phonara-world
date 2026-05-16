@@ -197,6 +197,7 @@ export default {
     },
   },
   plugins: [
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     require("tailwindcss-animate"),
     // LOCKED v3.0 §13-2 — Device Intelligence variants: low: / mid: / high:
     function ({ addVariant }: { addVariant: (name: string, def: string) => void }) {
