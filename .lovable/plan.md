@@ -273,11 +273,68 @@ depositCopied, depositResumeTitle, depositResumeBody, depositResumeContinue,
 depositResumeFresh, depositGraceChecking, depositSafeChecking, depositProtectedLine
 ```
 
-## 13. 비포함
+## 13. Final Operational Polish (A2–E2)
+
+### A2. Balance Snapshot Before Deposit
+- submit 직전 `phon_balances` 현재값 `beforeBalance`로 캡처 → `useDeposit` 상태에 보관.
+- Step3 filled 시 `+{credited} PHON 반영 예정` delta 카드 (Warm Gold). realtime로 실제 잔액 반영되면 체크 표시.
+
+### B2. Deposit Timeline UI
+- DepositHistory 카드 확장 시 3-step 가로 타임라인: `신청됨 · 확인중 · 반영완료`.
+- 현재 단계 Warm Gold 채움 + 펄스, 이전 단계 회색 체크, 다음 단계 회색 점. 텍스트 없이도 위치만으로 이해.
+
+### C2. Copy-Paste Sanitizer
+- 모든 텍스트 입력(주소 검증, 상품권 PIN, 메모 확인) `onPaste`/`onChange`:
+  - `trim()` + zero-width(`\u200B-\u200D\uFEFF`) 제거 + 모든 whitespace 제거.
+- `src/packages/wallet/lib/sanitize.ts` 유틸로 일원화.
+
+### D2. Visibility Heartbeat
+- `awaiting_payment` 30s 초과 시 카드 하단 회색 1줄: `마지막 확인 시각: 14:22:31` (realtime 이벤트 또는 polling tick마다 갱신).
+- 키 `depositLastChecked`. "멈춘 거 아님" 확신.
+
+### E2. Soft Session Freeze
+- submit 성공 → intent_created 후 method/amount 입력 lock (회색 disabled + 자물쇠 아이콘 + `g('depositInputsLocked')`).
+- 해제 조건: regenerate / cancel / expired / filled. reconciliation 혼선 차단.
+
+### Glossary 추가 (A2–E2)
+```
+depositDeltaPreview, depositTimelineStep1, depositTimelineStep2, depositTimelineStep3,
+depositLastChecked, depositInputsLocked
+```
+
+## 14. 비포함
 - 결제 PG / Stripe / 카카오 SDK 자동연동 (mem 제약)
 - 신규 DB / RPC / 트리거
 - 출금 흐름 변경
 - 백엔드 rate limit (no-backend-rate-limiting directive)
+
+## 15. 실행 순서 (4-Day Plan)
+
+**Day 1 — Foundation**
+- glossary 키 일괄 추가 (Sections 11+12+13)
+- `useDeposit` core state machine (step / method / draft resume / funnel id / beforeBalance / soft-freeze)
+- realtime 채널 + polling fallback (`useRealtimeChannel` 재사용)
+- `sanitize.ts` 유틸
+
+**Day 2 — Modal UX**
+- DepositModal Step 1/2/3 + 3카드 그리드
+- USDT QR + copy verification (끝 6자리 칩)
+- regenerate + grace UI + soft-freeze lock 표시
+
+**Day 3 — History & Ops**
+- DepositHistory (pending top + `updated_at DESC` + Warm Gold active badge + 3-step timeline)
+- Telemetry 6 이벤트 + `session_funnel_id` 첨부
+- Realtime disconnect banner + voucher fraud soft limit + safe-checking 카피 + heartbeat
+- Step3 balance delta 카드
+
+**Day 4 — QA Gate**
+- 360px 모바일 QA (한 손, 44px+ 터치, 18px+ 텍스트)
+- `g()` 100% grep 검증 (하드코딩 0)
+- Race QA: filled vs expired grace, 더블탭 idempotency, 새로고침 resume
+- Duplicate QA: 같은 amount/메모 중복 차단, paste sanitize round-trip
+
+## 16. 의미
+입금 모달이 아니라 **Production-minded Deposit Infrastructure v1.0**. 출금만 쉬우면 빠져나가고, 입금까지 쉬워야 다시 들어온다. State machine / realtime / recoverability / telemetry / senior UX / fraud soft protection / draft resume / grace / safe-checking / balance snapshot / timeline / sanitizer / heartbeat / soft-freeze까지 "내 돈이 안전하게 처리되고 있다"는 확신을 만든다.
 
 ## 14. 실행 순서 (4-Day Plan)
 
