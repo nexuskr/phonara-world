@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useRequireAdmin } from "@/hooks/use-require-auth";
-import { useRealtimeChannel } from "@/hooks/use-realtime-channel";
+import { useChatChannel } from "@pkg/realtime";
 import { LoadingList } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
 import { notify } from "@/lib/notify";
@@ -83,7 +83,7 @@ export default function AdminSupport() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter]);
 
-  useRealtimeChannel({
+  useChatChannel({
     key: "admin-support-threads",
     bindings: [{ event: "*", table: "support_threads" }],
     onEvent: () => void loadThreads(),

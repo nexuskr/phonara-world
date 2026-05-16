@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Session } from "@supabase/supabase-js";
 import { fetchWallet, type WalletBalance } from "@/lib/wallet";
-import { useRealtimeChannel } from "@/hooks/use-realtime-channel";
+import { useWalletChannel } from "@pkg/realtime";
 
 export function useSession() {
   const [session, setSession] = useState<Session | null>(null);
@@ -36,7 +36,7 @@ export function useWallet(userId: string | undefined) {
   }, [userId, reload]);
 
   // Idempotent shared channel — multiple <useWallet> consumers fan out from one socket.
-  useRealtimeChannel({
+  useWalletChannel({
     key: userId ? `wallet:${userId}` : "",
     bindings: userId
       ? [

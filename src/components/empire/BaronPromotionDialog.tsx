@@ -97,7 +97,7 @@ export default function BaronPromotionDialog() {
   useEffect(() => {
     void loadLatest();
     return subscribePostgres(
-      { key: "fomo:baron:any", table: "fomo_notifications", event: "INSERT" },
+      { key: "game:fomo:baron:any", table: "fomo_notifications", event: "INSERT" },
       () => void loadLatest(),
     );
   }, []);

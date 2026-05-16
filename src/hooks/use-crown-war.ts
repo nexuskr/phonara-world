@@ -57,11 +57,11 @@ export function useCrownWar(pollMs = 15000) {
   // Realtime: refresh on any war/crown state change (deduped via realtime bus)
   useEffect(() => {
     const offWars = subscribePostgres(
-      { key: "crown-wars-live", table: "crown_wars", event: "*" },
+      { key: "game:crown-wars-live", table: "crown_wars", event: "*" },
       () => void load(),
     );
     const offEvents = subscribePostgres(
-      { key: "crown-events-live", table: "crown_events", event: "INSERT" },
+      { key: "game:crown-events-live", table: "crown_events", event: "INSERT" },
       () => void load(),
     );
     return () => { offWars(); offEvents(); };

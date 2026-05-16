@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useRealtimeChannel, type ConnState } from "@/hooks/use-realtime-channel";
+import { useWalletChannel } from "@pkg/realtime";
+import { type ConnState } from "@pkg/realtime";
 import { toast } from "@/hooks/use-toast";
 import { Clock, Crown, CheckCircle2, XCircle, Zap, ArrowRight, RefreshCw, Wifi, WifiOff } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -75,7 +76,7 @@ export default function WithdrawQueueStatus() {
   }, []);
 
   // 통합 realtime: 채널 dedup + 자동 재연결 + 폴링 폴백 + 포커스 재개
-  useRealtimeChannel({
+  useWalletChannel({
     key: uid ? `wr-${uid}` : "",
     bindings: uid
       ? [{ event: "*", table: "withdrawal_requests", filter: `user_id=eq.${uid}` }]

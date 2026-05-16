@@ -12,7 +12,7 @@
  *
  * STRICT:
  *  - Only design tokens (glass-strong, neon-border, glow-primary, text-money, text-gold)
- *  - notify (no sonner direct), useRealtimeChannel (no supabase.channel direct)
+ *  - notify (no sonner direct), useChatChannel(no supabase.channel direct)
  *  - No new RPCs, no schema changes
  */
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
@@ -23,7 +23,7 @@ import {
   Users, Zap, X,
 } from "lucide-react";
 import { useAdminPending } from "@/hooks/use-admin-pending";
-import { useRealtimeChannel } from "@/hooks/use-realtime-channel";
+import { useChatChannel } from "@pkg/realtime";
 import { useMfaLevel } from "@/hooks/use-mfa-level";
 import { useStepUp } from "@/hooks/use-step-up";
 import { supabase } from "@/integrations/supabase/client";
@@ -89,6 +89,7 @@ function LiveKpi() {
   // 채널 1개만 낭비될 뿐 어떤 이벤트도 받지 못해 제거.
   useEffect(() => {
     let mounted = true;
+    // eslint-disable-next-line no-restricted-syntax -- presence channel whitelisted (PR-J)
     const ch = supabase.channel("admin-presence-godmode", {
       config: { presence: { key: crypto.randomUUID() } },
     });
@@ -247,7 +248,7 @@ function AnomalyFeed() {
     })();
   }, []);
 
-  useRealtimeChannel({
+  useChatChannel({
     key: "godmode:anomaly_events",
     bindings: [{ event: "INSERT", schema: "public", table: "anomaly_events" }],
     enabled: true,

@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { getMyFoundingSeat, getMyFoundingSeatHistory } from "@/lib/foundingSeason";
 import { LoadingList } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
-import { useRealtimeChannel } from "@/hooks/use-realtime-channel";
+import { useWalletChannel } from "@pkg/realtime";
 
 const EVENT_LABEL: Record<string, string> = {
   claim: "좌석 점유",
@@ -30,7 +30,7 @@ export default function MyFoundingSeat() {
 
   useEffect(() => { void load(); }, []);
 
-  useRealtimeChannel({
+  useWalletChannel({
     key: "my:fs",
     bindings: [
       { event: "*", table: "founding_season_seats" },

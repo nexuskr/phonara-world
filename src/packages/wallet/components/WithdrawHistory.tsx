@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useRequireAuth } from "@/hooks/use-require-auth";
-import { useRealtimeChannel } from "@/hooks/use-realtime-channel";
+import { useWalletChannel } from "@pkg/realtime";
 import { g } from "@pkg/core/i18n/glossary";
 import { formatFromPhon } from "@/lib/displayCurrency";
 
@@ -50,7 +50,7 @@ export default function WithdrawHistory() {
     return () => { alive = false; };
   }, [user?.id]);
 
-  useRealtimeChannel({
+  useWalletChannel({
     key: user?.id ? `wallet-history:${user.id}` : "",
     bindings: user?.id ? [{ event: "*", table: "withdrawal_requests", filter: `user_id=eq.${user.id}` }] : [],
     onEvent: async () => {

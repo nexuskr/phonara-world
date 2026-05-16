@@ -61,7 +61,7 @@ export function useFomoNotifications() {
     if (typeof window !== "undefined" && window.location.pathname.startsWith("/guide")) return;
     return subscribePostgres(
       {
-        key: `fomo:user:${user.id}`,
+        key: `game:fomo:user:${user.id}`,
         table: "fomo_notifications",
         event: "INSERT",
         filter: `user_id=eq.${user.id}`,

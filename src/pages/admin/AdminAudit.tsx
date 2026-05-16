@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useRealtimeChannel } from "@/hooks/use-realtime-channel";
+import { useChatChannel } from "@pkg/realtime";
 import { Search, Loader2, ChevronDown, ChevronRight, Download } from "lucide-react";
 import RlsSmokePanel from "@/components/admin/security/RlsSmokePanel";
 import KeyRotationPanel from "@/components/admin/security/KeyRotationPanel";
@@ -39,7 +39,7 @@ export default function AdminAudit() {
 
   useEffect(() => { load();   }, [hours, actionFilter]);
 
-  useRealtimeChannel({
+  useChatChannel({
     key: "admin-audit-live",
     bindings: [{ event: "INSERT", table: "admin_audit_log" }],
     onEvent: (p) => {

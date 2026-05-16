@@ -9,7 +9,7 @@ import {
   adminUpdateFoundingSeason, adminEndFoundingSeason,
   adminReleaseFoundingSeat, type FoundingSeasonAdminRow,
 } from "@/lib/foundingSeason";
-import { useRealtimeChannel } from "@/hooks/use-realtime-channel";
+import { useChatChannel } from "@pkg/realtime";
 
 export default function FoundingSeasonsAdmin() {
   const [rows, setRows] = useState<FoundingSeasonAdminRow[] | null>(null);
@@ -23,7 +23,7 @@ export default function FoundingSeasonsAdmin() {
   }
   useEffect(() => { void load(); }, []);
 
-  useRealtimeChannel({
+  useChatChannel({
     key: "admin:fs",
     bindings: [
       { event: "*", table: "founding_seasons" },

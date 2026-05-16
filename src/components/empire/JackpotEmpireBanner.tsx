@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Flame, Timer, Trophy, Users, Sparkles } from "lucide-react";
 import { useReducedMotionPref } from "@/lib/app-settings";
-import { useRealtimeChannel } from "@/hooks/use-realtime-channel";
+import { useGameChannel } from "@pkg/realtime";
 import { formatKRW } from "@/lib/store";
 import { supabase } from "@/integrations/supabase/client";
 import { setVisibleInterval } from "@/lib/util/visible-interval";
@@ -113,7 +113,7 @@ export function JackpotEmpireBanner() {
   }, []);
 
   // Real roulette_spins via unified realtime — 실유저 표기 + 봇 시드 종료.
-  useRealtimeChannel({
+  useGameChannel({
     key: "jackpot-roulette-spins",
     bindings: [{ event: "INSERT", schema: "public", table: "roulette_spins" }],
     onEvent: (payload: any) => {

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useRealtimeChannel } from "@/hooks/use-realtime-channel";
+import { useWalletChannel } from "@pkg/realtime";
 import { useTranslation } from "react-i18next";
 import { Clock, CheckCircle2, XCircle, ArrowUpRight, Filter, X, Banknote, Coins, Shield, FileText, Inbox } from "lucide-react";
 import RequestTimeline from "@/components/RequestTimeline";
@@ -86,7 +86,7 @@ export default function WithdrawalHistoryList() {
   }, []);
 
   // Realtime: refresh on any change to user's withdrawal_requests
-  useRealtimeChannel({
+  useWalletChannel({
     key: uid ? `wh-${uid}` : "",
     bindings: uid
       ? [{ event: "*", table: "withdrawal_requests", filter: `user_id=eq.${uid}` }]

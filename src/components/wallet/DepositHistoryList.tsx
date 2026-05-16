@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useRealtimeChannel } from "@/hooks/use-realtime-channel";
+import { useWalletChannel } from "@pkg/realtime";
 import { Clock, CheckCircle2, XCircle, ArrowUpRight, X, Banknote, Coins, Ticket, Shield, FileText, Inbox } from "lucide-react";
 import RequestTimeline from "@/components/RequestTimeline";
 import { LoadingList } from "@/components/ui/loading-state";
@@ -78,7 +78,7 @@ export default function DepositHistoryList() {
     void supabase.auth.getUser().then(({ data }) => setUid(data.user?.id ?? null));
   }, []);
 
-  useRealtimeChannel({
+  useWalletChannel({
     key: uid ? `dh-${uid}` : "",
     bindings: uid
       ? [{ event: "*", table: "deposit_requests", filter: `user_id=eq.${uid}` }]

@@ -10,7 +10,7 @@ import { Crown } from "lucide-react";
 import { motion } from "framer-motion";
 import { getMainNft, type MainNftRow, invalidateMainNftCache } from "@/lib/mainNft";
 import { getNftImage, getRarityRingClass } from "@/lib/nftImage";
-import { useRealtimeChannel } from "@/hooks/use-realtime-channel";
+import { useWalletChannel } from "@pkg/realtime";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -54,7 +54,7 @@ export default function NftAvatar({ userId, mainNft, size = "md", className, sho
   }, [effectiveId, mainNft]);
 
   // Realtime invalidate on profile.main_nft_id update
-  useRealtimeChannel({
+  useWalletChannel({
     key: effectiveId ? `main-nft-watch:${effectiveId}` : "",
     bindings: effectiveId ? [{ event: "UPDATE", table: "profiles", filter: `id=eq.${effectiveId}` }] : [],
     onEvent: (payload: any) => {

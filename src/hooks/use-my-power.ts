@@ -8,7 +8,8 @@
  */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useRealtimeChannel, type ChannelBinding } from "@/hooks/use-realtime-channel";
+import { useWalletChannel } from "@pkg/realtime";
+import { type ChannelBinding } from "@pkg/realtime";
 
 export interface NFTRow {
   id: string;
@@ -123,7 +124,7 @@ export function useMyPower(): PowerState {
     [uid],
   );
 
-  useRealtimeChannel({
+  useWalletChannel({
     key: uid ? `my-power:${uid}` : "",
     bindings,
     onEvent: () => { void refreshSnapshot(true); },

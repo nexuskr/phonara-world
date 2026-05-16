@@ -13,7 +13,7 @@ import {
 import { notify } from "@/lib/notify";
 import { haptics } from "@/lib/haptics";
 import { supabase } from "@/integrations/supabase/client";
-import { useRealtimeChannel } from "@/hooks/use-realtime-channel";
+import { useGameChannel } from "@pkg/realtime";
 import { fireBigWinShare } from "@/lib/bigwinShare";
 
 const QUICK = [10000, 50000, 100000, 500000];
@@ -76,7 +76,7 @@ export default function Crash() {
   }, [round.status, betState, round.last_crash, bet]);
 
   // Realtime: refresh stats on my bet changes
-  useRealtimeChannel({
+  useGameChannel({
     key: uid ? `crash-bets:${uid}` : "",
     bindings: uid ? [{ event: "*", table: "crash_bets", filter: `user_id=eq.${uid}` }] : [],
     onEvent: () => qc.invalidateQueries({ queryKey: ["crash-stats"] }),

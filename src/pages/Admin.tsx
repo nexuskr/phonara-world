@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useRealtimeChannel } from "@/hooks/use-realtime-channel";
+import { useChatChannel } from "@pkg/realtime";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { useDB, formatKRW, uid, type Mission, type MissionTier } from "@/lib/store";
@@ -85,7 +85,7 @@ export default function Admin() {
     return () => { alive = false; };
   }, [user?.isAdmin]);
 
-  useRealtimeChannel({
+  useChatChannel({
     key: user?.isAdmin ? "admin:kpi" : "",
     bindings: [
       { event: "*", table: "deposit_requests" },
@@ -315,7 +315,7 @@ function ChatAdmin() {
     })();
   }, []);
 
-  useRealtimeChannel({
+  useChatChannel({
     key: "admin:threads",
     bindings: [{ event: "*", table: "support_threads" }],
     onEvent: () => {
@@ -335,7 +335,7 @@ function ChatAdmin() {
     })();
   }, [active?.id]);
 
-  useRealtimeChannel({
+  useChatChannel({
     key: active?.id ? `admin:msgs:${active.id}` : "",
     bindings: active?.id
       ? [{ event: "INSERT", table: "support_messages", filter: `thread_id=eq.${active.id}` }]

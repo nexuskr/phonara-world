@@ -6,7 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { fetchWallet, TIER_CFG, type Tier, type WalletBalance } from "@/lib/wallet";
-import { useRealtimeChannel } from "@/hooks/use-realtime-channel";
+import { useWalletChannel } from "@pkg/realtime";
 
 const EARN_KINDS = [
   "mission_win",
@@ -60,7 +60,7 @@ export function useWalletSnapshot() {
 
   useEffect(() => { void reload(); }, [reload]);
 
-  useRealtimeChannel({
+  useWalletChannel({
     key: userId ? `wallet-snapshot:${userId}` : "",
     bindings: userId
       ? [

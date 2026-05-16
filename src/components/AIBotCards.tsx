@@ -3,7 +3,7 @@ import { useNowTick } from "@/hooks/use-now-tick";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
-import { useRealtimeChannel } from "@/hooks/use-realtime-channel";
+import { useGameChannel } from "@pkg/realtime";
 import i18n from "@/lib/i18n";
 import { useDB, formatKRW } from "@/lib/store";
 import { toast } from "@/hooks/use-toast";
@@ -80,7 +80,7 @@ export default function AIBotCards() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
-  useRealtimeChannel({
+  useGameChannel({
     key: user?.id ? `ai_bots:${user.id}` : "",
     bindings: user?.id
       ? [{ event: "*", table: "ai_bot_runs", filter: `user_id=eq.${user.id}` }]
@@ -764,7 +764,7 @@ export function ActiveBotsMini() {
   }, [uid]);
 
   // Unified realtime entry point — replaces direct supabase.channel call.
-  useRealtimeChannel({
+  useGameChannel({
     key: uid ? `ai_mini:${uid}` : "ai_mini:disabled",
     enabled: !!uid,
     bindings: uid

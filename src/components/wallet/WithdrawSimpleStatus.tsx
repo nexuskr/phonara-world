@@ -5,7 +5,7 @@
  */
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useRealtimeChannel } from "@/hooks/use-realtime-channel";
+import { useWalletChannel } from "@pkg/realtime";
 import { Clock, CheckCircle2, XCircle } from "lucide-react";
 
 type Status = "pending" | "processing" | "approved" | "completed" | "rejected" | "cancelled";
@@ -41,7 +41,7 @@ export default function WithdrawSimpleStatus() {
 
   useEffect(() => { void refresh(); }, [refresh]);
 
-  useRealtimeChannel({
+  useWalletChannel({
     key: uid ? `wr-mini-${uid}` : "",
     bindings: uid ? [{ event: "*", table: "withdrawal_requests", filter: `user_id=eq.${uid}` }] : [],
     enabled: !!uid,

@@ -217,6 +217,11 @@ export const G = {
   degradeAdminDesc: "화면 효과를 모두 끄고 시스템을 가볍게 만듭니다. 입출금·베팅은 영향 없습니다.",
   degradeConfirmOn: "정말 비상 절전 모드를 켤까요? 화면 애니메이션이 꺼집니다",
   degradeConfirmOff: "정상 모드로 돌아갈까요?",
+  // PR-J: realtime warm-tone messages (50-70대 친화)
+  realtimeReconnecting: "잠시만요, 다시 연결하고 있어요…",
+  realtimeDegraded: "실시간 연결이 잠시 느려졌어요. 돈과 데이터는 안전합니다",
+  realtimeRestored: "다시 실시간으로 연결됐어요",
+
 } as const;
 
 export type GlossaryKey = keyof typeof G;

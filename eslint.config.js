@@ -20,6 +20,7 @@ const NOTIFY_WRAPPERS = [
 
 const REALTIME_WRAPPERS = [
   "src/hooks/use-realtime-channel.ts",
+  "src/lib/realtime-bus.ts",
   "src/packages/realtime/**",
 ];
 
@@ -31,20 +32,21 @@ const LEGACY_DIRECT_SONNER = [
   "src/lib/layout-shift-monitor.ts",
 ];
 
+// PR-J: 4 partition wrappers는 강제됨. 여전히 raw `supabase.channel()`을 쓰는
+// 레거시 파일들은 PR-K(Operator Isolation) 후속 정리로 옮김 — 그 때까지는 warn.
+// 새 파일은 절대 이 목록에 들어가면 안 됨.
 const LEGACY_RAW_CHANNEL = [
   "src/components/EmpireFoundingCounter.tsx",
   "src/components/FloatingChat.tsx",
   "src/components/FreezeBanner.tsx",
   "src/components/InsuranceFundDashboard.tsx",
   "src/components/JackpotBanner.tsx",
-  "src/components/NeonNotificationFeed.tsx",
   "src/components/RequestTimeline.tsx",
   "src/components/admin/AMLAdmin.tsx",
   "src/components/admin/AnomalyAckQueue.tsx",
   "src/components/admin/AnomalyAutoFixPanel.tsx",
   "src/components/admin/DepositRequestsAdmin.tsx",
   "src/components/admin/FunnelAnalytics.tsx",
-  "src/components/admin/GodModePanel.tsx",
   "src/components/admin/PackagePurchasesAdmin.tsx",
   "src/components/admin/PayConsole.tsx",
   "src/components/admin/PermissionsAudit.tsx",
@@ -55,7 +57,6 @@ const LEGACY_RAW_CHANNEL = [
   "src/components/admin/compliance/RiskCenter.tsx",
   "src/components/auth/AuthSocialProof.tsx",
   "src/components/conversion/LivePurchaseTicker.tsx",
-  "src/components/dashboard/v3/ActivityEventTicker.tsx",
   "src/components/empire/EmpireLevelBadge.tsx",
   "src/components/empire/EmpireMomentToast.tsx",
   "src/components/empire/FoundingSeasonHall.tsx",
@@ -70,7 +71,6 @@ const LEGACY_RAW_CHANNEL = [
   "src/hooks/use-auth-live-data.ts",
   "src/hooks/use-daily-cap.ts",
   "src/hooks/use-user-notifications.ts",
-  "src/lib/layout-shift-monitor.ts",
   "src/pages/Cockpit.tsx",
   "src/pages/EmpireArena.tsx",
   "src/pages/GalaxyAuction.tsx",
@@ -78,6 +78,19 @@ const LEGACY_RAW_CHANNEL = [
   "src/pages/Settlements.tsx",
   "src/pages/WarTradingArena.tsx",
   "src/pages/Whales.tsx",
+];
+
+// Money-flow FREEZE paths — git diff = 0 required. They keep direct
+// `useRealtimeChannel` to avoid touching these files.
+const PRJ_FREEZE_RAW_CHANNEL = [
+  "src/packages/wallet/hooks/useDeposit.ts",
+  "src/packages/wallet/hooks/useDepositRealtime.ts",
+  "src/packages/wallet/hooks/useDepositCountdown.ts",
+  "src/lib/paper-trading/bybit-feed.ts",
+  "src/components/crash/hooks/useCrashRound.ts",
+  "src/components/trading/MegaOrderPanel.tsx",
+  "src/hooks/use-kill-switches.ts",
+  "src/hooks/use-auto-bet.ts",
 ];
 
 // Critical money path — 절대 무거워지면 안 됨.
@@ -101,6 +114,11 @@ const restrictSonnerRule = {
           message:
             "Direct sonner import is forbidden. Use `import { notify } from '@/lib/notify'` instead. (PHASE 1 lockdown)",
         },
+        {
+          name: "@/hooks/use-realtime-channel",
+          message:
+            "Direct `useRealtimeChannel` import is forbidden. Use `@pkg/realtime` wrappers (useWalletChannel / useGameChannel / useChatChannel / useMarketChannel). (PR-J)",
+        },
       ],
     },
   ],
@@ -113,7 +131,7 @@ const restrictRawChannelRule = {
       selector:
         "CallExpression[callee.object.name='supabase'][callee.property.name='channel']",
       message:
-        "Direct `supabase.channel(...)` is forbidden. Use `@pkg/realtime/*` wrappers (useWalletChannel / useGameChannel / useChatChannel / useMarketChannel) or `useRealtimeChannel`. (PHASE 1 lockdown)",
+        "Direct `supabase.channel(...)` is forbidden. Use `@pkg/realtime/*` wrappers (useWalletChannel / useGameChannel / useChatChannel / useMarketChannel). (PHASE 1 lockdown)",
     },
   ],
 };
@@ -191,6 +209,14 @@ export default tseslint.config(
     rules: {
       "no-restricted-imports": "warn",
       "no-restricted-syntax": "warn",
+    },
+  },
+  // PR-J FREEZE: money-flow paths retain direct `useRealtimeChannel` by design
+  // (git diff = 0 requirement). Other realtime imports stay forbidden.
+  {
+    files: PRJ_FREEZE_RAW_CHANNEL,
+    rules: {
+      "no-restricted-imports": "off",
     },
   },
   // Critical money path — strictest rules.

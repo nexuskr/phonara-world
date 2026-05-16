@@ -2,7 +2,7 @@
  * useWithdrawQueue — admin 출금 큐 통합 훅
  *
  * 단일 책임: withdrawal_requests 테이블에서 활성 큐를 가져오고,
- * useRealtimeChannel(통합 진입점)로 INSERT/UPDATE를 구독해 자동 갱신한다.
+ * useWalletChannel(통합 진입점)로 INSERT/UPDATE를 구독해 자동 갱신한다.
  *
  * - supabase.channel 직접 호출 금지 → useRealtimeChannel만 사용
  * - 채널 down 시 15s 폴링 폴백 (useRealtimeChannel 내장)
@@ -12,7 +12,7 @@
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useRealtimeChannel } from "@/hooks/use-realtime-channel";
+import { useWalletChannel } from "@pkg/realtime";
 
 export type WithdrawalStatus =
   | "pending"
@@ -94,7 +94,7 @@ export function useWithdrawQueue() {
   }, [fetchWithdrawals]);
 
   // 통합 realtime — 단일 채널 (INSERT/UPDATE 모두). 폴링 15s 폴백 + focus 재개.
-  useRealtimeChannel({
+  useWalletChannel({
     key: "admin-withdraw-queue",
     bindings: [{ event: "*", table: "withdrawal_requests" }],
     onEvent: () => {

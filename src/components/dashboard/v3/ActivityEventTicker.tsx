@@ -7,7 +7,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAppSettings, tickerIntervalFor } from "@/lib/app-settings";
-import { useRealtimeChannel } from "@/hooks/use-realtime-channel";
+import { useGameChannel } from "@pkg/realtime";
 
 const NAMES = ["K***", "J***", "S***", "P***", "L***", "M***", "H***", "C***", "Y***", "B***", "T***", "R***", "D***", "N***", "W***"];
 const TEMPLATES: Array<(n: string) => { icon: string; text: string }> = [
@@ -95,7 +95,7 @@ export default function ActivityEventTicker({
     [limit],
   );
 
-  useRealtimeChannel({
+  useGameChannel({
     key: "bot_activity_events",
     bindings: [{ event: "INSERT", schema: "public", table: "bot_activity_events" }],
     onEvent: onInsert,

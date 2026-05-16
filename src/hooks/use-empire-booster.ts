@@ -2,7 +2,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNowTick } from "@/hooks/use-now-tick";
-import { useRealtimeChannel } from "@/hooks/use-realtime-channel";
+import { useWalletChannel } from "@pkg/realtime";
 
 export type EmpireBooster = {
   id: number;
@@ -38,7 +38,7 @@ export function useEmpireBooster() {
   useEffect(() => { void load(); }, [load]);
 
   // Idempotent realtime: shared channel, StrictMode-safe, refcounted teardown.
-  useRealtimeChannel({
+  useWalletChannel({
     key: uid ? `empire-booster:${uid}` : "",
     bindings: uid
       ? [{ event: "INSERT", table: "empire_boosters", filter: `user_id=eq.${uid}` }]

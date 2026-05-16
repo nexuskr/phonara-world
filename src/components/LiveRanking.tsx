@@ -93,7 +93,7 @@ export default function LiveRanking() {
     const onOnline = () => void load();
     window.addEventListener("online", onOnline);
     const off = subscribePostgres(
-      { key: "leaderboard-live", table: "daily_stats", event: "*" },
+      { key: "game:leaderboard-live", table: "daily_stats", event: "*" },
       () => void load(),
     );
     return () => {

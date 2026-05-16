@@ -214,7 +214,7 @@ export const useRealStore = create<State>()((set, get) => ({
   subscribe(userId) {
     const offPos = subscribePostgres(
       {
-        key: `live_positions:${userId}`,
+        key: `game:live_positions:${userId}`,
         table: "live_positions",
         event: "*",
         filter: `user_id=eq.${userId}`,
@@ -223,7 +223,7 @@ export const useRealStore = create<State>()((set, get) => ({
     );
     const offHist = subscribePostgres(
       {
-        key: `live_trade_history:${userId}`,
+        key: `wallet:live_trade_history:${userId}`,
         table: "live_trade_history",
         event: "INSERT",
         filter: `user_id=eq.${userId}`,

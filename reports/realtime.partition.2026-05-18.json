@@ -1,0 +1,50 @@
+{
+  "date": "2026-05-18",
+  "pr": "PR-J Realtime Partition Migration",
+  "partitions": {
+    "wallet": 14,
+    "game": 11,
+    "chat": 9,
+    "market": 0
+  },
+  "calls_rewritten": 30,
+  "files_migrated": 25,
+  "raw_useRealtimeChannel_importers": {
+    "total_non_whitelist": 0,
+    "whitelist": [
+      "src/hooks/use-realtime-channel.ts",
+      "src/lib/realtime-bus.ts",
+      "src/packages/realtime/**",
+      "src/packages/wallet/hooks/useDepositRealtime.ts (FREEZE)"
+    ]
+  },
+  "raw_supabase_channel_calls": {
+    "factory": 1,
+    "presence_whitelisted": 1,
+    "legacy_warn_grandparent": 42,
+    "note": "42 legacy raw supabase.channel() callers tracked as warn — PR-K cleanup scope"
+  },
+  "money_flow_freeze": {
+    "result": "PASS",
+    "paths": 8,
+    "diff_lines": 0
+  },
+  "eslint": {
+    "errors": 0,
+    "added_rules": [
+      "no-restricted-imports for '@/hooks/use-realtime-channel' (error)",
+      "freeze paths exempted via PRJ_FREEZE_RAW_CHANNEL override"
+    ]
+  },
+  "glossary_keys_added": [
+    "realtimeReconnecting",
+    "realtimeDegraded",
+    "realtimeRestored"
+  ],
+  "smoke": {
+    "wallet": "ready (use-wallet/use-my-power/withdrawals/deposits all on useWalletChannel)",
+    "game": "ready (crash/jackpot/empire/AIBotCards/activity ticker on useGameChannel)",
+    "chat": "ready (support/admin alerts/founding admin/security audit on useChatChannel)",
+    "market": "n/a (no current direct consumers)"
+  }
+}

@@ -4,7 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { supabase } from "@/integrations/supabase/client";
 import { useRequireAuth } from "@/hooks/use-require-auth";
-import { useRealtimeChannel } from "@/hooks/use-realtime-channel";
+import { useChatChannel } from "@pkg/realtime";
 import { LoadingList } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
 import { MessageSquare, Clock, CheckCircle2, AlertTriangle, PauseCircle, ChevronRight } from "lucide-react";
@@ -66,7 +66,7 @@ export default function SupportTickets() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
-  useRealtimeChannel({
+  useChatChannel({
     key: uid ? `tickets:${uid}` : "",
     bindings: uid
       ? [{ event: "*", table: "support_threads", filter: `user_id=eq.${uid}` }]

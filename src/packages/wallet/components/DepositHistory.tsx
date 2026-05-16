@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { g } from "@pkg/core/i18n/glossary";
 import { EmptyState } from "@/components/ui/empty-state";
 import { LoadingList } from "@/components/ui/loading-state";
-import { useRealtimeChannel } from "@/hooks/use-realtime-channel";
+import { useWalletChannel } from "@pkg/realtime";
 import DepositTimeline, { statusToStage } from "./DepositTimeline";
 import { Inbox } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -69,7 +69,7 @@ export default function DepositHistory() {
     return () => window.removeEventListener("wallet:refresh", onRefresh);
   }, []);
 
-  useRealtimeChannel({
+  useWalletChannel({
     key: "wallet:deposit_history",
     bindings: [
       { event: "*", schema: "public", table: "deposit_requests" },

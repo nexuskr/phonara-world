@@ -5,7 +5,7 @@ import Layout from "@/components/Layout";
 import { useDB } from "@/lib/store";
 import { supabase } from "@/integrations/supabase/client";
 import { useRequireAuth } from "@/hooks/use-require-auth";
-import { useRealtimeChannel } from "@/hooks/use-realtime-channel";
+import { useChatChannel } from "@pkg/realtime";
 import { Send, MessageSquare, ChevronDown, BookOpen, Sparkles } from "lucide-react";
 import { LuxButton, LuxInput, LuxChip } from "@/components/ui/lux";
 
@@ -66,7 +66,7 @@ export default function Support() {
   }, [nav, user, db.user?.nickname, t]);
 
   // Idempotent realtime, keyed by thread — survives StrictMode double-mount.
-  useRealtimeChannel({
+  useChatChannel({
     key: threadId ? `support:${threadId}` : "",
     bindings: threadId
       ? [{ event: "INSERT", table: "support_messages", filter: `thread_id=eq.${threadId}` }]
