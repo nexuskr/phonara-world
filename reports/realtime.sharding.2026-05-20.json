@@ -1,0 +1,34 @@
+{
+  "pr": "PR-N",
+  "title": "Realtime Region Sharding",
+  "date": "2026-05-20",
+  "summary": "Adds ap|us|eu region prefix on top of the 4-partition realtime channel keys. Routing is pure wrapper-layer; no caller code changed.",
+  "routing_matrix": {
+    "ap": ["KR", "JP", "SG", "TW", "HK", "CN", "VN", "TH", "ID", "MY", "PH", "IN", "BD"],
+    "us": ["US", "CA", "MX", "BR", "AR", "CL", "CO"],
+    "eu": ["DE", "FR", "ES", "IT", "PT", "NL", "SE", "NO", "DK", "FI", "PL", "TR", "RU", "CZ", "HU", "GR", "RO", "UA", "Africa", "Other"]
+  },
+  "key_format": "${region}:${partition}:${resource}[:id]",
+  "examples": [
+    "ap:wallet:phon_balances:uid",
+    "us:game:live_positions",
+    "eu:chat:room:lounge",
+    "ap:market:oracle:BTCUSDT"
+  ],
+  "detection": {
+    "order": ["localStorage phonara:region:v1", "Intl timezone heuristic", "navigator.language heuristic", "default ap"],
+    "manual_override": "setRegion('us'|'eu'|'ap'|null)"
+  },
+  "files_changed": [
+    "src/packages/realtime/regions.ts (new)",
+    "src/packages/realtime/index.ts (buildKey → regionalKey, region re-export)"
+  ],
+  "caller_migrations": 0,
+  "verification": {
+    "build": "pass",
+    "bundle_budget_delta_kb": "<1",
+    "money_flow_freeze": "pass (8 paths diff=0)",
+    "operator_isolation": "pass (0 leaks)",
+    "raw_channel_calls_added": 0
+  }
+}

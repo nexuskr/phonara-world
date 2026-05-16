@@ -20,23 +20,32 @@ import {
   type ConnState,
   type ChannelBinding,
 } from "@/hooks/use-realtime-channel";
+import { regionalKey } from "./regions";
 
 export type RealtimePartition = "wallet" | "game" | "chat" | "market";
 export type PartitionOpts = UseRealtimeChannelOpts;
 export type { ConnState, ChannelBinding };
 /** Imperative (non-React) entry — for stores / modules. Prefer the 4 hooks below in components. */
 export { subscribeRealtime };
+/** Region sharding (PR-N) — re-export for admin / debug. */
+export { detectRegion, getRegion, setRegion, type RealtimeRegion } from "./regions";
 
 const LOG = "[PHONARA REALTIME]";
 
 function buildKey(part: RealtimePartition, key: string): string {
   if (!key) return "";
-  if (key.startsWith(`${part}:`)) return key;
-  if (import.meta.env.DEV && /^(wallet|game|chat|market):/.test(key)) {
+  // 이미 region+partition 이 붙어있으면 그대로
+  if (new RegExp(`^(ap|us|eu):${part}:`).test(key)) return key;
+  // cross-partition 오용 감지
+  if (
+    import.meta.env.DEV &&
+    /^(?:(?:ap|us|eu):)?(wallet|game|chat|market):/.test(key) &&
+    !new RegExp(`^(?:(?:ap|us|eu):)?${part}:`).test(key)
+  ) {
     // eslint-disable-next-line no-console
     console.warn(`${LOG} cross-partition key "${key}" mounted on ${part} — should be ${part}:*`);
   }
-  return `${part}:${key}`;
+  return regionalKey(part, key);
 }
 
 /** wallet 채널: phon_balances · withdrawal_requests · deposit_requests · nft_collection 등 */
