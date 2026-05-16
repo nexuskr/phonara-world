@@ -8,6 +8,7 @@ import { LoadingList } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
 import { notify } from "@/lib/notify";
 import { Activity, AlertTriangle, RefreshCw, Search, Timer, TrendingDown } from "lucide-react";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 type Summary = {
   inflight_total: number;
@@ -78,8 +79,8 @@ export default function KernelObservability() {
 
   useEffect(() => { void loadAll(); void loadAudit(); }, []);
   useEffect(() => {
-    const id = setInterval(() => { void loadAll(); }, 15000);
-    return () => clearInterval(id);
+    const id = setVisibleInterval(() => { void loadAll(); }, 15000 , { meta: { owner: "KernelObservability", category: "admin" } });
+    return () => id();
   }, []);
 
   const driftAggregated = useMemo(() => {

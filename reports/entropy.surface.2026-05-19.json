@@ -1,0 +1,37 @@
+{
+  "_note": "PR-D Admin Wave ledger snapshot. setInterval → setVisibleInterval with category='admin' for governor-controlled admin/observability polls.",
+  "pr": "PR-D",
+  "capturedAt": "2026-05-19T00:00:00Z",
+  "diff_from_previous_2026_05_18": {
+    "raw_setInterval_call_sites": { "before": 21, "after": 13, "delta": -8 },
+    "tracked_via_setVisibleInterval_delta": 8,
+    "money_flow_git_diff_lines": 0
+  },
+  "counts": {
+    "tracked_added_this_pr": 8,
+    "untracked_removed_this_pr": 8,
+    "coverage_direction": "monotonic_increase"
+  },
+  "migrated_call_sites": [
+    { "owner": "src/hooks/use-vip-pass.ts:48", "intervalMs": 60000, "category": "admin", "note": "User VIP poll." },
+    { "owner": "src/hooks/use-realtime-channel.ts:259", "intervalMs": "dynamic(pollMs)", "category": "admin", "note": "Realtime-disconnect polling fallback; pollTimer retyped Timeout→Cleanup, both clearInterval sites converted to pollTimer()." },
+    { "owner": "src/components/admin/KernelObservability.tsx:81", "intervalMs": 15000, "category": "admin" },
+    { "owner": "src/components/admin/EconomyDashboard.tsx:42", "intervalMs": 30000, "category": "admin" },
+    { "owner": "src/components/admin/empire/StressTestDashboard.tsx:49", "intervalMs": 15000, "category": "admin" },
+    { "owner": "src/components/admin/empire/RiskEngineDashboard.tsx:34", "intervalMs": 30000, "category": "admin" },
+    { "owner": "src/components/admin/PhaseCMetricsPanel.tsx:29", "intervalMs": 60000, "category": "admin" },
+    { "owner": "src/components/admin/OracleFortress.tsx:109", "intervalMs": 5000, "category": "admin", "note": "Kept at 5s — only visibility gate added." }
+  ],
+  "money_flow_freeze_verified": true,
+  "validation_gates": {
+    "tracked_monotonic_increase": "pass",
+    "money_flow_diff_zero": "pass (check-money-flow-freeze.mjs OK — 8 paths intact)",
+    "bundle_delta_estimate_kb": "+0.0",
+    "build": "pass (TS errors resolved: pollTimer retyped Timeout→Cleanup)"
+  },
+  "next_pr": {
+    "id": "PR-E",
+    "scope": "Resolve 1 'unknown' entry from triage + remaining 13 raw setInterval call sites (audit & classify before PR-F).",
+    "validation": "After PR-E, triage.unknown count MUST be 0."
+  }
+}

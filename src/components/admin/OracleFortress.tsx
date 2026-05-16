@@ -11,6 +11,7 @@ import { LoadingList } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
 import { notify } from "@/lib/notify";
 import { Activity, Radio, AlertTriangle, RefreshCw, Sliders, ShieldCheck, ShieldAlert, CheckCircle2, XCircle, Clock } from "lucide-react";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 type SourceCell = { source: string; price: number; age_s: number };
 type Row = {
@@ -106,8 +107,8 @@ export function OracleFortress() {
 
   useEffect(() => {
     load();
-    const t = setInterval(load, 5000);
-    return () => clearInterval(t);
+    const t = setVisibleInterval(load, 5000 , { meta: { owner: "OracleFortress", category: "admin" } });
+    return () => t();
   }, [load]);
 
   const chaosStale = async (source: string) => {
