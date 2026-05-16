@@ -7,10 +7,12 @@ import { Coins, Gamepad2, TrendingUp, Radio, ArrowRight } from "lucide-react";
 import { G } from "@/lib/glossary";
 
 const WhaleStrikeRail = lazy(() => import("@/components/empire/WhaleStrikeRail"));
+const LiveTicker = lazy(() => import("@pkg/live/components/LiveTicker"));
+const Onboarding60s = lazy(() => import("@pkg/earn/components/Onboarding60s"));
 
 /**
  * /home — Sprint 0 슬림 홈.
- * 5초 룰: Hero + 4탭 + 큰 카드 4개 + 실시간 빅윈 티커만.
+ * 5초 룰: Hero + 4탭 + 큰 카드 4개 + 실시간 빅윈 + 60초 온보딩(1회).
  */
 
 const CARDS = [
@@ -96,6 +98,16 @@ export default function Home() {
           <WhaleStrikeRail compact />
         </Suspense>
       </div>
+
+      {/* 하단 고정 실시간 티커 */}
+      <Suspense fallback={null}>
+        <LiveTicker />
+      </Suspense>
+
+      {/* 60초 온보딩 — 첫 방문 1회만 자동 노출 */}
+      <Suspense fallback={null}>
+        <Onboarding60s />
+      </Suspense>
     </SlimShell>
   );
 }

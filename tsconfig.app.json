@@ -23,7 +23,27 @@
     "noFallthroughCasesInSwitch": false,
 
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@pkg/core": ["./src/packages/core"],
+      "@pkg/core/*": ["./src/packages/core/*"],
+      "@pkg/ui": ["./src/packages/ui"],
+      "@pkg/ui/*": ["./src/packages/ui/*"],
+      "@pkg/wallet": ["./src/packages/wallet"],
+      "@pkg/wallet/*": ["./src/packages/wallet/*"],
+      "@pkg/earn": ["./src/packages/earn"],
+      "@pkg/earn/*": ["./src/packages/earn/*"],
+      "@pkg/game-engine": ["./src/packages/game-engine"],
+      "@pkg/game-engine/*": ["./src/packages/game-engine/*"],
+      "@pkg/trade": ["./src/packages/trade"],
+      "@pkg/trade/*": ["./src/packages/trade/*"],
+      "@pkg/live": ["./src/packages/live"],
+      "@pkg/live/*": ["./src/packages/live/*"],
+      "@pkg/avatar-nft": ["./src/packages/avatar-nft"],
+      "@pkg/avatar-nft/*": ["./src/packages/avatar-nft/*"],
+      "@pkg/referral": ["./src/packages/referral"],
+      "@pkg/referral/*": ["./src/packages/referral/*"],
+      "@pkg/analytics": ["./src/packages/analytics"],
+      "@pkg/analytics/*": ["./src/packages/analytics/*"]
     }
   },
   "include": ["src"]
