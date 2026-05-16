@@ -449,7 +449,7 @@ degrade 동작:
 
 ---
 
-## 15. 지금 바로 1번 작업
+## 16. 지금 바로 1번 작업
 
 **Week 1 detox + Ω-Core/Ω-FINAL 토대 병렬 착수:**
 - Toast 4-Tier (`notify.critical/important/passive/silent`) + ESLint `no-direct-sonner` 룰
