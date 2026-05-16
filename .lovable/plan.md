@@ -361,11 +361,13 @@ device.profile = "low" | "mid" | "high"
 
 ## 15. 지금 바로 1번 작업
 
-**Week 1 detox 3종 + Ω-Core 12-1/12-4 토대 병렬 착수:**
+**Week 1 detox + Ω-Core/Ω-FINAL 토대 병렬 착수:**
 - Toast 4-Tier (`notify.critical/important/passive/silent`) + ESLint `no-direct-sonner` 룰
 - `@pkg/realtime` 4채널 진입점 + GodModePanel·AIBotCards 마이그레이션
 - `setVisibleInterval` 헬퍼로 30+ setInterval 일괄 교체
 - `@pkg/ui/SoftBoundary` 도입 + optional 마운트 지점 1차 적용
-- `web-vitals` + budget telemetry 수집 시작 (`/admin/kpi` 패널 후속)
+- `web-vitals` + budget telemetry 수집 (`/admin/kpi` 패널 후속)
+- `@pkg/performance/runtime` (runWhenIdle/runIfVisible/runAfterFirstInteraction) + `@pkg/performance/device` (useDeviceProfile) 토대
+- `src/packages/operator` 폴더 신설 + admin 컴포넌트 점진 이전 시작 (route 유지)
 
-이 5개가 끝나야 Week 1 #2/#4/#5… 로 진행. **Week 1 끝까지 신규 기능 금지. 매주 금요일 Death Cleanup Day 시작.**
+이게 끝나야 Week 1 #2/#4/#5… 진행. **Week 1 끝까지 신규 기능 금지. 매주 금요일 Death Cleanup Day 시작.**
