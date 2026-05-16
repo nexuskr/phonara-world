@@ -51,7 +51,7 @@ export function useCrownWar(pollMs = 15000) {
     const t = setVisibleInterval(() => {
       if (Date.now() - lastFetch.current > pollMs - 100) void load();
     }, pollMs , { meta: { owner: "use-crown-war", category: "cosmetic" } });
-    return () => clearInterval(t);
+    return () => t();
   }, [load, pollMs]);
 
   // Realtime: refresh on any war/crown state change (deduped via realtime bus)

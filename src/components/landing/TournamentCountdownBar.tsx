@@ -44,7 +44,7 @@ export default function TournamentCountdownBar() {
     load();
     const id = setVisibleInterval(load, 30_000 , { meta: { owner: "TournamentCountdownBar", category: "cosmetic" } });
     const stop2 = setVisibleInterval(() => setTick((x) => x + 1), 1000, { meta: { owner: "TournamentCountdownBar:tick", category: "cosmetic" } });
-    return () => { mounted = false; clearInterval(id); stop2(); };
+    return () => { mounted = false; id(); stop2(); };
   }, []);
 
   if (!t) return null;

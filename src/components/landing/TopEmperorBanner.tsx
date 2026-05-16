@@ -28,8 +28,8 @@ export default function TopEmperorBanner() {
       if (alive && Array.isArray(data) && data[0]) setEmp(data[0] as TopEmperor);
     }
     load();
-    const id = window.setVisibleInterval(load, 30_000 , { meta: { owner: "TopEmperorBanner", category: "cosmetic" } });
-    return () => { alive = false; window.clearInterval(id); };
+    const id = setVisibleInterval(load, 30_000 , { meta: { owner: "TopEmperorBanner", category: "cosmetic" } });
+    return () => { alive = false; id(); };
   }, []);
 
   if (!emp) return null;

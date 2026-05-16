@@ -271,7 +271,7 @@ function SceneHook({ reduce }: { reduce: boolean }) {
   const [paid, setPaid] = useState(() => 8_241_500_000 + Math.floor(Math.random() * 5_000_000));
   useEffect(() => {
     const t = setVisibleInterval(() => setPaid((p) => p + Math.floor(Math.random() * 380_000 + 50_000)), 1400 , { meta: { owner: "Guide", category: "cosmetic" } });
-    return () => clearInterval(t);
+    return () => t();
   }, []);
 
   return (
@@ -367,7 +367,7 @@ function SceneLiveProof({ reduce }: { reduce: boolean }) {
         ...prev.slice(0, 5),
       ]);
     }, 2200);
-    return () => clearInterval(t);
+    return () => t();
   }, []);
 
   return (
@@ -634,7 +634,7 @@ function SceneFinalCTA({ isLoggedIn }: { isLoggedIn: boolean }) {
 
   useEffect(() => {
     const t = setVisibleInterval(() => setSeats((s) => Math.max(7, s - (Math.random() < 0.35 ? 1 : 0))), 2400 , { meta: { owner: "Guide", category: "cosmetic" } });
-    return () => clearInterval(t);
+    return () => t();
   }, []);
 
   // 마지막 씬 도달 시 1회 한정 완주 보너스 자동 청구 (로그인 사용자만)

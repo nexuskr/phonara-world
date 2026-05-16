@@ -82,7 +82,7 @@ export function getMainNft(uid: string): Promise<MainNftRow | null> {
     if (!flushTimer) flushTimer = setTimeout(flush, 30);
     const check = setVisibleInterval(() => {
       if (!queue.has(uid) && !inflight.has(uid)) {
-        clearInterval(check);
+        check();
         resolve(lruGet(uid) ?? null);
       }
     }, 40 , { meta: { owner: "mainNft", category: "cosmetic" } });

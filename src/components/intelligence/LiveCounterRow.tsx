@@ -12,7 +12,7 @@ export default function LiveCounterRow() {
     const t = setVisibleInterval(() => {
       setTraders((n) => Math.max(1500, n + (Math.random() < 0.5 ? -1 : 1) * Math.floor(Math.random() * 4)));
     }, 6_000 , { meta: { owner: "LiveCounterRow", category: "cosmetic" } });
-    return () => clearInterval(t);
+    return () => t();
   }, []);
 
   const totalPnl = history.reduce((s, p) => s + (p.closed?.pnl ?? 0), 0);

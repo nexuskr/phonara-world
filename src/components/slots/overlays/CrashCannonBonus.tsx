@@ -27,12 +27,12 @@ export default function CrashCannonBonus({
       i++;
       setTick(i);
       if (i >= ticks) {
-        clearInterval(id);
+        id();
         setExploded(true);
         setTimeout(() => !cancelled && onComplete(totalWin), 1500);
       }
     }, stepMs , { meta: { owner: "CrashCannonBonus", category: "cosmetic" } });
-    return () => { cancelled = true; clearInterval(id); };
+    return () => { cancelled = true; id(); };
   }, [show, ticks, totalWin, onComplete]);
 
   // Exponential curve toward target

@@ -19,13 +19,13 @@ import { setVisibleInterval } from "@/lib/util/visible-interval";
 function useLiveEarners(min = 1100, max = 1450) {
   const [n, setN] = useState(() => min + Math.floor(Math.random() * (max - min)));
   useEffect(() => {
-    const i = window.setVisibleInterval(() => {
+    const i = setVisibleInterval(() => {
       setN((p) => {
         const next = p + (Math.random() < 0.5 ? -1 : 1) * Math.floor(Math.random() * 7);
         return Math.max(min, Math.min(max, next));
       });
     }, 60_000 , { meta: { owner: "Earn", category: "cosmetic" } });
-    return () => clearInterval(i);
+    return () => i();
   }, [min, max]);
   return n;
 }

@@ -878,7 +878,7 @@ function DiceGame({ reward, onResult }: { reward: number; onResult: (w: boolean,
       setD([1 + Math.floor(Math.random() * 6), 1 + Math.floor(Math.random() * 6)]);
       n++;
       if (n > 12) {
-        clearInterval(i);
+        i();
         setRolling(false);
       }
     }, 80 , { meta: { owner: "Missions", category: "cosmetic" } });
@@ -934,7 +934,7 @@ function SlotGame({ reward, onResult }: { reward: number; onResult: (w: boolean,
       ]);
       n++;
       if (n > 18) {
-        clearInterval(i);
+        i();
         // weighted: 22% triple match, 35% double
         const r = Math.random();
         let final: string[];

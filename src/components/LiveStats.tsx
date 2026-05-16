@@ -16,7 +16,7 @@ function useJitter(initial: number, { min = -200, max = 800, every = 1500 }: any
       if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
       setV(prev => Math.max(0, prev + Math.floor(Math.random() * (max - min)) + min));
     }, every , { meta: { owner: "LiveStats", category: "cosmetic" } });
-    return () => clearInterval(t);
+    return () => t();
   }, [initial, every, min, max]);
   return v;
 }

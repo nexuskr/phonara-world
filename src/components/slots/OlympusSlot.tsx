@@ -323,9 +323,9 @@ export default function OlympusSlot({ theme = OLYMPUS_THEME }: { theme?: SlotThe
         setShowBonusIntro(true);
         await new Promise<void>((res) => {
           const id = setVisibleInterval(() => {
-            if (!showBonusIntroRefVal.current) { clearInterval(id); res(); }
+            if (!showBonusIntroRefVal.current) { id(); res(); }
           }, 100 , { meta: { owner: "OlympusSlot", category: "cosmetic" } });
-          setTimeout(() => { clearInterval(id); res(); }, 4000);
+          setTimeout(() => { id(); res(); }, 4000);
         });
 
         // Mechanic-specific or fallback wheel.

@@ -81,7 +81,7 @@ export function AuthSocialProof({
     const t = setVisibleInterval(load, 30_000 , { meta: { owner: "AuthSocialProof", category: "cosmetic" } });
     return () => {
       mounted = false;
-      clearInterval(t);
+      t();
     };
   }, []);
 
@@ -115,7 +115,7 @@ export function AuthSocialProof({
     const t = setVisibleInterval(load, 60_000 , { meta: { owner: "AuthSocialProof", category: "cosmetic" } });
     return () => {
       mounted = false;
-      clearInterval(t);
+      t();
     };
   }, [onPulses]);
 
@@ -163,7 +163,7 @@ export function AuthSocialProof({
     const t = setVisibleInterval(load, 60_000 , { meta: { owner: "AuthSocialProof", category: "cosmetic" } });
     return () => {
       mounted = false;
-      clearInterval(t);
+      t();
     };
   }, []);
 
@@ -183,7 +183,7 @@ export function AuthSocialProof({
     const t = setVisibleInterval(load, 60_000 , { meta: { owner: "AuthSocialProof", category: "cosmetic" } });
     return () => {
       mounted = false;
-      clearInterval(t);
+      t();
     };
   }, []);
 

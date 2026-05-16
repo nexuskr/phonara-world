@@ -23,7 +23,7 @@ export function useLastTradeResult(): LastTradeResult | null {
   // refresh once after mount to evaluate TTL
   useEffect(() => {
     const id = setVisibleInterval(() => setTick((n) => n + 1), 5_000 , { meta: { owner: "use-last-trade-result", category: "cosmetic" } });
-    return () => clearInterval(id);
+    return () => id();
   }, []);
 
   if (!last?.closed) return null;

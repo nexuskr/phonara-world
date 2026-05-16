@@ -21,7 +21,7 @@ function useJackpot() {
       if (document.visibilityState !== "visible") return;
       setV((prev) => Math.max(11_000_000, prev + Math.floor(Math.random() * 80_000) - 20_000));
     }, 8000 , { meta: { owner: "KpiGridV3", category: "cosmetic" } });
-    return () => clearInterval(t);
+    return () => t();
   }, []);
   return v;
 }

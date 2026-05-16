@@ -133,7 +133,7 @@ export function useAuthLiveData() {
     };
     fetchKpi();
     const t = setVisibleInterval(fetchKpi, 30_000 , { meta: { owner: "use-auth-live-data", category: "cosmetic" } });
-    return () => { alive = false; clearInterval(t); };
+    return () => { alive = false; t(); };
   }, []);
 
   // ---- Real LIVE FEED ----
@@ -166,7 +166,7 @@ export function useAuthLiveData() {
     };
     load();
     const t = setVisibleInterval(load, 60_000 , { meta: { owner: "use-auth-live-data", category: "cosmetic" } });
-    return () => { alive = false; clearInterval(t); };
+    return () => { alive = false; t(); };
   }, []);
 
   // ---- Real TOP5 ----
@@ -190,7 +190,7 @@ export function useAuthLiveData() {
     };
     load();
     const t = setVisibleInterval(load, 60_000 , { meta: { owner: "use-auth-live-data", category: "cosmetic" } });
-    return () => { alive = false; clearInterval(t); };
+    return () => { alive = false; t(); };
   }, []);
 
   // ---- UNIFIED 1s tick: KPI drift / new feed / top5 jitter ----
@@ -213,7 +213,7 @@ export function useAuthLiveData() {
         })));
       }
     }, 2000 , { meta: { owner: "use-auth-live-data", category: "cosmetic" } });
-    return () => clearInterval(id);
+    return () => id();
   }, []);
 
   // ---- Realtime crown_events ----

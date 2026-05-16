@@ -69,8 +69,8 @@ function fireConfetti(tier: WinTier, themeKey?: string, prefersReduced = false) 
   if (tier === "epic" || tier === "legendary") {
     // Coin cascade — repeated bursts
     let bursts = tier === "legendary" ? 8 : 5;
-    const interval = window.setVisibleInterval(() => {
-      if (--bursts <= 0) { clearInterval(interval); return; }
+    const interval = setVisibleInterval(() => {
+      if (--bursts <= 0) { interval(); return; }
       confetti({
         particleCount: 60, angle: 90, spread: 100,
         origin: { x: Math.random() * 0.8 + 0.1, y: 0 },

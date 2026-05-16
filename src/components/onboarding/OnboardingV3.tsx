@@ -220,7 +220,7 @@ function StepSlot() {
     let n = 0;
     const id = setVisibleInterval(() => {
       setReels([symbols[Math.floor(Math.random() * symbols.length)], symbols[Math.floor(Math.random() * symbols.length)], symbols[Math.floor(Math.random() * symbols.length)]]);
-      if (++n > 12) { clearInterval(id); setReels(["7", "7", "7"]); setSpinning(false); }
+      if (++n > 12) { id(); setReels(["7", "7", "7"]); setSpinning(false); }
     }, 70 , { meta: { owner: "OnboardingV3", category: "cosmetic" } });
   };
   return (

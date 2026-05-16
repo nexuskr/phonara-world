@@ -41,7 +41,7 @@ export default function VipWhalePreview() {
     const t = setVisibleInterval(load, 10_000 , { meta: { owner: "VipWhalePreview", category: "cosmetic" } });
     return () => {
       mounted = false;
-      clearInterval(t);
+      t();
     };
   }, [vip.loading, vip.active]);
 

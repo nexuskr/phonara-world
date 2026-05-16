@@ -215,7 +215,7 @@ class SlotSoundManagerImpl {
   private tweenBgm(target: number, rampMs: number, onDone?: () => void) {
     if (SSR) return;
     if (this.duckTween) {
-      window.clearInterval(this.duckTween);
+      this.duckTween();
       this.duckTween = null;
     }
     let current = 0;
@@ -229,7 +229,7 @@ class SlotSoundManagerImpl {
       const t = (performance.now() - t0) / Math.max(1, rampMs);
       if (t >= 1) {
         try { SoundManager.setChannelVolume?.("bgm", target); } catch { /* */ }
-        if (this.duckTween) window.clearInterval(this.duckTween);
+        if (this.duckTween) this.duckTween();
         this.duckTween = null;
         onDone?.();
         return;
@@ -237,7 +237,7 @@ class SlotSoundManagerImpl {
       const v = start + (target - start) * t;
       try { SoundManager.setChannelVolume?.("bgm", v); } catch { /* */ }
     };
-    this.duckTween = window.setVisibleInterval(tick, 24 , { meta: { owner: "SlotSoundManager", category: "cosmetic" } });
+    this.duckTween = setVisibleInterval(tick, 24 , { meta: { owner: "SlotSoundManager", category: "cosmetic" } });
   }
 
   // ===== Reduced-motion mute =====

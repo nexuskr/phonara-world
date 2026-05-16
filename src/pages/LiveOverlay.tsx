@@ -35,7 +35,7 @@ export default function LiveOverlay() {
     load();
     const id = setVisibleInterval(load, 5_000 , { meta: { owner: "LiveOverlay", category: "cosmetic" } });
     const stop2 = setVisibleInterval(() => setTick((x) => x + 1), 1000, { meta: { owner: "LiveOverlay:36", category: "cosmetic" } });
-    return () => { mounted = false; clearInterval(id); stop2(); };
+    return () => { mounted = false; id(); stop2(); };
   }, [token]);
 
   const remaining = t ? Math.max(0, t.seconds_until_end - tick) : 0;

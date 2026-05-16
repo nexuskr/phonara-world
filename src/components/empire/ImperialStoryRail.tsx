@@ -43,8 +43,8 @@ export default function ImperialStoryRail() {
       if (mounted && Array.isArray(data)) setStories(data as Story[]);
     };
     void load();
-    const id = window.setVisibleInterval(load, 60_000 , { meta: { owner: "ImperialStoryRail", category: "cosmetic" } });
-    return () => { mounted = false; window.clearInterval(id); };
+    const id = setVisibleInterval(load, 60_000 , { meta: { owner: "ImperialStoryRail", category: "cosmetic" } });
+    return () => { mounted = false; id(); };
   }, []);
 
   if (!stories.length) return null;

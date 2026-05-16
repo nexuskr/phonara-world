@@ -290,7 +290,7 @@ export function AnimatedCounter({
       const delta = Math.floor(Math.random() * (jitter * 2 + 1)) - jitter;
       animate(mv, cur + delta, { duration: 0.6 });
     }, 1800 , { meta: { owner: "EmpireFX", category: "cosmetic" } });
-    return () => clearInterval(t);
+    return () => t();
   }, [jitter, mv, reduce]);
 
   return (

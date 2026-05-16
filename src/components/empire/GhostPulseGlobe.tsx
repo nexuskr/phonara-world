@@ -48,7 +48,7 @@ export default function GhostPulseGlobe() {
     }, 2500 , { meta: { owner: "GhostPulseGlobe", category: "cosmetic" } });
     return () => {
       alive = false;
-      clearInterval(id);
+      id();
     };
   }, []);
 
