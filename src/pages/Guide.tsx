@@ -355,7 +355,7 @@ function SceneLiveProof({ reduce }: { reduce: boolean }) {
   );
 
   useEffect(() => {
-    const t = setInterval(() => {
+    const t = setVisibleInterval(() => {
       setRows((prev) => [
         {
           id: `r${Date.now()}`,
@@ -366,7 +366,7 @@ function SceneLiveProof({ reduce }: { reduce: boolean }) {
         },
         ...prev.slice(0, 5),
       ]);
-    }, 2200);
+    }, 2200, { meta: { owner: "Guide:rows", category: "cosmetic" } });
     return () => t();
   }, []);
 
