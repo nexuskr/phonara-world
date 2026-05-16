@@ -246,6 +246,11 @@ export function JackpotEmpireBanner() {
                     {f.amount >= 500_000 ? "💎" : f.amount > 0 ? "WIN" : "TRY"}
                   </span>
                   <span className="text-xs truncate font-medium">{f.name}</span>
+                  {f.sim && (
+                    <span className="text-[8px] font-black px-1 py-0.5 rounded bg-muted/40 text-muted-foreground tracking-wider">
+                      SIM
+                    </span>
+                  )}
                 </div>
                 <div className="text-right shrink-0">
                   <span className={`text-xs font-bold tabular-nums ${
