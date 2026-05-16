@@ -107,6 +107,7 @@ const Landing = lazy(() => import("./pages/Landing.tsx"));
 const OnboardingV3 = lazy(() => import("./components/onboarding/OnboardingV3.tsx"));
 const DevConsole = lazy(() => import("./pages/DevConsole.tsx"));
 const ForcedShareDialog = lazy(() => import("./components/share/ForcedShareDialog.tsx"));
+const BigWinShareHost = lazy(() => import("./components/share/BigWinShareHost.tsx"));
 const VipArrivalAnnouncer = lazy(() => import("./components/empire/VipArrivalAnnouncer.tsx"));
 const ReactivationOfferDialog = lazy(() => import("./components/reactivation/ReactivationOfferDialog.tsx"));
 import { PracticeModeBanner } from "./components/practice/PracticeModeBanner";
@@ -193,6 +194,7 @@ function GlobalOverlays() {
       <Suspense fallback={null}><EmpireMomentToast /></Suspense>
       <Suspense fallback={null}><FloatingCashLoopWidget /></Suspense>
       <Suspense fallback={null}><ForcedShareDialog /></Suspense>
+      <Suspense fallback={null}><BigWinShareHost /></Suspense>
       <Suspense fallback={null}><VipArrivalAnnouncer /></Suspense>
       <Suspense fallback={null}><ReactivationOfferDialog /></Suspense>
       <Suspense fallback={null}><OnboardingV3 /></Suspense>
