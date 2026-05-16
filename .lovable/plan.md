@@ -1,10 +1,14 @@
-# PHONARA Ω — Mobile-First World OS (LOCKED v2.0)
+# PHONARA Ω — Mobile-First Financial Entertainment OS (LOCKED v3.0)
 
-> 핵심 원칙 1줄: **"무엇을 추가할까"보다 "무엇을 절대 안 넣을까"가 더 중요하다.**
+> **Target feeling:** Stake 단순함 · Rollbit 모멘텀 · Bloomberg 신뢰 · TikTok 리텐션 · Apple 부드러움 · Roblox 로비 정체성 · Exchange 투명성 — 단, **더 가볍게, 더 조용하게, 더 빠르게, 더 모바일 네이티브하게.**
 >
-> 지금 단계에서 가장 위험한 것 = 기능 부족 ❌ / 너무 많이 동시에 넣다가 무거워지는 것 ✅
+> **다음 2주 절대 규칙: 신규 기능 0. 오직 Performance Surgery + Architecture Detox.**
 >
-> 그래서 다음 2주는 **신규 기능 금지**. 오직 외과수술.
+> 모든 PR description에 **"Which 2+ core laws does this improve?"** + **"Budget Impact"**(animations / CPU / memory / INP) 필수. 2개 미만이거나 예산 초과 시 reject.
+>
+> 핵심 원칙: "무엇을 추가할까"보다 **"무엇을 절대 안 넣을까"**가 더 중요하다. 가장 큰 리스크는 기능 부족이 아니라 비대·소음·렉·분열·심리적 피로다.
+>
+> **최종 합격 기준:** ① 조용한데 살아있다 ② 가벼운데 깊다 ③ 내부는 복잡, 사용은 단순 ④ 사용은 게임처럼 ⑤ 신뢰는 거래소처럼.
 
 ---
 
