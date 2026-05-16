@@ -1,82 +1,71 @@
-# PR-H rpc.surface 시나리오 레이스 수정
+# PR-H 숨김/유휴 RPC 누수 재검증 및 잔여 경계 호출 봉쇄
 
-## 현재 결과
-- `activeRPC: 2`
-- `hiddenRPC: 1` — `platform_kill_switches` 1회
-- `idleRPC: 2` — `get_whale_strikes_24h`, `platform_kill_switches` 각 1회
+## 현재 관찰
+- 콘솔 결과는 여전히 `activeRPC: 2`, `hiddenRPC: 1`, `idleRPC: 2`
+- 누수 RPC는 그대로 `platform_kill_switches` / `get_whale_strikes_24h`
+- 추가로 현재 콘솔의 `rpc.surface.ts:217/218` 및 `deltaPct.hidden/idle = null`은 **지금 소스와 맞지 않습니다**
 
-## 재진단
-앱 쪽 가드 자체보다는 **`rpc.surface.runScenario()`의 단계 전환 순서** 때문에 경계 시점 호출이 잘못 집계되고 있습니다.
+## 핵심 판단
+이번 이슈는 두 층으로 봐야 합니다.
 
-1. **Hidden 1회**
-   - hidden 단계 시작 시 `forcedMode = "hidden"`이 먼저 켜지고,
-   - 그 직후 `document.hidden = true` / `visibilitychange`가 적용됩니다.
-   - 이 아주 짧은 틈에서 60초 경계에 도달한 `platform_kill_switches` 폴링이 실행되면, 실제로는 “전환 경계 호출”인데 hidden 버킷으로 분류됩니다.
+1. **프리뷰가 최신 번들을 아직 안 물고 있을 가능성**
+   - 현재 소스 기준이면 `diffReport()`는 `baseline.foreground.count`를 기준으로 계산하므로 `deltaPct`가 `null`로 나오지 않아야 합니다.
+   - 그런데 사용자 콘솔은 여전히 이전 번들의 라인 번호와 계산 결과를 보여주고 있습니다.
+   - 즉, 먼저 **프리뷰/개발 서버가 최신 `rpc.surface.ts`를 실행 중인지 재동기화**가 필요합니다.
 
-2. **Idle 2회**
-   - idle 단계에서도 `forcedMode = "idle"`가 먼저 켜지고,
-   - `__phonaraIdle.force(true)`로 governor pause가 걸리기 전 짧은 틈이 있습니다.
-   - 같은 경계 구간에서 `get_whale_strikes_24h` / `platform_kill_switches`가 1회씩 실행되면 idle 버킷으로 잡힙니다.
-
-3. **verdict 계산도 현재 왜곡됨**
-   - baseline 수집은 foreground만 채우므로 `baseline.hidden` / `baseline.idle`은 구조적으로 0입니다.
-   - 그런데 `diffReport()`는 hidden/idle을 각각 이 0과 비교합니다.
-   - 따라서 나중에 count가 0이 되더라도 PASS 판정이 안정적으로 나오지 않습니다.
+2. **최신 번들에서도 남을 수 있는 실제 경계 누수**
+   - `use-kill-switches`는 interval 경로만 막혀 있고, `focus` 이벤트와 realtime callback은 같은 가드를 직접 거치지 않습니다.
+   - `use-auth-live-data`의 whale RPC는 `setVisibleInterval`에만 의존하므로, 경계 직전 큐에 들어온 호출은 함수 내부에서 한 번 더 차단하지 못합니다.
+   - 그래서 최신 번들에서도 드물게 hidden/idle bucket에 1회씩 섞일 여지가 남아 있습니다.
 
 ## 변경안
 
-### 1) `rpc.surface.runScenario()` 단계 전환을 원자적으로 정리
-`src/packages/entropy/rpc.surface.ts`
+### 1) 프리뷰를 최신 번들로 재동기화
+- 개발 서버/프리뷰를 새로 고쳐 현재 `src/packages/entropy/rpc.surface.ts`가 실제로 반영되었는지 먼저 확인
+- 확인 기준:
+  - `deltaPct.hidden`, `deltaPct.idle`가 더 이상 `null`이 아니어야 함
+  - 콘솔 라인 번호가 현재 파일 구조와 맞아야 함
 
-- hidden 단계:
-  1. 먼저 실제 런타임 상태를 hidden으로 전환
-  2. visibility listener / catch-up이 한 프레임 정리되도록 settle
-  3. 그 다음 카운터 reset
-  4. 마지막에 hidden 측정 시작
+### 2) `use-kill-switches`의 비-interval 경로까지 동일 가드 적용
+`src/hooks/use-kill-switches.ts`
 
-- idle 단계:
-  1. 먼저 visible 복귀에 따른 catch-up을 측정 바깥에서 정리
-  2. `__phonaraIdle.force(true)`로 governor pause를 먼저 확정
-  3. settle 후 reset
-  4. 마지막에 idle 측정 시작
+- `refresh()`의 hidden/admin pause 가드는 유지
+- 추가로 아래 트리거들도 동일한 보호막을 통과하게 정리
+  - realtime `postgres_changes` callback
+  - `window.focus` callback
+- 필요하면 **in-flight dedupe / 직전 refresh 재진입 방지**를 넣어 phase 경계에서 중복 fetch 시작 자체를 막음
 
-즉, **분류 모드 진입보다 실제 pause/visibility 상태를 먼저 확정**해서 경계 호출이 phase bucket에 섞이지 않게 만듭니다.
+### 3) `use-auth-live-data` whale RPC에 함수 내부 가드 추가
+`src/hooks/use-auth-live-data.ts`
 
-### 2) phase boundary flush helper 추가
-`src/packages/entropy/rpc.surface.ts`
+- `load()` 시작 시점에 아래를 다시 확인
+  - `document.hidden`
+  - `isCategoryPaused("cosmetic")`
+- 즉, interval 레벨에서 한 번, RPC 함수 본문에서 한 번 더 막아 **경계 직전 큐 진입 호출**을 차단
 
-- 예: 다음 tick / animation frame까지 기다리는 `flushPhaseBoundary()` 추가
-- 목적:
-  - visibilitychange 리스너 실행 완료
-  - `setVisibleInterval`의 catch-up/onVisible 처리 소진
-  - 경계 직전 타이머와 측정 구간을 분리
-
-### 3) verdict 기준 수정
-`src/packages/entropy/rpc.surface.ts`
-
-- hidden/idle 비교 기준을 `baseline.foreground.count`로 변경
-- 기대 의미:
-  - active 대비 hidden은 90% 이상 감소
-  - active 대비 idle은 70% 이상 감소
-
-이렇게 해야 현재 시나리오 구조와 수치 해석이 일치합니다.
+### 4) 재검증은 동일 시나리오로 고정
+- `__phonaraSurface.runScenario()`를 다시 실행
+- hidden / idle bucket이 둘 다 0인지 확인
+- verdict가 둘 다 PASS인지 확인
 
 ## 변경 파일
-- `src/packages/entropy/rpc.surface.ts`
+- `src/hooks/use-kill-switches.ts`
+- `src/hooks/use-auth-live-data.ts`
+- 필요 시 재검증만으로 충분하면 소스 수정 없이 프리뷰 재동기화에서 종료
 
 ## 기대 결과
-- 경계 레이스 제거 후:
+- 최신 번들 반영 후 `deltaPct`가 정상 수치로 계산됨
+- 잔여 경계 호출 차단 후:
   - `hiddenRPC = 0`
   - `idleRPC = 0`
-- verdict 계산 수정 후:
   - `verdict.hidden === "PASS"`
   - `verdict.idle === "PASS"`
 
 ## 검증
-1. `bun run build`
+1. 프리뷰/개발 서버 재동기화
 2. DEV 콘솔에서 `__phonaraSurface.runScenario()` 실행
 3. 확인 항목
+   - `deltaPct.hidden` / `deltaPct.idle`가 `null` 아님
    - hidden bucket = 0
    - idle bucket = 0
    - verdict hidden/idle 모두 PASS
-4. 필요 시 결과를 `reports/rpc.surface.2026-05-16.json`에 반영
