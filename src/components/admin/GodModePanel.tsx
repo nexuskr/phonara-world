@@ -89,6 +89,7 @@ function LiveKpi() {
   // 채널 1개만 낭비될 뿐 어떤 이벤트도 받지 못해 제거.
   useEffect(() => {
     let mounted = true;
+    // eslint-disable-next-line no-restricted-syntax -- presence channel whitelisted (PR-J)
     const ch = supabase.channel("admin-presence-godmode", {
       config: { presence: { key: crypto.randomUUID() } },
     });
