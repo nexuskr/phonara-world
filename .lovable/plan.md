@@ -354,7 +354,47 @@ depositLastChecked, depositInputsLocked
 depositLeaveConfirm, depositLeaveStay, depositLeaveExit
 ```
 
-## 15. 비포함
+## 15. v1.0 Lock Rules (구현 시 절대 고정)
+
+### L1. 상태 우선순위 ENUM (race-proof)
+```ts
+export const DEPOSIT_STATUS_PRIORITY = {
+  draft: 0,
+  intent_created: 1,
+  awaiting_payment: 2,
+  matching: 3,
+  manual_review: 4,
+  expired: 5,
+  filled: 6,
+} as const;
+```
+- realtime/polling merge: `if (nextPriority >= currentPriority) apply()`.
+- `filled`(6)는 항상 최종 승리. `expired`(5)는 `matching`(3) 위지만 `filled`(6) 못 덮음.
+- websocket 역순/중복 이벤트 모두 안전 → "입금됐는데 expired 뜸" 박멸.
+
+### L2. Soft Freeze는 financial inputs만
+- 변경: `locks.inputsLocked` → `locks.financialInputsLocked: boolean`.
+- Lock 대상: amount, method만.
+- 항상 활성: copy / regenerate / history 보기 / close(confirm 거침) / 고객지원 CTA.
+
+### L3. Voucher Hash는 솔트 포함
+- `sha256(\`${pin}:${user.id}:phonara-v1\`)`. localStorage rainbow 공격 회피. 24h TTL. 동일 해시 3회+ → 클라 차단.
+
+### L4. Polling Truth Merge 규칙
+- realtime → optimistic apply.
+- polling → authoritative overwrite, **두 조건 동시 만족 시에만**:
+  1. `polling.updated_at >= local.updated_at`
+  2. `priority(polling.status) >= priority(local.status)`
+- 미달이면 polling 결과 무시 (낙관 상태 보호).
+
+### L5. "돈 보호중" 레이어 = Retention Core (제거 금지)
+- 다음 6개는 어떤 명목으로도 v1.0에서 제거·축소 불가:
+  - heartbeat / safe-checking 카피 / grace checking / copy verification / realtime degraded banner / timeline.
+- 제거 시 "사이트 먹튀 느낌" + CS 폭증 + 재입금률 하락 직결.
+
+---
+
+## 16. 비포함
 - 결제 PG / Stripe / 카카오 SDK 자동연동 (mem 제약)
 - 신규 DB / RPC / 트리거
 - 출금 흐름 변경
