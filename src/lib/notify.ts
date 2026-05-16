@@ -60,6 +60,36 @@ export const notify = {
     sonner.error(title, fmt(title, "error", { description: describeError(err), ...opts })),
   promise: sonner.promise.bind(sonner),
   dismiss: sonner.dismiss.bind(sonner),
+
+  // ─────────────────────────────────────────────────────────────
+  // 4-TIER NOTIFICATION SYSTEM (LOCKED v3.0 Week 1 #1)
+  //
+  //   critical()  → fullscreen 가능, 입출금/보안 사고만. Infinity duration.
+  //   important() → 1회 toast, Baron 승급/Vault 만료/Prediction 종료 등. 6s.
+  //   passive()   → 자동 소멸 mini toast, 일상 피드백. 2.5s.
+  //   silent()    → 절대 popup 금지, activity rail / telemetry 만.
+  //
+  // 직접 toast()/sonner 호출은 ESLint custom rule로 금지 예정.
+  // 화면당 동시 attention source ≤ 2 (Anti-FOMO Fatigue Rule §14-4).
+  // ─────────────────────────────────────────────────────────────
+  critical: (message: ReactNode, opts?: Opts) =>
+    sonner.error(message, fmt(message, "error", { duration: Infinity, ...opts })),
+  important: (message: ReactNode, opts?: Opts) =>
+    sonner(message, fmt(message, "info", { duration: 6000, ...opts })),
+  passive: (message: ReactNode, opts?: Opts) =>
+    sonner(message, fmt(message, "default", { duration: 2500, ...opts })),
+  /** 절대 popup 금지. activity rail/telemetry로만 흘려보낸다. */
+  silent: (message: ReactNode, payload?: Record<string, unknown>) => {
+    try {
+      window.dispatchEvent(
+        new CustomEvent("phonara:silent-notify", {
+          detail: { message: String(message), payload, ts: Date.now() },
+        }),
+      );
+    } catch {
+      /* ignore */
+    }
+  },
 };
 
 export type Notify = typeof notify;
