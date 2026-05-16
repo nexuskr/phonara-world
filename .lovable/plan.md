@@ -1,5 +1,9 @@
 # Sprint 2 — Wallet & Withdraw UX
 
+## 입출금 정책 (절대 준수)
+- 입금: USDT + 원화 계좌이체 + 상품권(수동)
+- 출금: USDT + 원화 계좌이체 **(상품권 출금 불가)**
+
 ## 목표
 Earn으로 모은 PHON을 5분 안에 실제 출금까지 끝낼 수 있다는 신뢰를 50–70대에게 5초 안에 전달한다. `/wallet` 진입 → 잔액 인지 → 3스텝 출금 → ProcessingBanner → History 갱신까지 한 손, Zero lag.
 
