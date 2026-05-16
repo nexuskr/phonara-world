@@ -42,7 +42,10 @@ export default defineConfig(({ mode }) => ({
           !/\/locale-(ja|vi)-[^/]+\.js$/.test(d) &&
           !/\/motion-[^/]+\.js$/.test(d) &&
           !/\/icons-[^/]+\.js$/.test(d) &&
-          !/\/supabase-[^/]+\.js$/.test(d),
+          !/\/supabase-[^/]+\.js$/.test(d) &&
+          // PR-K: operator chunk(s) must NEVER preload on Layer 1.
+          // Loaded only when user hits /admin/* via React.lazy.
+          !/\/operator(-[^/]+)?\.js$/.test(d),
         ),
     },
     rollupOptions: {
@@ -62,6 +65,21 @@ export default defineConfig(({ mode }) => ({
 
           // 사운드 매니저(소스) — 슬롯 공통이지만 슬롯 페이지가 router-lazy 이므로
           // async chunk 로 자연 분리됨. 명시적 그룹화는 위와 같은 흡수 이슈를 유발하므로 제거.
+
+          // PR-K — Operator Isolation.
+          // 모든 admin/operator 코드를 단일 "operator" 청크로 강제 격리한다.
+          // Layer 1(일반 유저) 번들에서 0바이트가 되어야 한다.
+          // 검증: `node scripts/check-operator-isolation.mjs`.
+          if (
+            id.includes("/src/pages/admin/") ||
+            id.includes("/src/components/admin/") ||
+            id.includes("/src/packages/operator/") ||
+            id.endsWith("/src/pages/Admin.tsx") ||
+            id.endsWith("/src/pages/Cockpit.tsx") ||
+            id.endsWith("/src/pages/CockpitV2.tsx")
+          ) {
+            return "operator";
+          }
 
           if (!id.includes("node_modules")) return;
 
