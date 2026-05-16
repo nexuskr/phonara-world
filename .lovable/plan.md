@@ -1,105 +1,145 @@
-# Sprint 3 — Deposit Fast Lane (입금 5분 확신)
+# Sprint 3 — Deposit Fast Lane v3.0 (FINAL ARCHITECT EDITION)
 
-출금이 5분이면 입금도 5분. /wallet 상단 `[지금 충전]` 한 번에 USDT / 계좌이체 / 상품권(수동)을 한 손·3스텝으로 끝낸다. 50–70대가 "내 돈을 바로 넣을 수 있구나"를 5초 안에 체감한다.
+PhonarA Wallet / Deposit System. Stake급 운영 안정성 + Rollbit급 속도감 + Freecash급 온보딩 UX.
 
-## 입출금 정책 (절대 준수)
-- 입금: USDT + 원화 계좌이체 + 상품권(수동)
-- 출금: USDT + 원화 계좌이체 (상품권 출금 불가 — 모달 하단에 상시 노출)
+## 0. 목표
+- 입금 시작까지 5초, 입금 완료 확신까지 30초, 재충전 루프 활성화.
+- 진짜 만드는 것은 "입금 UI"가 아니라 **돈 흐름 상태머신**. "내 돈이 지금 어디 상태인지" 절대 불안하지 않게.
 
-## 재사용 (변경 금지)
+## 1. Deposit Lifecycle (불변)
+```text
+draft → intent_created → awaiting_payment → matching → filled
+                                          ↘ expired
+                                          ↘ manual_review (voucher)
+```
+
+### 정책 (불변)
+- 입금: USDT / 원화 계좌이체 / 상품권(수동)
+- 출금: USDT / 원화 계좌이체 (상품권 출금 금지)
+
+### 재사용 (변경 금지)
 - RPC: `create_crypto_deposit_intent`, `get_pay_receive_address`, `get_my_pending_deposits`, `submit_deposit`, `validate_deposit_input`
-- 클라: `src/lib/phonaraPay.ts`, `src/lib/deposits-rpc.ts` (`uploadReceipt` 포함)
-- 컴포넌트: `PhonaraPayPanel` 내부 매칭 로직(주소·만료·realtime)
-- 변환: `src/lib/displayCurrency.ts` (PHON ↔ ₩, 1 USDT = 1,300 PHON)
+- 클라: `src/lib/phonaraPay.ts`, `src/lib/deposits-rpc.ts` (`uploadReceipt`)
+- 매칭 레이어: `PhonaraPayPanel` realtime / address expiry / intent tracking
 
-## 신규 파일 (모두 `@pkg/wallet/*`)
+## 2. Phase A — Financial Correctness (먼저 고정)
+
+### A-1. State Invariants
+- expired intent reuse 금지
+- filled 이후 duplicate submit 금지
+- voucher는 manual_review 허용
+- bank는 memo(sender name) 기반 매칭
+- USDT는 `unique_amount` exact match only (소수 4자리)
+
+### A-2. Realtime 우선, Polling은 Fallback
+- 채널: `crypto_deposit_intents` UPDATE (intent.id 필터)
+- 이벤트 처리: `status=filled` →
+  1. Step 3 자동 전환
+  2. `notify.success(g('depositSuccess'))`
+  3. `window.dispatchEvent(new Event('wallet:refresh'))`
+  4. History + balance refetch
+- 30s `get_my_pending_deposits` polling fallback (realtime drop 대비)
+
+### A-3. Error Recoverability Map
+| 코드 | Recoverable | Action |
+|---|---|---|
+| `amount_below_min` | YES | stay step 2 |
+| `intent_expired` | YES | regenerate intent CTA |
+| `voucher_pin_invalid` | YES | reset PIN |
+| `receipt_upload_failed` | YES | retry upload |
+| `realtime_disconnect` | YES | reconnect + polling |
+| `duplicate_submit` | NO | lock + 안내 |
+
+## 3. Phase B — UX Execution
+
+### Step 1 — Method Select (5초 인지)
+- 카드 3장 (USDT / 계좌이체 / 상품권), `min-h-[120px] text-xl font-black`, 아이콘 32px
+- ETA 배지: USDT 1~5분 · 계좌 5~30분 · 상품권 수동
+- 정책 라인 Hot Pink `#FF00AA` 고정: "상품권은 입금 전용 (출금 불가)"
+
+### Step 2 — Method Detail
+
+**A. USDT** — "생각 없이 복사·전송"
+```text
+get_pay_receive_address → create_crypto_deposit_intent → unique_amount
+표시 우선순위: QR > [복사] > 주소 > 경고
+Countdown: >5분 Warm Gold / ≤5분 Hot Pink pulse
+상태: "현재 매칭 대기 중" pulse
+```
+
+**B. Bank** — "은행 앱으로 보내면 끝"
+- 입금 계좌 + `senderName = user.nickname` 자동 채움 (오타↓ 매칭률↑ 입력↓)
+- `submit_deposit({ method:'bank', amount, memo: senderName })`
+- 안심 카피: "자동 매칭 처리 중 · 보통 5~30분 내 반영"
+
+**C. Voucher** — "자동화보다 신뢰감"
+- 브랜드: culture / happy / cultureland
+- PIN 16~18자리 (마스킹, paste 허용)
+- `uploadReceipt(file)` → signed URL → `submit_deposit({method:'voucher', voucher_brand, voucher_pin, receipt_url})`
+- 상태 `manual_review` + "카톡 채널 1:1 안내"
+
+### Step 3 — Completion ("내 돈 사라지지 않았다")
+- Warm Gold check 성공 표시
+- ETA: USDT 1~5분 / 계좌 5~30분 / 상품권 1~6시간
+- CTA: [내 입금 보기] / [닫기]
+
+## 4. File Structure
 ```text
 src/packages/wallet/
   hooks/
-    useDeposit.ts             # 3스텝 상태머신 + 수단별 분기 + intent/upload
+    useDeposit.ts        # state machine + realtime + upload
   components/
-    DepositCard.tsx           # 초대형 [지금 충전] CTA + 평균 도착 배지
-    DepositModal.tsx          # 3스텝 다이얼로그
-    DepositHistory.tsx        # 최근 입금 5건 (pending/filled/expired)
+    DepositCard.tsx      # 초대형 CTA + 평균 도착 배지
+    DepositModal.tsx     # 3-step dialog
+    DepositHistory.tsx   # 최근 5건 + status pill + realtime
 ```
 
-`WalletTopSection.tsx` 갱신 — `<WithdrawCard />` 옆에 `<DepositCard />` 추가, 아래에 `<DepositHistory />` 추가. 기존 `<WithdrawModal />` / `<WithdrawHistory />` / `<ProcessingBanner />` 흐름은 그대로 보존.
-
-## 컴포넌트 트리
+`WalletTopSection` 갱신:
 ```text
-Wallet (page)
+Wallet
 └─ WalletTopSection
-   ├─ WalletDashboard                (잔액·KPI·ProcessingBanner)
-   ├─ grid grid-cols-2 gap-3
-   │   ├─ WithdrawCard               (지금 출금)
-   │   └─ DepositCard                (지금 충전) ── opens DepositModal
+   ├─ WalletDashboard
+   ├─ CTA Grid (grid-cols-2 gap-3)
+   │   ├─ WithdrawCard
+   │   └─ DepositCard
    ├─ WithdrawHistory
    └─ DepositHistory
 ```
 
-## DepositModal 3스텝 흐름
-```text
-Step 1  수단 선택
-  - 큰 카드 3개 (USDT / 계좌이체 / 상품권)
-  - 카드별 ETA 배지: USDT 1~5분 · 계좌 5~30분 · 상품권 수동 확인
-  - 정책 라인 상시: "상품권은 입금 전용 (출금 불가)"
+## 5. useDeposit FINAL State Machine
+```ts
+step: 1 | 2 | 3
+method: 'coin' | 'bank' | 'voucher'
+common: { amount }
+coin:   { intent, qrDataUrl, expiresAt, status }
+bank:   { bankName, bankAccount, senderName }
+voucher:{ voucherBrand, voucherPin, receiptFile, receiptUrl }
 
-Step 2  수단별 상세
-  · USDT (TRC20)
-      - get_pay_receive_address 로드 → create_crypto_deposit_intent(amount)
-      - QR (data URL) + 주소 모노스페이스 + [복사] 큰 버튼 (haptic + 토스트)
-      - unique_amount 강조 (소수 4자리 정확 매칭 안내)
-      - 30분 카운트다운 + "현재 매칭 대기 중" 펄스
-      - realtime: crypto_deposit_intents UPDATE → status=filled 즉시 Step 3
-  · 계좌이체 (bank)
-      - 입금 계좌: pay_config(bank) 노출(없으면 안내 카피)
-      - "보낼 사람 이름"을 사용자 닉네임으로 자동 채움 + 복사 버튼
-      - submit_deposit({ method:'bank', amount, memo })로 신청 기록
-      - 자동매칭/5~30분 안내
-  · 상품권 (voucher, 수동)
-      - 브랜드 선택 (culture / happy / cultureland)
-      - PIN 16~18자리 입력 (마스킹, paste 허용)
-      - 사진 업로드 1장 (uploadReceipt → signed URL)
-      - submit_deposit({ method:'voucher', voucher_brand, voucher_pin, receipt_url })
-      - "카톡 채널 1:1 안내" 라인 (mem 제약 — 자동 PG 금지)
-
-Step 3  완료 안내
-  - "신청이 접수되었습니다" + Warm Gold 체크
-  - 예상 도착: USDT 1~5분 / 계좌 5~30분 / 상품권 1~6시간
-  - CTA 2개: [내 입금 보기] (DepositHistory 스크롤) · [닫기]
+actions:
+  next() prev() reset() close()
+  submit()                  // method별 분기
+  copy(text)                // haptic + toast
+  regenerateIntent()        // expired 복구
+  subscribeRealtime(id)     // crypto_deposit_intents UPDATE
 ```
 
-## useDeposit 상태머신
-- `step`: 1 | 2 | 3
-- `method`: 'coin' | 'bank' | 'voucher'
-- 공통: `amount` (KRW 기준 입력, USDT는 내부에서 환산)
-- coin: `intent`, `qrDataUrl`, `expiresAt`, `status`
-- bank: `bankName`, `bankAccount`, `senderName`
-- voucher: `voucherBrand`, `voucherPin`, `receiptFile`, `receiptUrl`
-- actions: `next() / prev() / submit() / copy(text)`
-- 검증
-  - amount ≥ 최소 입금액 (수단별: USDT 10,000 / 계좌 10,000 / 상품권 5,000)
-  - voucher PIN length 16~18, brand 필수
-  - submit 실패 시 토스트 + 머무름
-- realtime: coin intent.id 채널 구독 → filled 즉시 Step 3 + `window.dispatchEvent('wallet:refresh')`
+## 6. Validation
+| 수단 | 최소 |
+|---|---|
+| coin | 10,000 KRW |
+| bank | 10,000 KRW |
+| voucher | 5,000 KRW |
 
-## 에러 매핑 (Glossary)
-| 코드 | 토스트 키 | 액션 |
-|---|---|---|
-| `amount_below_min` | `depositErrMin` | Step 2 머무름 |
-| `intent_expired` | `depositErrExpired` | 자동 재발급 버튼 노출 |
-| `voucher_pin_invalid` | `depositErrVoucherPin` | PIN 초기화 |
-| `receipt_upload_failed` | `depositErrUpload` | 재시도 버튼 |
-| 그 외 | `depositErrGeneric` | 머무름 |
+- voucher: brand 필수, pin length 16~18
+- expired → regenerate 버튼 노출
+- upload 실패 → retry CTA
 
-## 50–70대 가독성 규칙
-- 수단 카드: `min-h-[120px] text-xl font-black`, 아이콘 32px
-- 주소/계좌/PIN 표시: `text-lg font-mono tabular-nums tracking-wide`
-- 복사 버튼: `min-h-[56px] bg-amber-300 text-black font-black`
-- 카운트다운: 5분 미만 Hot Pink `#FF00AA` 펄스
-- 모바일 360px: `px-4 py-5`, 수단 카드 1열 스택 + 우측 ETA 배지
+## 7. Mobile 360px QA
+- no horizontal overflow / QR fully visible / font ≥16px / CTA thumb reach / safe-area inset
+- 공통 클래스: `px-4 py-5 gap-3 rounded-3xl`
 
-## Glossary 신규 키 (`src/lib/glossary.ts`)
+## 8. Glossary 정책 (100% `g()`)
+신규 키:
 ```
 depositNow, depositCtaSub, depositAvgTime,
 depositStep1Title, depositStep2Title, depositStep3Title,
@@ -107,35 +147,57 @@ depositMethodCoin, depositMethodBank, depositMethodVoucher,
 depositMethodCoinSub, depositMethodBankSub, depositMethodVoucherSub,
 depositAmountLabel, depositMin, depositCopy, depositCopied,
 depositCoinNetwork, depositCoinAddress, depositCoinUnique,
-depositCoinExpiresIn, depositCoinWaiting, depositCoinFilled,
-depositBankName, depositBankAccount, depositBankSender,
-depositVoucherBrand, depositVoucherPin, depositVoucherPhoto,
-depositVoucherKakao, depositPolicyNotice (= "상품권은 입금 전용 (출금 불가)"),
-depositSubmit, depositSuccess, depositEtaCoin, depositEtaBank, depositEtaVoucher,
-depositHistoryTitle, depositHistoryEmpty,
+depositCoinExpiresIn, depositCoinWaiting, depositCoinFilled, depositCoinRegenerate,
+depositBankName, depositBankAccount, depositBankSender, depositBankAutoMatch,
+depositVoucherBrand, depositVoucherPin, depositVoucherPhoto, depositVoucherKakao, depositVoucherReview,
+depositPolicyNotice,
+depositSubmit, depositSuccess,
+depositEtaCoin, depositEtaBank, depositEtaVoucher,
+depositHistoryTitle, depositHistoryEmpty, depositSeeMine,
 depositStatusPending, depositStatusFilled, depositStatusExpired, depositStatusReview,
-depositErrMin, depositErrExpired, depositErrVoucherPin, depositErrUpload, depositErrGeneric
+depositErrMin, depositErrExpired, depositErrVoucherPin, depositErrUpload, depositErrDuplicate, depositErrGeneric
 ```
+검증: `rg '"[가-힣]' src/packages/wallet` 결과 0건.
 
-## 검증 체크리스트
-- [ ] /wallet 상단 5초 이내 [지금 출금] + [지금 충전] 동시 렌더
-- [ ] 3스텝 한 손 흐름, 모든 버튼 ≥56px
-- [ ] 360px 잘림 없음, 카운트다운 가독성 유지
-- [ ] USDT 매칭 realtime → Step 3 자동 전환 + History 즉시 갱신
-- [ ] 상품권: 사진 업로드 → submit_deposit 정상 + 정책 안내 노출
-- [ ] 모든 텍스트 g() 100% (수동 grep)
-- [ ] DB/RPC 변경 0건
+## 9. Final QA Checklist
+
+**UX**
+- [ ] 5초 충전 인지 (CTA 즉시 보임)
+- [ ] 3-step one-hand flow
+- [ ] 모든 버튼 ≥56px, Warm Senior UI
+
+**Financial**
+- [ ] unique_amount exact match
+- [ ] realtime fill detection
+- [ ] expiry handling + regenerate
+- [ ] duplicate submit lock
+
+**Ops**
+- [ ] manual voucher review 흐름
+- [ ] `wallet:refresh` 이벤트 sync
+- [ ] recoverable error 복구 UI
+- [ ] upload retry
+
+**Engineering**
+- [ ] DB 변경 0 / RPC 추가 0
+- [ ] Withdraw 흐름 미변경
+- [ ] 기존 매칭 레이어 재사용
+
+## 10. 작업 순서
+```text
+1) Glossary 키 + useDeposit (state + realtime + validate)
+2) DepositCard / DepositHistory (realtime status)
+3) DepositModal Step1 (method select)
+4) DepositModal Step2 (USDT QR + Bank + Voucher)
+5) DepositModal Step3 (completion + CTA)
+6) WalletTopSection 2열 CTA 통합
+7) Polish: 360px QA, expired regenerate, upload retry, grep g() 100%
+```
 
 ## 비포함
-- 결제 PG / Stripe / 카카오 SDK (mem 제약)
-- 신규 테이블 / RPC / 트리거
+- 결제 PG / Stripe / 카카오 SDK 자동연동 (mem 제약)
+- 신규 DB / RPC / 트리거
 - 출금 흐름 변경
 
-## 작업 순서
-```text
-1) Glossary 키 + useDeposit 훅
-2) DepositCard / DepositHistory
-3) DepositModal 3스텝 (수단별 분기)
-4) WalletTopSection 통합 + 2열 CTA 그리드
-5) Polish: realtime, 카운트다운, 360px QA
-```
+## 의미
+입금 모달이 아니라 **Retention Infrastructure**. 출금만 쉬우면 빠져나가고, 입금까지 쉬워야 다시 들어온다.
