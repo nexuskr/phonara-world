@@ -1,47 +1,56 @@
 /**
- * @pkg/realtime — Realtime 4-way Partition (LOCKED v3.0 Week 1 #3)
+ * @pkg/realtime — Realtime 4-way Partition (LOCKED v3.1 Phase 3 PR-J)
  *
- *  4 채널만 허용 — 그 외 직접 supabase.channel() 호출 금지 (ESLint custom rule 예정):
- *    - wallet : 잔액/입출금/PHON 잔액
- *    - game   : 슬롯·라이브 포지션·게임 결과
- *    - chat   : 채팅·DM·comment
- *    - market : oracle 가격·예측 시장·티커
+ * 외부 코드는 `useRealtimeChannel` / `supabase.channel()` 직접 import 금지 (ESLint enforced).
+ * 4-파티션 wrapper 만 사용한다:
  *
- * 기존 single-entry `useRealtimeChannel` (`@/hooks/use-realtime-channel`)을
- * 4 partition으로 라벨링하는 얇은 래퍼. 각 partition은 권장 prefix를 따른다:
- *   wallet:phon_balances · game:live_positions · chat:chat_messages · market:oracle_prices
+ *   useWalletChannel   wallet:<resource>[:id]   잔액·입출금·PHON·NFT
+ *   useGameChannel     game:<resource>[:id]     슬롯·라이브 포지션·잭팟·empire 이벤트
+ *   useChatChannel     chat:<resource>[:id]     채팅·서포트·관리자 알림
+ *   useMarketChannel   market:<resource>[:id]   오라클·예측시장·티커
  *
- * 진짜 socket 분리는 Supabase realtime 단일 ws를 쓰므로 물리 분리는 아니지만,
- * (1) 채널 키 namespace, (2) 컴포넌트 import 경로, (3) 텔레메트리 라벨을 통일해
- * "어디서 무엇이 구독하는지"를 한눈에 추적 가능하게 한다.
+ * money-flow 관련 read realtime 은 반드시 useWalletChannel.
+ *
+ * key prefix 는 자동 부여 — 호출부는 `wallet:` 등 prefix 를 생략해도 안전하다.
  */
-import { useRealtimeChannel } from "@/hooks/use-realtime-channel";
+import {
+  useRealtimeChannel,
+  type UseRealtimeChannelOpts,
+  type ConnState,
+} from "@/hooks/use-realtime-channel";
 
 export type RealtimePartition = "wallet" | "game" | "chat" | "market";
+export type PartitionOpts = UseRealtimeChannelOpts;
+export type { ConnState };
 
-type AnyOpts = Parameters<typeof useRealtimeChannel>[0];
+const LOG = "[PHONARA REALTIME]";
 
-/** wallet 채널: phon_balances · withdrawal_requests · deposit_requests 등 */
-export function useWalletChannel(opts: AnyOpts) {
-  return useRealtimeChannel({ ...opts, key: prefix("wallet", opts.key) });
+function buildKey(part: RealtimePartition, key: string): string {
+  if (!key) return "";
+  if (key.startsWith(`${part}:`)) return key;
+  if (import.meta.env.DEV && /^(wallet|game|chat|market):/.test(key)) {
+    // eslint-disable-next-line no-console
+    console.warn(`${LOG} cross-partition key "${key}" mounted on ${part} — should be ${part}:*`);
+  }
+  return `${part}:${key}`;
 }
 
-/** game 채널: live_positions · slot_spins · game_results 등 */
-export function useGameChannel(opts: AnyOpts) {
-  return useRealtimeChannel({ ...opts, key: prefix("game", opts.key) });
+/** wallet 채널: phon_balances · withdrawal_requests · deposit_requests · nft_collection 등 */
+export function useWalletChannel(opts: PartitionOpts) {
+  return useRealtimeChannel({ ...opts, key: buildKey("wallet", opts.key) });
 }
 
-/** chat 채널: chat_messages · dm_threads · comments 등 */
-export function useChatChannel(opts: AnyOpts) {
-  return useRealtimeChannel({ ...opts, key: prefix("chat", opts.key) });
+/** game 채널: live_positions · slot_spins · jackpot · empire 이벤트 등 */
+export function useGameChannel(opts: PartitionOpts) {
+  return useRealtimeChannel({ ...opts, key: buildKey("game", opts.key) });
+}
+
+/** chat 채널: chat_messages · support_tickets · admin alerts · audit log 등 */
+export function useChatChannel(opts: PartitionOpts) {
+  return useRealtimeChannel({ ...opts, key: buildKey("chat", opts.key) });
 }
 
 /** market 채널: oracle_prices · prediction_markets · 마켓 티커 등 */
-export function useMarketChannel(opts: AnyOpts) {
-  return useRealtimeChannel({ ...opts, key: prefix("market", opts.key) });
-}
-
-function prefix(part: RealtimePartition, key: string): string {
-  if (key.startsWith(`${part}:`)) return key;
-  return `${part}:${key}`;
+export function useMarketChannel(opts: PartitionOpts) {
+  return useRealtimeChannel({ ...opts, key: buildKey("market", opts.key) });
 }
