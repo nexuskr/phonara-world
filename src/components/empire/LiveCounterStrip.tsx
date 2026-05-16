@@ -57,7 +57,7 @@ export default function LiveCounterStrip() {
     }, 2000 , { meta: { owner: "LiveCounterStrip", category: "cosmetic" } });
     return () => {
       alive = false;
-      clearInterval(timer);
+      timer?.();
     };
   }, []);
 
