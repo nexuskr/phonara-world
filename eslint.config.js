@@ -25,14 +25,59 @@ const REALTIME_WRAPPERS = [
 
 // TODO PHASE 2 — 이 목록은 detox 진행하며 0으로 줄여야 함.
 //   각 파일을 notify wrapper / realtime wrapper 사용으로 마이그레이션 후 항목 제거.
+//   새로 추가되는 파일은 절대 이 목록에 들어가면 안 됨 (error 규칙이 막음).
 const LEGACY_DIRECT_SONNER = [
   "src/components/NeonNotificationFeed.tsx",
   "src/lib/layout-shift-monitor.ts",
 ];
 
 const LEGACY_RAW_CHANNEL = [
-  "src/components/dashboard/v3/ActivityEventTicker.tsx",
+  "src/components/EmpireFoundingCounter.tsx",
+  "src/components/FloatingChat.tsx",
+  "src/components/FreezeBanner.tsx",
+  "src/components/InsuranceFundDashboard.tsx",
+  "src/components/JackpotBanner.tsx",
+  "src/components/NeonNotificationFeed.tsx",
+  "src/components/RequestTimeline.tsx",
+  "src/components/admin/AMLAdmin.tsx",
+  "src/components/admin/AnomalyAckQueue.tsx",
+  "src/components/admin/AnomalyAutoFixPanel.tsx",
+  "src/components/admin/DepositRequestsAdmin.tsx",
+  "src/components/admin/FunnelAnalytics.tsx",
   "src/components/admin/GodModePanel.tsx",
+  "src/components/admin/PackagePurchasesAdmin.tsx",
+  "src/components/admin/PayConsole.tsx",
+  "src/components/admin/PermissionsAudit.tsx",
+  "src/components/admin/ReferralsAdmin.tsx",
+  "src/components/admin/TrustV2Admin.tsx",
+  "src/components/admin/ViralForensics.tsx",
+  "src/components/admin/WithdrawRequestsAdmin.tsx",
+  "src/components/admin/compliance/RiskCenter.tsx",
+  "src/components/auth/AuthSocialProof.tsx",
+  "src/components/conversion/LivePurchaseTicker.tsx",
+  "src/components/dashboard/v3/ActivityEventTicker.tsx",
+  "src/components/empire/EmpireLevelBadge.tsx",
+  "src/components/empire/EmpireMomentToast.tsx",
+  "src/components/empire/FoundingSeasonHall.tsx",
+  "src/components/empire/LiveWithdrawalsTable.tsx",
+  "src/components/empire/PhonaraPayPanel.tsx",
+  "src/components/lounge/GuildLiveFeed.tsx",
+  "src/components/trading/PendingOrderManager.tsx",
+  "src/components/wallet/ServerTxList.tsx",
+  "src/hooks/use-admin-notifications.ts",
+  "src/hooks/use-admin-pending.ts",
+  "src/hooks/use-admin-siren.ts",
+  "src/hooks/use-auth-live-data.ts",
+  "src/hooks/use-daily-cap.ts",
+  "src/hooks/use-user-notifications.ts",
+  "src/lib/layout-shift-monitor.ts",
+  "src/pages/Cockpit.tsx",
+  "src/pages/EmpireArena.tsx",
+  "src/pages/GalaxyAuction.tsx",
+  "src/pages/Lounge.tsx",
+  "src/pages/Settlements.tsx",
+  "src/pages/WarTradingArena.tsx",
+  "src/pages/Whales.tsx",
 ];
 
 // Critical money path — 절대 무거워지면 안 됨.
