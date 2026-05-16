@@ -36,6 +36,8 @@ type GameCard = {
 };
 
 const GAMES: GameCard[] = [
+  { to: "/casino/olympus-legacy-5000", code: "olympus_legacy_5000", title: "Olympus Legacy 5000",
+    subtitle: "고변동 · Cluster Tumble · Zeus Ladder", rtp: "RTP 96.0%", max: "MAX 5000×", bg: bgImage, logo: logoImage },
   { to: "/casino/cosmic-forge-5000", code: "cosmic_forge_5000", title: "Cosmic Forge 5000",
     subtitle: "고변동 · Sticky Multiplier", rtp: "RTP 96.0%", max: "MAX 5000×", bg: bgCosmic, logo: logoCosmic },
   { to: "/casino/neon-tokyo-88", code: "neon_tokyo_88", title: "Neon Tokyo 88",
