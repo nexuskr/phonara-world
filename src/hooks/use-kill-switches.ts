@@ -7,6 +7,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { setVisibleInterval } from "@/lib/util/visible-interval";
+import { isCategoryPaused } from "@pkg/runtime";
 
 export type KillSwitches = {
   trading_halt: boolean;
