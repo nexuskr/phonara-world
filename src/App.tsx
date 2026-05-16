@@ -195,6 +195,7 @@ function GlobalOverlays() {
       <Suspense fallback={null}><ForcedShareDialog /></Suspense>
       <Suspense fallback={null}><VipArrivalAnnouncer /></Suspense>
       <Suspense fallback={null}><ReactivationOfferDialog /></Suspense>
+      <Suspense fallback={null}><OnboardingV3 /></Suspense>
     </>
   );
 }
