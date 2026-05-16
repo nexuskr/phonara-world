@@ -31,13 +31,52 @@ export default function PersonalizedFeedRail({ limit = 12 }: { limit?: number })
   const [bias, setBias] = useState<Bias>(() => {
     try { return (localStorage.getItem(BIAS_KEY) as Bias) ?? "auto"; } catch { return "auto"; }
   });
+  const lastClickRef = useRef(0);
+  const [autoGenTried, setAutoGenTried] = useState(false);
 
   async function load() {
     try {
       const data = await rankFeedForUser(limit);
       setItems(data);
+      return data;
     } catch {
       setItems([]);
+      return [] as FeedRecommendation[];
+    }
+  }
+
+  /** Fallback: trending RPC → 최근 videos SELECT. 항상 카드가 보이도록 보장. */
+  async function loadFallback(): Promise<FeedRecommendation[]> {
+    try {
+      const { data } = await (supabase as any).rpc("get_trending_videos", { _limit: limit });
+      if (Array.isArray(data) && data.length) {
+        const seeded: FeedRecommendation[] = data.slice(0, limit).map((r: any) => ({
+          video_id: r.video_id ?? r.id,
+          score: Number(r.score ?? 0),
+          mode: "fallback-trending",
+          served_at: new Date().toISOString(),
+        }));
+        setItems(seeded);
+        return seeded;
+      }
+    } catch { /* ignore — final fallback below */ }
+    try {
+      const { data } = await supabase
+        .from("videos")
+        .select("id")
+        .order("created_at", { ascending: false })
+        .limit(limit);
+      const seeded: FeedRecommendation[] = (data ?? []).map((r: any) => ({
+        video_id: r.id,
+        score: 0,
+        mode: "fallback-recent",
+        served_at: new Date().toISOString(),
+      }));
+      setItems(seeded);
+      return seeded;
+    } catch {
+      setItems([]);
+      return [];
     }
   }
 
@@ -48,17 +87,21 @@ export default function PersonalizedFeedRail({ limit = 12 }: { limit?: number })
       if (!session) {
         const { notify } = await import("@/lib/notify");
         notify.info("로그인이 필요합니다", { description: "맞춤 피드를 생성하려면 먼저 로그인해 주세요." });
+        // 비로그인도 폴백으로 카드는 보여준다
+        await loadFallback();
         return;
       }
-      const { error } = await supabase.functions.invoke("feed-personalize", {
-        body: { bias: nextBias },
-      });
-      if (error) throw error;
-      await load();
+      const invokeP = supabase.functions.invoke("feed-personalize", { body: { bias: nextBias } });
+      const timeoutP = new Promise<{ error: Error }>((resolve) =>
+        window.setTimeout(() => resolve({ error: new Error("personalize_timeout") }), 8000),
+      );
+      const res: any = await Promise.race([invokeP, timeoutP]);
+      if (res?.error) throw res.error;
+      const fresh = await load();
+      if (!fresh.length) await loadFallback();
     } catch (e: any) {
-      console.error("[PersonalizedFeedRail] generate failed", e);
-      const { notify } = await import("@/lib/notify");
-      notify.error("새로고침 실패", { description: e?.message ?? "잠시 후 다시 시도해 주세요." });
+      console.debug("[PersonalizedFeedRail] generate failed → fallback seed", e);
+      await loadFallback();
     } finally {
       setGenerating(false);
     }
@@ -72,8 +115,15 @@ export default function PersonalizedFeedRail({ limit = 12 }: { limit?: number })
     void generate(next);
   }
 
+  function onRefreshClick() {
+    const now = Date.now();
+    if (now - lastClickRef.current < 3000) return; // 3s 쿨다운
+    lastClickRef.current = now;
+    setAutoGenTried(false);
+    void generate();
+  }
+
   // Initial load + auto-generate when empty (one shot)
-  const [autoGenTried, setAutoGenTried] = useState(false);
   useEffect(() => { void load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (items && items.length === 0 && !autoGenTried) {
@@ -84,7 +134,7 @@ export default function PersonalizedFeedRail({ limit = 12 }: { limit?: number })
 
   const header = (
     <Header
-      onRefresh={() => generate()}
+      onRefresh={onRefreshClick}
       busy={generating}
       bias={bias}
       onBiasChange={changeBias}
