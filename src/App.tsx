@@ -62,6 +62,7 @@ const PharaohsVault2500 = lazy(() => import("./pages/casino/PharaohsVault2500.ts
 const VikingThunder4000 = lazy(() => import("./pages/casino/VikingThunder4000.tsx"));
 const AztecSun1200 = lazy(() => import("./pages/casino/AztecSun1200.tsx"));
 const CherrySakura500 = lazy(() => import("./pages/casino/CherrySakura500.tsx"));
+const OlympusLegacy5000 = lazy(() => import("./pages/casino/OlympusLegacy5000.tsx"));
 const Missions = lazy(() => import("./pages/Missions.tsx"));
 const Packages = lazy(() => import("./pages/Packages.tsx"));
 const Wallet = lazy(() => import("./pages/Wallet.tsx"));
