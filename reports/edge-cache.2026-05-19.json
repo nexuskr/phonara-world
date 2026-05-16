@@ -1,0 +1,34 @@
+{
+  "generated_at": "2026-05-19T00:00:00Z",
+  "headers_snapshot": {
+    "/assets/*.js": "public, max-age=31536000, immutable",
+    "/assets/*.css": "public, max-age=31536000, immutable",
+    "/locales/*": "public, max-age=31536000, immutable",
+    "/sounds/*": "public, max-age=2592000, stale-while-revalidate=86400",
+    "/sw.js": "no-cache, no-store, must-revalidate",
+    "/sw-push.js": "no-cache, no-store, must-revalidate",
+    "/manifest*.webmanifest": "public, max-age=3600",
+    "/": "public, max-age=0, must-revalidate",
+    "/index.html": "public, max-age=0, must-revalidate"
+  },
+  "edge_functions": {
+    "public-status (json)": "public, max-age=60, stale-while-revalidate=300",
+    "public-status (shield)": "public, max-age=60, stale-while-revalidate=120"
+  },
+  "client_swr": {
+    "module": "src/packages/core/swr.ts",
+    "whitelist": [
+      "world_domination_stats",
+      "recent_payouts_100",
+      "whale_strikes_24h",
+      "payout_ops_stats_24h"
+    ],
+    "default_ttl_ms": 60000,
+    "default_swr_ms": 300000
+  },
+  "verification": {
+    "money_flow_freeze": "PASS (0 diff)",
+    "operator_isolation": "PASS (0 leaks)",
+    "bundle_budget": "PASS (10/10 routes within limit)"
+  }
+}
