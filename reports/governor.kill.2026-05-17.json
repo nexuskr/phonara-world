@@ -1,0 +1,32 @@
+{
+  "_pr": "PR-I",
+  "_phase": "Phase 3 — Active Governance",
+  "_summary": "killCategory/killAll LIVE with triple money_flow guard + Degrade Mode (kill-switch row 'degrade_mode' + DegradeModeBinder + DegradeModeBanner + body[data-degrade=1] + Tailwind degrade: variant).",
+  "capturedAt": null,
+  "scenario": "DEV console: (await import('@pkg/runtime')).killCategory('cosmetic')|('admin')|('money_flow')|killAll() — then runScenario() with body[data-degrade=1].",
+  "kill_contract": {
+    "money_flow_guards": [
+      "MONEY_FLOW_GUARD = ['money_flow'] explicit deny-list",
+      "KILLABLE = ['cosmetic','admin'] allow-list — fail-closed for any new category",
+      "killAll() iterates KILLABLE only — money_flow ids never enter the loop"
+    ],
+    "killable_categories": ["cosmetic", "admin"],
+    "expected": {
+      "killCategory('money_flow')": 0,
+      "killCategory('unknown')":   0,
+      "killCategory('cosmetic')":  ">= 0 (depends on tracked count)",
+      "killCategory('admin')":     ">= 0 (depends on tracked count)",
+      "killAll()":                 ">= 0 (cosmetic + admin only)"
+    }
+  },
+  "degrade_mode": {
+    "kill_switch_key": "degrade_mode",
+    "ui_surfaces": [
+      "<DegradeModeBanner /> sticky top — 18px+ font, Warm Gold + Hot Pink gradient, ShieldCheck 44px, no close button",
+      "body[data-degrade='1'] — Tailwind degrade: variant activates",
+      "notify.important on ON transition, notify.passive on OFF transition"
+    ],
+    "admin_surface": "/admin/ops/self-heal — KillSwitches tab, '🛡 비상 절전 모드' card with reason + Switch + AAL2 + audit log"
+  },
+  "next": "PR-J — Realtime Partition migration (useRealtimeChannel → @pkg/realtime 4-partition wrappers)."
+}
