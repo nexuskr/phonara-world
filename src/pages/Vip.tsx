@@ -189,12 +189,7 @@ export default function Vip() {
                     )}
                   >
                     {/* gradient header */}
-                    <div
-                      className="p-4 text-center"
-                      style={{
-                        background: `linear-gradient(135deg, ${t.gradient_from ? "" : ""}hsl(var(--card)) 0%, transparent 100%)`,
-                      }}
-                    >
+                    <div className="p-4 text-center bg-gradient-to-br from-card via-card/80 to-background">
                       <VipTierBadge tier={t.tier} size="md" className="mx-auto" />
                       <div className="mt-3 text-3xl font-black tabular-nums text-foreground">
                         {fmt(t.min_phon)}
