@@ -238,3 +238,42 @@ export const CHERRY_SAKURA_THEME: SlotTheme = {
   bgOverlay: SHEER_OVERLAY, reelPattern: SAKURA_PATTERN,
   bonusKind: "mission_trail",
 };
+
+// === FLAGSHIP — Olympus Legacy 5000 ==========================================
+// "Warm Olympus Luxury" — deep night blue + rich warm amber gold.
+// Reuses olympus symbol/sound pack for immediate launch (zero downtime).
+// Swap the two import lines below to new amber-gold hero assets when ready:
+//   import bgOlympusLegacy from "@/assets/slots/olympus-legacy/bg.jpg";
+//   import logoOlympusLegacy from "@/assets/slots/olympus-legacy/logo.png";
+
+// Marble columns + warm amber lattice + gentle gold halo
+const OLYMPUS_LEGACY_PATTERN =
+  "repeating-linear-gradient(90deg, hsla(45, 92%, 60%, 0.10) 0 1px, transparent 1px 22px), " +
+  "repeating-linear-gradient(0deg, hsla(45, 92%, 60%, 0.08) 0 1px, transparent 1px 22px), " +
+  "radial-gradient(circle at 50% 20%, hsla(45, 95%, 65%, 0.22), transparent 55%), " +
+  "radial-gradient(circle at 50% 100%, hsla(40, 80%, 30%, 0.28), transparent 70%)";
+
+export const OLYMPUS_LEGACY_THEME: SlotTheme = {
+  gameCode: "olympus_legacy_5000",
+  // ── Background asset strategy ──────────────────────────────────────────────
+  // Reusing the existing olympus art for an immediate launch. When the new
+  // amber-gold hero assets are ready, just swap these two lines (see comment
+  // block above).
+  bg: bgOlympus,
+  logo: logoOlympus,
+  title: "Olympus Legacy 5000",
+  rtpLabel: "96.0%",
+  volatility: "high",
+  maxMultiplier: 5000,
+  symbolPack: "olympus",
+  soundPack: "olympus",
+  // warm amber tint without breaking olympus card art
+  cardFilter: "hue-rotate(8deg) saturate(1.25) brightness(1.08)",
+  reelFrameClass:
+    "rounded-2xl border-2 border-amber-400/70 bg-gradient-to-b from-[#0a1228]/60 to-[#1a1408]/65 backdrop-blur-[2px] p-2 sm:p-3 shadow-[inset_0_0_60px_rgba(255,196,90,0.38)]",
+  spinStreakClass:
+    "pointer-events-none absolute inset-0 bg-gradient-to-b from-amber-100/0 via-amber-200/14 to-amber-100/0",
+  bgOverlay: SHEER_OVERLAY,
+  reelPattern: OLYMPUS_LEGACY_PATTERN,
+  bonusKind: "cluster_tumble",
+};
