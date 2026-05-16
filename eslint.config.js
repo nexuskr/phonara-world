@@ -200,4 +200,12 @@ export default tseslint.config(
       ...restrictCriticalImportsRule,
     },
   },
+  // Wrappers re-exemption (must come AFTER critical block to override).
+  {
+    files: [...NOTIFY_WRAPPERS, ...REALTIME_WRAPPERS],
+    rules: {
+      "no-restricted-imports": "off",
+      "no-restricted-syntax": "off",
+    },
+  },
 );
