@@ -240,11 +240,67 @@ depositCoinConfirming, depositRealtimeDegraded, depositErrVoucherDup,
 depositHistoryActiveBadge, depositSubmitLocked
 ```
 
-## 12. 비포함
+## 12. Pre-Launch Confidence Layer (A–E)
+
+### A. Modal Recovery Resume
+- `sessionStorage` 키 `phonara:deposit_draft:v1` = `{ method, amount, intentId, expiresAt, step, createdAt }`.
+- `useDeposit` mount 시 draft 존재 + `expiresAt > now()` → "진행 중인 입금이 있습니다. 이어서 진행할까요?" 모달 (Warm Gold 강조 / 새로 시작 / 이어서).
+- step3 진입(filled) 또는 명시적 cancel 시 draft 삭제.
+
+### B. Copy Verification UX
+- 모든 copy 액션(주소/금액/계좌/메모) 후:
+  - `notify.success(g('depositCopied'))` + 끝 6자리 강조 칩 (`...8F2A91`, 24px mono, Warm Gold border).
+  - 카드 내 해당 필드 1.5s shimmer + 체크 아이콘.
+- 고령층 "복사된 거 맞나?" 불안 제거.
+
+### C. Intent Expiry Grace UI
+- 카운트다운 00:00 도달 → 즉시 expired 표시 금지.
+- 2~5s grace: 카드 메시지 = `g('depositGraceChecking')` = "마지막 확인 중입니다…" + 회색 펄스.
+- grace 중 `get_my_pending_deposits` 1회 재조회 → filled면 Step3, 아니면 expired UI + regenerate CTA.
+
+### D. Analytics Correlation ID
+- `sessionStorage` 키 `phonara:deposit_funnel_id:v1` = `crypto.randomUUID()` (모달 open 시 발급, close+filled 시 폐기).
+- 모든 telemetry payload에 `session_funnel_id` 자동 첨부 → 한 유저의 modal_open→method→submit→intent→filled/abandon 한 줄로 분석.
+
+### E. "내 돈 보호중" 카피
+- `depositSafeChecking` = "입금 상태를 안전하게 확인 중입니다"
+- `depositProtectedLine` = "고객님의 돈은 안전하게 보호되고 있습니다"
+- `depositCoinConfirming` 하단 보조 라인으로 `depositProtectedLine` 노출 + Warm Gold `ShieldCheck` 아이콘.
+
+### Glossary 추가 (A–E)
+```
+depositCopied, depositResumeTitle, depositResumeBody, depositResumeContinue,
+depositResumeFresh, depositGraceChecking, depositSafeChecking, depositProtectedLine
+```
+
+## 13. 비포함
 - 결제 PG / Stripe / 카카오 SDK 자동연동 (mem 제약)
 - 신규 DB / RPC / 트리거
 - 출금 흐름 변경
 - 백엔드 rate limit (no-backend-rate-limiting directive)
 
-## 13. 의미
-입금 모달이 아니라 **Retention Infrastructure + Operable v1.0 Deposit System**. 출금만 쉬우면 빠져나가고, 입금까지 쉬워야 다시 들어온다. Hardening 7종으로 race / fraud / disconnect / funnel observability까지 운영 가능 수준 확보.
+## 14. 실행 순서 (4-Day Plan)
+
+**Day 1 — Foundation**
+- glossary 키 일괄 추가 (Sections 11+12)
+- `useDeposit` core state machine (step / method / draft resume / funnel id)
+- realtime 채널 + polling fallback (`useRealtimeChannel` 재사용)
+
+**Day 2 — Modal UX**
+- DepositModal Step 1/2/3 + 3카드 그리드
+- USDT QR 렌더 + copy verification UX (끝 6자리 칩)
+- regenerate flow + grace UI
+
+**Day 3 — History & Ops**
+- DepositHistory (pending top + `updated_at DESC` + Warm Gold active badge)
+- Telemetry 6 이벤트 + `session_funnel_id` 첨부
+- Realtime disconnect banner + voucher fraud soft limit + safe-checking 카피
+
+**Day 4 — QA Gate**
+- 360px 모바일 QA (한 손, 44px+ 터치, 18px+ 텍스트)
+- `g()` 100% grep 검증 (하드코딩 0)
+- Race QA: filled vs expired, 더블탭, 새로고침 resume
+- Duplicate QA: 같은 amount/메모 중복 차단
+
+## 15. 의미
+입금 모달이 아니라 **Retention + Money Confidence Infrastructure v1.0**. 출금만 쉬우면 빠져나가고, 입금까지 쉬워야 다시 들어온다. State machine / realtime / recoverability / telemetry / senior UX / fraud soft protection / draft resume / grace / safe-checking 카피까지 모두 포함.
