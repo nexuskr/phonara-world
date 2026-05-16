@@ -4,6 +4,7 @@ import { Flame, Timer, Trophy, Users, Sparkles } from "lucide-react";
 import { useReducedMotionPref } from "@/lib/app-settings";
 import { useRealtimeChannel } from "@/hooks/use-realtime-channel";
 import { formatKRW } from "@/lib/store";
+import { supabase } from "@/integrations/supabase/client";
 
 // Korean nicknames used for bot ticker (mixed with seeded bots if available)
 const BOT_NICK_POOL = [
@@ -15,7 +16,7 @@ function pickBotName(seed: number) {
   return BOT_NICK_POOL[seed % BOT_NICK_POOL.length];
 }
 
-type FeedItem = { id: string; name: string; prize: string; amount: number };
+type FeedItem = { id: string; name: string; prize: string; amount: number; sim: boolean };
 
 const PRIZES = [
   { label: "1만원 적중", amount: 10_000, weight: 30 },
