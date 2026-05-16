@@ -55,6 +55,7 @@ const Dynasty = lazy(() => import("./pages/Dynasty.tsx"));
 const Lounge = lazy(() => import("./pages/Lounge.tsx"));
 const Whales = lazy(() => import("./pages/Whales.tsx"));
 const Roulette = lazy(() => import("./pages/Roulette.tsx"));
+const Crash = lazy(() => import("./pages/Crash.tsx"));
 const CasinoLobby = lazy(() => import("./pages/Casino.tsx"));
 const Olympus1000 = lazy(() => import("./pages/casino/Olympus1000.tsx"));
 const Wizard2000 = lazy(() => import("./pages/casino/Wizard2000.tsx"));
