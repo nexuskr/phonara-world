@@ -1,7 +1,7 @@
 // V17 <PersonalizedFeedRail> — horizontal personalized feed.
 // Loads recommendations from `rank_feed_for_user` RPC; if empty, asks the
 // `feed-personalize` Edge function to build them, then re-loads.
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Sparkles, RefreshCw, Crown, Target, Eye } from "lucide-react";
 import { rankFeedForUser, type FeedRecommendation } from "@/lib/feed-rpc";
 import { supabase } from "@/integrations/supabase/client";
@@ -61,7 +61,7 @@ export default function PersonalizedFeedRail({ limit = 12 }: { limit?: number })
       }
     } catch { /* ignore — final fallback below */ }
     try {
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from("videos")
         .select("id")
         .order("created_at", { ascending: false })
