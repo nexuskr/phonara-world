@@ -4,6 +4,7 @@
  */
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 export type VipPassStatus = {
   active: boolean;
@@ -45,8 +46,8 @@ export function useVipPass() {
 
   useEffect(() => {
     load();
-    const t = setInterval(load, 60_000);
-    return () => clearInterval(t);
+    const t = setVisibleInterval(load, 60_000 , { meta: { owner: "use-vip-pass", category: "admin" } });
+    return () => t();
   }, [load]);
 
   return { ...status, loading, refresh: load };

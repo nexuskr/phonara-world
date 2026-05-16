@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { LoadingList } from "@/components/ui/loading-state";
 import { notify } from "@/lib/notify";
 import { Coins, TrendingUp, Crown, Camera } from "lucide-react";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 type Stats = {
   phon_supply: number; phon_holders: number; nft_total: number;
@@ -39,8 +40,8 @@ export default function EconomyDashboard() {
 
   useEffect(() => {
     refresh();
-    const t = setInterval(refresh, 30_000);
-    return () => clearInterval(t);
+    const t = setVisibleInterval(refresh, 30_000 , { meta: { owner: "EconomyDashboard", category: "admin" } });
+    return () => t();
   }, []);
 
   async function onAdjust() {

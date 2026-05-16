@@ -21,6 +21,7 @@
 import { useEffect, useRef } from "react";
 import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 export type ChannelBinding = {
   event: "*" | "INSERT" | "UPDATE" | "DELETE";
@@ -255,7 +256,7 @@ export function useRealtimeChannel(opts: UseRealtimeChannelOpts) {
       // 채널이 live가 아닐 때만 폴링 활성
       if (pollMs && pollRef.current) {
         if (s !== "live" && !pollTimer) {
-          pollTimer = setInterval(() => { try { pollRef.current?.(); } catch {} }, pollMs);
+          pollTimer = setVisibleInterval(() => { try { pollRef.current?.(); } catch {} }, pollMs , { meta: { owner: "use-realtime-channel", category: "admin" } });
         } else if (s === "live" && pollTimer) {
           clearInterval(pollTimer); pollTimer = null;
         }

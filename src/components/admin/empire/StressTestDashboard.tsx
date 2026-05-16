@@ -7,6 +7,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { Activity, FlaskConical, Gauge, Play, Power, RefreshCcw, Target, Waves } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { notify } from "@/lib/notify";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 import {
   equityVolatilityInjector,
   fullFlowAutoTest,
@@ -46,8 +47,8 @@ export default function StressTestDashboard() {
 
   useEffect(() => {
     load();
-    const t = setInterval(load, 15_000);
-    return () => clearInterval(t);
+    const t = setVisibleInterval(load, 15_000 , { meta: { owner: "StressTestDashboard", category: "admin" } });
+    return () => t();
   }, []);
 
   const guarded = async (label: string, fn: () => Promise<void>) => {

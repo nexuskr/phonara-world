@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useRequireAdmin } from "@/hooks/use-require-auth";
 import { LoadingList } from "@/components/ui/loading-state";
 import { Hammer, ShoppingBag, Rocket, Map, Sparkles, Crown, Trophy } from "lucide-react";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 type Metrics = {
   atelier_24h: number; atelier_7d: number; atelier_jackpots_7d: number;
@@ -26,7 +27,7 @@ export default function PhaseCMetricsPanel() {
     setLoading(false);
   }, [admin]);
 
-  useEffect(() => { void load(); const id = window.setInterval(load, 60_000); return () => window.clearInterval(id); }, [load]);
+  useEffect(() => { void load(); const id = setVisibleInterval(load, 60_000 , { meta: { owner: "PhaseCMetricsPanel", category: "admin" } }); return () => id(); }, [load]);
 
   if (!admin) return null;
   if (loading || !m) return <LoadingList rows={4} />;

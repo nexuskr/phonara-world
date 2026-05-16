@@ -6,6 +6,7 @@
 import { useEffect, useState } from "react";
 import { ShieldAlert, Activity, Ban } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { setVisibleInterval } from "@/lib/util/visible-interval";
 
 type Heat = { symbol: string; avg_rpi: number; avg_safety: number; rejects: number; warns: number };
 type Stats = {
@@ -31,8 +32,8 @@ export default function RiskEngineDashboard() {
       if (alive) setLoading(false);
     };
     load();
-    const t = setInterval(load, 30_000);
-    return () => { alive = false; clearInterval(t); };
+    const t = setVisibleInterval(load, 30_000 , { meta: { owner: "RiskEngineDashboard", category: "admin" } });
+    return () => { alive = false; t(); };
   }, []);
 
   return (
