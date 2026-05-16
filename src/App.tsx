@@ -214,7 +214,8 @@ const App = () => (
           <Suspense fallback={<RouteFallback />}>
             <MaintenanceGate>
             <Routes>
-              <Route path="/" element={<Index />} />
+              <Route path="/" element={<Landing />} />
+              <Route path="/legacy-index" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
 
               {/* v14.0 — 4탭 슬림 IA */}
