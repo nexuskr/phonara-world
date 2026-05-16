@@ -1,60 +1,61 @@
-# perf-gate CI 복구 (ESLint lockdown 잡 살리기)
+# perf-gate / perf 복구 — PR-A: signature-engine lazy 분리
 
-`perf-gate / lockdown` 잡이 1084 ESLint error로 죽고 있다. 원인은 lockdown 규칙이 아니라 누적된 일반 룰 + 진짜 버그 몇 개 + 누락 플러그인 1개의 혼합. 최소 수정으로 잡을 녹색으로 만든다.
+`perf-gate / perf` 잡이 Layer 1 = 339.9 KB gz (budget 180 KB, 초과 159.9 KB) 로 죽고 있다.
+가장 큰 단일 청크인 `signature-engine` (73.3 KB gz / 230.5 KB raw) 을 부트에서 떼어내는 PR-A 만 먼저 진행한다.
 
-## 실제 차단 원인 (분류)
+## 목표
 
-| 종류 | 건수 | 처리 |
-|---|---|---|
-| `react-hooks/rules-of-hooks` — `useChart`가 hook 이름인데 render 콜백에서 호출 | 4 | **함수명 변경**으로 가짜 hook 표식 제거 (`useChart` → `computeChart`) |
-| `react/no-danger` rule definition not found (`Totp.tsx:166` eslint-disable 주석) | 1 | 해당 `eslint-disable-next-line react/no-danger` 한 줄 제거 (rule 미등록) |
-| `no-restricted-imports` — `src/lib/notify.ts`가 sonner import (CRITICAL_PATHS critical-layer 규칙) | 1 | `eslint.config.js`에서 NOTIFY/REALTIME wrapper 파일에 critical-layer 규칙도 off 처리 |
-| `@typescript-eslint/no-require-imports` — `tailwind.config.ts:200` | 1 | 해당 라인 위에 `eslint-disable-next-line` (tailwind v3는 CJS plugin require가 표준) |
-| `@typescript-eslint/no-explicit-any` | 954 | **`warn`으로 다운그레이드** (전사 일괄). 이후 점진적으로 잡음. |
-| `no-empty` | 106 | **`warn`으로 다운그레이드**. 빈 catch는 의도적 무시 패턴 다수. |
-| `@typescript-eslint/no-unused-expressions` | 6 | `warn`으로 다운그레이드 |
-| `@typescript-eslint/ban-ts-comment` | 5 | `warn`으로 다운그레이드 |
-| `prefer-const` | 4 | `--fix`로 자동 수정 |
-| `@typescript-eslint/no-empty-object-type` | 2 | `warn`으로 다운그레이드 |
+- Layer 1 ≤ 180 KB gz 1차 진입.
+- `signature-engine` 청크는 카지노 로비/홈 진입 시점에 modulepreload 되지 않고, 실제 슬롯 페이지 진입 시에만 로드.
+- 슬롯 사용자 체감 동작 변화 0 (Suspense fallback = `null`, 동일 라우트 내 1회 로딩).
+
+## 원인 (요약)
+
+`vite.config.ts`의 `manualChunks`가 슬롯 엔진을 별도 청크로 분리하지만, 슬롯 페이지들이 **정적 import** 라서 entry → page → engine 그래프가 그대로 이어져 Vite 가 `<link rel="modulepreload">` 를 자동 주입 → Layer 1 카운팅에 들어감.
 
 ## 변경 파일
 
-1. **`eslint.config.js`**
-   - `rules`에 다음 추가:
-     ```
-     "@typescript-eslint/no-explicit-any": "warn",
-     "@typescript-eslint/no-unused-expressions": "warn",
-     "@typescript-eslint/ban-ts-comment": "warn",
-     "@typescript-eslint/no-empty-object-type": "warn",
-     "no-empty": ["warn", { allowEmptyCatch: true }],
-     ```
-   - NOTIFY/REALTIME wrapper override 블록에 critical-layer 규칙도 off:
-     ```
-     "no-restricted-imports": "off",
-     "no-restricted-syntax": "off",
-     ```
-     (이미 있음 — wrapper 파일이 CRITICAL_PATHS와 겹쳐 다시 켜지는 것을 막기 위해 critical override의 `files`에서 wrapper 경로 제외)
-   - `react-hooks/rules-of-hooks`는 그대로 `error` 유지(진짜 위험)
+1. **슬롯 페이지 7종** — `SlotSignatureWrapper` 정적 import 를 `React.lazy` 로 치환:
+   - `src/pages/casino/CosmicForge5000.tsx`
+   - `src/pages/casino/OlympusLegacy5000.tsx`
+   - `src/pages/casino/SugarFever3000.tsx`
+   - `src/pages/casino/NeonTokyo88.tsx`
+   - `src/pages/casino/Wizard2000.tsx`
+   - `src/pages/casino/DragonEmpire.tsx`
+   - `src/pages/casino/PiratesCurse1500.tsx`
+   - `src/pages/casino/PharaohsVault2500.tsx`
+   - `src/pages/casino/CherrySakura500.tsx`
+   - `src/pages/casino/AztecSun1200.tsx`
+   - `src/pages/casino/VikingThunder4000.tsx`
+   - `src/pages/casino/Olympus1000.tsx` (OlympusSlot 직접 import → lazy)
 
-2. **`src/components/ui/mini-chart.tsx`** — `useChart` → `computeChart` 4곳 + 함수 정의 1곳 (총 5곳). 동작 동일, lint 오탐만 제거.
+   패턴:
+   ```ts
+   const SlotSignatureWrapper = lazy(() => import("@/components/slots/SlotSignatureWrapper"));
+   // <Suspense fallback={null}><SlotSignatureWrapper ... /></Suspense>
+   ```
 
-3. **`src/pages/security/Totp.tsx`** — `166` 라인의 `// eslint-disable-next-line react/no-danger` 주석 삭제 (해당 줄에는 `dangerouslySetInnerHTML`이 없어서 무해 — 단순 정리. 실제로 있다면 주석은 남기되 룰 이름만 제거).
+   Background/Paytable/Overlay 컴포넌트는 wrapper props 로 전달되므로 wrapper lazy 만으로 engine 청크 전체가 deferred 됨.
 
-4. **`tailwind.config.ts`** — `200` 라인 `require()` 위에 `// eslint-disable-next-line @typescript-eslint/no-require-imports` 추가.
+2. **`vite.config.ts`** — 변경 없음. 기존 `signature-engine` manualChunks 유지 (lazy import 가 alone in graph 이면 Vite 가 자동으로 async chunk 처리).
 
-5. **자동 수정**: `bunx eslint . --fix` 한 번 실행해 `prefer-const` 4건 정리.
+3. **검증**
+   - `bun run build` → `signature-engine-*.js` 가 async chunk 로 표시되는지 확인.
+   - `node scripts/bundle-check.mjs` → Layer 1 ≈ 266 KB gz 로 감소 (still > 180? — 만약 미달이면 PR-B/C/D 후속).
+   - 슬롯 페이지 로딩 시 첫 spin 까지 추가 지연 < 200ms.
+   - `node scripts/check-money-flow-freeze.mjs` 0 diff.
 
-## 검증
+## 분리 처리 (이 PR 아님)
 
-- 로컬에서 `bun run lint` → exit 0, warning은 그대로 노출
-- `node scripts/check-money-flow-freeze.mjs` → 0 diff 유지
-- `bunx depcruise --config .dependency-cruiser.cjs --output-type err src` → 통과
+- PR-B: `pickers` (cmdk/vaul/embla/day-picker) lazy.
+- PR-C: `audio` (howler+sounds) lazy in 슬롯 페이지.
+- PR-D: `locale-ja/vi` dynamic import.
+- PR-E: `motion` 슬림화.
 
-## 분리 처리 (이 PR에서 하지 않음)
-
-- **`perf-gate / perf` 잡 (Bundle budget)** — 별도 진단 필요. 본 PR은 lockdown만 복구.
-- `any` 954건 점진적 정리는 후속 작업 (`reports/eslint-any-cleanup.md`로 트래킹 권장).
+PR-A 만으로 Layer 1 ≤ 180 KB 미달성 시 PR-B 를 즉시 이어 진행한다.
 
 ## 영향 범위
 
-순수 정적 분석/설정 변경. 런타임 코드 의미 변화 0 — `useChart` 이름 변경은 내부 호출 4곳 동기 교체라 동작 동일.
+- 슬롯 페이지 진입 시 wrapper + engine 첫 로드 (≈73 KB gz) 1회 추가 네트워크. 동일 세션 내 다른 슬롯 진입 시 캐시 히트.
+- 홈/대시보드/지갑/카지노 로비는 engine 청크 다운로드 0 — Layer 1 부담 제거.
+- 런타임 로직/사운드/Crown 보상 경로 변화 0.
