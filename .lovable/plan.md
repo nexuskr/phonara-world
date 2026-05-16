@@ -1,131 +1,163 @@
-# v14.0 Sprint 0 — Great Simplification (Week 1~2)
+# v14.0 Sprint 1 — Earn Engine Completion
 
-v14.0 마스터 플랜의 첫 스프린트. 목적은 **첫 화면을 5초 안에 이해 가능하게 슬림화**하고, 앞으로 12주를 받쳐줄 **폴더 alias 골격 + 단어 정화 + 디자인 토큰 정리 + 새 랜딩/온보딩**을 까는 것.
+"0원으로 가장 쉽게 돈 버는" 5초 룰을 완성한다. 이미 깔린 인프라 위에 빠진 3가지(룰렛 카드·VIP 부스트 카드·자동 공유 이미지 + 7채널) 만 정밀하게 얹어 Sprint 1 을 종결한다.
 
-기존 기능/데이터는 **하나도 삭제하지 않음**. UI 표시·진입점·단어만 바꾸고, 깊은 페이지들은 alias로 살려둔다.
+## 현재 상태 (재사용 가능)
 
----
+이미 존재하므로 **새로 만들지 않는다**:
 
-## 1. 폴더 alias 골격 (`src/packages/*`)
+- 페이지: `/earn` (`src/pages/Earn.tsx`) + 5카드 (Streak·Missions·Referral·PlayToEarn·Share)
+- 훅: `useEarnHub()` — 오늘 누적 PHON 카운트업 + 낙관적 업데이트 완비
+- RPC: `get_earn_hub_state`, `claim_daily_attendance`, `claim_daily_quick_reward`, `claim_share_reward`, `spin_roulette`
+- 테이블: `mission_templates`, `mission_history`, `referrals`, `referral_earnings`, `roulette_spins`, `crash_mission_claims`
+- BigWin 공유 이벤트 버스: `src/lib/bigwinShare.ts` (`fireBigWinShare`)
+- 채널 인텐트 매핑: `CHANNEL_INTENT` (x · line · naver, 카카오/IG/TT/YT 는 fallback)
+- VIP 인프라: `vip_passes` 테이블 + `useVipPass()` 훅 + `subscribe_vip_pass_phon` RPC
+- 글로사리: `@pkg/core/i18n/glossary` → `g()` (Sprint 0 완비)
 
-Turborepo 물리 분리는 Sprint 4 종료 후. 지금은 **alias 레이어만** 깐다.
+## Sprint 1 에서 새로 추가 (Δ만)
 
-- 생성: `src/packages/{core,ui,wallet,earn,game-engine,trade,live,avatar-nft,referral,analytics}/index.ts`
-- 각 폴더 `index.ts`는 현재 `src/components/*`, `src/lib/*`에서 해당 도메인의 안정적인 export만 re-export. 신규 코드만 여기로 들어오고, 기존 import 경로는 그대로 유지.
-- `tsconfig.json` paths에 `@pkg/core/*` … `@pkg/analytics/*` 추가 (`@/` 경로는 변경 없음).
-- `docs/adr/0001-packages-alias.md`에 결정 기록.
+### 1. Earn Hub 확장 — 카드 2개 추가 (총 7카드)
 
-이렇게 두면 Sprint 1~4 동안 신규 도메인 코드(earn, wallet 환전 등)는 `@pkg/*`로만 짜고, Sprint 4 끝에 그 폴더만 떼서 Turborepo로 옮기면 된다.
+**A. RouletteCard** (`src/components/earn/RouletteCard.tsx`)
+- 24h 1회 무료 스핀. 결과 50 / 100 / 200 / 500 / 1000 / 5000 PHON
+- `spin_daily_roulette()` RPC (신규) — 서버 결정성 + idempotency_key=`roulette:{user}:{YYYYMMDD}`
+- 가중치: `{50:35, 100:30, 200:18, 500:12, 1000:4, 5000:1}` (RTP ≈ 230 PHON/일, 명세 부합)
+- 휠 회전 = framer-motion `rotate` (감속 cubic-bezier), 결과 칸 정중앙 정렬
+- `get_earn_hub_state` 응답에 `roulette: { spun_today, last_amount, next_at }` 추가
 
-## 2. 단어 정화 (glossary)
+**B. VipBoostCard** (`src/components/earn/VipBoostCard.tsx`)
+- VIP 활성 시: "오늘 보상 ×1.5 적용중 · 남은 시간 23:14:02" 표시
+- 비활성 시: "VIP 패스 30일 = +50% 모든 미션 보상 · 30,000 PHON" CTA → `/vip`
+- `useVipPass()` 그대로 사용, 신규 RPC 없음
+- `get_earn_hub_state` 가 VIP 활성 시 모든 mission `amount` 를 ×1.5 로 반환 (서버 가산)
 
-- 신규: `src/packages/core/i18n/glossary.ts`
-  - 매핑: Empire→레벨 · Crown→보너스 포인트 · Baron→VIP · Founding/Galaxy→시즌 좌석 · Cosmic Emperor→이번 주 TOP · Whale Strike→실시간 빅윈 · Imperial Story→소식
-- 헬퍼 `g(key)` 한 개만 export. **DB 컬럼/내부 코드명/메모/RPC명은 절대 건드리지 않음.**
-- 적용 범위는 사용자 가시 텍스트만:
-  - `src/components/Layout.tsx` 사이드바·헤더 라벨
-  - `<EmpireLevelBadge />`·`<WhaleStrikeRail />`·`<BaronPromotionDialog />`·`<VipPassBadge />` 등 표시 라벨
-  - 새 `/home`·`/earn`·`/live`의 카피
-- Sprint 0에서는 **위 핵심 6곳만** 1차 적용. 나머지 페이지는 Sprint 1~2에서 점진 교체.
+### 2. DB — 추가 1테이블 + 1 RPC 만
 
-## 3. 첫 화면 슬림화 + TopBar 4탭
+```sql
+-- earn_roulette_spins: 일일 룰렛 결정성 로그 (멱등키)
+CREATE TABLE public.earn_roulette_spins (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  spin_date date NOT NULL DEFAULT (now() AT TIME ZONE 'Asia/Seoul')::date,
+  amount integer NOT NULL CHECK (amount > 0),
+  weight_bucket text NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (user_id, spin_date)
+);
+ALTER TABLE public.earn_roulette_spins ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "own_select" ON public.earn_roulette_spins
+  FOR SELECT TO authenticated USING (user_id = auth.uid());
+-- INSERT 는 SECURITY DEFINER RPC 만
 
-기존 사이드바(`MainSidebar`)와 모바일 하단 탭바를 **TopBar + 4탭 + 하단 티커**로 축소.
+-- spin_daily_roulette() RPC: 가중 랜덤 + PHON 가산 + VIP ×1.5
+-- 응답: { ok, amount, multiplier, balance_after, already_spun }
+```
 
-- 신규: `src/packages/ui/nav/TopBar.tsx`
-  - 좌: PHONARA.WORLD 로고 (→ `/home`)
-  - 우: PHON 잔액 · 충전 버튼 · 프로필 아바타 드롭다운(지갑/VIP/아바타/설정/로그아웃)
-- 신규: `src/packages/ui/nav/MainTabs.tsx`
-  - 4개 탭: 💰 수익(`/earn`) · 🎰 게임(`/games`) · 📈 투자(`/trade`) · 🔴 실시간(`/live`)
-  - 데스크탑은 TopBar 하단, 모바일은 하단 고정.
-- 신규: `src/packages/live/components/LiveTicker.tsx`
-  - 하단 1줄 마키. 데이터 = 기존 `get_whale_strikes_24h` + `get_recent_payouts_100` + 신규 가입(공개 카운트 RPC 있으면 사용, 없으면 생략 — **Sprint 0에서는 신규 RPC 만들지 않음**).
-- `src/components/Layout.tsx`: 새 컴포넌트 3개로 교체. 기존 `MainSidebar`/`MobileTabBar`는 파일 보존하되 import 제거.
-- `/home`(`src/pages/Home.tsx`) 카드 **5개 이하**로 압축:
-  1. 히어로 — "오늘도 X원 벌었어요" 실데이터(=`get_recent_payouts_100` 24h 합산) + 단일 CTA `[지금 무료로 시작 +500 PHON]`
-  2. 진행 중인 이벤트 1개 (`/events`)
-  3. Earn 진입 카드 (오늘의 미션 1개 미리보기)
-  4. 게임 진입 카드 (인기 슬롯 1개)
-  5. Live 미리보기 (`<WhaleStrikeRail />` 축소판)
-- **`/home`에서 제거(import 삭제)할 7개 컴포넌트**:
-  `HubTabs` · `EmpireSignature` · `FomoStrip` · `CrownWarHUD` · `WorldDominationWall` · `ImperialJourneyMap` · `ImperialStoryRail`
-  → 모두 `/live`로 이동(LiveTabs로 묶음). 파일은 삭제하지 않음.
+`get_earn_hub_state` SECURITY DEFINER 함수에 `roulette` 필드 + `vip_boost`(active·multiplier·ends_at) 필드 추가.
 
-## 4. 디자인 토큰 정리
+### 3. Share Card Edge Function — `earn-share-card`
 
-- `src/index.css` 정리:
-  ```css
-  --bg: 222 47% 7%;
-  --card: 222 40% 10%;
-  --gold: 44 88% 58%;
-  --pink: 340 100% 62%;
-  --text: 0 0% 96%;
-  --muted: 222 15% 60%;
-  ```
-- `tailwind.config.ts`에 위 6개 토큰만 노출. 기존 토큰은 호환을 위해 유지하되 새 컴포넌트는 위 6개만 사용.
-- 폰트: Pretendard(한글 700/500) + Space Grotesk(영문 700/500). `<link>` 정리.
-- `lucide-react` strokeWidth=1.5 전역화는 새 컴포넌트(TopBar/MainTabs/Home)부터.
+`supabase/functions/earn-share-card/index.ts`
+- 입력: `?kind=mission|bigwin|streak|roulette&amount=…&nick=…&v=…`
+- 출력: 1200×630 PNG (OG 규격). Satori + resvg-wasm 또는 Canvas API
+- 디자인: Warm Gold (#E8B84A) → Hot Pink (#E84393) 대각선 그라디언트 + 마스킹 닉 + 금액 + "phonara.world" 워터마크
+- 캐시 30일 (`Cache-Control: public, max-age=2592000, immutable`)
+- 5070 가독성: 헤드라인 96px Pretendard Black, 금액 220px tabular-nums
+- 호출처: `fireBigWinShare` 가 미리 `https://…/earn-share-card?...` URL 만 생성 → 채널별 share 인텐트에 `og_image` 로 직접 사용
 
-## 5. 신규 풀스크린 랜딩 `/`
+### 4. 7 채널 공유 통합 — `src/lib/share/channels.ts` (신규)
 
-- `src/pages/Landing.tsx` 전면 리뉴얼:
-  - 풀스크린 히어로 ("한국에서 제일 쉽게 돈 버는 가상세계" + 실데이터)
-  - 4탭 미리보기 카드
-  - 단일 CTA `[무료로 시작 +500 PHON]` → `/auth?next=/home`
-  - 하단 LiveTicker 동일 컴포넌트 재사용
-- 기존 Landing는 `/landing-legacy`로 보존.
+| 채널 | 방식 |
+|---|---|
+| 카카오톡 | Kakao SDK `Kakao.Share.sendDefault({ feedTemplate })`, 키 = `VITE_KAKAO_JS_KEY` (publishable) |
+| 카카오스토리 | `https://story.kakao.com/share?url=…` |
+| X (Twitter) | `https://twitter.com/intent/tweet?text=…&url=…` (기존 재사용) |
+| Threads | `https://www.threads.net/intent/post?text=…` |
+| Facebook | `https://www.facebook.com/sharer/sharer.php?u=…` |
+| Telegram | `https://t.me/share/url?url=…&text=…` |
+| Instagram | OG 이미지 다운로드 + "스토리에 붙여넣기" 안내 모달 (IG 는 web intent 없음) |
 
-## 6. 60초 온보딩
+- 각 채널 클릭 시 `claim_share_reward(_channel)` 자동 호출 + 보상 토스트
+- 채널 6개 그리드 + IG 1개 풀폭 = 모바일 44px+ 정확히
 
-- 신규: `src/packages/earn/components/Onboarding60s.tsx`
-  - 4스텝: 가입 완료 → 무료 룰렛 1회(`/missions?tab=battle` 호출) → 오늘의 미션 1개 클레임 → 슬롯 데모(`/casino/cherry-sakura-500` deeplink, 베팅 없이 1스핀 데모)
-  - 진행률 바 + "건너뛰기" + 완료 시 +500 PHON 클레임(기존 `claim_daily_streak` 또는 신규 RPC 없이 일단 미션 1개에 +500 보너스 키만 추가)
-- 마운트 위치: `/home` 첫 진입 시(localStorage `phonara:onboarding60s:v1` 미존재 시 1회). 기존 `OnboardingV3`는 잠시 비활성(import 유지, 마운트 분기에서 제외).
+### 5. 글로사리 확장 — `src/lib/glossary.ts`
 
-## 7. 라우트 alias 1주 병행
+Earn Hub 사용자 가시 텍스트 18개 키 추가 (예시):
+```
+earnTodayLabel: "오늘 번 PHON",
+earnRouletteTitle: "데일리 무료 룰렛",
+earnRouletteCta: "오늘의 룰렛 1회 무료",
+earnVipBoostOn: "VIP 부스트 ×1.5 적용중",
+earnVipBoostOff: "VIP 패스로 모든 보상 +50%",
+earnShareReward: "공유하고 +200 PHON",
+earnShareTitle: "친구한테 자랑하기",
+earnFomoLine: "지금 {n}명이 오늘 PHON 받았어요",
+…
+```
 
-이미 `/home`·`/earn`·`/live`·`/games`·`/trade` 라우트는 존재. Sprint 0에서 추가로:
+모든 신규 컴포넌트는 `g('…')` 만 사용 (하드코딩 한국어 금지). 기존 5개 카드는 Sprint 1.5 에서 일괄 마이그레이션 (스코프 분리).
 
-- `/dashboard` 진입 시 일주일간 상단에 `<RoutingMigrationBanner />` ("새 홈은 /home 입니다"). 일주일 후 `/dashboard` → `/home` 리다이렉트(이 결정은 Sprint 1 시작 시점에서).
-- `/casino`→`/games`, `/empire/*`→`/live/*` alias는 **현 상태 유지**.
+## 컴포넌트 트리
 
----
+```text
+Earn.tsx (기존)
+└─ <SlimShell>
+   └─ Header (오늘 PHON 카운트업 + FOMO 라인 신규)
+   └─ Grid 3col md / 1col mobile
+      ├─ StreakCard         (기존)
+      ├─ MissionsCard       (기존, VIP×1.5 서버 반영)
+      ├─ RouletteCard       ★ 신규
+      ├─ ReferralCard       (기존)
+      ├─ PlayToEarnCard     (기존)
+      ├─ VipBoostCard       ★ 신규
+      └─ ShareRewardCard    (기존 → ShareChannelsSheet 연결 ★)
 
-## 변경 파일 요약
+신규 공용:
+- src/components/share/ShareChannelsSheet.tsx (7채널 Sheet)
+- src/lib/share/channels.ts (인텐트 + 카카오 SDK 로드)
+- src/lib/share/shareCardUrl.ts (Edge URL 빌더)
+```
 
-**생성**
-- `src/packages/{core,ui,wallet,earn,game-engine,trade,live,avatar-nft,referral,analytics}/index.ts` (10)
-- `src/packages/core/i18n/glossary.ts`
-- `src/packages/ui/nav/TopBar.tsx`
-- `src/packages/ui/nav/MainTabs.tsx`
-- `src/packages/live/components/LiveTicker.tsx`
-- `src/packages/earn/components/Onboarding60s.tsx`
-- `src/components/RoutingMigrationBanner.tsx`
-- `docs/adr/0001-packages-alias.md`
+## 상태 관리
 
-**수정**
-- `src/components/Layout.tsx` (TopBar/MainTabs/LiveTicker로 교체)
-- `src/pages/Home.tsx` (5카드 슬림화, 7개 컴포넌트 import 제거)
-- `src/pages/Live.tsx` (7개 컴포넌트를 탭으로 흡수)
-- `src/pages/Landing.tsx` (풀스크린 히어로 리뉴얼)
-- `src/index.css` + `tailwind.config.ts` (토큰 정리)
-- `src/App.tsx` (Onboarding60s 마운트 분기, OnboardingV3 마운트 OFF)
-- `tsconfig.json` (`@pkg/*` paths)
+- 단일 진입점 `useEarnHub()` 확장 (roulette, vip_boost 필드 추가)
+- 룰렛 결과: 낙관적 업데이트 → 실패 시 롤백 (기존 패턴 그대로)
+- VIP 부스트: `useVipPass()` 결합, 카운트다운은 `useNowTick(60_000)`
+- 공유 카운트: 채널 클릭 즉시 `claim_share_reward` → optimistic 상태 + 토스트 (기존 훅 재사용)
 
-**삭제**
-- 없음. 모든 기존 컴포넌트/페이지/RPC/테이블 보존.
+## 보안 / 메모 준수
 
----
+- 신규 테이블 `earn_roulette_spins`: RLS SELECT own / INSERT 차단 (SECURITY DEFINER RPC만)
+- `spin_daily_roulette` 는 `auth.uid()` 가드 + `UNIQUE(user_id, spin_date)` 로 서버측 1일 1회 강제
+- 신규 함수는 `function_permissions_baseline` 에 등록 (CI permission drift 통과)
+- `get_earn_hub_state` 시그니처 변경: `mem://features/rpc-drift-fix-2026-05-16` 패턴대로 컬럼셋 메모 추가
+- 카카오 JS Key 는 publishable → 코드 직접 포함 OK. Edge Function 은 secret 불필요
+- 결제 라우팅·출금 스텝업·rate limit 정책 전부 불변
 
-## 제약 / 비범위
+## 작업 순서
 
-- DB 마이그레이션 없음. RPC 신설 없음. 엣지 함수 없음. (Earn 테이블/RPC는 Sprint 1)
-- 결제 라우팅(코인+계좌이체+상품권 수동) 그대로. Stripe/PG 자동 제안 금지.
-- 보안 메모(출금 AAL2, 이상감지 동결, profiles 민감 컬럼 트리거, no-backend-rate-limiting) 모두 유지.
-- 글로서리는 사용자 가시 텍스트만 교체. 내부 코드/DB/메모는 Empire/Crown/Baron 명칭 유지.
-- 단어 정화 2차 적용(전 페이지)은 Sprint 1과 병행.
+1. **DB 마이그레이션 1회** — `earn_roulette_spins` 테이블 + `spin_daily_roulette()` + `get_earn_hub_state` 확장 + baseline 등록
+2. **Edge Function** — `earn-share-card` 1개 신규 배포
+3. **공용 모듈** — `src/lib/share/{channels,shareCardUrl}.ts` + `ShareChannelsSheet.tsx`
+4. **신규 카드 2개** — `RouletteCard.tsx`, `VipBoostCard.tsx`
+5. **Earn.tsx 그리드 7카드로 확장 + ShareRewardCard 가 Sheet 연결**
+6. **글로사리 18키 추가** + 신규 컴포넌트 `g()` 100% 적용
+7. **메모 업데이트** — `mem://features/v14-sprint-1-earn-engine` 신규 + index 1줄
+8. **검증** — `/earn` 진입 → 5초 안에 "오늘 얼마 벌었는지" + 7카드 + 공유 sheet 가 모두 보이는지
 
-## 출구 조건 (Week 1 / Week 2)
+## 비-목표 (Sprint 2 이후로)
 
-- **Week 1**: TopBar + 4탭 + 5카드 `/home` + 단어 정화 6곳 + 디자인 토큰 + alias 폴더 → 신규 5명에게 5초 노출 시 "무료로 돈 벌고 게임하고 트레이딩"이라 답해야 통과.
-- **Week 2**: 풀스크린 랜딩 + 60초 온보딩 가동 → Sprint 1 Earn Engine 진입.
+- 기존 5카드의 글로사리 재배선 (스코프 분리)
+- 친구 N명 달성 단계 보너스 (referrals milestone) → Sprint 2 (Viral Loop)
+- 룰렛 시즌제 / 콜렉티블 → Phase D 잭팟 연계
+- 카카오 SDK 정식 비즈 채널 인증 (개발용 JS Key 로 일단 동작)
+
+## 출구 조건
+
+- `/earn` 진입 시: 헤더 카운트업 + 7카드 + FOMO 라인 모두 보임
+- 룰렛 1회 정확히 돌아가고 결과가 잔액 + `today_earned` 에 반영
+- 공유 시트의 7채널 모두 클릭 가능 + 각 채널당 +200 PHON 1회 적립
+- VIP 가입자는 모든 카드 보상이 ×1.5 로 표시되고 실제 가산도 ×1.5
+- 모든 신규 텍스트가 `g()` 진입점 사용
+- CI 권한 drift / RLS 테스트 통과
