@@ -1,71 +1,138 @@
-# PR-H 숨김/유휴 RPC 누수 재검증 및 잔여 경계 호출 봉쇄
+# Phase 3 — Active Governance & Detox 마무리 (PR-I → PR-J → PR-K)
 
-## 현재 관찰
-- 콘솔 결과는 여전히 `activeRPC: 2`, `hiddenRPC: 1`, `idleRPC: 2`
-- 누수 RPC는 그대로 `platform_kill_switches` / `get_whale_strikes_24h`
-- 추가로 현재 콘솔의 `rpc.surface.ts:217/218` 및 `deltaPct.hidden/idle = null`은 **지금 소스와 맞지 않습니다**
+Phase 2 Visibility (PR-A~H)는 EXIT. hidden/idle bucket을 0.0까지 못 쥐어짠 잔여 1~2건은 `platform_kill_switches` realtime callback + 경계 race로 잔존 — **수용 가능한 noise**로 동결하고, 다음 단계로 진입한다.
 
-## 핵심 판단
-이번 이슈는 두 층으로 봐야 합니다.
+다음 단계는 v3.0 LOCKED "미완 / 다음 단계"에 명시된 3건 + Phase 4 governor 활성화를 PR-I/J/K 3장으로 묶는다.
 
-1. **프리뷰가 최신 번들을 아직 안 물고 있을 가능성**
-   - 현재 소스 기준이면 `diffReport()`는 `baseline.foreground.count`를 기준으로 계산하므로 `deltaPct`가 `null`로 나오지 않아야 합니다.
-   - 그런데 사용자 콘솔은 여전히 이전 번들의 라인 번호와 계산 결과를 보여주고 있습니다.
-   - 즉, 먼저 **프리뷰/개발 서버가 최신 `rpc.surface.ts`를 실행 중인지 재동기화**가 필요합니다.
+---
 
-2. **최신 번들에서도 남을 수 있는 실제 경계 누수**
-   - `use-kill-switches`는 interval 경로만 막혀 있고, `focus` 이벤트와 realtime callback은 같은 가드를 직접 거치지 않습니다.
-   - `use-auth-live-data`의 whale RPC는 `setVisibleInterval`에만 의존하므로, 경계 직전 큐에 들어온 호출은 함수 내부에서 한 번 더 차단하지 못합니다.
-   - 그래서 최신 번들에서도 드물게 hidden/idle bucket에 1회씩 섞일 여지가 남아 있습니다.
+## 작업 순서 (직렬 — 앞 PR 머지 후 다음 시작)
 
-## 변경안
+```text
+PR-I  Active Governor + Degrade Mode  ── 런타임 엔진
+   └─→ PR-J  Realtime Partition 마이그레이션  ── 데이터 채널
+        └─→ PR-K  Operator Isolation  ── 코드 경계
+```
 
-### 1) 프리뷰를 최신 번들로 재동기화
-- 개발 서버/프리뷰를 새로 고쳐 현재 `src/packages/entropy/rpc.surface.ts`가 실제로 반영되었는지 먼저 확인
-- 확인 기준:
-  - `deltaPct.hidden`, `deltaPct.idle`가 더 이상 `null`이 아니어야 함
-  - 콘솔 라인 번호가 현재 파일 구조와 맞아야 함
+각 PR은 독립 머지 가능. 롤백도 PR 단위. money-flow 8경로 git diff = 0줄 계약은 PR-I/J/K 모두 유지.
 
-### 2) `use-kill-switches`의 비-interval 경로까지 동일 가드 적용
-`src/hooks/use-kill-switches.ts`
+---
 
-- `refresh()`의 hidden/admin pause 가드는 유지
-- 추가로 아래 트리거들도 동일한 보호막을 통과하게 정리
-  - realtime `postgres_changes` callback
-  - `window.focus` callback
-- 필요하면 **in-flight dedupe / 직전 refresh 재진입 방지**를 넣어 phase 경계에서 중복 fetch 시작 자체를 막음
+## PR-I — Active Governor + Degrade Mode
 
-### 3) `use-auth-live-data` whale RPC에 함수 내부 가드 추가
-`src/hooks/use-auth-live-data.ts`
+**목적**: Phase 2의 cooperative pause(`setVisibleInterval`만 honor)에서 한 단계 진입 — `killCategory`/`killAll` 스텁을 LIVE화하고, §14-5 Emergency Degrade Mode를 platform 레벨로 노출.
 
-- `load()` 시작 시점에 아래를 다시 확인
-  - `document.hidden`
-  - `isCategoryPaused("cosmetic")`
-- 즉, interval 레벨에서 한 번, RPC 함수 본문에서 한 번 더 막아 **경계 직전 큐 진입 호출**을 차단
+### 변경
+1. `@pkg/runtime/runtime.governor.ts`
+   - `killCategory(cat)` 실제 구현: `listIdsByCategory(cat)` → `clearInterval(id)` + `forgetInterval(id)`. tracked만 대상, untracked(money-flow 12경로)는 **절대 미접근**.
+   - `killAll()` = cosmetic + admin만 순회. money-flow 카테고리 화이트리스트로 제외.
+   - DEV에서 kill 시 `console.warn` + `__phonaraGovernor.lastKill` 노출.
+2. `platform_kill_switches` 마이그레이션
+   - 컬럼 추가: `degrade_mode boolean default false`, `degrade_reason text`.
+   - 기존 4개 스위치와 동일 RLS / admin RPC 패턴.
+3. `src/hooks/use-degrade-mode.ts` (신규)
+   - `useKillSwitches()` 위에 얇은 selector. `{ degraded, reason }` 반환.
+   - degraded=true → `document.body.dataset.degrade = "1"` 부착 (Tailwind `degrade:` variant 활성).
+4. `src/App.tsx`
+   - 루트에 `<DegradeModeBinder />` (effect-only) 마운트.
+5. `/admin/ops/self-heal`
+   - 기존 kill-switch 패널에 "Degrade Mode" 토글 추가. 켜는 순간 `killCategory("cosmetic")` 호출하여 즉시 회수.
 
-### 4) 재검증은 동일 시나리오로 고정
-- `__phonaraSurface.runScenario()`를 다시 실행
-- hidden / idle bucket이 둘 다 0인지 확인
-- verdict가 둘 다 PASS인지 확인
+### 검증
+- `__phonaraSurface.runScenario()` 다시 실행 — degrade ON 상태에서 cosmetic bucket = 0 hard.
+- `scripts/check-money-flow-freeze.mjs` PASS.
+- `[runtime.governor] killCategory(cosmetic) → cleared N ids` DEV 로그.
 
-## 변경 파일
-- `src/hooks/use-kill-switches.ts`
-- `src/hooks/use-auth-live-data.ts`
-- 필요 시 재검증만으로 충분하면 소스 수정 없이 프리뷰 재동기화에서 종료
+---
 
-## 기대 결과
-- 최신 번들 반영 후 `deltaPct`가 정상 수치로 계산됨
-- 잔여 경계 호출 차단 후:
-  - `hiddenRPC = 0`
-  - `idleRPC = 0`
-  - `verdict.hidden === "PASS"`
-  - `verdict.idle === "PASS"`
+## PR-J — Realtime Partition 마이그레이션
 
-## 검증
-1. 프리뷰/개발 서버 재동기화
-2. DEV 콘솔에서 `__phonaraSurface.runScenario()` 실행
-3. 확인 항목
-   - `deltaPct.hidden` / `deltaPct.idle`가 `null` 아님
-   - hidden bucket = 0
-   - idle bucket = 0
-   - verdict hidden/idle 모두 PASS
+**목적**: 기존 `useRealtimeChannel` 직접 호출부를 `@pkg/realtime`의 4-partition 래퍼(`useWalletChannel`/`useGameChannel`/`useChatChannel`/`useMarketChannel`)로 일괄 이전. 채널 key prefix 강제 → 누수/중복 구독 일소.
+
+### 변경
+1. 인벤토리: `rg "useRealtimeChannel\(" src` 결과를 4 partition 중 하나로 분류 (wallet/game/chat/market 외 admin = `useGameChannel("admin:...")` 임시 수용).
+2. 호출부 일괄 교체 — 한 PR에서 한 번에. 부분 마이그레이션 금지 (mixed state 디버깅 비용 ↑).
+3. ESLint 룰 `no-raw-channel` 확장: `useRealtimeChannel` 직접 import 금지 → `@pkg/realtime/*`만 허용. 기존 그랜드파더 목록 비움.
+4. `mem://realtime/unified-channel` 갱신 — "직접 호출 금지" → "partition 래퍼만 허용"으로 강화.
+
+### 검증
+- `rg "from \"@/hooks/use-realtime-channel\"" src` 결과 0건.
+- DevTools Network WebSocket frames에서 channel key가 `wallet:` / `game:` / `chat:` / `market:` 접두사로만 시작.
+- 회귀: wallet 잔액 realtime / Crown war 알림 / 채팅 / 오라클 가격 4개 스모크.
+
+---
+
+## PR-K — Operator Isolation
+
+**목적**: `src/pages/admin/**` + `src/components/admin/**`를 `src/packages/operator/`로 이전. Layer 1 entry 그래프에서 admin 코드 완전 제거 → bundle-check 180KB 마진 회복.
+
+### 변경
+1. 디렉터리 이동
+   - `src/pages/admin/*` → `src/packages/operator/pages/*`
+   - `src/components/admin/*` → `src/packages/operator/components/*`
+   - import path는 `@pkg/operator/pages/...`로 통일.
+2. `src/App.tsx` 라우터에서 admin 라우트 그룹을 `React.lazy(() => import("@pkg/operator/router"))`로 단일 진입점 lazy.
+3. `dependency-cruiser`에 layer 룰 추가
+   - `@pkg/operator` → 일반 페이지/컴포넌트 import 금지 (역방향만).
+   - 일반 코드 → `@pkg/operator` import 금지.
+4. `vite.config.ts` manualChunks에 `operator` 그룹 명시 (admin 전용 청크 격리).
+5. bundle-check Layer 1 예산 측정 → 회복분(예상 -15~25KB gz) 리포트에 기록.
+
+### 검증
+- `bun run build` 후 `dist/assets/operator-*.js` 단일 청크 + entry에서 import 없음.
+- `scripts/bundle-check.mjs` Layer 1 PASS, 마진 ≥ 10KB.
+- /admin/* 라우트 네비게이션 동작 + AAL2 게이트 회귀.
+
+---
+
+## 네이밍 규칙 (PR-I/J/K 공통)
+
+| 종류 | 규칙 | 예 |
+|------|------|----|
+| 패키지 alias | `@pkg/<domain>` kebab. 신규 도메인 코드는 alias만 | `@pkg/runtime`, `@pkg/operator` |
+| 훅 | `use-<feature>.ts` kebab 파일, `useFeature` export | `use-degrade-mode.ts` → `useDegradeMode` |
+| 컴포넌트 | `PascalCase.tsx`, prop type은 `XxxProps` | `DegradeModeBinder.tsx` |
+| 카테고리 키 | `RuntimeCategory` enum 문자열 — `cosmetic` / `admin` / `money_flow` 고정 (snake) | `pauseCategory("cosmetic")` |
+| 채널 key | `partition:resource[:id]` colon-separated | `wallet:balance`, `game:crown-war:42` |
+| Kill switch 컬럼 | snake_case + `_halt` 또는 `_mode` 접미 | `degrade_mode`, `trading_halt` |
+| 마이그레이션 파일 | Supabase 기본 `YYYYMMDDHHMMSS_<slug>.sql`. slug는 `pr-i-degrade-mode` 형식 | `20260517101500_pr-i-degrade-mode.sql` |
+| 리포트 | `reports/<surface>.<YYYY-MM-DD>.json`. PR-I/J/K 종료마다 1장 | `reports/rpc.surface.2026-05-24.json` |
+| 콘솔 prefix | `[runtime.governor]` / `[rpc.surface]` / `[@pkg/<domain>]` | `[runtime.governor] killCategory(cosmetic)` |
+| 메모리 키 | `mem://features/phase-3-active-governance` 처럼 phase 단위 | — |
+| Phase/PR 코드 | Phase 정수, PR 알파벳 — Phase 3은 I부터 시작 (H까지 Phase 2 사용) | PR-I, PR-J, PR-K |
+
+---
+
+## 변경 파일 예상 목록
+
+PR-I
+- `src/packages/runtime/runtime.governor.ts`
+- `src/hooks/use-degrade-mode.ts` (신규)
+- `src/components/system/DegradeModeBinder.tsx` (신규)
+- `src/App.tsx`
+- `supabase/migrations/<ts>_pr-i-degrade-mode.sql`
+- `src/pages/admin/SelfHeal.tsx` (Degrade 토글 추가)
+
+PR-J
+- `src/packages/realtime/**` (래퍼는 이미 존재, export 정리)
+- `src/hooks/use-*.ts` 중 realtime 사용처 일괄
+- `eslint.config.js` (no-raw-channel 확장)
+- `mem://realtime/unified-channel`
+
+PR-K
+- `src/pages/admin/**` → `src/packages/operator/pages/**` (이동)
+- `src/components/admin/**` → `src/packages/operator/components/**` (이동)
+- `src/App.tsx` 라우터 lazy
+- `.dependency-cruiser.cjs`
+- `vite.config.ts` manualChunks
+
+---
+
+## 종료 기준 (Phase 3 EXIT)
+
+- PR-I/J/K 모두 머지 + 각 PR 리포트 1장씩 `reports/`에 남김.
+- money-flow 8경로 누적 git diff = 0줄.
+- Layer 1 bundle 예산 마진 ≥ 10KB.
+- `__phonaraSurface.runScenario()` degrade ON 시 cosmetic bucket = 0 hard.
+- ESLint `no-raw-channel` 그랜드파더 = 빈 배열.
+- `mem://features/phase-3-active-governance` 생성, `mem://index.md` Core에 한 줄 요약 추가.
