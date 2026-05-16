@@ -888,6 +888,65 @@ export type Database = {
           },
         ]
       }
+      avatar_catalog: {
+        Row: {
+          active: boolean
+          created_at: string
+          emoji: string | null
+          id: string
+          image_url: string | null
+          limited_edition_cap: number | null
+          name: string
+          nft_source: string | null
+          price_phon: number
+          rarity: string
+          slug: string
+          sold_count: number
+          vip_min_tier: string | null
+          wearable_bonus: Json
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          emoji?: string | null
+          id?: string
+          image_url?: string | null
+          limited_edition_cap?: number | null
+          name: string
+          nft_source?: string | null
+          price_phon?: number
+          rarity: string
+          slug: string
+          sold_count?: number
+          vip_min_tier?: string | null
+          wearable_bonus?: Json
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          emoji?: string | null
+          id?: string
+          image_url?: string | null
+          limited_edition_cap?: number | null
+          name?: string
+          nft_source?: string | null
+          price_phon?: number
+          rarity?: string
+          slug?: string
+          sold_count?: number
+          vip_min_tier?: string | null
+          wearable_bonus?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "avatar_catalog_vip_min_tier_fkey"
+            columns: ["vip_min_tier"]
+            isOneToOne: false
+            referencedRelation: "vip_tier_config"
+            referencedColumns: ["tier"]
+          },
+        ]
+      }
       badges_catalog: {
         Row: {
           created_at: string
@@ -7252,6 +7311,41 @@ export type Database = {
           },
         ]
       }
+      user_avatars: {
+        Row: {
+          acquired_at: string
+          acquired_via: string
+          avatar_id: string
+          equipped: boolean
+          id: string
+          user_id: string
+        }
+        Insert: {
+          acquired_at?: string
+          acquired_via?: string
+          avatar_id: string
+          equipped?: boolean
+          id?: string
+          user_id: string
+        }
+        Update: {
+          acquired_at?: string
+          acquired_via?: string
+          avatar_id?: string
+          equipped?: boolean
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_avatars_avatar_id_fkey"
+            columns: ["avatar_id"]
+            isOneToOne: false
+            referencedRelation: "avatar_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_badges: {
         Row: {
           acquired_at: string
@@ -7583,6 +7677,7 @@ export type Database = {
           renewals: number
           source: string
           started_at: string
+          tier: string
           updated_at: string
           user_id: string
         }
@@ -7595,6 +7690,7 @@ export type Database = {
           renewals?: number
           source?: string
           started_at?: string
+          tier?: string
           updated_at?: string
           user_id: string
         }
@@ -7607,8 +7703,71 @@ export type Database = {
           renewals?: number
           source?: string
           started_at?: string
+          tier?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vip_passes_tier_fkey"
+            columns: ["tier"]
+            isOneToOne: false
+            referencedRelation: "vip_tier_config"
+            referencedColumns: ["tier"]
+          },
+        ]
+      }
+      vip_tier_config: {
+        Row: {
+          concierge: boolean
+          created_at: string
+          crown_mult: number
+          event_lead_hours: number
+          fee_waiver_pct: number
+          free_spins: number
+          gradient_from: string
+          gradient_to: string
+          lounge: boolean
+          min_phon: number
+          rank: number
+          skin_pack: string
+          tier: string
+          whale_lead_seconds: number
+          withdraw_priority: number
+        }
+        Insert: {
+          concierge?: boolean
+          created_at?: string
+          crown_mult?: number
+          event_lead_hours?: number
+          fee_waiver_pct?: number
+          free_spins?: number
+          gradient_from: string
+          gradient_to: string
+          lounge?: boolean
+          min_phon: number
+          rank: number
+          skin_pack: string
+          tier: string
+          whale_lead_seconds?: number
+          withdraw_priority?: number
+        }
+        Update: {
+          concierge?: boolean
+          created_at?: string
+          crown_mult?: number
+          event_lead_hours?: number
+          fee_waiver_pct?: number
+          free_spins?: number
+          gradient_from?: string
+          gradient_to?: string
+          lounge?: boolean
+          min_phon?: number
+          rank?: number
+          skin_pack?: string
+          tier?: string
+          whale_lead_seconds?: number
+          withdraw_priority?: number
         }
         Relationships: []
       }
@@ -9666,6 +9825,10 @@ export type Database = {
       assign_persona: { Args: never; Returns: string }
       auto_adjust_bot_strength: { Args: never; Returns: Json }
       auto_freeze_critical_anomalies: { Args: never; Returns: Json }
+      award_avatar_for_bigwin: {
+        Args: { _amount: number; _user: string }
+        Returns: Json
+      }
       award_crown: {
         Args: {
           _base: number
@@ -9951,6 +10114,7 @@ export type Database = {
         Args: { _when?: string }
         Returns: undefined
       }
+      equip_avatar: { Args: { _avatar_id: string }; Returns: Json }
       equip_badge: {
         Args: { _badge_key: string; _slot: number }
         Returns: Json
@@ -10049,6 +10213,7 @@ export type Database = {
           total_reward: number
         }[]
       }
+      get_avatar_catalog: { Args: never; Returns: Json }
       get_beta_funnel_stats: { Args: never; Returns: Json }
       get_bot_feed: {
         Args: { _limit?: number }
@@ -10283,6 +10448,7 @@ export type Database = {
         }[]
       }
       get_my_empire_map: { Args: never; Returns: Json }
+      get_my_equipped_avatar: { Args: never; Returns: Json }
       get_my_fomo_notifications: {
         Args: { _limit?: number }
         Returns: {
@@ -10425,6 +10591,7 @@ export type Database = {
       }
       get_my_total_boost_pct: { Args: never; Returns: number }
       get_my_vip_pass: { Args: never; Returns: Json }
+      get_my_vip_tier: { Args: never; Returns: Json }
       get_my_weekly_referral_rank: { Args: never; Returns: Json }
       get_next_empire_day: { Args: never; Returns: string }
       get_next_nft_threshold: { Args: never; Returns: Json }
@@ -10988,6 +11155,7 @@ export type Database = {
       public_uptime_heatmap_90d: { Args: never; Returns: Json }
       public_uptime_summary: { Args: never; Returns: Json }
       public_withdrawal_sla: { Args: never; Returns: Json }
+      purchase_avatar: { Args: { _avatar_id: string }; Returns: Json }
       purchase_season_pass: { Args: never; Returns: Json }
       rank_feed_for_user: {
         Args: { _limit?: number }
@@ -11382,7 +11550,9 @@ export type Database = {
         }
         Returns: Json
       }
-      subscribe_vip_pass_phon: { Args: never; Returns: Json }
+      subscribe_vip_pass_phon:
+        | { Args: never; Returns: Json }
+        | { Args: { _tier?: string }; Returns: Json }
       take_phon_snapshot: { Args: never; Returns: Json }
       tap_reinforce: { Args: { _nonce: string }; Returns: Json }
       tick_weekly_leaderboard_ranks: { Args: never; Returns: Json }
