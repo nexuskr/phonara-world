@@ -1,45 +1,82 @@
-# PR-H Idle/Hidden Suspension — 회귀 수정
+# PR-H rpc.surface 시나리오 레이스 수정
 
-## 현재 시나리오 결과
-- `activeRPC: 5` (정상)
-- `hiddenRPC: 1` — FAIL (`platform_kill_switches` 1회 유출)
-- `idleRPC: 5` — FAIL (cosmetic 4개 + admin 1개 전부 유출)
+## 현재 결과
+- `activeRPC: 2`
+- `hiddenRPC: 1` — `platform_kill_switches` 1회
+- `idleRPC: 2` — `get_whale_strikes_24h`, `platform_kill_switches` 각 1회
 
-## 원인
-1. **Idle**: `runtime.idle.installIdleSuspension()`이 `pauseCategory("admin")`만 호출합니다. `use-auth-live-data`의 4개 폴링(KPI, whale, top5, 1s drift)은 `category: "cosmetic"` 이므로 idle 단계에서 계속 발사됩니다.
-2. **Hidden**: `setVisibleInterval`은 `document.hidden`과 governor를 모두 가드하지만, `use-kill-switches`의 두 가지 비-interval 경로가 가드되지 않습니다:
-   - Supabase realtime `postgres_changes` 콜백 → `refresh()` 직접 호출
-   - `window` `focus` 이벤트 → `refresh()` 직접 호출 (시나리오가 visibility를 토글할 때 트리거될 가능성)
+## 재진단
+앱 쪽 가드 자체보다는 **`rpc.surface.runScenario()`의 단계 전환 순서** 때문에 경계 시점 호출이 잘못 집계되고 있습니다.
+
+1. **Hidden 1회**
+   - hidden 단계 시작 시 `forcedMode = "hidden"`이 먼저 켜지고,
+   - 그 직후 `document.hidden = true` / `visibilitychange`가 적용됩니다.
+   - 이 아주 짧은 틈에서 60초 경계에 도달한 `platform_kill_switches` 폴링이 실행되면, 실제로는 “전환 경계 호출”인데 hidden 버킷으로 분류됩니다.
+
+2. **Idle 2회**
+   - idle 단계에서도 `forcedMode = "idle"`가 먼저 켜지고,
+   - `__phonaraIdle.force(true)`로 governor pause가 걸리기 전 짧은 틈이 있습니다.
+   - 같은 경계 구간에서 `get_whale_strikes_24h` / `platform_kill_switches`가 1회씩 실행되면 idle 버킷으로 잡힙니다.
+
+3. **verdict 계산도 현재 왜곡됨**
+   - baseline 수집은 foreground만 채우므로 `baseline.hidden` / `baseline.idle`은 구조적으로 0입니다.
+   - 그런데 `diffReport()`는 hidden/idle을 각각 이 0과 비교합니다.
+   - 따라서 나중에 count가 0이 되더라도 PASS 판정이 안정적으로 나오지 않습니다.
 
 ## 변경안
 
-### A. Idle 정책 확장 (정답으로 추천)
-`runtime.idle.ts`를 수정해 60초 입력 없음이 감지되면 **`admin` + `cosmetic` 둘 다** 일시정지하도록 변경. 입력 복귀 시 둘 다 resume.
+### 1) `rpc.surface.runScenario()` 단계 전환을 원자적으로 정리
+`src/packages/entropy/rpc.surface.ts`
 
-근거: 탭이 visible이라도 60초간 입력이 없으면 화면을 능동적으로 보지 않는 상태이므로 cosmetic 폴링/마키 갱신을 멈춰도 UX 손실이 없고, 입력 한 번에 즉시 catch-up이 일어납니다. `useDocumentVisible`/Realtime은 영향 없습니다.
+- hidden 단계:
+  1. 먼저 실제 런타임 상태를 hidden으로 전환
+  2. visibility listener / catch-up이 한 프레임 정리되도록 settle
+  3. 그 다음 카운터 reset
+  4. 마지막에 hidden 측정 시작
 
-대안 (선택하면 알려주세요):
-- **B**. `use-auth-live-data`만 `category: "admin"`으로 재분류 — 좁은 수정이지만 `/secure-auth` 외 다른 cosmetic 폴링은 idle에 계속 살아남음.
-- **C**. 새 카테고리 `"idle-suppressible"` 도입 — 코드 양 가장 많음, 비추천.
+- idle 단계:
+  1. 먼저 visible 복귀에 따른 catch-up을 측정 바깥에서 정리
+  2. `__phonaraIdle.force(true)`로 governor pause를 먼저 확정
+  3. settle 후 reset
+  4. 마지막에 idle 측정 시작
 
-### Hidden 누수 차단 (A/B/C 공통)
-`use-kill-switches.ts`의 `refresh()` 호출 시 가드 추가:
-```ts
-function refresh() {
-  if (typeof document !== "undefined" && document.hidden) return;
-  if (isCategoryPaused("admin")) return;
-  // ...
-}
-```
-- realtime 콜백/focus 핸들러 모두 자동으로 보호됨.
-- realtime 이벤트는 무시되지만, visible 복귀 시 `setVisibleInterval` catch-up과 `focus` 리스너가 1회 즉시 refresh 하므로 일관성 유지.
+즉, **분류 모드 진입보다 실제 pause/visibility 상태를 먼저 확정**해서 경계 호출이 phase bucket에 섞이지 않게 만듭니다.
+
+### 2) phase boundary flush helper 추가
+`src/packages/entropy/rpc.surface.ts`
+
+- 예: 다음 tick / animation frame까지 기다리는 `flushPhaseBoundary()` 추가
+- 목적:
+  - visibilitychange 리스너 실행 완료
+  - `setVisibleInterval`의 catch-up/onVisible 처리 소진
+  - 경계 직전 타이머와 측정 구간을 분리
+
+### 3) verdict 기준 수정
+`src/packages/entropy/rpc.surface.ts`
+
+- hidden/idle 비교 기준을 `baseline.foreground.count`로 변경
+- 기대 의미:
+  - active 대비 hidden은 90% 이상 감소
+  - active 대비 idle은 70% 이상 감소
+
+이렇게 해야 현재 시나리오 구조와 수치 해석이 일치합니다.
 
 ## 변경 파일
-- `src/packages/runtime/runtime.idle.ts` — `tick()`/`markActive()`/`__phonaraIdle.force()`에서 `admin` + `cosmetic` 둘 다 pause/resume.
-- `src/hooks/use-kill-switches.ts` — `refresh()` 첫 줄에 hidden + admin paused 가드 추가, `isCategoryPaused` import.
+- `src/packages/entropy/rpc.surface.ts`
+
+## 기대 결과
+- 경계 레이스 제거 후:
+  - `hiddenRPC = 0`
+  - `idleRPC = 0`
+- verdict 계산 수정 후:
+  - `verdict.hidden === "PASS"`
+  - `verdict.idle === "PASS"`
 
 ## 검증
 1. `bun run build`
-2. `__phonaraSurface.runScenario()` 실행
-3. 기대 결과: `verdict.hidden === "PASS"`, `verdict.idle === "PASS"`, `hiddenRPC=0`, `idleRPC=0`
-4. 통과 시 `reports/rpc.surface.2026-05-16.json`에 결과 저장
+2. DEV 콘솔에서 `__phonaraSurface.runScenario()` 실행
+3. 확인 항목
+   - hidden bucket = 0
+   - idle bucket = 0
+   - verdict hidden/idle 모두 PASS
+4. 필요 시 결과를 `reports/rpc.surface.2026-05-16.json`에 반영
