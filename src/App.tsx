@@ -364,7 +364,6 @@ const App = () => (
           </Suspense>
         </BrowserRouter>
       </TooltipProvider>
-      </MotionConfig>
     </QueryClientProvider>
   </ErrorBoundary>
 );
