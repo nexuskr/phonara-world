@@ -124,6 +124,8 @@ class SlotSoundManagerImpl {
       html5: false,
       volume: 1,
       onload: () => { entry.loaded = true; },
+      // Silent fallback: 음원 자산 미배포 상태가 정상 운영 가드(public/sounds/** 비어 있음).
+      // procedural BGM/SFX 폴백이 자동 라우팅되므로 사용자/모니터링에 404를 노출하지 않는다.
       onloaderror: () => { entry.failed = true; },
       onplayerror: () => { entry.failed = true; },
     });
