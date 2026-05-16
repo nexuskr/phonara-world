@@ -1863,6 +1863,33 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_quick_claims: {
+        Row: {
+          amount: number
+          created_at: string
+          day: string
+          id: number
+          kind: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          day?: string
+          id?: number
+          kind: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          day?: string
+          id?: number
+          kind?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       daily_stats: {
         Row: {
           best_streak: number
@@ -9687,6 +9714,7 @@ export type Database = {
           reward: number
         }[]
       }
+      claim_daily_quick_reward: { Args: { _kind: string }; Returns: Json }
       claim_demo_refill: { Args: never; Returns: Json }
       claim_first_deposit_godmode: {
         Args: { _deposit_krw: number }
@@ -9740,6 +9768,7 @@ export type Database = {
         Args: { _level: number; _track: string }
         Returns: Json
       }
+      claim_share_reward: { Args: { _channel: string }; Returns: Json }
       claim_weekly_pass_reward: { Args: { _level: number }; Returns: Json }
       cleanup_bot_activity: { Args: never; Returns: undefined }
       complete_guide_bonus: { Args: never; Returns: Json }
@@ -10079,6 +10108,7 @@ export type Database = {
           tone: string
         }[]
       }
+      get_earn_hub_state: { Args: never; Returns: Json }
       get_empire_seats_remaining: { Args: never; Returns: number }
       get_error_stats: {
         Args: { _hours?: number }
