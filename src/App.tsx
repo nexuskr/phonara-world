@@ -35,6 +35,10 @@ if (__dev || __debugPerf) {
 const Index = lazy(() => import("./pages/Index.tsx"));
 const Auth = lazy(() => import("./pages/Auth.tsx"));
 const Dashboard = lazy(() => import("./pages/Dashboard.tsx"));
+// v14.0 Great Simplification — 4탭 슬림 IA
+const Home = lazy(() => import("./pages/Home.tsx"));
+const Earn = lazy(() => import("./pages/Earn.tsx"));
+const Live = lazy(() => import("./pages/Live.tsx"));
 const EmpireArena = lazy(() => import("./pages/EmpireArena.tsx"));
 const TradingArenaWithArmy = lazy(() => import("./pages/TradingArenaWithArmy.tsx"));
 const TradingArenaBybit = lazy(() => import("./pages/TradingArenaBybit.tsx"));
@@ -211,9 +215,18 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
 
+              {/* v14.0 — 4탭 슬림 IA */}
+              <Route path="/home" element={<Home />} />
+              <Route path="/earn" element={<Earn />} />
+              <Route path="/live" element={<Live />} />
+              <Route path="/games" element={<CasinoLobby />} />
+              <Route path="/trade" element={<TradingArenaBybit />} />
+              <Route path="/events" element={<Navigate to="/missions?tab=daily" replace />} />
+              <Route path="/avatar" element={<Navigate to="/profile" replace />} />
+              <Route path="/guild" element={<Navigate to="/lounge" replace />} />
+
               {/* Phonara Empire 5축 IA — 정식 라우트 */}
               <Route path="/command" element={<Dashboard />} />
-              <Route path="/earn" element={<Navigate to="/missions" replace />} />
               <Route path="/empire" element={<Empire />} />
               <Route path="/empire/hall" element={<EmpireHall />} />
               <Route path="/empire/my-seat" element={<MyFoundingSeat />} />
