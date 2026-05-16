@@ -51,15 +51,13 @@ export default defineConfig(({ mode }) => ({
 
           if (!id.includes("node_modules")) return;
 
-          // howler — audio 청크에 함께 포함
-          if (id.includes("howler")) return "audio";
+          // PR-C: 라이브러리 수동 그룹화 최소화.
+          // 부트 핵심(supabase auth / i18n / icons / motion) 만 별도 청크로 유지.
+          // 그 외(howler/recharts/d3/lightweight-charts/date-fns)는 자연 코드 스플리팅에 맡겨
+          // 자동 modulepreload 흡수 이슈를 차단한다.
           if (id.includes("@supabase")) return "supabase";
-          if (id.includes("recharts") || id.includes("d3-")) return "charts";
-          if (id.includes("lightweight-charts")) return "lwcharts";
           if (id.includes("lucide-react")) return "icons";
-          if (id.includes("date-fns")) return "date";
           if (id.includes("i18next")) return "i18n";
-          // H-4: framer-motion own chunk so route bundles don't redownload it
           if (id.includes("framer-motion") || id.includes("motion-dom") || id.includes("motion-utils")) return "motion";
           // PR-B: pickers 수동 그룹 제거.
           // cmdk/vaul/embla/day-picker는 admin/special 페이지만 사용하며
