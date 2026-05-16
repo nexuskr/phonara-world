@@ -1,195 +1,192 @@
-# PHONARA.WORLD — The Only Digital World You'll Ever Need
+# PHONARA.WORLD — Great Simplification (대개편)
 
-**Trump × Musk Edition · 통합 마스터 플랜 v1.0**
-
----
-
-## 0. 한 줄
-
-> "현실보다 더 재미있고, 더 돈이 되고, 더 소속감 있는 제2의 인생."
-> 한국 점령(6개월) → 아시아 패권(18개월) → 글로벌 독점(36개월).
-
-**측정 가능한 1년 목표:** DAU 5×, 평균 세션 18→45분, D7 리텐션 25%+, ARPPU 3×.
+**"5초 안에 이해되는 가상세계."**
+복잡함을 다 걷어내고, 처음 들어온 사람이 즉시 **Earn · Bet · Games · Trade** 4개로만 인식하게 만든다.
 
 ---
 
-## 1. 포지셔닝 (Phase별)
+## 0. 핵심 진단 (지금 왜 허접해 보이는가)
 
-| Phase | 기간 | 포지셔닝 | 환급 |
-|---|---|---|---|
-| **1 한국 점령** | 0~6M | PHON 기반 하이브리드 소셜카지노 + Earn 허브 | 상품권/NFT/포인트 + 코인 |
-| **2 아시아 패권** | 6~18M | 가상 국가 (아바타·길드·메타) | + 라이선스 기반 직접 환급 |
-| **3 글로벌 독점** | 18M+ | "The Digital World" | USDT 직접 베팅 + 글로벌 환급 |
-
-기존 자산(Empire 10티어 · VIP Pass · Founding Seats · Crown War · Whale Strike · NFT 부스트 · Trust v2 · AI Coach · Oracle Fortress · Reactivation)은 **전부 보존**하고 그 위에 Earn Hub + 환전 + 중독 루프를 얹는다.
+1. **첫 화면 정보 폭격** — Dashboard에 카드가 20개+ 노출 (Hero, Briefing, VIP Preview, Stories, Journey Map, Claim Panel, Trading Entry, Casino, KPI×4, HubTabs, FOMO Strip, Crown War, Whale Rail, Bet Panel, P2E, Boost Hero, Feed, Revenue, Challenge, Countdown, Ticker, Attendance, Tier Compare, Jackpot, Bots, Mission, Ranking …)
+2. **정체불명 단어** — Empire / Crown / Imperial / Baron / Founding / Galaxy / Cosmic 등 신화 용어가 첫 인상을 흐림. "여기 뭐 하는 곳?"
+3. **사이드바·탭·HUB 중복** — HubTabs + EmpireSignature + PowerHeader + WhaleStrikeRail + FomoStrip 동시 표시
+4. **CTA 분산** — 베팅, 충전, 미션, 출금, 황제, NFT 버튼이 모두 동급으로 노출됨
+5. **시각 톤이 게임/카지노보다 "신비 종교" 느낌** — Stake처럼 "여긴 베팅·게임이구나"가 0.5초 안에 안 와닿음
 
 ---
 
-## 2. 지갑·경제 구조 (전면 재설계)
+## 1. 새 첫인상 (NORTH STAR)
 
 ```text
-[Deposit Balance]   USDT / 계좌이체 / 상품권   ── 입금 원장 (출금 대상)
-        │  (사용자 선택 환전 — 0% fee)
-        ▼
-[PHON Balance]      게임 · 트레이딩 · Earn 사용
-        │  (출금 시 1.5%, VIP 면제)
-        ▼
-[Withdraw]          코인 / 상품권 / NFT
+┌─────────────────────────────────────────────────┐
+│  PHONARA.WORLD                    PHON 잔액 + 👤 │
+│  ─────────────────────────────────────────────  │
+│  💸 EARN     🎰 GAMES     📈 TRADE     🏆 LIVE │   ← 4탭만
+│  ─────────────────────────────────────────────  │
+│                                                 │
+│  [큰 히어로 1장 — 현재 탭에 맞는 메시지 1줄]    │
+│  [주요 액션 1개 — "지금 시작 +500 PHON"]        │
+│                                                 │
+│  [그 아래는 해당 탭의 핵심 카드 3~5개만]        │
+│                                                 │
+└─────────────────────────────────────────────────┘
+                  하단 라이브 티커 1줄
 ```
 
-- **기본 환율:** 1 USDT = 1,300 PHON (기존 유지, 메모 준수)
-- **VIP 보너스 환전:** Silver +2% / Gold +5% / Platinum +8~10% PHON 추가 지급
-- **한정 이벤트:** "오늘만 1:1,450 PHON" FOMO 배너 (주 1~2회)
-- **자동 환전 옵션:** 입금 시 30/50/100% 선택, 미선택 시 Deposit Balance 유지
-- **보안:** 환전 전 30초 카운트다운 + 2FA + 일일 한도 + AI 이상탐지(`anomaly_events` 재활용)
+**5초 룰:** 첫 화면에서 누구나 "여긴 부업·게임·트레이딩 하는 곳"이라고 즉시 답할 수 있어야 함.
 
 ---
 
-## 3. 6주 1차 스프린트 (즉시 실행)
+## 2. 새 정보 구조 (IA)
 
-### Week 1 — Earn Hub MVP (`/earn`)
-- 라우트 + 좌측 사이드바 🎁 진입
-- 5카드: **일일출석 · 일일미션 · 친구초대 · Play-to-Earn · 주간보스**
-- D1=100 → D7=1,000 PHON + 슬롯 프리스핀 10
-- 미션 5종 자동 롤(슬롯 50스핀/크래쉬 3판/초대/채팅/트레이딩)
-- 친구 초대 2단(가입 +200, 첫 입금 양쪽 +1,500)
-- Play-to-Earn: 누적 10k PHON 베팅마다 100 PHON 보너스 크레딧(베팅 전용)
-- AI Coach를 Earn 일일 브리핑 카드로 재배치
+### 메인 탭 4개 (좌측 사이드바, 모바일 하단 탭바)
 
-### Week 2 — 듀얼 지갑 + 선택적 환전
-- `wallet_balances`에 `deposit_balance` 컬럼 + PHON 분리
-- RPC: `convert_deposit_to_phon(amount, auto_pct?)` / `revert_phon_to_deposit(amount)`
-- 신규 페이지: `/wallet` 탭 "환전" + 30초 카운트다운 + VIP 보너스 표시
-- 입금 플로우 변경: 입금 완료 → "자동 환전 비율 선택" 다이얼로그
-- "오늘만 ×1.12 환전" 한정 배너 인프라(`fx_rate_promos` 테이블)
+| 탭 | 뜻 | 한 줄 설명 | 들어갈 것 |
+|---|---|---|---|
+| 💸 **EARN** | 부업 | "무료로 PHON 벌기" | 출석·미션·초대·오퍼월·Play-to-Earn |
+| 🎰 **GAMES** | 게임 | "슬롯·크래쉬·룰렛" | 카지노 12종 · 크래쉬 · 룰렛 |
+| 📈 **TRADE** | 트레이딩 | "코인 가격 베팅" | TradingArena · NFT 부스트 |
+| 🏆 **LIVE** | 라이브·랭킹 | "실시간 빅윈·랭킹·VIP" | Whale Rail · 랭킹 · VIP · Lounge |
 
-### Week 3 — 중독 코어 루프 극한 강화 (전 게임)
-- **빅윈 3단계 연출:** Mega(10×) / Epic(50×) / Legendary(100×) 풀스크린 + 화면 흔들림 + 사운드 빌드업 + 햅틱
-- **Hot Streak:** 3연승 시 오버레이 + 다음 스핀 1.2× 멀티
-- **니어미스 강화:** 스캐터 2개 + 3번째 reel 0.5초 지연
-- **콤보 메터:** 5스핀 누적 → 보너스 트리거 확률 +5%
-- **크래쉬:** 라이브 채팅 + 베팅 마키(현 라운드 베팅자 닉네임 흘림) + 사운드 빌드업
-- **룰렛 일일 무료 1회:** Earn에서 클레임, 잭팟 0.1% 떡밥
-- **세션 종료 방지:** 5분 비활동 시 "🔥 잭팟 임박" 토스트 (실데이터)
+### 우측 상단 (영구 표시)
+- PHON 잔액 + 충전 버튼 (1개)
+- 프로필 아바타 (드롭다운: 지갑/VIP/설정/로그아웃)
 
-### Week 4 — 세계관 통합 ("Phonara World")
-- Stake 스타일 다크 + 골드 리디자인, 좌측 영구 사이드바
-  - Casino / Crash / Roulette / Trading / **Earn** / Empire / Lounge
-- 상단 라이브 티커: Whale Strike + VIP 입장 + 최근 출금 한 줄 (기존 RPC 재활용)
-- 60초 온보딩: 가입 → 무료 룰렛 → 일일미션 1개 → 슬롯 데모 → 패키지 추천
-- 화면 진입 시그니처 사운드(음소거 가능)
-
-### Week 5 — VIP 시스템 강화 + 소셜 기본
-- VIP Empire Pass 3티어(Silver/Gold/Platinum) — 환전 보너스 + 수수료 면제 + 전용 라운지
-- 글로벌 채팅 강화: 빅윈 자동 브로드캐스트 + 이모지 리액션
-- 친구 시스템: 추가 / 빅윈 알림 / 친구 랭킹
-- 한정 이벤트: 주말 더블 보상 / 한정 환율 / VIP-only 토너먼트
-
-### Week 6 — 데이터·폴리시·푸시
-- `/admin/kpi` 신규 패널: D1/D7/D30 리텐션 · Earn→실입금 전환 · 평균 세션 · ARPU · 환전량
-- A/B 프레임워크: 빅윈 강도 / 온보딩 순서 / 미션 리워드
-- PWA 푸시: 잭팟 임박 / 친구 빅윈 / 일일미션 리셋 / 한정 환전
-- TikTok형 빅윈 피드(PersonalizedFeedRail 풀스크린 모드)
-- QA 스윕 + 첫 6주 회고
+### 숨김 처리 (탭 안쪽 메뉴로 이동)
+- Empire / Crown / Founding / Galaxy / Cosmic → **"🏆 LIVE > 명예의 전당"** 1개 메뉴로 통합
+- Achievements / Missions / Referral → **"💸 EARN"** 안 카드로
+- Marketplace / NFT Atelier / Collection → **"📈 TRADE > NFT 부스트"**
+- Trust / Legal / Support / Status → **푸터 1줄**
 
 ---
 
-## 4. Phase 2 (M6~M18) — 아시아 패권
+## 3. 단어 정화 (브랜딩 톤)
 
-- **Crash Game** 자체 엔진 출시 (Oracle Fortress 가격 합의 재활용)
-- **아바타 시스템** (NFT 부스트 시각화 + 라운지 룸)
-- **길드 v2** (실시간 보이스 채팅 + 길드 토너먼트 + 길드 환전 풀)
-- **TikTok 스타일 풀스크린 피드** 메인 진입점화
-- **AI 개인화 추천** (V17 엔진 확장, 게임/시간대/금액 추천)
-- **i18n:** 영어 → 일본어 → 베트남어 → 중국어(번체)
+| 기존 (혼란) | 새 (직관) |
+|---|---|
+| Empire / Imperial / 황제 | **Level** (1~10) |
+| Crown | **Bonus Pts** |
+| Baron 승급 | **VIP 승급** |
+| Founding Seat / Galaxy | **시즌 좌석** |
+| Cosmic Emperor | **Top Player** |
+| Whale Strike | **Live Wins** |
+| Imperial Story | **News** |
+| Phonara World ✓ | (유지) |
 
-## 5. Phase 3 (M18+) — 글로벌 독점
-
-- Curacao/Anjouan **라이선스 취득** + 법인 분리
-- **USDT 직접 베팅** (PHON 우회 옵션) — 글로벌 전용
-- **자체 게임 5종** 추가 출시
-- **대규모 가상 이벤트:** 콘서트 / 토너먼트 / 페스티벌 (1만명+ 동시 접속)
-- **Phonara 경제권:** 광고주·크리에이터·B2B 시뮬 API(`sim-api` 이미 가동 중)
+DB 컬럼·내부 코드는 그대로(`empire_levels` 등) — **UI 문구만 일괄 교체**. 변경 비용 최소.
 
 ---
 
-## 6. 수익 모델 (Phase 1 기준)
+## 4. 페이지별 정리
 
-| 라인 | 비중 | 메커니즘 |
+### `/` (Index, 비로그인 랜딩)
+- 풀스크린 히어로 1장 + "지금 가입하고 무료 PHON 받기" CTA 1개
+- 아래 4섹션 가로 스와이프: EARN / GAMES / TRADE / LIVE (각 3줄 설명 + 썸네일)
+- 푸터: Trust · Legal · Support
+- **삭제:** WhaleStrikeRail · VipArrivalsTicker · WorldDominationWall · 트럼프배너 · vs CEX 티커 (모두 LIVE 탭 안으로)
+
+### `/dashboard` → **/home** 으로 리네임
+- 상단: PHON 잔액 + 오늘 미션 진행률 1줄
+- 큰 카드 1개: "오늘의 추천 행동" (AI Coach 1줄 + CTA 1개)
+- 아래 카드 4개만: 출석 · 진행 중 미션 · 진행 중 베팅 · 친구 신청
+- **삭제:** Hero V3 풀스크린 / Stories / Journey Map / Claim Panel / KPI Grid / MoreSection 전체 (각 탭으로 이동)
+
+### `/earn` (신규, 단순)
+- 5카드 그리드: 출석 · 일일미션 · 친구초대 · Play-to-Earn · 오퍼월
+
+### `/games` (Casino 리네임)
+- 카드 12개 그리드, 필터: 인기/신규/잭팟
+- 상단에 크래쉬·룰렛 큰 배너 2개
+
+### `/trade`
+- 차트 + 베팅 패널만 (현재 TradingArena 정리 버전)
+- NFT 부스트는 하단 슬림 카드 1개
+
+### `/live`
+- 탭 4개: Live Wins · 랭킹 · VIP · 명예의 전당
+- 기존 Empire/Crown/Founding/Galaxy 콘텐츠가 여기로 흡수
+
+---
+
+## 5. 디자인 톤 (Stake·롤빛 수준)
+
+- **다크 베이스** `#0B0E1A` + **네온 골드** `#F0B935` + **액센트** 핫핑크 `#FF3B7C`
+- **카드:** 1px 그라디언트 보더 + 미세 글로우. 그림자 최소.
+- **여백 크게.** 카드 사이 24px+. 한 화면에 카드 4~5개 이상 금지.
+- **폰트:** Pretendard 700/500 (한글) + Space Grotesk 700/500 (영문). 신비주의 폰트 전면 폐기.
+- **아이콘:** lucide-react 1.5px 스트로크 통일. 이모지 남발 금지(탭 헤더만 허용).
+- **모션:** 0.2~0.3s ease. 풀스크린 화려 연출은 빅윈 순간에만.
+- **사운드:** 전역 음소거 기본. 게임 진입 후만 자동 ON.
+
+---
+
+## 6. 6주 → 2주 우선 (Great Simplification 먼저)
+
+이전 마스터플랜의 Week 1~6 시작 전에 **Week 0 (2주) 대개편**을 끼워넣는다.
+
+### Sprint 0-A (Week 1) — IA & 단어 정화
+- 사이드바·탭바 4개로 축소 (EARN/GAMES/TRADE/LIVE)
+- `/dashboard` → `/home` 슬림 버전으로 교체 (카드 4개)
+- `<Layout>` 우측 PowerHeader 단순화 (PHON + 아바타만)
+- 단어 사전(`src/lib/i18n/glossary.ts`) 만들고 UI 문구 일괄 교체
+- HubTabs / EmpireSignature / FomoNotificationStrip / CrownWarHUD / WorldDominationWall **첫 화면에서 제거** (LIVE 탭 안으로)
+
+### Sprint 0-B (Week 2) — 첫 화면·랜딩 리디자인
+- `/` 새 랜딩: 풀스크린 히어로 + 4탭 스와이프 + CTA 1개
+- 첫 로그인 60초 온보딩: 가입 → 무료 룰렛 → 미션 1개 → 게임 데모 (단어는 전부 새 사전)
+- 다크+골드+핫핑크 토큰 일괄 적용 (index.css 갱신)
+- 폰트 교체 + 이모지/신비주의 카피 정리
+
+### → 이후 Week 1~6 (이전 마스터플랜) 그대로 진행
+Earn Hub MVP → 듀얼 지갑/환전 → 중독 루프 → 통합 세계관 → VIP·소셜 → 데이터·푸시
+
+---
+
+## 7. 기술 사항
+
+### 제거/이동 대상 컴포넌트 (Dashboard에서)
+DashboardHeroV3 / ImperialStoryRail / ImperialJourneyMap / JourneyClaimPanel / KpiGridV3 / MoreSection 안 다수 → **LIVE 탭으로 이동 또는 lazy 유지하되 default off**
+
+### 신규/리네임
+- `src/pages/Home.tsx` (새 슬림 Dashboard)
+- `src/pages/Earn.tsx` (신규)
+- `src/pages/Games.tsx` (Casino 리네임 + 정리)
+- `src/pages/Live.tsx` (Empire/Whale/VIP/명예의전당 통합)
+- `src/lib/i18n/glossary.ts` (단어 매핑)
+- `src/components/nav/MainSidebar.tsx` + `MobileTabBar.tsx` (4탭)
+
+### 디자인 토큰 (index.css)
+```css
+--bg: 222 47% 7%;
+--card: 222 40% 10%;
+--gold: 44 88% 58%;
+--pink: 340 100% 62%;
+--text: 0 0% 96%;
+--muted: 222 15% 60%;
+```
+
+### 라우트 alias (점진 마이그레이션)
+`/dashboard` → `/home` 리다이렉트, `/casino` → `/games`, `/empire/*` → `/live/*` 1주 병행 후 제거.
+
+### 기존 자산 (보존 — UI만 숨김/이동)
+모든 RPC·DB·엣지·Empire/Crown/Founding/Galaxy/VIP/NFT 로직 그대로. **시각 노출만 정리.**
+
+---
+
+## 8. 성공 기준 (2주 후)
+
+| 지표 | 현재 | 2주 목표 |
 |---|---|---|
-| 게임 하우스엣지 | 50~55% | 슬롯 RTP 96% · 크래쉬 1% · 룰렛 2.7% |
-| PHON 패키지 + VIP | 28~32% | 첫입금 보너스 + 한정 환율 + 3티어 구독 |
-| 오퍼월/광고 | 12~15% | AdGate/OfferToro SDK (Week 5에 secret 추가) |
-| 트레이딩 수수료 | <5% | Phase 2 확대 |
+| 첫 화면 카드 수 | 20+ | **6 이하** |
+| 첫 5초 이해도 (5명 user test) | "모르겠다" | "베팅·부업·게임" |
+| Bounce (3초 내) | ~40% | <20% |
+| 가입 전환 (랜딩→가입) | ~3% | 8%+ |
+| 가입→첫 액션 (미션/베팅) | ~25% | 60%+ |
 
 ---
 
-## 7. 기술 사항 (개발 참조)
+## 9. 다음 액션
 
-### 신규 라우트
-- `src/pages/Earn.tsx`
-- `src/pages/PhonaraWorld.tsx` (메인 리디자인, Index 병행 → 점진 교체)
-
-### 신규 테이블 (migration)
-- `daily_login_streaks` (user_id, current_streak, last_claim_at, total_claimed)
-- `daily_missions` (id, user_id, mission_code, progress, target, claimed_at, expires_at)
-- `play_to_earn_ledger` (user_id, total_wagered_phon, bonus_credit_balance)
-- `referral_rewards` (referrer_id, referee_id, signup_reward_at, deposit_reward_at)
-- `offerwall_completions` (user_id, provider, offer_id, payout_phon, status)
-- `fx_conversions` (user_id, deposit_amount, phon_credited, fx_rate, vip_bonus_pct, fee_pct)
-- `fx_rate_promos` (id, label, multiplier, starts_at, ends_at, active)
-- `wallet_balances` 확장: `+ deposit_balance numeric`
-
-### 신규 RPC
-- `claim_daily_streak()`
-- `roll_daily_missions()` (cron 매일 00:00 KST)
-- `claim_mission(mission_id)`
-- `process_referral_deposit(referee_id)` (입금 트리거)
-- `credit_play_to_earn(user_id, wagered)` (베팅 RPC 내부)
-- `convert_deposit_to_phon(_amount, _confirm_token)` — 30초 confirm token
-- `revert_phon_to_deposit(_amount)`
-- `get_current_fx_promo()` — 한정 배너용 공개 RPC
-
-### 재활용 (변경 없음)
-Whale Strike Rail · VIP Arrivals · Reactivation · Trust v2 · NFT Boost · AI Coach · Empire 10티어 · Founding Seats · Crown War · Oracle Fortress · Kernel Observability · sim-api
-
-### 디자인 토큰
-- 다크 베이스 `#0B0E1A` + 골드 `#F0B935` + 액센트 핫핑크 `#FF3B7C`
-- 폰트: Pretendard(한글) + Space Grotesk(영문)
-- 모든 카드: 그라디언트 보더 + 펄스 글로우 (Stake/롤빛 톤)
-
-### 결제 제약 (메모 준수)
-코인 입금 + 한국 계좌이체 + 상품권 수동. Stripe/PG 자동 제안 금지.
-
----
-
-## 8. 실행 원칙 (Trump × Musk)
-
-**Musk — First Principles:**
-1. 6주마다 큰 업데이트 + 사내 데모 데이
-2. 모든 의사결정은 `/admin/kpi` 숫자 기준
-3. 수직 통합(Earn·게임·소셜·경제·NFT 전부 자체 제어)
-
-**Trump — Bigger Than Everyone:**
-1. 매주 1회 한정 이벤트 / FOMO 배너
-2. VIP는 과감하게 차별 대우(전용 라운지·환전 보너스·수수료 0%)
-3. "세계 최고" 메시지 일관 노출 — Whale Strike Rail / VIP Arrivals 항상 ON
-
----
-
-## 9. 6주 성공 기준
-
-| 지표 | 현재 추정 | 6주 목표 |
-|---|---|---|
-| D1 리텐션 | ~30% | 55%+ |
-| D7 리텐션 | ~10% | 25%+ |
-| 평균 세션 | ~5분 | 18분+ |
-| Earn→실입금 전환 | N/A | 8%+ |
-| DAU | 기준선 | 5× |
-| 환전 사용률 | N/A | 입금자 70%+ |
-
----
-
-## 10. 다음 액션
-
-승인 시 **Week 1 (Earn Hub MVP) 즉시 착수**. 1주 단위로 보고 + 다음 주 우선순위 재확인. Phase 2/3 세부 플랜은 Week 6 회고 시점에 v2로 갱신.
+승인 시 **Sprint 0-A (IA & 단어 정화) 즉시 착수**.
+1주 후 슬림 첫 화면 데모 → 사용자 테스트 5명 → Sprint 0-B 진행.
+그 후 이전 마스터플랜 Week 1(Earn Hub MVP)부터 정상 진행.
