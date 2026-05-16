@@ -34,16 +34,24 @@ if (__dev || __debugPerf) {
 
 // LOCKED v3.0 §12-1 §13-2 — 모든 환경에서 device profile + budget telemetry 가동
 // (web-vitals 4KB, device 판정 1tick, 둘 다 critical path 영향 0)
+// Phase 2 Visibility — DEV-only runtime ledger override (zero prod cost).
 if (typeof window !== "undefined") {
-  // idle-deferred init — first paint 영향 0
   const __initBudgetSystems = () => {
     import("@pkg/performance").then((m) => m.initDeviceIntelligence()).catch(() => {});
     import("@pkg/telemetry").then((m) => m.initWebVitals()).catch(() => {});
+    if ((import.meta as { env?: { DEV?: boolean } }).env?.DEV) {
+      import("@pkg/entropy").then((m) => m.captureEntropy()).catch(() => {});
+    }
   };
   const ric = (window as any).requestIdleCallback;
   if (typeof ric === "function") ric(__initBudgetSystems, { timeout: 2000 });
   else setTimeout(__initBudgetSystems, 1000);
 }
+
+// DEV-only chip — tree-shaken in prod.
+const EntropyChip = (import.meta as { env?: { DEV?: boolean } }).env?.DEV
+  ? lazy(() => import("@pkg/entropy/EntropyChip"))
+  : null;
 
 const Index = lazy(() => import("./pages/Index.tsx"));
 const Auth = lazy(() => import("./pages/Auth.tsx"));
