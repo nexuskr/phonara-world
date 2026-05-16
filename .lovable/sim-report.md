@@ -1,15 +1,3 @@
-# Slot RTP v3 — 1,000,000 rounds/game (FINAL)
+# Sim / Verification Log
 
-목표 밴드: **RTP ∈ [95.5%, 97.0%]** · bonus hit ∈ [1/120, 1/250] · maxX ≤ 게임별 캡
-
-| game                 | RTP     | base   | bonus  | bonus hit | MAX×    | ≥100× | ≥1000× | 상태 |
-|----------------------|---------|--------|--------|-----------|---------|-------|--------|----|
-| cosmic_forge_5000    | 96.83%  | 42.5%  | 54.3%  | 1/129     | 1224×   | 0.15% | 0.000% | ✅ |
-| neon_tokyo_88        | 95.87%  | 64.9%  | 31.0%  | 1/206     | 8888×   | 0.03% | 0.002% | ✅ |
-| pirates_curse_1500   | 96.59%  | 76.6%  | 20.0%  | 1/93      |  563×   | 0.02% | 0.000% | ✅ |
-| pharaohs_vault_2500  | 95.68%  | 65.1%  | 30.6%  | 1/94      | 1239×   | 0.06% | 0.000% | ✅ |
-| viking_thunder_4000  | 95.90%  | 53.4%  | 42.5%  | 1/127     |  438×   | 0.08% | 0.000% | ✅ |
-| aztec_sun_1200       | 96.49%  | 49.3%  | 47.2%  | 1/93      |  338×   | 0.06% | 0.000% | ✅ |
-| cherry_sakura_500    | 96.88%  | 88.1%  |  8.8%  | 1/65      |  644×   | 0.05% | 0.000% | ✅ |
-
-7/7 게임 RTP 목표 밴드 안착. 다음 단계: STAGE 3 (Bonus Overlay ↔ Server Payout 동기화).
+- 2026-05-16: RPC drift 패치 검증 — `get_my_dashboard_state()` 비로그인 `{}` / 로그인 시 imperial_score, level, today_deposit, lifetime_deposit, trading_cap_today, whale_rank_today, booster, next_milestone 8키. `get_slot_leaderboard('24h',NULL,'total_payout',20)` 200. `get_recent_roulette_spins(20)` 200. `fomo_notifications` GET (level 컬럼 제거) 200. `/sounds/**` 404는 procedural fallback로 silent.

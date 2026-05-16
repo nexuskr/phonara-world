@@ -369,6 +369,7 @@ export default function Missions() {
             return (
               <div
                 key={m.id}
+                id={m.game === "lucky" ? "roulette-card" : undefined}
                 className={`glass-strong rounded-2xl p-4 neon-border tilt-card relative overflow-hidden ${locked ? "opacity-70" : ""}`}
               >
                 <div className="absolute -top-10 -right-10 w-24 h-24 rounded-full bg-gradient-primary blur-2xl opacity-30" />

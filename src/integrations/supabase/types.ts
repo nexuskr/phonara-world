@@ -10473,6 +10473,17 @@ export type Database = {
           tier: Database["public"]["Enums"]["user_tier"]
         }[]
       }
+      get_recent_roulette_spins: {
+        Args: { _limit?: number }
+        Returns: {
+          amount: number
+          created_at: string
+          id: string
+          kind: string
+          masked_name: string
+          prize_label: string
+        }[]
+      }
       get_recent_vip_arrivals: { Args: { _limit?: number }; Returns: Json }
       get_recommended_missions: {
         Args: never
@@ -10497,6 +10508,25 @@ export type Database = {
       get_slot_buy_bonus_quote: {
         Args: { _bet_phon: number; _game_code: string }
         Returns: Json
+      }
+      get_slot_leaderboard: {
+        Args: {
+          _game_code?: string
+          _limit?: number
+          _metric?: string
+          _window?: string
+        }
+        Returns: {
+          game_code: string
+          masked_name: string
+          max_multiplier: number
+          max_payout: number
+          net: number
+          rank: number
+          spin_count: number
+          total_bet: number
+          total_payout: number
+        }[]
       }
       get_slot_sound_pack: {
         Args: { _theme: string }

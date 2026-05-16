@@ -13,7 +13,6 @@ import { formatHMS } from "@/hooks/use-empire-booster";
 type FomoRow = {
   id: number;
   kind: string;
-  level: number | null;
   payload: any;
   created_at: string;
 };
@@ -85,7 +84,7 @@ export default function BaronPromotionDialog() {
     if (!user) return;
     const { data } = await (supabase
       .from("fomo_notifications") as any)
-      .select("id, kind, level, payload, created_at")
+      .select("id, kind, payload, created_at")
       .eq("user_id", user.id)
       .eq("kind", "baron_promotion")
       .is("read_at", null)

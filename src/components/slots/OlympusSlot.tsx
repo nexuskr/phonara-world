@@ -152,6 +152,7 @@ export default function OlympusSlot({ theme = OLYMPUS_THEME }: { theme?: SlotThe
     stopBalanceFloor: 0,
   });
   const autoActiveRef = useRef(false);
+  const jackpotTriedRef = useRef<string | null>(null);
 
   const livePlay = useFakePlayerCount();
 
@@ -272,7 +273,7 @@ export default function OlympusSlot({ theme = OLYMPUS_THEME }: { theme?: SlotThe
         refreshPower();
 
         // Progressive jackpot roll — server decides; idempotent on spin_id.
-        // We look up our most recent spin row (RLS-scoped to caller) and pass it.
+        // dedupe: React strict-mode / 이펙트 중복 호출 가드 (latestSpin.id 기준 1회).
         try {
           const { data: latestSpin } = await supabase
             .from("slot_spins")
@@ -281,7 +282,8 @@ export default function OlympusSlot({ theme = OLYMPUS_THEME }: { theme?: SlotThe
             .order("created_at", { ascending: false })
             .limit(1)
             .maybeSingle();
-          if (latestSpin?.id) {
+          if (latestSpin?.id && jackpotTriedRef.current !== latestSpin.id) {
+            jackpotTriedRef.current = latestSpin.id;
             const { data: jp } = await supabase.rpc("try_jackpot_hit", {
               _game_code: GAME_CODE,
               _spin_id: latestSpin.id,

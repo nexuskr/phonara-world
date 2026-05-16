@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useDB, formatKRW, MAIN_MILESTONE_AMOUNT, MAIN_MAX_INTERVAL_MS, MINI_MAX_INTERVAL_MS, jackpotPayoutPct, jackpotResetBase, miniJackpotResetBase, miniJackpotAmount, randomFakeNick, type Tier, type JackpotState } from "@/lib/store";
 import { setVisibleInterval } from "@/lib/util/visible-interval";
@@ -180,15 +180,43 @@ export default function JackpotBanner({ compact = false }: { compact?: boolean }
           </div>
         )}
 
-        <Link
-          to="/roulette"
-          className="mt-3 group flex items-center justify-center gap-2 w-full rounded-xl bg-gradient-gold text-gold-foreground font-black py-2.5 text-sm shadow-neon-gold hover:shadow-[0_0_30px_hsl(44_95%_65%/0.9)] transition-all"
-        >
-          <Crown className="w-4 h-4" />
-          지금 룰렛 돌리기
-          <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-        </Link>
+        <RouletteCtaButton />
       </div>
     </div>
   );
 }
+
+function RouletteCtaButton() {
+  const nav = useNavigate();
+  const loc = useLocation();
+  function focusRoulette() {
+    const el = document.getElementById("roulette-card");
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      el.classList.add("ring-2", "ring-gold", "shadow-[0_0_30px_hsl(44_95%_65%/0.9)]", "transition-all");
+      window.setTimeout(() => {
+        el.classList.remove("ring-2", "ring-gold", "shadow-[0_0_30px_hsl(44_95%_65%/0.9)]");
+      }, 1500);
+    }
+  }
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        if (loc.pathname === "/missions") {
+          nav("/missions?tab=battle", { replace: true });
+          window.setTimeout(focusRoulette, 80);
+        } else {
+          nav("/missions?tab=battle");
+          window.setTimeout(focusRoulette, 320);
+        }
+      }}
+      className="mt-3 group flex items-center justify-center gap-2 w-full rounded-xl bg-gradient-gold text-gold-foreground font-black py-2.5 text-sm shadow-neon-gold hover:shadow-[0_0_30px_hsl(44_95%_65%/0.9)] transition-all"
+    >
+      <Crown className="w-4 h-4" />
+      지금 룰렛 돌리기
+      <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+    </button>
+  );
+}
+
