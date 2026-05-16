@@ -1,4 +1,6 @@
 import { useEffect, useRef } from "react";
+import { prefersReducedMotion } from "@/lib/haptics";
+import { getCrashPrefs } from "./CrashSettingsSheet";
 
 interface Props {
   multiplier: number;
@@ -6,11 +8,18 @@ interface Props {
   crashedAt?: number | null;
 }
 
-interface Particle { x: number; y: number; vx: number; vy: number; life: number; max: number; }
+interface Particle { x: number; y: number; vx: number; vy: number; life: number; max: number; alive: boolean; }
 
-export default function CrashCanvas({ multiplier, status, crashedAt }: Props) {
+export default function CrashCanvas({ multiplier, status }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const stateRef = useRef({ multiplier, status, crashedAt, particles: [] as Particle[], stars: [] as { x: number; y: number; z: number }[], t: 0, crashFlash: 0 });
+  const stateRef = useRef({
+    multiplier, status,
+    particles: [] as Particle[],
+    stars: [] as { x: number; y: number; z: number }[],
+    t: 0, crashFlash: 0,
+    bgGrad: null as CanvasGradient | null,
+    w: 0, h: 0,
+  });
 
   useEffect(() => { stateRef.current.multiplier = multiplier; }, [multiplier]);
   useEffect(() => {
@@ -20,28 +29,46 @@ export default function CrashCanvas({ multiplier, status, crashedAt }: Props) {
 
   useEffect(() => {
     const canvas = canvasRef.current!;
-    const ctx = canvas.getContext("2d")!;
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const lowEnd = dpr < 2 && window.innerWidth < 480;
-    const particleCap = lowEnd ? 40 : 80;
+    const ctx = canvas.getContext("2d", { alpha: false })!;
+    const prefs = getCrashPrefs();
+    const reduce = prefersReducedMotion() || prefs.reducedMotion;
+    const lowEndAuto =
+      (typeof navigator !== "undefined" && (navigator.hardwareConcurrency ?? 8) <= 4) ||
+      (window.matchMedia && window.matchMedia("(max-width: 480px)").matches);
+    const lowEnd = prefs.lowEnd || lowEndAuto;
+    const dpr = Math.min(window.devicePixelRatio || 1, lowEnd ? 1 : 2);
+    const particleCap = reduce ? 0 : lowEnd ? 30 : 80;
+    const starCount = reduce ? 0 : lowEnd ? 40 : 100;
+
+    // Pre-allocate particle pool (object pooling — reuse instead of splice/push)
+    const pool: Particle[] = Array.from({ length: Math.max(particleCap, 1) }, () => ({
+      x: 0, y: 0, vx: 0, vy: 0, life: 0, max: 0, alive: false,
+    }));
+    stateRef.current.particles = pool;
+
     let raf = 0;
+    let running = true;
 
     const resize = () => {
       const r = canvas.getBoundingClientRect();
-      canvas.width = r.width * dpr;
-      canvas.height = r.height * dpr;
+      canvas.width = Math.max(1, Math.floor(r.width * dpr));
+      canvas.height = Math.max(1, Math.floor(r.height * dpr));
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      stateRef.current.w = r.width;
+      stateRef.current.h = r.height;
+      const g = ctx.createLinearGradient(0, 0, 0, r.height);
+      g.addColorStop(0, "hsl(240 40% 6%)");
+      g.addColorStop(1, "hsl(260 30% 3%)");
+      stateRef.current.bgGrad = g;
     };
     resize();
     window.addEventListener("resize", resize);
 
-    // Stars
-    stateRef.current.stars = Array.from({ length: lowEnd ? 50 : 100 }, () => ({
+    stateRef.current.stars = Array.from({ length: starCount }, () => ({
       x: Math.random(), y: Math.random(), z: 0.3 + Math.random() * 0.7,
     }));
 
-    const lerpColor = (m: number) => {
-      // 1→3 gold, 3→10 orange, 10+ pink
+    const lerpColor = (m: number): [number, number, number] => {
       if (m < 3) return [255, 196, 80];
       if (m < 10) {
         const t = (m - 3) / 7;
@@ -50,27 +77,39 @@ export default function CrashCanvas({ multiplier, status, crashedAt }: Props) {
       return [255, 80, 140];
     };
 
+    const spawn = (x: number, y: number, vx: number, vy: number, max: number) => {
+      if (particleCap === 0) return;
+      for (let i = 0; i < pool.length; i++) {
+        const p = pool[i];
+        if (!p.alive) {
+          p.x = x; p.y = y; p.vx = vx; p.vy = vy; p.life = 0; p.max = max; p.alive = true;
+          return;
+        }
+      }
+    };
+
     const draw = () => {
-      const w = canvas.width / dpr, h = canvas.height / dpr;
+      if (!running) return;
       const s = stateRef.current;
+      const w = s.w, h = s.h;
       s.t += 1;
 
       // Background
-      const grad = ctx.createLinearGradient(0, 0, 0, h);
-      grad.addColorStop(0, "hsl(240 40% 6%)");
-      grad.addColorStop(1, "hsl(260 30% 3%)");
-      ctx.fillStyle = grad;
+      ctx.fillStyle = s.bgGrad ?? "hsl(240 40% 5%)";
       ctx.fillRect(0, 0, w, h);
 
       // Stars (parallax)
-      ctx.fillStyle = "rgba(255,255,255,0.7)";
-      for (const star of s.stars) {
-        const sx = (star.x * w + s.t * 0.1 * star.z) % w;
-        const sy = (star.y * h) % h;
-        ctx.globalAlpha = 0.3 + star.z * 0.5;
-        ctx.fillRect(sx, sy, star.z * 1.5, star.z * 1.5);
+      if (s.stars.length) {
+        ctx.fillStyle = "rgba(255,255,255,0.7)";
+        for (let i = 0; i < s.stars.length; i++) {
+          const star = s.stars[i];
+          const sx = (star.x * w + s.t * 0.1 * star.z) % w;
+          const sy = (star.y * h) % h;
+          ctx.globalAlpha = 0.3 + star.z * 0.5;
+          ctx.fillRect(sx, sy, star.z * 1.5, star.z * 1.5);
+        }
+        ctx.globalAlpha = 1;
       }
-      ctx.globalAlpha = 1;
 
       // Rocket position
       const m = Math.max(1, s.multiplier);
@@ -84,29 +123,25 @@ export default function CrashCanvas({ multiplier, status, crashedAt }: Props) {
       ctx.lineWidth = 3;
       ctx.beginPath();
       ctx.moveTo(60, h - 80);
-      for (let i = 0; i <= 30; i++) {
-        const t = i / 30;
-        const px = 60 + t * (rocketX - 60);
-        const py = (h - 80) + t * (rocketY - (h - 80));
-        ctx.lineTo(px, py);
+      const steps = lowEnd ? 16 : 30;
+      for (let i = 0; i <= steps; i++) {
+        const t = i / steps;
+        ctx.lineTo(60 + t * (rocketX - 60), (h - 80) + t * (rocketY - (h - 80)));
       }
       ctx.stroke();
 
-      // Spawn particles on running
-      if (s.status === "running" && s.particles.length < particleCap && s.t % 2 === 0) {
-        s.particles.push({
-          x: rocketX, y: rocketY,
-          vx: -1.5 - Math.random() * 1.5, vy: 1 + Math.random() * 1.5,
-          life: 0, max: 30 + Math.random() * 20,
-        });
+      // Spawn particles while running
+      if (!reduce && s.status === "running" && s.t % 2 === 0) {
+        spawn(rocketX, rocketY, -1.5 - Math.random() * 1.5, 1 + Math.random() * 1.5, 30 + Math.random() * 20);
       }
 
-      // Draw + update particles
-      for (let i = s.particles.length - 1; i >= 0; i--) {
-        const p = s.particles[i];
+      // Draw + update particles (pool)
+      for (let i = 0; i < pool.length; i++) {
+        const p = pool[i];
+        if (!p.alive) continue;
         p.x += p.vx; p.y += p.vy; p.life++;
         const a = 1 - p.life / p.max;
-        if (a <= 0) { s.particles.splice(i, 1); continue; }
+        if (a <= 0) { p.alive = false; continue; }
         ctx.fillStyle = `rgba(${r},${g},${b},${a * 0.8})`;
         ctx.beginPath();
         ctx.arc(p.x, p.y, 3 * a + 1, 0, Math.PI * 2);
@@ -117,8 +152,10 @@ export default function CrashCanvas({ multiplier, status, crashedAt }: Props) {
       ctx.save();
       ctx.translate(rocketX, rocketY);
       ctx.rotate(-Math.PI / 4);
-      ctx.shadowColor = `rgba(${r},${g},${b},0.9)`;
-      ctx.shadowBlur = 20;
+      if (!lowEnd && !reduce) {
+        ctx.shadowColor = `rgba(${r},${g},${b},0.9)`;
+        ctx.shadowBlur = 20;
+      }
       ctx.fillStyle = `rgb(${r},${g},${b})`;
       ctx.beginPath();
       ctx.moveTo(0, -14);
@@ -129,20 +166,14 @@ export default function CrashCanvas({ multiplier, status, crashedAt }: Props) {
       ctx.restore();
 
       // Crash flash
-      if (s.crashFlash > 0) {
+      if (!reduce && s.crashFlash > 0) {
         ctx.fillStyle = `rgba(255,200,80,${s.crashFlash * 0.5})`;
         ctx.fillRect(0, 0, w, h);
         s.crashFlash -= 0.04;
-        // Explosion particles
-        if (s.crashFlash > 0.9 && s.particles.length < particleCap) {
-          for (let i = 0; i < 12; i++) {
+        if (s.crashFlash > 0.9) {
+          for (let i = 0; i < (lowEnd ? 6 : 12); i++) {
             const ang = Math.random() * Math.PI * 2;
-            s.particles.push({
-              x: rocketX, y: rocketY,
-              vx: Math.cos(ang) * (2 + Math.random() * 4),
-              vy: Math.sin(ang) * (2 + Math.random() * 4),
-              life: 0, max: 40 + Math.random() * 30,
-            });
+            spawn(rocketX, rocketY, Math.cos(ang) * (2 + Math.random() * 4), Math.sin(ang) * (2 + Math.random() * 4), 40 + Math.random() * 30);
           }
         }
       }
@@ -150,7 +181,31 @@ export default function CrashCanvas({ multiplier, status, crashedAt }: Props) {
       raf = requestAnimationFrame(draw);
     };
     raf = requestAnimationFrame(draw);
-    return () => { cancelAnimationFrame(raf); window.removeEventListener("resize", resize); };
+
+    // Pause when hidden or off-screen
+    const onVis = () => {
+      if (document.hidden) { running = false; cancelAnimationFrame(raf); }
+      else if (!running) { running = true; raf = requestAnimationFrame(draw); }
+    };
+    document.addEventListener("visibilitychange", onVis);
+
+    let io: IntersectionObserver | null = null;
+    if ("IntersectionObserver" in window) {
+      io = new IntersectionObserver((entries) => {
+        const visible = entries[0]?.isIntersecting;
+        if (!visible) { running = false; cancelAnimationFrame(raf); }
+        else if (!running) { running = true; raf = requestAnimationFrame(draw); }
+      }, { threshold: 0.05 });
+      io.observe(canvas);
+    }
+
+    return () => {
+      running = false;
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", resize);
+      document.removeEventListener("visibilitychange", onVis);
+      io?.disconnect();
+    };
   }, []);
 
   return (

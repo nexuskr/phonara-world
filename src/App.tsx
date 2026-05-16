@@ -56,6 +56,7 @@ const Lounge = lazy(() => import("./pages/Lounge.tsx"));
 const Whales = lazy(() => import("./pages/Whales.tsx"));
 const Roulette = lazy(() => import("./pages/Roulette.tsx"));
 const Crash = lazy(() => import("./pages/Crash.tsx"));
+const CrashHistory = lazy(() => import("./pages/CrashHistory.tsx"));
 const CasinoLobby = lazy(() => import("./pages/Casino.tsx"));
 const Olympus1000 = lazy(() => import("./pages/casino/Olympus1000.tsx"));
 const Wizard2000 = lazy(() => import("./pages/casino/Wizard2000.tsx"));
@@ -267,6 +268,7 @@ const App = () => (
               <Route path="/jackpot" element={<Roulette />} />
               <Route path="/casino" element={<CasinoLobby />} />
               <Route path="/crash" element={<Crash />} />
+              <Route path="/crash/history" element={<CrashHistory />} />
               <Route path="/casino/olympus1000" element={<Navigate to="/casino/olympus-1000" replace />} />
               <Route path="/casino/olympus-1000" element={<Olympus1000 />} />
               <Route path="/casino/wizard-2000" element={<Wizard2000 />} />

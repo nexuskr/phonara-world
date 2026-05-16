@@ -10091,6 +10091,23 @@ export type Database = {
           status: string
         }[]
       }
+      crash_get_my_history: {
+        Args: { _filter?: string; _limit?: number; _offset?: number }
+        Returns: {
+          auto_cashout: number
+          bet_id: string
+          bet_phon: number
+          bonus_mult: number
+          cashed_out_at_multiplier: number
+          crash_multiplier: number
+          crashed_at: string
+          created_at: string
+          payout_phon: number
+          round_id: string
+          seed_hash: string
+          won: boolean
+        }[]
+      }
       crash_get_my_hot_streak: { Args: never; Returns: Json }
       crash_get_my_stats: { Args: never; Returns: Json }
       crash_get_recent_wins: {
@@ -10104,6 +10121,7 @@ export type Database = {
           round_id: string
         }[]
       }
+      crash_get_round_proof: { Args: { _round_id: string }; Returns: Json }
       crash_place_bet: {
         Args: { _auto_cashout?: number; _bet_phon: number }
         Returns: Json
