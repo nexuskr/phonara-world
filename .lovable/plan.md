@@ -1,57 +1,66 @@
-# Olympus Legacy 5000 — New Flagship Signature Slot
+# Sugar Fever 3000 — New Signature Slot
 
-Add an 8th Signature Slot, "Olympus Legacy 5000", as the new crown jewel. It plugs into the existing single-engine architecture (`OlympusSlot` + `SlotSignatureWrapper`) the same way Cosmic Forge 5000 does — zero changes to the reel engine, zero new logic hooks.
+Add a new flagship-style slot "Sugar Fever 3000" following the exact same architecture pattern as Olympus Legacy 5000. Zero regression to existing 8 slots. All differences expressed via theme + Canvas + PaytableSheet + MaxWinOverlay only.
 
-## Design Direction — "Warm Olympus Luxury"
+## Scope
 
-- Palette: deep night blue base + rich warm amber gold (`hsl(45 90% 60%)`), soft marble white, gentle luxurious glow
-- Lightning: warm golden amber only — never cold blue
-- Vibe: Trump-level hype on the 5000× moment, Musk-level particle precision, Korean 50–70s dignified luxury
+New slot card on Casino lobby, route `/casino/sugar-fever-3000`, warm pastel candy luxury aesthetic (soft pink + warm gold + mint + strawberry red). Shares OlympusSlot engine and `cluster_tumble` bonus pipeline. Reuses existing `olympus` symbol/sound pack as placeholder so it works immediately; assets can be swapped later.
 
-## What gets built
+## Files to create
 
-### New files
-- `src/components/slots/OlympusLegacyCanvas.tsx` — animated background
-  - 2-layer parallax warm clouds (slow drift)
-  - Marble pillar silhouettes (low-opacity)
-  - Random golden amber lightning bolt every 8–14s (lightning path procedurally generated)
-  - `prefers-reduced-motion` → static gradient only
-  - Pauses on `document.hidden`; RAF budget capped (≤16ms even during lightning burst)
-- `src/components/slots/OlympusLegacyPaytableSheet.tsx` — 6-column paytable
-  - Zeus Multiplier Ladder: `2 / 5 / 12 / 30 / 80 / 200 / 500`
-  - Free Spins tiers: `10 / 15 / 20 / 25`
-  - Lightning Wild rules + cluster-tumble explanation
-  - Reuses `BasePaytableSheet` shell for sheet/trigger consistency
-- `src/components/celebration/OlympusLegacyMaxWinOverlay.tsx` — 5000× cinematic
-  - Phases: 320ms screen-shake → 1.2s 0.4× slow-mo → 200+ golden particles → Zeus silhouette fade-in → CTA
-  - Auto Crown award at `≥4000×` via existing `useEmpireCrown` payload (idempotent dedupe by spinId)
-  - Built on `BaseMaxWinOverlay` so trigger plumbing is unchanged
-- `src/pages/casino/OlympusLegacy5000.tsx` — page wrapper, identical shape to `CosmicForge5000.tsx`
+1. `src/components/slots/SugarFeverCanvas.tsx`
+   - Single RAF loop, DPR cap 2, pause on `document.hidden`, `prefers-reduced-motion` static fallback
+   - 2-layer parallax pastel "sugar clouds", floating candy dots, soft sparkle particles (auto-throttled on mobile)
+   - Warm radial glow vignette (pink → gold)
 
-### Edits
-- `src/components/slots/themes.ts` — add `OLYMPUS_LEGACY_THEME`
-  - `gameCode: "olympus_legacy_5000"`, `maxMultiplier: 5000`, `volatility: "high"`
-  - Warm amber `reelFrameClass`, `spinStreakClass`, new `OLYMPUS_LEGACY_PATTERN`
-  - `bonusKind: "cluster_tumble"`, `symbolPack: "olympus"`, `soundPack: "olympus"`
-- `src/lib/sounds/soundConfig.ts` — add `olympus_legacy` + `olympus_legacy_5000` to `SLOT_ID_TO_THEME`, `SLOT_SOUND_MAP`, and `SLOT_ID_TO_SOUND_KEY` (reuse olympus pack)
-- `src/lib/empireConfig.ts` — extend `EmpireSlotKey` with `"olympus_legacy"`, set `SLOT_CROWN_WEIGHT.olympus_legacy = 1.6` (highest), add alias entries
-- `src/App.tsx` — `lazy()` import + route `/casino/olympus-legacy-5000`
-- `src/pages/Casino.tsx` — add lobby card (if a card list exists in that file)
+2. `src/components/celebration/SugarFeverMaxWinOverlay.tsx`
+   - Built on shared celebration primitives (same pattern as `OlympusLegacyMaxWinOverlay`)
+   - 3000x+ candy burst: 250 GPU particles desktop / 120 mobile, chocolate splash radial, giant lollipop + crown candy SVG, slow-mo + screen shake
+   - React.lazy compatible default export, reduced-motion path = single static hero frame
+   - Crown award already handled by base celebration pipeline at 2500x+ via `computeLegendaryCrown`
 
-## Architecture Compliance
+3. `src/components/slots/SugarFeverPaytableSheet.tsx`
+   - 6-column paytable, candy symbols (Strawberry / Chocolate Bar / Rainbow Candy / Mint Drop / Golden Lollipop scatter / Multiplier Bomb)
+   - Multiplier Bomb ladder 2x → 100x, Free Spins with progressive multipliers, cluster_tumble mechanics explanation
+   - Warm pastel cards with gold accent borders
 
-- No new slot folder, no new logic hook
-- All differences delivered through `themes.ts` + custom Background + PaytableSheet + MaxWinOverlay
-- `cluster_tumble` `bonusKind` reuses existing bonus pipeline for the 6×5 tumble / multiplier-orbs / free-spin / lightning feel — base reel engine untouched
-- Zero edits to `OlympusSlot.tsx`, `SlotSignatureWrapper.tsx`, `SoundManager`, `WinCelebrationManager`
+4. `src/pages/casino/SugarFever3000.tsx`
+   - Exact wrapper mirror of `OlympusLegacy5000.tsx`: `SlotSignatureWrapper` with `slotId="sugar_fever"`, theme, Background, PaytableSheet, MaxWinOverlay, pastel flare colors, signatureLabel, themeKey
 
-## Performance Budget
+## Files to edit (additions only)
 
-- Canvas: single RAF loop, offscreen path cache for lightning, capped DPR=2, pause on hidden tab
-- MaxWinOverlay: `React.lazy` import, particle count auto-throttled on mobile (200 desktop / 120 mobile), GPU `will-change: transform`
-- Full `prefers-reduced-motion` paths on canvas + overlay
-- No re-renders on existing 7 slots — they don't import anything new
+5. `src/components/slots/themes.ts`
+   - Add `SUGAR_FEVER_PATTERN` (pastel dot lattice + warm radial glow)
+   - Add `SUGAR_FEVER_THEME`: `gameCode: "sugar_fever_3000"`, `maxMultiplier: 3000`, `volatility: "high"`, `symbolPack: "sugar"` (falls back to olympus assets via theme `bg`/`logo` imports reusing existing slot art temporarily), `soundPack: "sugar"`, `bonusKind: "cluster_tumble"`, pastel pink + gold reel frame
+   - Reuse `bgOlympus` / `logoOlympus` imports with a swap-comment block, identical to Olympus Legacy convention
 
-## Open question
+6. `src/lib/sounds/soundConfig.ts`
+   - Add `sugar_fever` to `SLOT_ID_TO_THEME` (mapped to `olympus` theme as placeholder)
+   - Add `sugar_fever` and `sugar_fever_3000` aliases to `SLOT_ID_TO_SOUND_KEY`
+   - Add `SLOT_SOUND_MAP.sugar_fever` entry (sfx: `candy_pop`, `chocolate_splash`; voice empty for elegance; legendary uses common `legendary_win`)
 
-- **Background image**: existing slots reference `@/assets/slots/<key>/bg.jpg` + `logo.png`. Olympus Legacy can either (a) reuse the existing `assets/slots/olympus/` art, or (b) wait for a new amber-gold hero asset. Plan ships with option (a) so it works immediately; new art can drop in later by changing two import lines in `themes.ts`.
+7. `src/lib/empireConfig.ts`
+   - Add `"sugar_fever"` to `EmpireSlotKey` union
+   - Add `SLOT_CROWN_WEIGHT.sugar_fever = 1.4`
+   - Add `sugar_fever` + `sugar_fever_3000` aliases to ALIAS map
+
+8. `src/App.tsx`
+   - Add `const SugarFever3000 = lazy(() => import("./pages/casino/SugarFever3000"))`
+   - Add `<Route path="/casino/sugar-fever-3000" element={<SugarFever3000 />} />` next to OlympusLegacy5000 route
+
+9. `src/pages/Casino.tsx`
+   - Insert lobby card at top recommended section, mirroring the Olympus Legacy 5000 card with warm pastel gradient + "NEW SIGNATURE" ribbon
+
+## Technical notes
+
+- No new DB tables, RPCs, or backend changes. Pure frontend additive feature.
+- All colors via inline `hsl()` literals inside theme strings (consistent with existing theme file convention — semantic tokens are not used inside `themes.ts` because patterns need raw CSS gradients).
+- `SugarFeverCanvas` uses `useAnimatedCanvas` hook if present, otherwise a self-contained RAF identical to `OlympusLegacyCanvas` to guarantee zero coupling.
+- Mobile particle throttle: `navigator.hardwareConcurrency <= 4 || matchMedia("(max-width: 640px)")` → halve particle counts.
+- Crown weight 1.4 places Sugar Fever between Cosmic Forge (1.5) and Neon Tokyo (1.4) — same tier as Neon, below Olympus Legacy flagship (1.6) by design.
+
+## Out of scope
+
+- New audio asset files (placeholder reuses olympus sound pack; ElevenLabs prompts can be added later in `docs/audio/elevenlabs-prompts.md`)
+- New image assets (placeholder reuses olympus bg/logo; swap comment block included for later)
+- Any change to the OlympusSlot engine, cluster_tumble pipeline, or other 8 existing slots
