@@ -47,3 +47,5 @@ project_id = "ketlqzfaplppmupaiwft"
     verify_jwt = false
   [functions.reactivation-cron]
     verify_jwt = false
+  [functions.earn-share-card]
+    verify_jwt = false
