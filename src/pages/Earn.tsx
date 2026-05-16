@@ -13,8 +13,21 @@ import ShareRewardCard from "@/components/earn/ShareRewardCard";
 import RouletteCard from "@/components/earn/RouletteCard";
 import VipBoostCard from "@/components/earn/VipBoostCard";
 import ShareChannelsSheet from "@/components/share/ShareChannelsSheet";
-import { useFakePlayerCount } from "@/hooks/use-fake-player-count";
 import { G } from "@/lib/glossary";
+
+function useLiveEarners(min = 1100, max = 1450) {
+  const [n, setN] = useState(() => min + Math.floor(Math.random() * (max - min)));
+  useEffect(() => {
+    const i = window.setInterval(() => {
+      setN((p) => {
+        const next = p + (Math.random() < 0.5 ? -1 : 1) * Math.floor(Math.random() * 7);
+        return Math.max(min, Math.min(max, next));
+      });
+    }, 60_000);
+    return () => clearInterval(i);
+  }, [min, max]);
+  return n;
+}
 
 function useCountUp(target: number, ms = 600) {
   const [n, setN] = useState(target);
@@ -40,7 +53,7 @@ export default function Earn() {
   const user = useRequireAuth();
   const { state, loading, claim, claimAttendance, refresh } = useEarnHub();
   const earned = useCountUp(state.today_earned);
-  const livePlayers = useFakePlayerCount(1100, 1450);
+  const livePlayers = useLiveEarners();
   const [shareOpen, setShareOpen] = useState(false);
 
   if (!user) return null;
