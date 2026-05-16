@@ -400,7 +400,7 @@ export const DEPOSIT_STATUS_PRIORITY = {
 - 출금 흐름 변경
 - 백엔드 rate limit (no-backend-rate-limiting directive)
 
-## 16. 실행 순서 (4-Day Plan)
+## 17. 실행 순서 (4-Day Plan)
 
 **Day 1 — Foundation**
 - glossary 키 일괄 추가 (Sections 11+12+13+14)
