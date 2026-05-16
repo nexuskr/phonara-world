@@ -196,5 +196,15 @@ export default {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require("tailwindcss-animate"),
+    // LOCKED v3.0 §13-2 — Device Intelligence variants: low: / mid: / high:
+    function ({ addVariant }: { addVariant: (name: string, def: string) => void }) {
+      addVariant("low", '&:where([data-device="low"] *, [data-device="low"]&)');
+      addVariant("mid", '&:where([data-device="mid"] *, [data-device="mid"]&)');
+      addVariant("high", '&:where([data-device="high"] *, [data-device="high"]&)');
+      // §14-5 Emergency Degrade Mode
+      addVariant("degrade", '&:where([data-degrade="1"] *, [data-degrade="1"]&)');
+    },
+  ],
 } satisfies Config;
