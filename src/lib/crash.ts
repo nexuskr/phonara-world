@@ -63,7 +63,7 @@ export async function getLiveBets(roundId: string): Promise<LiveBet[]> {
 export async function getMyStats(): Promise<MyCrashStats> {
   const { data, error } = await supabase.rpc("crash_get_my_stats");
   if (error) throw error;
-  return (data as MyCrashStats) ?? {
+  return (data as unknown as MyCrashStats) ?? {
     total: 0, wins: 0, best_mult: 0, streak: 0, today_bets: 0, mission_ready: false, mission_claimed: false,
   };
 }
