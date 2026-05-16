@@ -20,6 +20,7 @@ const NOTIFY_WRAPPERS = [
 
 const REALTIME_WRAPPERS = [
   "src/hooks/use-realtime-channel.ts",
+  "src/lib/realtime-bus.ts",
   "src/packages/realtime/**",
 ];
 
