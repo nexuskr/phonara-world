@@ -194,7 +194,6 @@ function GlobalOverlays() {
       <Suspense fallback={null}><EmpireMomentToast /></Suspense>
       <Suspense fallback={null}><FloatingCashLoopWidget /></Suspense>
       <Suspense fallback={null}><ForcedShareDialog /></Suspense>
-      <Suspense fallback={null}><BigWinShareHost /></Suspense>
       <Suspense fallback={null}><VipArrivalAnnouncer /></Suspense>
       <Suspense fallback={null}><ReactivationOfferDialog /></Suspense>
       <Suspense fallback={null}><OnboardingV3 /></Suspense>
