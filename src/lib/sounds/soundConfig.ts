@@ -23,6 +23,8 @@ export const SOUND_PATHS = {
 export const SLOT_ID_TO_THEME: Record<string, SlotThemeKey> = {
   olympus_1000: "olympus",
   olympus: "olympus",
+  olympus_legacy: "olympus",
+  olympus_legacy_5000: "olympus",
   wizard_2000: "wizard",
   wizard: "wizard",
   dragon_empire: "dragon",
