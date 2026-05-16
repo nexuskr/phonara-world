@@ -307,8 +307,9 @@ export const SUGAR_FEVER_THEME: SlotTheme = {
   rtpLabel: "96.0%",
   volatility: "high",
   maxMultiplier: 3000,
-  symbolPack: "sugar",
-  soundPack: "sugar",
+  // Placeholder: reuses olympus symbol/sound pack until dedicated candy assets ship.
+  symbolPack: "olympus",
+  soundPack: "olympus",
   // warm pastel tint without breaking the borrowed art
   cardFilter: "hue-rotate(320deg) saturate(1.25) brightness(1.08)",
   reelFrameClass:
