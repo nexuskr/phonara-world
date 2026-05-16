@@ -1,69 +1,115 @@
-# Sprint 1 Week 3 — Earn Hub MVP + Viral Foundation
+# Sprint 1 Week 4 — VIP Tiers + Avatar Shop + Guild Foundation
 
-5장의 살아있는 카드로 구성된 /earn 허브와, 빅윈 자동 공유 다이얼로그를 만들어 "매일 무료로 돈 버는 곳 → 헤어나갈 수 없는 곳" 루프의 핵심 엔진을 완성합니다.
+Build the Monetization + Identity + Community layer on top of the existing VIP Pass, Earn Hub, and NFT Collection so users have lasting reasons to stay and spend.
 
-## 사용자 입장에서 보이는 것
+## 1. VIP System — 4 Tiers (Silver / Gold / Platinum / Diamond)
 
-- /earn 페이지 헤더에 "오늘 얼마 벌었나요?" + 오늘 누적 PHON 큰 숫자 카운터
-- 5개의 따뜻한 카드 (모바일 1열 / md 2열 / lg 3열)
-  1. 출석체크 D1~D7 — 한 번에 클레임
-  2. 오늘의 미션 3종 (게임 1판, 친구 초대, 첫 입금) — 즉시 보상
-  3. 친구 초대 코드 + 한 번에 카카오/문자/링크 공유
-  4. "오늘 한 게임 = +80 PHON" 자동 보상 카드
-  5. 공유하고 받기 — 1080×1350 이미지 자동 생성 다이얼로그
-- 슬롯·트레이딩·출금 큰 승리 시 자동으로 "공유 다이얼로그" 팝업 → 8개 채널 (인스타/틱톡/유튜브/X/네이버/카카오/라인/저장)
-- 모든 버튼 44px+, 큰 숫자, 따뜻한 카피, 디자인 토큰만 사용
+Upgrade the existing single-tier VIP Pass to a tiered ladder driven by cumulative PHON spent on Pass + lifetime deposits.
 
-## 백엔드 (단일 마이그레이션)
+Tier thresholds (PHON):
+- Silver: 30,000 (current Pass entry)
+- Gold: 100,000
+- Platinum: 300,000
+- Diamond: 1,000,000
 
-신규 테이블
+Benefits matrix:
 
-- `daily_quick_claims (user_id, kind, day, amount)` — UNIQUE(user_id, kind, day), RLS 본인 SELECT/INSERT
+| Benefit | Silver | Gold | Platinum | Diamond |
+|---|---|---|---|---|
+| Crown ×N bonus | ×2 | ×3 | ×4 | ×5 |
+| Slot fee waiver | 0% | 10% | 25% | 50% |
+| Daily free spins | 1 | 3 | 7 | 15 |
+| Whale signal pre-reveal | 15s | 30s | 60s | 120s |
+| Exclusive lounge | — | yes | yes | yes |
+| Personal manager (concierge tag) | — | — | yes | yes |
+| Exclusive avatar skin pack | Silver pack | Gold pack | Platinum pack | Diamond pack |
+| Priority withdrawal queue | — | yes | yes | yes (top) |
+| Event early entry | — | 6h | 24h | 48h |
 
-신규 RPC (모두 SECURITY DEFINER + `set search_path = public`)
+Backend:
+- New table `vip_tier_config(tier, min_phon, crown_mult, fee_waiver_pct, free_spins, whale_lead_seconds, lounge, concierge, withdraw_priority, event_lead_hours, skin_pack)`.
+- Extend `vip_passes` with `tier text` (defaults Silver).
+- RPC `get_my_vip_tier()` → `{ tier, benefits, next_tier, progress_pct }`.
+- Update `subscribe_vip_pass_phon(_amount)` to accept tier amount and compute tier.
+- Update `award_crown` / `request_withdrawal` / slot fee RPC to read `crown_mult`, `fee_waiver_pct`, `withdraw_priority`.
 
-- `claim_daily_quick_reward(_kind text)` — 화이트리스트 보상 (mission_play=100, mission_invite=150, mission_deposit=300, play_today=80). INSERT … ON CONFLICT DO NOTHING. 성공 시 `phon_balances` +amount, `mission_history` 로깅. 이미 클레임 시 멱등 반환.
-- `claim_share_reward(_channel text)` — 채널 화이트리스트(instagram/tiktok/youtube/x/naver/kakao/line/copy). 일일 1회 +200 PHON. 내부에서 `log_share_event` 호출.
-- `get_earn_hub_state()` — 단일 호출로 5카드 상태 반환: streak(streak일수, 오늘 클레임 여부, 다음 보상), missions(3종 클레임 여부+보상), play_today(클레임 여부), share_today(클레임 채널 목록), referral(코드/누적 초대/누적 보상), todayEarned(오늘 총 PHON).
+Frontend:
+- `/vip` rewritten: 4-tier comparison table + current tier badge + upgrade CTA per tier.
+- `VipPassBadge` shows tier color (silver/gold/platinum/diamond gradient).
+- Lounge entry gate on `/lounge` for Gold+.
 
-기존 RPC 재활용: `claim_daily_attendance`, `log_share_event`, `process_referral_deposit`, referrals/profiles/phon_balances.
+## 2. Avatar Shop + NFT Integration (`/avatar`)
 
-## 프런트엔드
+Backend:
+- `avatar_catalog(id, name, rarity, vip_min_tier, price_phon, nullable nft_source, wearable_bonus jsonb, image_url, limited_edition_cap, sold_count)`.
+- `user_avatars(user_id, avatar_id, equipped, acquired_at, acquired_via)` — unique (user_id, avatar_id).
+- RPCs (SECURITY DEFINER, search_path=public):
+  - `get_avatar_catalog()` → catalog + ownership + eligibility.
+  - `purchase_avatar(_id)` → checks PHON, VIP tier, edition cap; debits PHON; inserts row; emits FOMO notification on limited-edition sellout.
+  - `equip_avatar(_id)` → sets equipped flag (single equipped per user).
+  - `award_avatar_for_bigwin(_user, _amount)` → drops avatar when amount ≥ thresholds.
 
-신규 훅 — `src/hooks/use-earn-hub.ts`
+NFT integration:
+- Avatars with `nft_source IS NOT NULL` mirror onto existing `nft_collection` via internal helper so wearable bonus stacks with `get_my_total_boost_pct` (cap 100).
+- Big win avatar drop fires `phonara:bigwin` event already wired to share dialog.
 
-- 단일 `get_earn_hub_state` 호출로 모든 카드 상태 로드
-- `claim(kind)`, `claimShare(channel)`, `claimAttendance()` 메서드에 optimistic update + 실패 시 롤백
-- realtime: `phon_balances` 변경 시 todayEarned 재계산
+Wearable bonuses (`wearable_bonus` jsonb):
+- `slot_win_boost_bps`, `free_spins_daily`, `crown_mult_bonus`, `xp_mult`.
+- Applied server-side in slot/crown RPCs; client uses `get_my_equipped_avatar()` for display.
 
-신규 컴포넌트 (모두 디자인 토큰 — gold/pink/card/text/muted)
+Frontend:
+- `/avatar` page: grid of cards (rarity ring, VIP gate badge, price chip, limited stock counter, equip button).
+- `<EquippedAvatarChip />` in `PhonaraTopBar` next to `VipPassBadge`.
 
-- `src/components/earn/StreakCard.tsx` — D1~D7 도트, 오늘 클레임 CTA, 큰 +PHON
-- `src/components/earn/MissionsCard.tsx` — 3미션 체크리스트 + 각 클레임 버튼
-- `src/components/earn/ReferralCard.tsx` — 코드/링크/카카오/문자/링크 공유 + 누적 통계
-- `src/components/earn/PlayToEarnCard.tsx` — "오늘 한 게임 +80 PHON" + /games 이동
-- `src/components/earn/ShareRewardCard.tsx` — 빅윈 공유 다이얼로그 트리거
-- `src/components/share/BigWinShareDialog.tsx` — 1080×1350 캔버스(닉/금액/심볼/날짜/QR-style brand), 8 채널 그리드, 클릭 시 `navigator.share` 또는 채널별 인텐트 + `claim_share_reward(channel)`
-- `src/components/share/BigWinShareHost.tsx` — 전역 `window` 이벤트 `phonara:bigwin` 리스너 → 다이얼로그 자동 오픈
+## 3. Guild System Foundation
 
-수정
+Backend:
+- `guilds(id, name UNIQUE, tag, owner_id, level, xp, total_phon, member_cap, created_at)`.
+- `guild_members(guild_id, user_id, role enum[owner|officer|member], joined_at)` unique (user_id) — one guild per user.
+- `guild_messages(id, guild_id, user_id, body, created_at)` with RLS member-only.
+- `guild_rewards(id, guild_id, kind, amount_phon, distributed_at)`.
+- `guild_leaderboard_weekly` materialized via cron.
+- RPCs: `create_guild(name,tag)`, `join_guild(id)`, `leave_guild()`, `post_guild_message(body)`, `get_my_guild()`, `get_guild_leaderboard()`, `distribute_guild_rewards()` (cron weekly, splits 5% of guild member fees back).
 
-- `src/pages/Earn.tsx` — 완전 재작성, SlimShell + 헤더 카운터 + 5카드 그리드 + framer-motion 0.2~0.3s
-- `src/App.tsx` — `<BigWinShareHost />` 전역 마운트
+Frontend:
+- `/guild` page: 3 tabs — Home (my guild + chat), Browse (search/join), Leaderboard.
+- Realtime chat via `useRealtimeChannel` on `guild_messages`.
+- Guild tag rendered next to nickname via `NickWithBadge`.
 
-## 빅윈 트리거 (회귀 없음, 부가 디스패치만)
+## 4. Integration & Quality
 
-기존 BigWin 발생 지점에서 한 줄만 추가:
-```ts
-window.dispatchEvent(new CustomEvent("phonara:bigwin", { detail: { amount, symbol } }));
-```
-- 슬롯/룰렛 BigWinModal 마운트 시
-- Wallet 출금 완료 토스트 시
-- Trading PnL +임계치 이상 청산 시
+- Routes added to `App.tsx`: `/avatar`, `/guild` (lazy).
+- Nav: extend `BottomNav` / sidebar with Avatar + Guild entries.
+- Earn Hub: new mission `join_guild` (one-time +500 PHON) in `claim_daily_quick_reward` whitelist.
+- BigWinShareDialog overlays equipped avatar on share image canvas.
+- Design tokens only (`--gold`, `--pink`, `--card`, `--text`, `--muted`); 44px+ touch targets; mobile-first grids (1 col → 2 col → 3 col).
+- All new RPCs `SECURITY DEFINER SET search_path = public`, idempotent via unique constraints.
+- Permission baseline updated; CI drift test will pass.
 
-## 성공 기준
+## Technical notes
 
-- /earn 5카드 모두 실제 RPC와 연결, 클릭 한 번에 PHON 즉시 적립
-- 빅윈 발생 → 자동 공유 다이얼로그 → 채널 클릭 → +200 PHON
-- 친구 코드 카카오 한 번에 공유 가능
-- 50~70대도 한눈에 이해, 디자인 토큰만, 회귀 0
+- Migrations: one migration file per slice (vip-tiers, avatar-shop, guild-foundation) to keep review small.
+- Realtime: add `guild_messages` to `supabase_realtime` publication.
+- Memory updates after build: new `mem://features/vip-tiers`, `mem://features/avatar-shop`, `mem://features/guild-foundation`; index Core line updated for VIP tier multipliers.
+- Types: regenerated automatically post-migration; never edit `types.ts` manually.
+- No new external libs; reuse framer-motion, lucide-react, existing UI primitives.
+
+## File map (new / edited)
+
+New:
+- `supabase/migrations/<ts>_vip_tiers.sql`
+- `supabase/migrations/<ts>_avatar_shop.sql`
+- `supabase/migrations/<ts>_guild_foundation.sql`
+- `src/hooks/use-vip-tier.ts`, `use-avatar-shop.ts`, `use-my-guild.ts`
+- `src/pages/AvatarShop.tsx`, `src/pages/Guild.tsx`
+- `src/components/vip/VipTierTable.tsx`, `VipTierBadge.tsx`
+- `src/components/avatar/AvatarCard.tsx`, `EquippedAvatarChip.tsx`
+- `src/components/guild/GuildHome.tsx`, `GuildBrowse.tsx`, `GuildLeaderboard.tsx`, `GuildChat.tsx`
+
+Edited:
+- `src/pages/Vip.tsx` (4-tier rewrite)
+- `src/components/empire/VipPassBadge.tsx` (tier-aware)
+- `src/components/nav/PhonaraTopBar.tsx` (equipped avatar chip)
+- `src/App.tsx` (routes)
+- `src/hooks/use-earn-hub.ts` + Earn page (join_guild mission)
+- `src/components/share/BigWinShareDialog.tsx` (avatar overlay)
