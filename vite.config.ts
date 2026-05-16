@@ -61,13 +61,10 @@ export default defineConfig(({ mode }) => ({
           if (id.includes("i18next")) return "i18n";
           // H-4: framer-motion own chunk so route bundles don't redownload it
           if (id.includes("framer-motion") || id.includes("motion-dom") || id.includes("motion-utils")) return "motion";
-          // M-9: pickers/overlays chunk — heavy but only used by a few routes
-          if (
-            id.includes("/cmdk/") ||
-            id.includes("/vaul/") ||
-            id.includes("embla-carousel") ||
-            id.includes("react-day-picker")
-          ) return "pickers";
+          // PR-B: pickers 수동 그룹 제거.
+          // cmdk/vaul/embla/day-picker는 admin/special 페이지만 사용하며
+          // 해당 페이지는 router-lazy. 수동 그룹화 시 공용 청크로 승격되어
+          // 자동 modulepreload 됨 (signature-engine 과 동일 패턴).
           // 나머지(react, react-dom, react-router, radix, tanstack 등)는
           // 단일 vendor chunk로 묶어 createContext 순서 문제를 회피.
         },
