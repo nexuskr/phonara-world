@@ -180,7 +180,7 @@ function StepAttendance() {
   const claim = async () => {
     setLoading(true);
     try {
-      await supabase.rpc("claim_attendance" as any).catch(() => null);
+      try { await (supabase.rpc as any)("claim_attendance"); } catch { /* */ }
       setClaimed(true);
     } finally { setLoading(false); }
   };
