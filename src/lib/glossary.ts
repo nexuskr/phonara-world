@@ -70,6 +70,8 @@ export const G = {
   earnShareSheetSub: "채널당 1회 · +200 PHON 즉시 적립",
   earnShareCopied: "링크가 복사됐어요",
   earnShareInstagramHint: "이미지를 저장해서 스토리에 올려주세요",
+  earnFomoLive: "지금 {n}명이 오늘 PHON 받고 있어요",
+  earnVipBoostHint: "모든 미션·룰렛·공유 보상 +50% · 30일 30,000 PHON",
 } as const;
 
 export type GlossaryKey = keyof typeof G;

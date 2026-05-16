@@ -14,7 +14,8 @@ interface Props {
   onClaimed?: (channel: ShareChannel, amount: number) => void;
 }
 
-const ORDER: ShareChannel[] = ["kakao", "kakaostory", "x", "threads", "facebook", "telegram", "instagram"];
+// Kakao SDK 연동은 별도 스프린트에서 처리 — 현재는 카카오스토리/X/Threads/FB/Telegram/Instagram 6채널.
+const ORDER: ShareChannel[] = ["kakaostory", "x", "threads", "facebook", "telegram", "instagram"];
 
 export default function ShareChannelsSheet({
   open,
