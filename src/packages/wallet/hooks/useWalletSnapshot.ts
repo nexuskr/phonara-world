@@ -15,6 +15,7 @@ const EARN_KINDS = [
   "jackpot_win",
   "package_settle",
 ] as const;
+type EarnKind = (typeof EARN_KINDS)[number];
 
 export interface WalletSnapshot {
   loading: boolean;
