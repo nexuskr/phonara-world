@@ -1,65 +1,117 @@
-# Week 4 Frontend — VIP / Avatar / Guild Integration
+# Sprint 1 Week 5 — Crash Game (World #1 Level)
 
-Backend is live (vip_tier_config, vip_passes.tier, avatar_catalog, user_avatars, 5 RPCs, tier-aware award_crown, mission_guild). This plan covers the remaining UI only.
+A provably-fair PHON Crash game with cinematic canvas rendering, deep VIP / Avatar / Earn integration, and extreme FOMO surfaces. Designed to feel warmer and more premium than Stake.com while remaining buttery-smooth on low-end mobile.
 
-## 1. New shared components
+## 1. Backend (single migration)
 
-- `src/components/vip/VipTierBadge.tsx`
-  - Props: `tier: 'silver'|'gold'|'platinum'|'diamond'|null`, `size?: 'sm'|'md'`.
-  - Tier → gradient token map (uses `--gold`, `--pink`, `--muted`, `--card`); silver=slate, gold=gold, platinum=cyan/white, diamond=pink+gold.
-  - Renders pill with crown icon + tier label. Null → "Free" muted chip.
+Tables (RLS on, owner-only SELECT, INSERT via RPC only):
 
-- `src/components/avatar/EquippedAvatarChip.tsx`
-  - Calls `get_my_equipped_avatar()` via react-query (60s stale).
-  - Renders 28px circular avatar with rarity ring color; falls back to initials.
-  - 44px touch target wrapper, `aria-label`, links to `/avatar`.
+- `crash_rounds` — `id, seed_hash, seed_revealed, crash_multiplier numeric(8,2), started_at, crashed_at, status (pending|running|crashed)`
+- `crash_bets` — `id, round_id, user_id, bet_phon, auto_cashout numeric(6,2) null, cashed_out_at_multiplier numeric(8,2) null, payout_phon, won bool, created_at`
+- `crash_hot_streaks` — `user_id pk, streak int, updated_at` (3연승 시 multiplier bonus +5%)
 
-## 2. `/vip` page rewrite (`src/pages/Vip.tsx`)
+RPCs (all `SECURITY DEFINER`, `set search_path = public`):
 
-- Header: current tier `<VipTierBadge>` + progress toward next tier (from `get_my_vip_tier()` returns).
-- 4-tier comparison: horizontal scroll on mobile, 4-col grid ≥md.
-  - Card per tier: gradient header, monthly PHON price, list of benefits (crown_mult, fee_waiver_pct, free_spins, whale_lead_seconds, lounge, concierge, withdraw_priority, event_lead_hours).
-  - CTA button: "현재 등급" (disabled) / "업그레이드" → calls `subscribe_vip_pass_phon(tier)` with confirm dialog; toast via `@/lib/notify`.
-- Empty/loading states use `@/components/ui/empty-state` and `LoadingList`.
+- `crash_place_bet(_bet_phon, _auto_cashout)` — PHON 차감, VIP 티어별 max bet 검증, idempotent per active round
+- `crash_cashout(_round_id, _multiplier)` — multiplier 검증(현재 round + 서버 clock 기준), payout 적립, hot streak 갱신
+- `crash_get_current_round()` — 진행 중 round + remaining bets summary
+- `crash_get_recent_wins(_limit)` — 최근 대박 캐시아웃 (마스킹 닉 + avatar_id + multiplier + payout)
+- `crash_get_live_bets(_round_id)` — 현재 round 베팅자 리스트 (avatar + bet + status)
+- `crash_get_my_stats()` — 총 베팅/승률/최고 멀티/누적 PHON
 
-## 3. `/avatar` page (`src/pages/Avatar.tsx`)
+VIP integration:
+- Silver: max bet 50k PHON, multiplier ×1.00
+- Gold: 200k, ×1.02
+- Platinum: 500k, ×1.05 + fee waiver
+- Diamond: 2M, ×1.10 + fee waiver + 자동 hot streak +1
 
-- Tabs: Shop | My Collection.
-- Shop grid `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3`.
-- Card:
-  - Image with rarity ring (common=muted, rare=cyan, epic=pink, legendary=gold gradient).
-  - VIP gate chip if `min_vip_tier` set (uses `VipTierBadge` sm).
-  - Price (PHON) + stock counter `남은 수량 N / total` when limited.
-  - Buttons: 구매 (`purchase_avatar`) / 장착 (`equip_avatar`) — state from `user_avatars`.
-- My Collection: owned avatars, equipped highlighted with gold ring + "장착됨" chip.
-- 44px+ buttons, framer-motion fade/scale 0.2s on card hover.
+Earn mission: `mission_crash_3` (+150 PHON, daily) — `crash_cashout`에서 자동 카운트.
 
-## 4. MissionsCard update (`src/components/earn/MissionsCard.tsx`)
+Provably-fair: server seed hash 공개 → 라운드 종료 시 reveal. Crash multiplier = `floor(100 * 99 / (1 - r)) / 100` (r = sha256(seed).toFloat).
 
-- Append `mission_guild` row: title "길드 가입", reward `+500 PHON`, one-time.
-- Status derived from `claim_daily_quick_reward` response / existing mission map; CTA "길드 가기" → `/guild` if not joined, "보상 받기" if joined+unclaimed.
+Realtime: `ALTER PUBLICATION supabase_realtime ADD TABLE crash_rounds, crash_bets;`
 
-## 5. BigWinShareDialog avatar overlay (`src/components/share/BigWinShareDialog.tsx`)
+Edge function `crash-tick` (cron 1s): 라운드 자동 진행 (대기 5s → 진행 → crash → 다음 라운드).
 
-- On canvas render, after background, fetch equipped avatar URL (cached) and `drawImage` as 96px circle bottom-left with rarity ring stroke.
-- Skip silently if none equipped. No layout change to dialog UI.
+## 2. Frontend
 
-## 6. Routing + TopBar
+### `/crash` page (`src/pages/Crash.tsx`)
 
-- `src/App.tsx`: add lazy routes `/avatar` → `Avatar`, `/guild` → existing Guild page (verify exists; if missing, out of scope — leave route but TODO).
-- `src/components/layout/PhonaraTopBar.tsx` (or current TopBar file): insert `<EquippedAvatarChip />` immediately left of `<VipPassBadge />`. Hidden on `<sm` if space tight (use `hidden xs:flex`).
+레이아웃 (mobile-first → desktop split):
 
-## 7. Constraints
+```text
++---------------------------------------------------+
+| Header: 시즌·내 통계·VIP 티어 칩                  |
++---------------------------------------------------+
+| Canvas (full-bleed, 16:10)                        |
+|   - 로켓 + 파티클 트레일 (warm gold → orange → pink)|
+|   - 별/구름 패럴랙스                              |
+|   - 중앙 거대 멀티플라이어 (neon glow, pulse)     |
+|   - Crash 시 폭발 + 화면 진동 + 슬로모            |
++---------------------------------------------------+
+| BetPanel: amount + quick (10k/50k/100k/Max)       |
+|   auto cashout 입력, 추천 cashout 칩, 큰 CTA      |
++---------------------------------------------------+
+| LivePlayers (좌) | RecentBigWins 피드 (우)        |
++---------------------------------------------------+
+| HotStreakBar + NearMissTicker                     |
++---------------------------------------------------+
+```
 
-- No new npm deps.
-- Only design tokens (`--gold`, `--pink`, `--card`, `--text`, `--muted`, existing semantic tokens). No hex literals in JSX.
-- All buttons ≥44px height (`h-11`).
-- Mobile-first; test 360px width.
-- Use `@/lib/notify` for toasts, `useRealtimeChannel` if any realtime needed (avatar stock).
-- Zero regression: do not touch unrelated TopBar items; preserve existing classNames.
+### Components (`src/components/crash/`)
 
-## Technical notes
+- `CrashCanvas.tsx` — `requestAnimationFrame` 60fps, DPR aware, `OffscreenCanvas` fallback. 멀티플라이어 → 색상 보간(`--gold` → `--orange` → `--pink`). 로켓 SVG path + 파티클 풀(최대 80, 재사용). Crash 이벤트 시 shake (CSS transform on parent) + 골드 파편 burst.
+- `MultiplierDisplay.tsx` — 6xl→9xl 반응형, neon glow drop-shadow, beat pulse (0.25s scale 1→1.04).
+- `BetPanel.tsx` — VIP 티어별 max bet, auto cashout, "스마트 추천" (최근 10라운드 median × 0.8). 진행중에는 cashout 버튼으로 변경. 44px+ 터치.
+- `LivePlayersPanel.tsx` — realtime `crash_bets` subscription, avatar chip + bet + status. 가상화(최대 20개 노출).
+- `BigWinsFeed.tsx` — `crash_get_recent_wins` 30s polling + realtime, "XX님이 87.4x에서 2,847,000 PHON 캐시아웃!" 마키.
+- `NearMissTicker.tsx` — crash_multiplier ≥ 98 라운드 강조 토스트 + 마키 라인.
+- `HotStreakBar.tsx` — useMyCrashStats, 🔥 1/2/3 시각화, 3연승 시 골드 글로우 + +5% 칩.
+- `CrashCashoutCelebration.tsx` — high cashout(≥10x or ≥1M PHON payout) 시 `BigWinShareDialog` 자동 오픈 (equipped avatar overlay 재사용).
+- `useCrashRound.ts` — round 상태머신 훅 (server time sync, drift correction).
+- `useCrashHaptic.ts` — `navigator.vibrate` 단계별 (5x/10x/20x/crash).
 
-- New RPC calls typed via existing `supabase` client; cast args as needed if `types.ts` not yet regenerated for new functions.
-- React-query keys: `['vip','tier']`, `['avatar','catalog']`, `['avatar','mine']`, `['avatar','equipped']`. Invalidate on purchase/equip/subscribe.
-- File count: 2 new pages, 2 new components, 3 edits (MissionsCard, BigWinShareDialog, App.tsx, TopBar) — keep each <250 LOC.
+### Sound (옵션, lazy)
+`src/lib/crashAudio.ts` — WebAudio API, build-up sine sweep + crash noise burst. localStorage `crash:mute` 토글.
+
+### Integration
+- `App.tsx`: `const Crash = lazy(() => import("./pages/Crash.tsx"));` + route `/crash`
+- Main nav (Layout / PowerHeader / HubTabs): "Crash" 항목 추가 (🚀 아이콘, NEW 뱃지)
+- `MissionsCard`: `mission_crash_3` 행 추가 (+150 PHON, "지금 플레이" CTA → /crash)
+- `BigWinShareDialog`: 기존 equipped avatar overlay 재사용 (변경 없음)
+- VIP 티어 표시: `VipTierBadge` 헤더에 사용
+
+## 3. Performance & UX 규칙
+
+- Canvas: 단일 RAF 루프, 객체 풀, 파티클 80 cap, low-end(DPR<2 && innerWidth<480) 시 파티클 40으로 강등
+- 모든 framer-motion 0.2~0.3s, `prefers-reduced-motion` 존중 (shake/슬로모 비활성)
+- 디자인 토큰만: `--gold`, `--pink`, `--card`, `--text`, `--muted`, plus 새 `--orange` 토큰 (warm 보간용)
+- 50-70대 친화: 큰 글자 베팅 결과 토스트, 한글 우선, 명확한 색대비 (gold on dark)
+- Realtime 구독은 `useRealtimeChannel` 단일 진입점 사용 (mem://realtime/unified-channel)
+- Notify는 `@/lib/notify`, EmptyState/LoadingState 프리미티브 사용
+
+## 4. Files
+
+Created:
+- `supabase/migrations/<ts>_crash_game.sql`
+- `supabase/functions/crash-tick/index.ts` + cron schedule
+- `src/pages/Crash.tsx`
+- `src/components/crash/{CrashCanvas,MultiplierDisplay,BetPanel,LivePlayersPanel,BigWinsFeed,NearMissTicker,HotStreakBar,CrashCashoutCelebration}.tsx`
+- `src/components/crash/hooks/{useCrashRound,useCrashHaptic,useMyCrashStats}.ts`
+- `src/lib/crash.ts` (RPC 래퍼), `src/lib/crashAudio.ts`
+
+Edited:
+- `src/App.tsx` (lazy route)
+- `src/components/Layout.tsx` / nav (Crash 진입점)
+- `src/components/earn/MissionsCard.tsx` (+mission_crash_3)
+- `src/index.css` / `tailwind.config.ts` (--orange 토큰)
+
+## 5. Acceptance
+
+- 60fps on mid-tier Android (Pixel 4a급) — DevTools perf trace로 검증
+- 라운드 진행/크래시/캐시아웃 e2e: 베팅 → auto cashout 트리거 → 잔액 반영
+- Hot streak 3연승 시 다음 라운드 multiplier ×1.05 적용
+- 10x↑ 캐시아웃 시 BigWinShareDialog 자동 (equipped avatar 노출)
+- VIP Diamond 계정에서 max bet 2M, multiplier ×1.10 적용
+- `/crash` 메인 네비 진입, mission_crash_3 카운트 + 클레임
+- 모바일 44px+ 터치, 디자인 토큰만 사용, zero regression
