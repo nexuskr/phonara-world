@@ -21,6 +21,8 @@ import { ReviewerMaskRoot } from "./components/ReviewerMaskRoot";
 import ReviewerBadge from "./components/ReviewerBadge";
 import { AdultGate } from "./components/AdultGate";
 import MaintenanceGate from "./components/MaintenanceGate";
+import { DegradeModeBinder } from "./components/system/DegradeModeBinder";
+import { DegradeModeBanner } from "./components/system/DegradeModeBanner";
 import { registerSW } from "./lib/pwa/registerSW";
 
 installGlobalErrorLogging();
@@ -235,6 +237,8 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+          <DegradeModeBanner />
+          <DegradeModeBinder />
           <SessionWatcher />
           <ReviewerMaskRoot />
           <ReviewerBadge />

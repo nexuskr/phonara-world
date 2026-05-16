@@ -343,6 +343,7 @@ const SWITCH_LABELS: Record<string, { label: string; desc: string }> = {
   withdrawals_halt: { label: "🔴 출금 중단",         desc: "출금 신청 차단" },
   signup_halt:      { label: "🔴 신규 가입 중단",   desc: "회원가입 차단" },
   maintenance_mode: { label: "🟡 유지보수 모드",     desc: "전 사용자에게 점검 화면" },
+  degrade_mode:     { label: "🛡 비상 절전 모드",   desc: "화면 효과 OFF + cosmetic 인터벌 회수 (입출금·베팅 영향 없음)" },
 };
 
 function KillSwitchesTab({ switches, reload }: { switches: KillSwitch[]; reload: () => void }) {

@@ -208,6 +208,15 @@ export const G = {
   depositLeaveConfirm: "진행 중인 충전이 있습니다. 정말 나가시겠습니까?",
   depositLeaveStay: "계속 진행",
   depositLeaveExit: "나가기",
+
+  // §14-5 Emergency Degrade Mode (PR-I)
+  degradeBannerOn: "지금 시스템 보호 모드입니다 — 안심하세요, 입출금은 정상입니다",
+  degradeBannerOff: "정상 모드로 돌아왔습니다",
+  degradeBannerReasonDefault: "잠시 후 자동 복구됩니다",
+  degradeAdminTitle: "🛡 비상 절전 모드",
+  degradeAdminDesc: "화면 효과를 모두 끄고 시스템을 가볍게 만듭니다. 입출금·베팅은 영향 없습니다.",
+  degradeConfirmOn: "정말 비상 절전 모드를 켤까요? 화면 애니메이션이 꺼집니다",
+  degradeConfirmOff: "정상 모드로 돌아갈까요?",
 } as const;
 
 export type GlossaryKey = keyof typeof G;

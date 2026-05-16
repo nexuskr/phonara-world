@@ -14,7 +14,8 @@ export type KillSwitches = {
   withdrawals_halt: boolean;
   signup_halt: boolean;
   maintenance_mode: boolean;
-  reasons: Partial<Record<keyof Omit<KillSwitches, "reasons">, string>>;
+  degrade_mode: boolean;
+  reasons: Partial<Record<keyof Omit<KillSwitches, "reasons" | "loaded">, string>>;
   loaded: boolean;
 };
 
@@ -23,6 +24,7 @@ const DEFAULT: KillSwitches = {
   withdrawals_halt: false,
   signup_halt: false,
   maintenance_mode: false,
+  degrade_mode: false,
   reasons: {},
   loaded: false,
 };
