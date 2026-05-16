@@ -30,7 +30,21 @@ export default defineConfig(({ mode }) => ({
     dedupe: ["react", "react-dom", "react/jsx-runtime", "react/jsx-dev-runtime", "@tanstack/react-query", "@tanstack/query-core"],
   },
   build: {
-    modulePreload: { polyfill: true },
+    // PR-B: modulepreload 화이트리스트.
+    // - locale-ja/vi : i18n.ts 가 active language 만 dynamic import → 비활성 청크는 preload 불필요.
+    // - motion : MotionConfig 제거 후 entry 정적 그래프에서 분리되었더라도 preload 만 차단.
+    // - icons (lucide) : 첫 페인트 시 일부 아이콘만 필요. 실제 임포트 시 fetch 됨 (waterfall ~80ms 허용).
+    // - supabase : auth-bridge 가 useEffect 안에서 호출. 첫 페인트엔 불필요.
+    modulePreload: {
+      polyfill: true,
+      resolveDependencies: (_filename, deps) =>
+        deps.filter((d) =>
+          !/\/locale-(ja|vi)-[^/]+\.js$/.test(d) &&
+          !/\/motion-[^/]+\.js$/.test(d) &&
+          !/\/icons-[^/]+\.js$/.test(d) &&
+          !/\/supabase-[^/]+\.js$/.test(d),
+        ),
+    },
     rollupOptions: {
       output: {
         manualChunks(id) {

@@ -1,5 +1,8 @@
 import { lazy, Suspense, useEffect, useState } from "react";
-import { MotionConfig } from "framer-motion";
+// PR-B: framer-motion 정적 import 제거 — MotionConfig 의존성 한 줄 때문에
+// entry 그래프에 framer-motion(45KB gz) 전체가 정적 결합되어 Layer 1 부담.
+// reduced-motion 은 motion 컴포넌트가 prefers-reduced-motion CSS 미디어 쿼리로
+// 자체 대응 가능. 글로벌 MotionConfig 제거 → motion 청크는 사용 페이지에서만 async 로드.
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -228,7 +231,6 @@ function GlobalOverlays() {
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
-      <MotionConfig reducedMotion="user">
       <TooltipProvider>
         <Toaster />
         <Sonner />
@@ -362,7 +364,6 @@ const App = () => (
           </Suspense>
         </BrowserRouter>
       </TooltipProvider>
-      </MotionConfig>
     </QueryClientProvider>
   </ErrorBoundary>
 );
