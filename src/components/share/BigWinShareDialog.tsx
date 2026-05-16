@@ -26,6 +26,56 @@ const CHANNELS: { id: ShareChannel; label: string; Icon: any }[] = [
 
 function fmt(n: number) { return Number(n || 0).toLocaleString(); }
 
+const RARITY_STROKE: Record<string, string> = {
+  common: "rgba(148,163,184,0.7)",
+  rare: "rgba(56,189,248,0.85)",
+  epic: "rgba(244,114,182,0.9)",
+  legendary: "rgba(250,204,21,0.95)",
+};
+
+async function loadImage(url: string): Promise<HTMLImageElement | null> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = url;
+  });
+}
+
+function drawAvatarOverlay(
+  ctx: CanvasRenderingContext2D,
+  avatar: { image_url?: string | null; emoji?: string | null; rarity: string },
+  img: HTMLImageElement | null,
+) {
+  const cx = 180, cy = 1170, r = 96;
+  ctx.save();
+  // ring
+  ctx.beginPath();
+  ctx.arc(cx, cy, r + 8, 0, Math.PI * 2);
+  ctx.strokeStyle = RARITY_STROKE[avatar.rarity] ?? RARITY_STROKE.common;
+  ctx.lineWidth = 6;
+  ctx.stroke();
+  // clip circle
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.closePath();
+  ctx.clip();
+  // bg
+  ctx.fillStyle = "#0a0612";
+  ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
+  if (img) {
+    ctx.drawImage(img, cx - r, cy - r, r * 2, r * 2);
+  } else if (avatar.emoji) {
+    ctx.fillStyle = "#fff";
+    ctx.font = "120px 'Pretendard', system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(avatar.emoji, cx, cy + 6);
+  }
+  ctx.restore();
+}
+
 function drawCard(canvas: HTMLCanvasElement, detail: BigWinDetail, nickname: string) {
   const W = 1080, H = 1350;
   canvas.width = W; canvas.height = H;
@@ -99,24 +149,35 @@ export default function BigWinShareDialog({ open, onClose, detail }: Props) {
   useEffect(() => {
     if (!open || !detail) return;
     (async () => {
+      let nick = "Player";
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        const nick = (detail.nickname || user?.user_metadata?.nickname || user?.email?.split("@")[0] || "Player").slice(0, 16);
-        setNickname(nick);
-        // defer render to next frame
-        requestAnimationFrame(() => {
-          const c = canvasRef.current;
-          if (!c) return;
-          drawCard(c, detail, nick);
-          try { setDataUrl(c.toDataURL("image/png")); } catch { /* */ }
-        });
-      } catch {
-        const c = canvasRef.current;
-        if (c) {
-          drawCard(c, detail, "Player");
-          try { setDataUrl(c.toDataURL("image/png")); } catch { /* */ }
+        nick = (detail.nickname || user?.user_metadata?.nickname || user?.email?.split("@")[0] || "Player").slice(0, 16);
+      } catch { /* */ }
+      setNickname(nick);
+
+      // Try to fetch equipped avatar (silent fail).
+      let avatar: { image_url?: string | null; emoji?: string | null; rarity: string } | null = null;
+      let avatarImg: HTMLImageElement | null = null;
+      try {
+        const { data } = await supabase.rpc("get_my_equipped_avatar");
+        const av = (data as any)?.avatar;
+        if (av) {
+          avatar = { image_url: av.image_url, emoji: av.emoji, rarity: av.rarity };
+          if (av.image_url) avatarImg = await loadImage(av.image_url);
         }
-      }
+      } catch { /* */ }
+
+      requestAnimationFrame(() => {
+        const c = canvasRef.current;
+        if (!c) return;
+        drawCard(c, detail, nick);
+        if (avatar) {
+          const ctx = c.getContext("2d");
+          if (ctx) drawAvatarOverlay(ctx, avatar, avatarImg);
+        }
+        try { setDataUrl(c.toDataURL("image/png")); } catch { /* */ }
+      });
     })();
   }, [open, detail]);
 
