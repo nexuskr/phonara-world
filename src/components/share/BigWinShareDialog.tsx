@@ -149,24 +149,35 @@ export default function BigWinShareDialog({ open, onClose, detail }: Props) {
   useEffect(() => {
     if (!open || !detail) return;
     (async () => {
+      let nick = "Player";
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        const nick = (detail.nickname || user?.user_metadata?.nickname || user?.email?.split("@")[0] || "Player").slice(0, 16);
-        setNickname(nick);
-        // defer render to next frame
-        requestAnimationFrame(() => {
-          const c = canvasRef.current;
-          if (!c) return;
-          drawCard(c, detail, nick);
-          try { setDataUrl(c.toDataURL("image/png")); } catch { /* */ }
-        });
-      } catch {
-        const c = canvasRef.current;
-        if (c) {
-          drawCard(c, detail, "Player");
-          try { setDataUrl(c.toDataURL("image/png")); } catch { /* */ }
+        nick = (detail.nickname || user?.user_metadata?.nickname || user?.email?.split("@")[0] || "Player").slice(0, 16);
+      } catch { /* */ }
+      setNickname(nick);
+
+      // Try to fetch equipped avatar (silent fail).
+      let avatar: { image_url?: string | null; emoji?: string | null; rarity: string } | null = null;
+      let avatarImg: HTMLImageElement | null = null;
+      try {
+        const { data } = await supabase.rpc("get_my_equipped_avatar");
+        const av = (data as any)?.avatar;
+        if (av) {
+          avatar = { image_url: av.image_url, emoji: av.emoji, rarity: av.rarity };
+          if (av.image_url) avatarImg = await loadImage(av.image_url);
         }
-      }
+      } catch { /* */ }
+
+      requestAnimationFrame(() => {
+        const c = canvasRef.current;
+        if (!c) return;
+        drawCard(c, detail, nick);
+        if (avatar) {
+          const ctx = c.getContext("2d");
+          if (ctx) drawAvatarOverlay(ctx, avatar, avatarImg);
+        }
+        try { setDataUrl(c.toDataURL("image/png")); } catch { /* */ }
+      });
     })();
   }, [open, detail]);
 
