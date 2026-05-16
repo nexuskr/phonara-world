@@ -10,7 +10,8 @@ export type EmpireSlotKey =
   | "pirate_curse"
   | "pharaoh_vault"
   | "cherry_sakura"
-  | "olympus_legacy";
+  | "olympus_legacy"
+  | "sugar_fever";
 
 /** Legendary 발동 시 base Crown 에 곱하는 가중치.
  *  Olympus Legacy 5000 = 1.6 (flagship, highest). Cherry Sakura(Low-vol) → 0.8x. */
@@ -23,6 +24,7 @@ export const SLOT_CROWN_WEIGHT: Record<EmpireSlotKey, number> = {
   pirate_curse: 1.1,
   pharaoh_vault: 1.25,
   cherry_sakura: 0.8,
+  sugar_fever: 1.4,
 };
 
 /** URL slug 별칭 → canonical key (soundConfig.SLOT_ID_TO_SOUND_KEY 와 일치). */
@@ -40,6 +42,8 @@ const ALIAS: Record<string, EmpireSlotKey> = {
   cherry_sakura_500: "cherry_sakura",
   olympus_legacy: "olympus_legacy",
   olympus_legacy_5000: "olympus_legacy",
+  sugar_fever: "sugar_fever",
+  sugar_fever_3000: "sugar_fever",
 };
 
 /** Legendary base — 멀티플라이어에 따른 로그 스케일. ≈80~180 사이. */

@@ -25,6 +25,8 @@ export const SLOT_ID_TO_THEME: Record<string, SlotThemeKey> = {
   olympus: "olympus",
   olympus_legacy: "olympus",
   olympus_legacy_5000: "olympus",
+  sugar_fever: "olympus",
+  sugar_fever_3000: "olympus",
   wizard_2000: "wizard",
   wizard: "wizard",
   dragon_empire: "dragon",
@@ -100,6 +102,14 @@ export const SLOT_SOUND_MAP: Record<
     voice: ["zeus_decree"],
     legendary: { primary: "legendary_win", voice: "zeus_decree" },
   },
+  sugar_fever: {
+    // Placeholder — reuses olympus pack until dedicated candy SFX/voice ship.
+    // When ready, add /sounds/sugar_fever/sfx/candy_pop.mp3, chocolate_splash.mp3
+    // and /sounds/sugar_fever/voice/sugar_announce.mp3 — Howl auto-registers.
+    sfx: ["zeus_strike", "marble_chime"],
+    voice: ["zeus_decree"],
+    legendary: { primary: "legendary_win", voice: "zeus_decree" },
+  },
 };
 
 /** URL slug aliases → canonical SLOT_SOUND_MAP key. */
@@ -117,6 +127,8 @@ export const SLOT_ID_TO_SOUND_KEY: Record<string, keyof typeof SLOT_SOUND_MAP> =
   cherry_sakura_500: "cherry_sakura",
   olympus_legacy: "olympus_legacy",
   olympus_legacy_5000: "olympus_legacy",
+  sugar_fever: "sugar_fever",
+  sugar_fever_3000: "sugar_fever",
 };
 
 export type WinTier = "big" | "mega" | "epic" | "legendary";
