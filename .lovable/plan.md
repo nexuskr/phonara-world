@@ -194,10 +194,57 @@ depositErrMin, depositErrExpired, depositErrVoucherPin, depositErrUpload, deposi
 7) Polish: 360px QA, expired regenerate, upload retry, grep g() 100%
 ```
 
-## 비포함
+## 11. 배포 직전 강화 (v1.0 Hardening — DB 추가 없이 클라단)
+
+### H-1. Idempotency Lock
+- `useDeposit` submit 진입 시 `clientRequestId = crypto.randomUUID()` 생성, sessionStorage에 캐시.
+- `submit_deposit` memo 끝에 `[cri:xxxx]` suffix 첨부 → 동일 cri 재전송 시 서버가 같은 row 매칭 가능 (현재 RPC 변경 없이 운영팀이 식별).
+- 더블탭/네트워크 retry/모바일 reconnect 시 동일 trip 보장. submit 중 버튼 `disabled + loading` 강제.
+
+### H-2. Intent Race (filled > expired)
+- realtime payload에서 `status` 우선순위: `filled > matching > expired`.
+- 카운트다운이 만료에 도달해도 마지막 1회 `get_my_pending_deposits` 재조회 → filled로 바뀌었으면 expired UI 무시하고 Step 3 전환.
+
+### H-3. Visibility Timeout (Intermediate State)
+- realtime 무응답 10s + intent.status=`awaiting_payment` 시 카드 메시지 전환: `g('depositCoinConfirming')` = "입금 확인 중입니다".
+- 사용자가 "돈 사라졌나?" 느끼지 않게 회색 펄스 유지.
+
+### H-4. History 정렬 (Senior-first)
+- DepositHistory 정렬: `pending/matching` 그룹 먼저 → 그 다음 `updated_at DESC`.
+- 진행 중 카드는 항상 최상단 + Warm Gold border.
+
+### H-5. Voucher Fraud Soft Limit
+- localStorage `phonara:voucher_pin_attempts:v1` (24h TTL) 에 SHA-256(pin) 해시 누적.
+- 동일 해시 3회 이상 → submit 전 클라단 차단 + `notify.error(g('depositErrVoucherDup'))` + "수동 확인이 필요합니다" 안내(서버 `manual_review` 라벨링은 운영팀).
+
+### H-6. Realtime Disconnect Banner
+- `useRealtimeChannel` status='CHANNEL_ERROR' / 30s 무이벤트 시 모달 상단 노란 띠: `g('depositRealtimeDegraded')` = "실시간 연결이 불안정합니다. 자동 새로고침으로 확인 중입니다".
+- 백그라운드 폴링 5s로 가속.
+
+### H-7. Telemetry Funnel
+- `src/lib/analytics.ts` `trackClick` 재사용. 이벤트:
+  ```
+  deposit_modal_open
+  deposit_method_selected   { method }
+  deposit_submit_clicked    { method, amount_band }
+  deposit_intent_created    { method, intent_id }
+  deposit_filled            { method, elapsed_ms }
+  deposit_abandon           { method, step }
+  ```
+- `amount_band`: <50k / 50k–200k / 200k–1M / 1M+ (PII 제외).
+- modal close 시 step≤2면 abandon 자동 발사.
+
+### Glossary 추가 (Hardening)
+```
+depositCoinConfirming, depositRealtimeDegraded, depositErrVoucherDup,
+depositHistoryActiveBadge, depositSubmitLocked
+```
+
+## 12. 비포함
 - 결제 PG / Stripe / 카카오 SDK 자동연동 (mem 제약)
 - 신규 DB / RPC / 트리거
 - 출금 흐름 변경
+- 백엔드 rate limit (no-backend-rate-limiting directive)
 
-## 의미
-입금 모달이 아니라 **Retention Infrastructure**. 출금만 쉬우면 빠져나가고, 입금까지 쉬워야 다시 들어온다.
+## 13. 의미
+입금 모달이 아니라 **Retention Infrastructure + Operable v1.0 Deposit System**. 출금만 쉬우면 빠져나가고, 입금까지 쉬워야 다시 들어온다. Hardening 7종으로 race / fraud / disconnect / funnel observability까지 운영 가능 수준 확보.
