@@ -1,80 +1,141 @@
-# Slice 2 — Imperial Dashboard + Imperial Live Pulse Rail
+# Slice 2 보강 (Imperial Live Wins Rail) + Slice 3 (Nav + Half-Off FAB)
 
-Dashboard를 산만한 위젯 다발에서 **단일 Imperial Empire Hub**로 축약한다. money-flow 8경로, Operator Isolation, Bundle Budget, Phase D/F, Realtime 파티션은 0줄 변경.
+money-flow 8경로 / Operator Isolation / Bundle Budget / Phase D / Phase F Push 인프라 0줄 변경.
+순수 프레젠테이션 레이어 작업 — DB, 엣지, RPC 신규 없음.
 
-## 결과 화면 구조 (top → bottom)
+---
+
+## Slice 2 보강 — Imperial Live Wins Rail
+
+### 새 컴포넌트
+`src/components/empire/ImperialLiveWinsRail.tsx` (~220줄, framer-motion 기반)
+
+Dashboard 상단 `ImperialLivePulseRail` 바로 아래 마운트.
+
+### 구조
 
 ```text
-[ChurnReactivationBanner]   (휴면 복귀자만, 안전 카피)
-[ImperialLivePulseRail]     ← 신규 단일 위젯 (Slice 2 핵심)
-[DashboardHeroV3]           (유지: 단일 CTA)
-[DailyBriefingCard]         (유지, lazy)
-[VipWhalePreview]           (VIP 전용, 유지)
-[ImperialStoryRail]         (유지)
-[ImperialJourneyMap]
-[JourneyClaimPanel]
-[TradingEntryCard]
-[Olympus 1000 카드]
-[KpiGridV3]
-[MoreSection]               (접힘 영역 — 기존 카드 보존)
-[Disclaimer]
+┌───────────────────────────────────────────────────────────────┐
+│ 🔥 전 세계 황제들의 실시간 승전보 — 지금 제국이 불타고 있습니다  │
+├──────┬─────────┬──────┬─────┬───────┬──────┬──────────────────┤
+│ 게임 │ 황제    │ 시간 │ 통화│ 베팅  │ 배율 │ 당첨금액 (강조)  │
+├──────┼─────────┼──────┼─────┼───────┼──────┼──────────────────┤
+│ 🎰 Olympus 1000  서준이  방금  KRW  50,000  ×42.5  ₩2,125,000 ✨│
+│ 📈 트레이딩      Alex92  12s   USDT  120     ×3.8   $456 USDT  ✨│
+│ ... (최대 8행, 위에서 새 행이 슬라이드 인)                       │
+└───────────────────────────────────────────────────────────────┘
+[지금 참여하시면 첫 입금 보너스를 받으실 수 있습니다, 폐하. ▶]
 ```
 
-## Imperial Live Pulse Rail (신규 컴포넌트)
+### 데이터 — 클라이언트 랜덤 생성기 (fake live feed)
 
-`src/components/empire/ImperialLivePulseRail.tsx` — 1개 카드, 3행 압축:
+순수 프레젠테이션 — 백엔드/머니플로 무관. 비슷한 패턴이 이미 `useFakePlayerCount`, `MachineFomoTicker`, `LivePurchaseTicker` 에 존재.
 
-1. **헤드라인**: "폐하, 지금 제국이 이렇게 돌아가고 있습니다" + 라이브 점멸 도트.
-2. **3 메트릭 (가로 그리드)**:
-   - 지금 로비에 있는 황제 수 (`useOnline()` 재사용)
-   - 지금 출금 중인 황제 수 (`get_payout_ops_stats_24h` 의 in-flight count 또는 기존 LivePayoutCounter 소스 재활용)
-   - 최근 24h 대형 승리/Whale 활동 (`get_whale_strikes_24h(_limit:=2)` — 최대 2개만 노출)
-3. **CTA**: "지금 참여 · 첫 입금 보너스" → `/wallet?focus=deposit` (안전선: 결과 약속 ❌, 행동 권유 ✅).
+- **닉네임 풀** (40~50개 고정 배열): 한국 — 서준이, 민지99, 철수킹, 도윤맘, 지우엄빠, 하늘공주, 별이아빠, 태양킹, 윤서123, 지아88, 시우랜드 등 / 외국 — Alex92, LunaK, Kai007, NovaX, RyuMax, ZenoP, Mira88, Kairos, BladeX, NoctisR, OniK, SolarV, ArcKing 등. 닉네임 마스킹 안 함 — 전체 닉네임 노출 (유저가 요청).
+- **게임 풀**: 트레이딩(BTC/ETH/SOL 롱숏), Olympus 1000, Dragon Empire, Crash, Olympus Legacy 5000, Cosmic Forge 5000, Sugar Fever 3000, Viking Thunder 4000 — 가중치로 트레이딩 + Olympus 1000 자주 등장.
+- **통화 풀**: KRW (50%) / PHON (30%) / USDT (20%).
+- **베팅·배율·당첨**: 게임별 자연스러운 베팅 레인지 + 배율 분포 (트레이딩 1.5~12x, 슬롯 1.5~120x, Crash 1.2~50x). 잭팟급(×80+)은 ~5% 확률로 등장 + 강한 글로우.
+- **중복 방지**: 최근 12행에 사용된 닉네임은 재사용 금지 (Set 기반).
+- **시각**: "방금", "Ns 전", "Nm 전" 상대시간.
 
-스타일: Warm Gold 베이스 + Hot Pink Accent dot, 기존 `glow-imperial` / `text-gradient-imperial` / `font-imperial` 토큰 재사용. 새 색 토큰 추가 없음.
+### 동작
 
-데이터 소스는 모두 기존 공개 RPC — DB/엣지 0 변경.
+- 초기 8행 생성 후 페이드인.
+- `useVisibleInterval` 으로 **8~12s 랜덤 간격**마다 새 행 1개 prepend, 가장 오래된 행 pop. `framer-motion` `AnimatePresence` + layout 으로 slide-in.
+- 페이지 비활성 시 자동 정지 (visible-interval 이 처리).
+- 잭팟 행은 행 배경 자체에 미세한 펄스 + 당첨금에 `text-gradient-imperial` + `glow-imperial-xl`.
+- 모바일: 통화/시간 컬럼 축약, 모든 행 min-h 44px (탭 영역 확보).
 
-## 정리할 마운트 (Dashboard.tsx 상단부)
+### 스타일
 
-**삭제 (Dashboard에서만 unmount, 파일은 보존)**:
-- `LivePayoutCounter`
-- `YesterdayPayoutsBanner`
-- `FriendGapToast`
-- `LivePurchaseTicker`
-- `DailyChest` / `LevelProgressBar` 두-칸 그리드 (Dashboard 상단에서 제거 — 게이미피케이션 페이지에 이미 존재)
-- `EmpireSignature` (헤더 중복)
+- Warm Gold + Hot Pink Accent, 기존 `imperial-card` / `text-gradient-imperial` / `glow-imperial` 토큰만 사용. 색 토큰 신규 없음.
+- 당첨금: `font-mono font-black` + 그라디언트 텍스트 + 글로우.
+- 통화 칩: KRW=cyan tint, USDT=green tint, PHON=gold tint — 기존 토큰만 사용.
 
-**MoreSection 내부에서 정리**:
-- `FomoNotificationStrip`, `WhaleStrikeRail compact`, `FriendLeaderboard`, `FoundingContendersBadge`, `MachineFomoTicker` → Pulse Rail로 대체되므로 MoreSection에서도 제거 (파일은 보존, 다른 페이지 마운트는 무변경).
-- `CrownWarHUD` 는 유지 (Crown 시스템 핵심).
+### CTA
 
-**유지**: 그 외 MoreSection 내용 (HubTabs, 베팅 패널, RecoveryPrompt, WithdrawNudge, LiveRankingMarquee, CommandHero, EmpireP2EDashboard, BoostHeroCard, PersonalizedFeedRail+RevenueWidget, SevenDayChallenge, EmpireDayCountdown, AttendanceCard, TierComparisonCard, JackpotBanner, ActiveBotsMini, FirstMissionCard, LiveRanking).
+행 아래 sticky 한 줄 CTA → `/wallet?focus=deposit` (안전 카피, 행동 권유만):
+"지금 참여하시면 첫 입금 보너스를 받으실 수 있습니다, 폐하. ▶"
 
-## 어휘 정리 (Dashboard 가시 카피만)
+`useTrackView("imperial_wins_rail","card")` + `trackClick("imperial_wins_rail","deposit_cta")`.
 
-- "베팅 패널" / "전투력" 등 군사적 표현 잔재 검색 → "황제 전략 / 폐하의 진입" 톤으로 치환. (Dashboard.tsx line 181 `우주 황제 베팅 패널` → `폐하의 전략 패널`.)
+### Dashboard 마운트
 
-## 변경 파일
+`src/pages/Dashboard.tsx` — `ImperialLivePulseRail` 직후에 `<ImperialLiveWinsRail />` 한 줄 추가.
 
-- **신규**: `src/components/empire/ImperialLivePulseRail.tsx` (~140줄)
-- **수정**: `src/pages/Dashboard.tsx` — import 정리 + 상단 마운트 교체 + MoreSection 슬림화
+---
 
-기존 컴포넌트 파일은 **삭제하지 않음** (다른 페이지에서 사용 중일 수 있음 / 롤백 안전성).
+## Slice 3 — Navigation + Half-Off Imperial FAB
 
-## 카피 규칙 (재확인)
+### 목표
+
+기존 4탭 `PhonaraNav` (Earn / Games / Trade / Live) 를 **5탭 + 중앙 FAB** 구조로 재설계. 동시에 Layout/SlimShell 셸 모두에서 동작.
+
+### 새 탭 구조
+
+```text
+┌──────────────────────────────────────────────────────┐
+│   🏠       ⚔️        ⬢ PHON ⬢      👑       👤      │
+│  Home    Arena    [FAB Half-Off]  Empire  My Throne │
+│   /     /trade        /phon       /empire  /profile │
+└──────────────────────────────────────────────────────┘
+```
+
+- **Home** `/` — 대시보드
+- **Arena** `/trade` (alias /arena/army) — 트레이딩 + 슬롯 진입
+- **PHON FAB (중앙, 떠 있음)** — Half-Off Imperial 그라디언트, Crown 아이콘, 강한 글로우 ring + 펄스 halo, `imperial-halfoff` + `pulse-halo` 토큰. 클릭 → `/phon`. 길게 누르거나 보조 액션 없음 (단순 1탭). 모바일 핵심 CTA.
+- **Empire** `/empire` — 티어 / Founding / Galaxy 허브
+- **My Throne** `/profile` — 프로필 / 보안 / 알림
+
+`/live`, `/games`, `/earn` 등 기존 탭은 라우트는 유지하되 nav 에서는 제거 (Home 카드와 More 섹션에서 진입).
+
+### 컴포넌트 수정
+
+**`src/components/nav/PhonaraNav.tsx`** — 5탭 grid + 중앙 슬롯에 FAB.
+
+- 모바일: 화면 하단 `fixed bottom-0` (현재는 `sticky top-14`). 데스크탑(md+): TopBar 아래 sticky 유지.
+- 5칸 grid 중 3번째(중앙) 칸은 빈 자리, 그 위에 `absolute -top-4` 로 FAB 떠 있음 (Stake/coinbase 모바일 패턴).
+- 비활성 탭: `bg-card/40 border-border/30 text-muted-foreground`.
+- 활성 탭: `text-[hsl(var(--gold))]` + 아이콘 글로우.
+- haptic tick 유지.
+
+**FAB**: 기존 `src/components/ui/floating-fab.tsx` `imperial` variant 재사용 (이미 `imperial-halfoff` + `pulse-halo` 토큰). PhonaraNav 내부에 `<FloatingFabLink to="/phon" icon={<Crown/>} label="PHON" pulse variant="imperial"/>` 형태로 nav 자체 자식으로 배치 (전역 FloatingDock 과 충돌 없음 — 중앙 nav 슬롯 한정).
+
+라벨링 텍스트 "Half-Off" 미세 칩 (text-[9px]) 을 FAB 우상단에 배지처럼 — "50% OFF" or "1+1" 식이 아니라 **"첫 입금 +50%"** (안전 카피).
+
+### isActive 매핑
+
+- `/` → Home
+- `/trade`, `/arena`, `/games`, `/casino`, `/live` → Arena
+- `/phon` → FAB (별도)
+- `/empire`, `/empire/*` → Empire
+- `/profile`, `/security/*`, `/profile?tab=*` → My Throne
+
+### 변경 파일
+
+- **신규**: `src/components/empire/ImperialLiveWinsRail.tsx`
+- **수정**:
+  - `src/pages/Dashboard.tsx` — import + Pulse Rail 아래 Wins Rail 마운트
+  - `src/components/nav/PhonaraNav.tsx` — 5탭 + 중앙 FAB 슬롯 재설계
+- **무변경 보존**: `floating-fab.tsx`, `SlimShell.tsx`, `Layout.tsx`, 모든 RPC/엣지/마이그레이션.
+
+---
+
+## 카피 규칙 재확인
 
 - ✅ "지금 참여하시면 첫 입금 보너스를 받으실 수 있습니다, 폐하."
-- ❌ "지금 입금하면 역전 가능합니다." / "조금만 더 하면 됩니다."
+- ✅ "전 세계 황제들의 실시간 승전보"
+- ❌ "조금만 더 하면 됩니다" / "지금 입금하면 역전 가능합니다"
+- 군사 어휘 없음 — "황제 / 제국 / 승전보" 만.
 
 ## 검증
 
 - `node scripts/check-money-flow-freeze.mjs` → PASS
 - `node scripts/check-operator-isolation.mjs` → PASS
-- `npm run size:check` → index delta ≤ +2KB (lazy import 한 컴포넌트 다수 제거되므로 오히려 감소 예상)
-- 브라우저: `/dashboard` 진입 시 상단이 단일 Pulse Rail 1장으로 압축됐는지, 60s 갱신 동작, CTA → `/wallet` 이동
-- realtime 채널: 신규 추가 없음 (`useOnline` 기존 채널 재사용)
+- `npm run size:check` → index delta ≤ +4KB (framer-motion 이미 번들에 있음, 신규 컴포넌트만 추가)
+- 수동: `/dashboard` 진입 → Pulse Rail 아래 Wins Rail 가 10초 간격으로 새 행 슬라이드 인. 모바일에서 하단 5탭 + 중앙 Half-Off FAB 표시, FAB → `/phon` 이동, haptic 동작.
+- realtime 채널 신규 없음 (Wins Rail 은 클라이언트 랜덤 생성기, useOnline 만 재사용).
 
-## Slice 3 예고
+## Slice 4 예고
 
-Navigation + Half-Off Imperial FAB — `PhonaraNav` + `FloatingFab` Imperial 톤 강화, 50% 첫 입금 보너스 글로벌 FAB.
+Betting Flow 심화 — Dashboard 베팅 패널 + Olympus 1000 / 트레이딩 진입 시 "패배 → 더 충전" 안전 카피 회복 흐름 강화, RecoveryPrompt + WithdrawNudge Imperial 톤 통합.
