@@ -16,16 +16,18 @@
 `src/packages/duel/engine/odds.ts` (NEW)
 - 양측 풀: `{ leftPool, rightPool, totalBets }` 시뮬레이션 ledger.
 - 배당: `odds(side) = (total / sidePool) * (1 - HOUSE_EDGE)`, `HOUSE_EDGE = 0.062`.
-- Variable Reward Tier (확률 + 멀티):
+- Variable Reward Tier (확률 + 멀티, House Edge 6.2% 보존):
   ```text
-  Base       (≥0.30 from threshold)   85.0%   ×1.00
-  Surge      (0.18..0.30)               9.5%   ×1.30
-  Crown      (0.08..0.18)               3.5%   ×1.75
-  Empyrean   (0.02..0.08)               0.7%   ×2.40
-  Divine     (<0.02)                    1.3%   ×3.20  -- 황실 잭팟
+  Base       64.0%   ×1.00 .. ×1.85
+  Surge      23.0%   ×2.10 .. ×4.80
+  Crown       8.5%   ×5.50 .. ×12.5
+  Empyrean    3.2%   ×15   .. ×38
+  Divine      1.3%   ×45   .. ×120   -- 황실 잭팟
   ```
-  (기존 `rewardTierFromRoll` 시그니처 유지하면서 분포 재튜닝)
-- Near-miss zone: `|roll - threshold| ∈ [0.005, 0.025]` → `nearMiss=true` + margin 0..1 정규화.
+  - Tier 멀티는 tier 내부 균등 분포 + house edge 보정 후 expected payout = 0.938.
+  - `rewardTierFromRoll(roll)` 시그니처 유지, 내부 분포만 재튜닝.
+- Strong Near-Miss zone: `roll ∈ [0.46, 0.54]` AND winner=opponent → `nearMiss=true`, `intensity = 1 - |roll-0.5|/0.04` (0..1).
+  - Near-Miss 효과는 intensity 에 비례 — slow-down 길이, glow 강도, particle 양, 진동 폭이 모두 동적 스케일.
 
 `src/packages/duel/hooks/useOddsEngine.ts` (NEW)
 - `useGameChannel({ key: "duel:room:" + roomId })` broadcast 로 풀 ledger 동기화 (presence + broadcast 이벤트만, DB 무영향).
