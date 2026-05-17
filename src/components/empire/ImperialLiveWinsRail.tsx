@@ -276,7 +276,7 @@ export default function ImperialLiveWinsRail({ variant = "compact" }: { variant?
                 className={
                   r.jackpot
                     ? (isFull
-                      ? "relative my-1 rounded-xl overflow-hidden bg-gradient-to-r from-[hsl(var(--gold)/0.18)] via-[hsl(var(--pink)/0.16)] to-[hsl(var(--gold)/0.18)] border border-[hsl(var(--gold)/0.55)] shadow-[0_0_28px_-4px_hsl(var(--gold)/0.55)] pulse-halo"
+                      ? "relative my-1 rounded-xl overflow-hidden bg-gradient-to-r from-[hsl(var(--gold)/0.22)] via-[hsl(var(--pink)/0.20)] to-[hsl(var(--gold)/0.22)] border border-[hsl(var(--gold)/0.7)] shadow-[0_0_44px_-4px_hsl(var(--gold)/0.7)] imperial-jackpot-breathe"
                       : "relative my-0.5 rounded-lg overflow-hidden bg-gradient-to-r from-amber-500/10 via-pink-500/10 to-amber-500/10 border border-amber-400/30 animate-pulse")
                     : (isFull ? "my-0 border-b border-[hsl(var(--gold)/0.12)]" : "my-0 border-b border-border/20")
                 }
