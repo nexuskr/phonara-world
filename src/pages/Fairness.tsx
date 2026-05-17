@@ -10,7 +10,7 @@ const STEPS: Array<{ icon: typeof Crown; title: string; body: string }> = [
   {
     icon: KeyRound,
     title: "1. 서버가 미리 약속합니다",
-    body: "전투 시작 전, 서버는 server_seed 의 SHA-256 해시(server_seed_hash)를 먼저 공개합니다. 이 시점 이후로는 서버도 결과를 바꿀 수 없습니다.",
+    body: "승부가 시작되기 전, 서버는 server_seed 의 SHA-256 해시(server_seed_hash)를 먼저 공개합니다. 이 시점 이후로는 서버도 결과를 바꿀 수 없습니다.",
   },
   {
     icon: Crown,
@@ -19,13 +19,13 @@ const STEPS: Array<{ icon: typeof Crown; title: string; body: string }> = [
   },
   {
     icon: Hash,
-    title: "3. 전투가 끝나면 server_seed 가 공개됩니다",
+    title: "3. 승부가 끝나면 server_seed 가 공개됩니다",
     body: "결과가 확정된 직후 서버가 server_seed 원본을 노출합니다. 이제 폐하는 직접 SHA-256 해싱 후 1단계의 해시와 일치하는지 확인할 수 있습니다.",
   },
   {
     icon: ShieldCheck,
     title: "4. 한 번의 클릭으로 검증",
-    body: "전투 기록의 '검증' 버튼이 위 과정을 자동으로 실행합니다. 일치하면 ✓ 검증됨, 다르면 ⚠ 불일치가 표시됩니다.",
+    body: "승전 기록의 '검증' 버튼이 위 과정을 자동으로 실행합니다. 일치하면 ✓ 검증됨, 다르면 ⚠ 불일치가 표시됩니다.",
   },
 ];
 
@@ -50,7 +50,7 @@ export default function Fairness() {
           황제의 공정한 승전보
         </h1>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          모든 전투는 시작 전에 서버 시드를 약속하고, 끝난 직후 공개합니다.
+          모든 승부는 시작 전에 서버 시드를 약속하고, 끝난 직후 공개합니다.
           폐하는 누구의 도움 없이도 결과의 공정성을 직접 검증하실 수 있습니다.
         </p>
       </header>
@@ -84,7 +84,7 @@ export default function Fairness() {
 {SAMPLE_CODE}
         </pre>
         <p className="text-[11px] text-muted-foreground leading-relaxed">
-          전투 기록 시트의 <span className="font-black text-emerald-300">검증</span> 버튼이
+          승전 기록 시트의 <span className="font-black text-emerald-300">검증</span> 버튼이
           위 로직을 자동 실행합니다. 결과가 다르면 즉시 운영팀에 신고해 주세요.
         </p>
       </section>
@@ -95,7 +95,7 @@ export default function Fairness() {
           className="px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-400 to-pink-500 text-white font-black text-sm tracking-wide press shadow-lg shadow-pink-500/30"
         >
           <Crown className="w-4 h-4 inline mr-1.5" />
-          전투장으로 돌아가기
+          황실 승부장으로 돌아가기
         </Link>
       </div>
     </main>

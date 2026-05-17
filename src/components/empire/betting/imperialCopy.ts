@@ -13,8 +13,8 @@ export const IMPERIAL_BET_COPY = {
   fairnessShort: "공정 검증",
   // History — 승전·패전 메시지
   wonRow: "위대한 승전",
-  lostRow: "다음 전투에서 승리하실 겁니다, 폐하",
-  replay: "전투 재생하기",
+  lostRow: "다음 승부에서 반드시 승리하실 겁니다, 폐하",
+  replay: "승부 다시 보기",
   // Cash out
   cashOutTitle: "황제의 전략적 철수",
   cashOutNudge: (phon: number) =>
