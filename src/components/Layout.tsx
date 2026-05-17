@@ -157,7 +157,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </Link>
           </div>
           <nav className="flex-1 p-3 overflow-y-auto">
-            <GroupedMenu pathname={loc.pathname} isAdmin={!!user.isAdmin} />
+            <SlimMenu pathname={loc.pathname} isAdmin={!!user.isAdmin} />
           </nav>
           <button
             onClick={async () => {
@@ -199,7 +199,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     </Link>
                   </div>
                   <div className="p-3 overflow-y-auto h-[calc(100%-180px)]">
-                    <GroupedMenu pathname={loc.pathname} isAdmin={!!user.isAdmin} onNavigate={() => setSheetOpen(false)} />
+                    <SlimMenu pathname={loc.pathname} isAdmin={!!user.isAdmin} onNavigate={() => setSheetOpen(false)} />
                   </div>
                   <button
                     onClick={async () => {
