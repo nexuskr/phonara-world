@@ -1,81 +1,99 @@
-# Hybrid Prerender — Phonara v15.2
+# Hybrid Prerender (Playwright) — Phonara v15.2
 
-React SPA(Vite) 위에 **공개 라우트 정적 HTML 프리렌더** 레이어를 얹어 SEO·LCP·AI 크롤러 친화성을 끌어올린다. 보호 라우트(지갑/출금/관리자 등)는 CSR 그대로 유지하여 머니플로 8경로 / Operator Isolation / Bundle Budget / Realtime Partition / Active Governor를 **단 1바이트도 변경하지 않는다.**
+React SPA(Vite) 위에 **공개 라우트 정적 HTML 프리렌더** 레이어를 얹어 SEO·LCP·AI 크롤러 친화성을 끌어올린다. 보호 라우트는 CSR 그대로. 머니플로 8경로 / Operator Isolation / Realtime Partition / Active Governor / Bundle Budget / sound 시스템 **단 1바이트도 변경 없음.**
 
-## 적용 범위
+## 라우트 분리
 
-### Prerender (정적 HTML 생성)
-- `/` (랜딩)
+### Prerender (정적 HTML)
+- `/`
 - `/trust`
 - `/legal/terms`, `/legal/privacy`
 - `/status`
 - `/vip`
 - `/empire` (공개 카운트만, 좌석 RPC 호출 X)
-- `/founding-seat` (있다면 공개 부분만)
-- `/about` (없으면 신규 만들지 않음 — 기존 라우트만 대상)
 
 ### CSR 유지 (절대 prerender 금지)
 - `/wallet`, `/deposit`, `/withdraw`, `/pay`
-- `/crash`, `/live`, `/trading-*`, `/casino/*` (실시간/세션 의존)
+- `/crash`, `/live`, `/casino/*`, 트레이딩 아레나
 - `/admin/*`, `/cockpit*`, `/dev/*`
-- `/auth`, `/auth/*`, `/security/*`, `/dashboard`, `/empire/my-seat`, `/empire/collection`
+- `/auth*`, `/security/*`, `/dashboard`, `/empire/my-seat`, `/empire/collection`
 - 로그인 이후 모든 페이지
-
-### 보안 룰
-- Prerender 단계에서는 **공개 RPC만** 호출 가능 (anon key, RLS public). 호출 실패 시 placeholder로 빌드 통과.
-- 응답 본문에 `auth.uid`, JWT, 출금 내역, 관리자 데이터 절대 포함 금지 → 빌드 후 `scripts/check-prerender-leak.mjs`가 grep 검사 (실패 시 빌드 실패).
-- `window.__INITIAL_DATA__`는 **공개 데이터에 한해서만** 임베드.
 
 ## 구현 (기술 섹션)
 
-### 1. 패키지 선택
-`react-snap` 또는 `vite-plugin-prerender-spa` 같은 무거운 SSR 프레임 도입은 React Router v6 + HelmetProvider 구조를 깨뜨릴 위험이 큼. 대신:
+### 1. 도구
+- **Playwright** (`playwright` + `@playwright/test`, devDependencies). puppeteer 대비 headless 안정성·자동 브라우저 다운로드·CI 친화.
 
-- **`vite-plugin-prerender`** (puppeteer 기반, 라우트별 정적 HTML 후처리) 채택.
-  - 기존 `vite build` 산출물을 그대로 두고 라우트별 `dist/<route>/index.html`만 추가 생성.
-  - SPA 진입점(`dist/index.html`)은 변경되지 않음 → SPA fallback / Vercel rewrites 무손상.
-  - React Helmet Async는 클라이언트 mount 시점에 head를 채우므로 puppeteer가 그대로 캡처 가능.
+### 2. 신규 파일
 
-### 2. 새 파일
-- `scripts/prerender.mjs` — puppeteer로 PUBLIC_ROUTES 순회, `dist/<route>/index.html` 저장.
-- `scripts/check-prerender-leak.mjs` — 생성된 HTML에 금칙어(`access_token`, `refresh_token`, `withdraw`, `admin_`, `service_role` 등) grep.
-- `src/lib/prerender.ts` — `isPrerender()` 헬퍼 (`navigator.userAgent.includes("phonara-prerender")`). 컴포넌트가 호출하여 prerender 단계에서는 인증/실시간/머니플로 훅 스킵.
+**`scripts/prerender.mjs`**
+- `vite preview` 또는 정적 서버(http-server)를 임시로 띄움 (포트 4173).
+- Playwright chromium headless로 PUBLIC_ROUTES 순회.
+- 페이지별:
+  - User-Agent = `Mozilla/5.0 phonara-prerender/1.0`
+  - timeout = 15000ms, retry 최대 2회
+  - `page.on("pageerror")` / `console.error` 발생 시 해당 라우트 실패로 기록 → 1건이라도 있으면 exit 1
+  - `networkidle` 대기 후 `document.documentElement.outerHTML` 캡처
+  - `dist/<route>/index.html` 저장 (`/`는 dist/index.html 덮어쓰기 X, 대신 `dist/index.html`은 SPA fallback용으로 보존하고 prerender는 `dist/__prerender__/index.html` 또는 라우트별 폴더로 저장 — Vercel rewrite 패턴이 정적 파일을 우선 매칭하므로 `dist/trust/index.html` 식으로 폴더 생성)
+  - `/`만 예외: `dist/index.html`을 prerender 결과로 덮어쓴다 (SPA fallback은 동일 파일이므로 안전 — 클라이언트 hydration 시 React Router가 정상 동작).
+- 종료 시 `reports/prerender-report.json` 생성: `{ generatedAt, routes: [{ path, ms, bytes, status, retries }], summary }`.
 
-### 3. 수정 파일 (최소)
-- `package.json`
-  - `"build:prerender": "vite build && node scripts/prerender.mjs && node scripts/check-prerender-leak.mjs"` 스크립트 추가.
-  - puppeteer를 `devDependencies`에 추가.
-- `vercel.json`
-  - 기존 SPA rewrite 규칙 앞에 prerender된 라우트들이 자연스럽게 매칭되도록 정적 파일 우선순위 확인(이미 `.*\..*` 제외 규칙 있어서 추가 변경 불필요 — 확인만).
-- `.github/workflows/bundle-budget.yml`
-  - 기존 `npm run build` 뒤에 `build:prerender` 잡 추가 (별도 job, fail-fast).
-- `src/main.tsx`
-  - 변경 없음 — prerender 중에도 동일 진입점 사용. `isPrerender()`로 분기는 *훅 내부에서만* 수행.
+**`scripts/check-prerender-leak.mjs`**
+- 금칙어: `access_token`, `refresh_token`, `service_role`, `secret`, `password`, `private_key`, `withdraw_pin`, `admin_`, `Bearer `, `eyJ` (JWT prefix 휴리스틱, anon key는 화이트리스트 예외 처리).
+- prerender 산출 HTML들만 스캔(추적: `reports/prerender-report.json`의 routes).
+- 1건이라도 매칭 시 라인+컨텍스트 출력 후 exit 1.
+
+**`src/lib/prerender.ts`**
+```ts
+export const isPrerender = () =>
+  typeof navigator !== "undefined" &&
+  navigator.userAgent.includes("phonara-prerender");
+export const isPrerenderBuild = () =>
+  typeof window !== "undefined" && (window as any).__PHONARA_PRERENDER__ === true;
+```
+- 컴포넌트/훅은 자체적으로 `if (isPrerender()) return placeholder;` 분기 — **money-flow/realtime/auth 훅은 직접 수정하지 않는다**. 대신 그것들을 호출하는 *공개 페이지 컴포넌트 진입부*에서만 가드. 머니플로 8경로 파일은 git diff = 0줄 유지.
+- 우려되는 호출이 있는 공개 페이지가 있다면 해당 페이지 최상단에서 早期 return으로 정적 마크업만 렌더 (Trust/Empire는 이미 공개 RPC만 사용 → 변경 최소).
+
+### 3. 수정 파일 (최소 surface)
+
+**`package.json`**
+- devDependencies: `playwright`, `@playwright/test`, `serve` 추가.
+- scripts:
+  - `"build:prerender": "vite build && node scripts/prerender.mjs && node scripts/check-prerender-leak.mjs"`
+  - `"preview:prerender": "serve dist -s -l 4173"`
+
+**`.github/workflows/bundle-budget.yml`** (또는 별도 `prerender.yml` 신설 — 기존 잡 무변경 우선이면 후자)
+- 신규 job `prerender`:
+  - `runs-on: ubuntu-latest`
+  - needs: `build` (있다면). fail-fast: false.
+  - steps: setup-node → `npm ci` → `npx playwright install --with-deps chromium` → `npm run build:prerender` → upload `reports/prerender-report.json` artifact.
 
 ### 4. 절대 변경 금지
-- `src/packages/wallet/**`, `src/packages/risk/**`, money-flow 8경로
+- `src/packages/wallet/**`, `src/packages/risk/**`, money-flow 8경로 (`scripts/check-money-flow-freeze.mjs` 통과)
 - `src/packages/operator/**`, `src/pages/admin/**`, vite `manualChunks` operator 룰
-- `src/packages/realtime/**`
+- `src/packages/realtime/**`, `@pkg/realtime` 4-파티션
 - `src/lib/sounds/**`, `src/lib/sound/**`
-- `size-limit.config.json` 예산값
+- `size-limit.config.json`
+- `src/integrations/supabase/client.ts`, `src/integrations/supabase/types.ts`, `.env`, `supabase/config.toml`
 
 ### 5. 검증
-1. `npm run build:prerender` → `dist/index.html`, `dist/trust/index.html`, `dist/legal/terms/index.html` 등 생성 확인.
-2. `scripts/check-prerender-leak.mjs` PASS.
-3. `scripts/check-operator-isolation.mjs` PASS (불변).
-4. `scripts/check-money-flow-freeze.mjs` git diff = 0줄.
-5. JS OFF 상태에서 `/`·`/trust` 정적 콘텐츠 풀-렌더 확인.
-6. Lighthouse `/` 모바일 Performance ≥ 90, LCP ≤ 1.2s 목표 (현재 lighthouserc warn threshold 유지).
-7. 로그인 후 `/wallet`, `/admin` 동작 회귀 없음.
+1. `npm run build:prerender` 성공 → `dist/trust/index.html` 등 생성.
+2. `check-prerender-leak.mjs` PASS (금칙어 0건).
+3. `scripts/check-operator-isolation.mjs` PASS.
+4. `scripts/check-money-flow-freeze.mjs` git diff = 0.
+5. `npm run preview:prerender` → JS OFF로 `/`, `/trust` 풀-렌더 확인.
+6. Lighthouse `/` 모바일 ≥ 90, LCP 개선.
+7. 로그인 후 `/wallet`, `/admin/*` 정상 동작 (CSR 회귀 0).
 
 ### 6. 롤백
-`build:prerender`만 안 돌리면 기존과 100% 동일. 신규 파일 3개 + package.json script 1줄 + workflow job 1개만 제거하면 완전 원복.
+신규 파일 3개 + package.json scripts 2줄 + CI job 1개 + `src/lib/prerender.ts` 만 제거하면 100% 원복. 기존 `npm run build`는 그대로 작동(opt-in 스크립트).
 
 ## 배포
 
-별도 인프라 변경 없음. Vercel은 `dist/` 그대로 서빙하며 prerender된 경로는 정적 HTML이, 나머지는 SPA fallback이 처리.
+Vercel `dist/` 그대로 서빙. 정적 HTML이 존재하는 경로는 정적이, 나머지는 SPA fallback. `vercel.json` 변경 없음 (rewrite 정규식이 이미 파일 우선).
 
 ## 비고
 
-- "build:prerender → 메인 build 대체"는 1단계에서는 하지 않는다. **opt-in 빌드 스크립트**로 시작 → CI에서 1주 안정성 확인 후 다음 PR에서 기본 `npm run build`에 통합.
-- 신규 라우트(`/about` 등)는 만들지 않는다 — 사용자가 명시한 "있다면"에 한정.
+- 1단계는 opt-in. CI 1주 안정성 확인 후 후속 PR에서 기본 `npm run build`에 합칠지 결정.
+- 신규 라우트(`/about` 등)는 만들지 않음 — 기존 공개 라우트만 대상.
+- Helmet은 클라이언트 mount 후 head를 갱신하므로 Playwright의 `networkidle` 캡처 시점에 SEO 메타가 정상 반영됨.
