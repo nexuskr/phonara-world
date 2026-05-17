@@ -136,6 +136,7 @@ function ImperialLogoBase({
 }: Props) {
   const px = MARK_SIZE[size];
   const word = WORD_CLASS[size];
+  useEffect(() => { ensureKeyframes(); }, []);
 
   const inner = (
     <span className={`group inline-flex items-center gap-2.5 ${className}`}>
