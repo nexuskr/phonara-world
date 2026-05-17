@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowRight, Coins, Crown, Radio, ShieldCheck, Sparkles } from "lucide-react";
 import PhonaraTopBar from "@/components/nav/PhonaraTopBar";
+import ImperialLogo from "@/components/brand/ImperialLogo";
 import ImperialLiveActivity from "@/components/live/ImperialLiveActivity";
 import ImperialPresenceBar from "@/components/live/ImperialPresenceBar";
 
@@ -176,7 +177,10 @@ function Footer() {
         <span>·</span>
         <Link to="/support" className="hover:text-foreground transition">고객센터</Link>
       </div>
-      © {new Date().getFullYear()} PHONARA.WORLD
+      <div className="flex items-center justify-center gap-2">
+        <span>©  {new Date().getFullYear()}</span>
+        <ImperialLogo to="" size="sm" withWordmark withWorld ariaLabel="PHONARA.WORLD" />
+      </div>
     </footer>
   );
 }
