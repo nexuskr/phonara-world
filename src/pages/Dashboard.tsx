@@ -13,6 +13,7 @@ import CommandHero from "@/components/CommandHero";
 import CrownWarHUD from "@/components/empire/CrownWarHUD";
 import LiveRankingMarquee from "@/components/LiveRankingMarquee";
 import ImperialLivePulseRail from "@/components/empire/ImperialLivePulseRail";
+import ImperialLiveWinsRail from "@/components/empire/ImperialLiveWinsRail";
 // v19 Slice 2: FomoNotificationStrip / WhaleStrikeRail / EmpireSignature 마운트 해제 (파일 보존).
 import { useWinback } from "@/hooks/use-winback";
 import HubTabs from "@/components/HubTabs";
@@ -106,6 +107,8 @@ export default function Dashboard() {
         <ChurnReactivationBanner />
         {/* v19 Slice 2: Imperial Empire Hub 단일 라이브 카드 */}
         <ImperialLivePulseRail />
+        {/* v19 Slice 2 보강: Global Live Wins — Stake Crusher */}
+        <ImperialLiveWinsRail />
       </div>
       <Suspense fallback={null}>
         <LivePurchaseTicker />
