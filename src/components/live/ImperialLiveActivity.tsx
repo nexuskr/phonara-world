@@ -198,9 +198,7 @@ export default function ImperialLiveActivity({
 
         {/* List */}
         <div className="divide-y divide-border/30">
-          <Suspense fallback={<StaticRows rows={rows} variant={variant} />}>
-            <AnimatedRows rows={rows} variant={variant} reduced={reduced} />
-          </Suspense>
+          <AnimatedRows rows={rows} variant={variant} reduced={reduced} />
         </div>
       </div>
     </section>
