@@ -7,8 +7,8 @@
     <meta name="theme-color" content="#d4af37" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#08070f" media="(prefers-color-scheme: dark)" />
     <title>이미 시작된 흐름입니다 · Phonara</title>
-    <meta name="description" content="한국인을 사기로부터 지키는 단 하나의 사이트. 복잡한 설명은 필요 없습니다. 들어오면 바로 이해됩니다." />
-    <meta name="keywords" content="Phonara, AI Decision Intelligence, Paper Trading, Long Short, Empire, 글로벌 AI 인프라, 트레이딩 아레나" />
+    <meta name="description" content="0원으로 시작하는 한국인 전용 AI 의사결정 인프라. 실시간 출금 보장, Founding Seat 한정 좌석, Whale Strike 라이브 피드, Empire 10-Tier 보상. 사기로부터 한국인을 지키는 단 하나의 플랫폼." />
+    <meta name="keywords" content="Phonara, 포나라, 0원 시작, Founding Seat, Whale Strike, Empire Booster, Crown, AI Decision Intelligence, Paper Trading, Long Short, 실시간 출금, 한국인 전용 트레이딩 아레나, Warm King" />
     <meta name="author" content="Phonara" />
     <!-- canonical removed: per-route Helmet sets it (avoid duplicate canonical) -->
     <link rel="alternate" hreflang="ko" href="https://phonara.world/?lang=ko" />
@@ -59,6 +59,19 @@
         "applicationCategory": "FinanceApplication",
         "operatingSystem": "Web",
         "inLanguage": ["ko", "en"],
+        "description": "0원으로 시작하는 한국인 전용 AI 의사결정 인프라. 실시간 출금 보장, Founding Seat 한정 좌석, Whale Strike 라이브, Empire 10-Tier 보상 체계.",
+        "featureList": [
+          "0원 시작 (무료 가입 + 연습 모드)",
+          "실시간 출금 보장 (30일 100건 공개 통계)",
+          "Founding Seat 한정 좌석 (시즌제 보상)",
+          "Whale Strike 라이브 피드 (Crown 폭발 / Baron 승급 / 대형 출금)",
+          "Empire 10-Tier + Crown Aura 보상 체계",
+          "Empire Booster 24h (Baron 승급 자동 발급)",
+          "VIP Empire Pass (Crown ×3 + Whale 30초 선공개)",
+          "AI Decision Coach (매일 06:00 KST 브리핑)",
+          "손실 보호 (godmode 7일 70% 환급)",
+          "AAL2 출금 스텝업 + 이상감지 자동 동결"
+        ],
         "offers": { "@type": "Offer", "price": "0", "priceCurrency": "KRW" }
       }
     </script>
@@ -93,8 +106,89 @@
   </head>
   <body>
     <div id="root">
-      <noscript style="display:block;padding:24px;color:#f4d77a;background:#08070f;font-family:system-ui,sans-serif;text-align:center">
-        Phonara를 사용하려면 JavaScript를 활성화해주세요. · Please enable JavaScript to use Phonara.
+      <noscript>
+        <style>
+          .pn-nojs{margin:0;padding:0;background:#08070f;color:#f4d77a;font-family:'Pretendard Variable',Pretendard,-apple-system,BlinkMacSystemFont,system-ui,sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased}
+          .pn-nojs *{box-sizing:border-box}
+          .pn-nojs .wrap{max-width:720px;margin:0 auto;padding:32px 20px 64px}
+          .pn-nojs .badge{display:inline-block;padding:6px 14px;border:1px solid #f4d77a;border-radius:999px;font-size:13px;font-weight:700;letter-spacing:.05em;color:#f4d77a;background:rgba(244,215,122,.06)}
+          .pn-nojs h1{margin:20px 0 12px;font-size:44px;line-height:1.12;font-weight:900;color:#fff;letter-spacing:-.02em}
+          .pn-nojs h1 .hot{background:linear-gradient(90deg,#ff3d8a,#f4d77a);-webkit-background-clip:text;background-clip:text;color:transparent}
+          .pn-nojs .lede{font-size:19px;color:#e7d9a8;margin:0 0 28px}
+          .pn-nojs .cta-row{display:flex;flex-wrap:wrap;gap:12px;margin:24px 0 40px}
+          .pn-nojs .btn{display:inline-block;padding:18px 28px;border-radius:14px;font-size:18px;font-weight:800;text-decoration:none;letter-spacing:-.01em}
+          .pn-nojs .btn-primary{background:linear-gradient(135deg,#ff3d8a 0%,#f4d77a 100%);color:#08070f;box-shadow:0 12px 32px rgba(255,61,138,.35)}
+          .pn-nojs .btn-secondary{background:transparent;color:#f4d77a;border:2px solid #f4d77a}
+          .pn-nojs .pillars{display:grid;grid-template-columns:1fr;gap:14px;margin:0 0 36px}
+          .pn-nojs .card{padding:20px;border:1px solid rgba(244,215,122,.25);border-radius:16px;background:rgba(244,215,122,.04)}
+          .pn-nojs .card .k{font-size:13px;font-weight:700;color:#ff3d8a;letter-spacing:.08em;text-transform:uppercase}
+          .pn-nojs .card .t{font-size:22px;font-weight:800;color:#fff;margin:6px 0 6px}
+          .pn-nojs .card .d{font-size:15px;color:#cfc29a;margin:0}
+          .pn-nojs .trust{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 36px}
+          .pn-nojs .chip{padding:8px 14px;border-radius:999px;background:rgba(255,255,255,.06);color:#f4d77a;font-size:13px;font-weight:700;border:1px solid rgba(244,215,122,.2)}
+          .pn-nojs .section-title{font-size:14px;font-weight:800;color:#ff3d8a;letter-spacing:.12em;text-transform:uppercase;margin:0 0 12px}
+          .pn-nojs .hint{margin-top:48px;padding-top:24px;border-top:1px solid rgba(244,215,122,.15);font-size:13px;color:#7a7158;line-height:1.7}
+          .pn-nojs .footer-links{margin-top:16px;font-size:14px}
+          .pn-nojs .footer-links a{color:#f4d77a;text-decoration:underline;margin-right:18px}
+          @media (min-width:560px){.pn-nojs h1{font-size:60px} .pn-nojs .pillars{grid-template-columns:repeat(3,1fr)}}
+          @media (min-width:880px){.pn-nojs h1{font-size:72px}}
+        </style>
+        <main class="pn-nojs">
+          <div class="wrap">
+            <span class="badge">PHONARA · 이미 시작된 흐름</span>
+            <h1>0원으로 시작해서<br/><span class="hot">여기서 돈을 법니다.</span></h1>
+            <p class="lede">한국인을 사기로부터 지키는 단 하나의 AI 의사결정 인프라.<br/>실시간 출금이 보장되고, Founding Seat 좌석은 한정입니다.</p>
+
+            <div class="cta-row">
+              <a class="btn btn-primary" href="/auth">무료로 시작 →</a>
+              <a class="btn btn-secondary" href="/trust">실시간 출금 보기</a>
+            </div>
+
+            <p class="section-title">3가지 핵심 가치</p>
+            <div class="pillars">
+              <div class="card">
+                <div class="k">EMPIRE</div>
+                <div class="t">10-Tier 황제 시스템</div>
+                <p class="d">Crown 폭발 · Baron 승급 시 24시간 Empire Booster(수수료 -30%, 보상 ×1.5) 자동 발급.</p>
+              </div>
+              <div class="card">
+                <div class="k">FOUNDING SEAT</div>
+                <div class="t">한정 100석 시즌제</div>
+                <p class="d">시즌 종료 시 Crown ×3 정산. 좌석이 풀리는 순간 FOMO 알림이 전 사용자에게 전달됩니다.</p>
+              </div>
+              <div class="card">
+                <div class="k">WHALE STRIKE</div>
+                <div class="t">실시간 라이브 피드</div>
+                <p class="d">24시간 내 대형 출금 · Crown 폭발 · Baron 승급이 마스킹 닉네임으로 흐릅니다. 가짜 없음.</p>
+              </div>
+            </div>
+
+            <p class="section-title">신뢰 보장</p>
+            <div class="trust">
+              <span class="chip">✓ 실시간 출금 100건 공개</span>
+              <span class="chip">✓ 손실 보호 70% 환급</span>
+              <span class="chip">✓ AAL2 출금 스텝업</span>
+              <span class="chip">✓ 이상감지 24h 자동 동결</span>
+              <span class="chip">✓ 한국 계좌이체 지원</span>
+            </div>
+
+            <div class="footer-links">
+              <a href="/trust">신뢰 센터</a>
+              <a href="/legal/terms">이용약관</a>
+              <a href="/legal/privacy">개인정보</a>
+              <a href="/status">상태</a>
+            </div>
+
+            <p class="hint">
+              Phonara is a real-time AI decision intelligence platform built for Korean users.
+              Start at zero cost, withdraw in real time (100 most recent payouts publicly visible at /trust),
+              compete for limited Founding Seats, and climb a 10-tier Empire ladder with Crown rewards,
+              Empire Booster (24h), VIP Pass (Crown ×3), and daily AI coach briefings at 06:00 KST.
+              JavaScript is required for the full interactive experience —
+              please enable JavaScript or visit on a modern browser to access slots, wallet, live trading arena, and Empire features.
+            </p>
+          </div>
+        </main>
       </noscript>
     </div>
     <script type="module" src="/src/main.tsx"></script>
