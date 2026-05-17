@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Crown, Gift, Sparkles, ArrowRight, Coins, Gamepad2, Target } from "lucide-react";
+import ImperialLogo from "@/components/brand/ImperialLogo";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 
 /**
@@ -105,10 +106,8 @@ export default function Welcome() {
 
       {/* Top bar */}
       <header className="relative z-10 flex items-center justify-between px-4 sm:px-6 pt-[max(0.75rem,env(safe-area-inset-top))] pb-2">
-        <div className="inline-flex items-center gap-2 text-[11px] tracking-[0.28em] font-black text-primary/80">
-          <Crown className="w-4 h-4" />
-          PHONARA · EMPIRE OS
-        </div>
+        <ImperialLogo to="" size="sm" withWordmark withWorld ariaLabel="PHONARA WORLD · EMPIRE OS" />
+
         <button
           onClick={finish}
           className="text-[11px] tracking-wider text-muted-foreground hover:text-foreground transition-colors press min-h-[36px] px-3"
