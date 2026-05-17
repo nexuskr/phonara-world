@@ -114,7 +114,7 @@ function Hero() {
         >
           <Link
             to="/auth?mode=signup"
-            className="pulse-halo group inline-flex items-center gap-2.5 h-[68px] px-9 rounded-2xl bg-gradient-to-r from-[hsl(var(--gold))] via-[hsl(var(--gold))] to-[hsl(var(--pink))] text-background font-black text-lg md:text-xl press shadow-[0_28px_84px_-18px_hsl(var(--gold)/0.9),0_0_0_1px_hsl(var(--gold)/0.7)] glow-imperial"
+            className="pulse-halo glow-pink-xl group inline-flex items-center gap-2.5 h-[68px] px-9 rounded-2xl bg-gradient-to-r from-[hsl(var(--gold))] via-[hsl(var(--gold))] to-[hsl(var(--pink))] text-background font-black text-lg md:text-xl press shadow-[0_28px_84px_-18px_hsl(var(--gold)/0.95),0_0_0_1px_hsl(var(--gold)/0.75)] glow-imperial hover:scale-[1.02] transition-transform"
           >
             <Crown className="w-5 h-5" />
             지금 무료로 황제가 되기
