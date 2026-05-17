@@ -1,40 +1,44 @@
-# Phase E — Slice 3: 게임 로비 + Imperial Card System
+# Phase E — Slice 4: FOMO / 중독성 디테일 마무리
 
-목표: `/games` · `/casino` 카드 시스템을 Stake.com 압살 수준의 Imperial Card로 통일. 슬롯 내부(Phase D 동결) / 라우팅 / 비즈니스 로직은 1줄도 건드리지 않는다. money-flow 8경로, Operator Isolation, Bundle Budget, three3d 청크 무손상.
+목표: Dashboard 상단의 출석 streak·라이브 출금 카운터·"어제 N명 출금" 배너를 Imperial Luxury 톤으로 묶어 매일 들어오고 싶게 만든다. 기존 페이지 구조·라우팅·RPC·money-flow 8경로·three3d·슬롯 내부(Phase D 동결)는 1줄도 건드리지 않는다.
 
 ## 범위
 
-1. **공통 Imperial Card 토큰 (`src/index.css` 추가만)**
-   - `.imperial-card` — 20px radius, glassmorphism(`backdrop-blur-md` + `hsl(var(--card)/0.55)`), Warm Gold 보더(`hsl(38 92% 55% / 0.45)`), inner gold ring, `contain: layout paint`, `will-change: transform`.
-   - `.imperial-card-hover` — 220ms ease-out, `translateY(-4px) scale(1.015)`, Imperial Half-Off glow shadow 강화.
-   - `.imperial-pulse-dot` — "지금 잭팟 대기 중" 우상단 빨강↔골드 펄스 닷(1.4s, `prefers-reduced-motion` OFF).
-   - `.imperial-corner-shine` — hover 시 좌상단 → 우하단 골드 sheen 라인(2.2s, opacity 0.0↔0.35).
+1. **`StreakFlame` Imperial Glow 강화** (`src/components/streak/StreakFlame.tsx`)
+   - 1~6일 muted, 7일+ amber pulse, 14일+ amber/rose gradient + ring pulse, 30일+ Imperial Half-Off gradient + 회전 corona + 우상단 👑 칩.
+   - `prefers-reduced-motion`에서 pulse/회전 OFF, drop-shadow는 유지.
+   - `contain: layout paint` + `will-change: transform` 적용. `cn` 유틸로 클래스 합성 유지(props/타입 무변경).
 
-2. **FOMO 카피 토큰 추가 (`src/lib/glossary.ts` `FOMO` 네임스페이스 확장)**
-   - `FOMO.jackpotWaiting = "지금 이 슬롯에서 잭팟이 대기 중입니다"`
-   - `FOMO.rarePartsCard = "이 슬롯은 극소수의 황제만이 정복했습니다"`
-   - `FOMO.legendaryCrownCard = "Legendary Crown 보유자만의 무대"`
-   - 기존 5종 그대로 유지, 추가만.
+2. **`LivePayoutCounter` Imperial 톤 + FOMO 카피 강화** (`src/components/fomo/LivePayoutCounter.tsx`)
+   - 카드 컨테이너 `.imperial-card` 토큰 적용, 좌측 imperial-pulse-dot 사용.
+   - 카피를 `"지금 {n}명의 황제들이 출금하고 있습니다 — 폐하도 자격이 충분합니다"` 로 교체(FOMO.withdrawingNow 토큰화).
+   - 데이터 hook(`useLiveFomoCounters`) / 폴링 / RPC 무변경.
 
-3. **`src/pages/Casino.tsx` 카드 폴리시**
-   - 기존 카드 wrapper `div`(border-2 + bg-cover)를 `.imperial-card .imperial-card-hover` 로 교체, aspect-ratio / 로고 / 메타 위치 유지.
-   - 카드 우상단에 `<JackpotPulseDot/>` (locally inlined span + `imperial-pulse-dot`) — 비-coming soon 항목 무작위 30% 또는 RTP ≥ 96.0 카드에 표기.
-   - hover 시 `imperial-corner-shine` 골드 sheen overlay.
-   - 카드 `<Link>` 에 `onMouseEnter` / `onFocus` 로 `void import(...)` **prefetch** — 각 슬롯 페이지의 lazy 청크를 hover 시 워밍업. 매핑 테이블은 카드 데이터에 `prefetch: () => import("@/pages/casino/...")` 추가(기존 코드 패턴 유지, 슬롯 내부 무변경).
-   - 타이틀 라인 아래 FOMO 미세 카피(`FOMO.jackpotWaiting` 등) `text-[10px] text-amber-200/80` 한 줄 추가.
+3. **`YesterdayPayoutsBanner` 신규** (`src/components/fomo/YesterdayPayoutsBanner.tsx`)
+   - 1줄 Warm Gold Imperial Banner. 아이콘 + "어제 폐하 {N}명이 출금을 마쳤습니다 — 다음 차례는 폐하입니다".
+   - 데이터: 기존 공개 RPC `get_recent_payouts_100()` (Trust v2) 1회 호출 → 클라이언트에서 어제(KST 기준) `completed_at` 카운트. 신규 RPC/마이그레이션 없음.
+   - 5분 sessionStorage 캐시(`phonara:yesterday_payouts:v1`). N === 0 또는 fetch 실패 시 null 렌더.
+   - `.imperial-card` + `bg-gradient` warm gold sheen, 우측 chevron CTA → `/trust`.
+   - Dashboard 상단 `<LivePayoutCounter />` 바로 아래에 `<Suspense fallback={null}>` lazy 마운트.
 
-4. **`/games` 라우트**
-   - 현재 `/games` 도 `CasinoLobby` 렌더 — 별도 페이지 신설 없이 위 카드 변경이 그대로 반영. 라우트 추가/이동 없음.
+4. **`StreakBadge` 위치/문구 그대로 유지** — 이미 Imperial 톤. `StreakFlame` 강화로 시각 위계 정리되면 충분. 추가 변경 없음.
 
-5. **(옵션, Slice 3 한정) `src/pages/Home.tsx` `/games` 진입 CTA 영역**
-   - 기존 카드 컨테이너에만 `.imperial-card .imperial-card-hover` 클래스 부여(구조/문구 유지). 다른 홈 섹션은 손대지 않음.
+5. **FOMO 카피 토큰 확장** (`src/lib/glossary.ts` `FOMO` 네임스페이스 추가만)
+   - `FOMO.streakGlow = "폐하의 연속 제국이 빛나고 있습니다"`
+   - `FOMO.withdrawingNow = (n: number) => "지금 {n}명의 황제들이 출금하고 있습니다 — 폐하도 자격이 충분합니다"`
+   - `FOMO.yesterdayPayouts = (n: number) => "어제 폐하 {n}명이 출금을 마쳤습니다 — 다음 차례는 폐하입니다"`
+   - 기존 8종 그대로 유지, 추가만.
+
+6. **Dashboard 상단 마운트 조정** (`src/pages/Dashboard.tsx`)
+   - 기존 `<LivePayoutCounter />` 바로 아래에 신규 `<YesterdayPayoutsBanner />` lazy 1줄 추가. 그 외 위젯 순서·마운트 0줄 변경.
 
 ## 비범위
 
-- 슬롯 페이지 내부(`src/components/slots/**`, `src/pages/casino/<Game>.tsx`) — Phase D 동결.
-- 라우팅 / 신규 페이지 / RPC / 마이그레이션 / 엣지 / 인증 / 결제 로직.
-- Lobby v3(three3d), Avatar Studio, money-flow 8경로(`PRJ_FREEZE_RAW_CHANNEL`).
-- Bottom Nav 본체, FAB 본체(Slice 1/2에서 완료).
+- `StreakBadge` 본체, AttendanceCard / SevenDayChallenge 등 출석 로직.
+- `useLiveFomoCounters` 폴링 / `get_payout_ops_stats_24h` / Trust RPC 시그니처.
+- 슬롯 내부(`src/components/slots/**`, `src/pages/casino/<Game>.tsx`) — Phase D 동결.
+- money-flow 8경로(`PRJ_FREEZE_RAW_CHANNEL`), Operator Isolation, three3d 청크.
+- 신규 페이지/라우트/RPC/마이그레이션/엣지.
 
 ## 보호 가드
 
@@ -42,25 +46,21 @@
 - `node scripts/check-operator-isolation.mjs` PASS
 - `npm run size:check` PASS (index ≤ 180KB gz, three3d / lobby / wallet / slots 청크 변동 0)
 - raw `supabase.channel(...)` 0건 추가, ESLint no-direct-sonner / no-raw-channel 유지
-- HSL 토큰만, 인라인 hex 금지
-- `prefers-reduced-motion` 에서 pulse / sheen / hover-lift 자동 OFF
+- HSL 토큰만, 인라인 hex 0건
+- `prefers-reduced-motion`에서 pulse / corona / sheen 자동 OFF
 
 ## 기술 메모
 
-- Prefetch 패턴:
-  ```ts
-  const onPrefetch = (g: GameCard) => () => { g.prefetch?.().catch(() => {}); };
-  <Link onMouseEnter={onPrefetch(g)} onFocus={onPrefetch(g)} ...>
-  ```
-- `imperial-card-hover` glow:
-  `box-shadow: 0 18px 44px -16px hsl(38 92% 55% / 0.55), 0 0 0 1px hsl(330 85% 60% / 0.35) inset`.
-- Pulse dot: 6px, `background: radial-gradient(circle, hsl(0 84% 60%), hsl(38 92% 55%))`, `animation: imperial-pulse 1.4s ease-in-out infinite`.
+- StreakFlame 30일+ Imperial corona = `::after` absolute, conic-gradient(from 0deg, amber, pink, amber), `animation: spin 6s linear infinite`, `mask: radial-gradient(transparent 60%, black 62%)`.
+- YesterdayPayoutsBanner KST 어제 = `new Date(Date.now() - 24*3600*1000)` toISOString의 KST 변환 후 `YYYY-MM-DD` 매칭. 5분 sessionStorage 캐시.
+- LivePayoutCounter는 기존 `useLiveFomoCounters` 그대로 — 컴포넌트 마크업/스타일만 교체.
+- 모든 컨테이너에 `contain: layout paint` + `will-change-transform` 부여(스크롤 중 리페인트 0).
 
 ## 검증 절차
 
-1. `git diff --name-only` — 변경 파일이 위 항목 범위 내인지
+1. `git diff --name-only` — 위 5개 파일(StreakFlame, LivePayoutCounter, glossary, Dashboard, YesterdayPayoutsBanner 신규) 외 변경 없음 확인
 2. money-flow grep freeze 0줄
 3. `node scripts/check-operator-isolation.mjs`
 4. `npm run size:check`
-5. 프리뷰 `/games`, `/casino` 카드 hover/Pulse/prefetch 확인 (모바일 viewport 포함)
-6. `mem://features/phase-e-slice-3-game-lobby` 신규 등재 + `mem://index.md` 갱신
+5. 프리뷰 `/` Dashboard 진입 → ChurnBanner / LivePayoutCounter / YesterdayPayoutsBanner / FriendGapToast 순서, StreakBadge 7/14/30일 시각 단계 확인 (DevTools에서 streak 임시 조작)
+6. `mem://features/phase-e-slice-4-fomo-detail` 신규 등재 + `mem://index.md` 갱신
