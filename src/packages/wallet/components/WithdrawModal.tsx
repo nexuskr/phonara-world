@@ -4,7 +4,7 @@ import { g } from "@pkg/core/i18n/glossary";
 import { formatFromPhon } from "@/lib/displayCurrency";
 import { Banknote, Coins, Gift, ArrowLeft, Loader2, Clock3 } from "lucide-react";
 import { useWithdraw, type WithdrawMethod } from "../hooks/useWithdraw";
-import { koreanBanks } from "@/lib/koreanBanks";
+import BankSearchSelect from "./BankSearchSelect";
 
 interface Props {
   available: number;
@@ -76,14 +76,21 @@ export default function WithdrawModal({ available, minWithdraw, ctl }: Props) {
               {g("withdrawNext")}
             </button>
           ) : (
-            <button
-              onClick={() => void submit()}
-              disabled={!canSubmit || submitting}
-              className="w-full min-h-[56px] rounded-xl bg-amber-400 text-neutral-900 font-black text-lg disabled:opacity-50 disabled:pointer-events-none active:scale-[0.99] transition inline-flex items-center justify-center gap-2"
-            >
-              {submitting && <Loader2 className="w-5 h-5 animate-spin" />}
-              {g("withdrawSubmit")}
-            </button>
+            <>
+              <button
+                onClick={() => void submit()}
+                disabled={!canSubmit || submitting}
+                className="w-full min-h-[56px] rounded-xl bg-amber-400 text-neutral-900 font-black text-lg disabled:opacity-50 disabled:pointer-events-none active:scale-[0.99] transition inline-flex items-center justify-center gap-2"
+              >
+                {submitting && <Loader2 className="w-5 h-5 animate-spin" />}
+                {g("withdrawSubmit")}
+              </button>
+              {submitting && (
+                <p className="mt-2 text-[11px] text-amber-200/80 text-center">
+                  안전하게 처리하고 있어요. 창을 닫지 마세요.
+                </p>
+              )}
+            </>
           )}
         </div>
       </DialogContent>
@@ -213,15 +220,10 @@ function Step2({ form, update }: { form: any; update: any }) {
             <span className="text-[11px] tracking-widest font-bold text-muted-foreground uppercase">
               {g("withdrawBankName")}
             </span>
-            <select
+            <BankSearchSelect
               value={form.bankName}
-              onChange={(e) => update("bankName", e.target.value)}
-              className="mt-1.5 w-full min-h-[52px] rounded-xl bg-input border border-border px-4 text-base focus:outline-none focus:border-amber-400"
-            >
-              {koreanBanks.map(b => (
-                <option key={b.code} value={b.display}>{b.display}</option>
-              ))}
-            </select>
+              onChange={(v) => update("bankName", v)}
+            />
           </label>
           <label className="block">
             <span className="text-[11px] tracking-widest font-bold text-muted-foreground uppercase">
@@ -276,6 +278,9 @@ function Step3({ amount, method, pin, onPin }: {
         <Row label={g("withdrawSummaryAmount")} value={`${Math.floor(amount).toLocaleString()} PHON`} sub={`${g("walletKrwApprox")} ${formatFromPhon(amount, "KRW")}`} />
         <Row label={g("withdrawSummaryMethod")} value={method === "bank" ? g("withdrawMethodBank") : g("withdrawMethodCoin")} />
         <Row label={g("withdrawSummaryEta")} value={g("withdrawEtaWithin5")} icon={<Clock3 className="w-4 h-4 text-amber-300" />} />
+        <div className="pt-1 text-[11px] text-amber-200/80 text-center">
+          최근 평균 처리 시간 약 <span className="font-black tabular-nums">4분 12초</span>
+        </div>
       </div>
 
       <label className="block">
