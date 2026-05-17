@@ -38,81 +38,38 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
  * Single source of truth for desktop sidebar, mobile sheet, and bottom-nav routing.
  */
 
-type NavLeaf = { to: string; label: string; icon: typeof LayoutDashboard };
-type NavGroup = { id: string; label: string; icon: typeof LayoutDashboard; children: NavLeaf[] };
+type IconType = typeof HomeIcon;
+type NavLeaf = { to: string; label: string; icon: IconType; matches?: string[] };
 
-const GROUPS: NavGroup[] = [
-  {
-    id: "trading",
-    label: "트레이딩",
-    icon: TrendingUp,
-    children: [
-      { to: "/trade", label: "Imperial Trade", icon: TrendingUp },
-    ],
-  },
-  {
-    id: "slots",
-    label: "슬롯",
-    icon: Zap,
-    children: [
-      { to: "/casino", label: "슬롯 로비", icon: Zap },
-      { to: "/crash", label: "🚀 Crash NEW", icon: Zap },
-      { to: "/casino/olympus-1000", label: "Olympus 1000", icon: Crown },
-    ],
-  },
-  {
-    id: "empire",
-    label: "제국 광장",
-    icon: Crown,
-    children: [
-      { to: "/empire", label: "제국 홀", icon: Crown },
-      { to: "/packages", label: "황실 패키지", icon: Sparkles },
-      { to: "/empire/my-seat", label: "내 좌석", icon: Crown },
-    ],
-  },
-  {
-    id: "missions",
-    label: "황제 미션",
-    icon: Trophy,
-    children: [
-      { to: "/missions", label: "데일리 미션", icon: Trophy },
-      { to: "/quests", label: "퀘스트", icon: Trophy },
-      { to: "/season-pass", label: "시즌 패스", icon: Sparkles },
-    ],
-  },
-  {
-    id: "treasury",
-    label: "내 제국",
-    icon: UserIcon,
-    children: [
-      { to: "/profile", label: "프로필", icon: UserIcon },
-      { to: "/wallet", label: "지갑", icon: Wallet },
-      { to: "/secure-wallet", label: "보안 금고", icon: Lock },
-    ],
-  },
+// v19 Slice 7.5: 좌측 사이드바 슬림화 — 6개 평탄 리스트 + Admin 최하단
+const SIDEBAR_NAV: NavLeaf[] = [
+  { to: "/command", label: "Home",   icon: HomeIcon,    matches: ["/command", "/home", "/dashboard"] },
+  { to: "/trade",   label: "Trade",  icon: TrendingUp,  matches: ["/trade", "/arena"] },
+  { to: "/casino",  label: "Slots",  icon: Zap,         matches: ["/casino", "/crash", "/jackpot", "/games"] },
+  { to: "/live",    label: "Live",   icon: Radio,       matches: ["/live"] },
+  { to: "/wallet",  label: "Wallet", icon: Wallet,      matches: ["/wallet", "/secure-wallet", "/phon"] },
+  { to: "/empire",  label: "Empire", icon: Crown,       matches: ["/empire", "/packages", "/profile"] },
 ];
 
 // Mobile bottom nav — 5 tabs, center FAB = PHON 허브
-type BottomItem = { to: string; matches: string[]; icon: typeof LayoutDashboard; label: string; fab?: boolean };
+type BottomItem = { to: string; matches: string[]; icon: IconType; label: string; fab?: boolean };
 const BOTTOM_NAV: BottomItem[] = [
-  { to: "/home",    matches: ["/home", "/", "/command", "/dashboard"], icon: HomeIcon,   label: "홈" },
+  { to: "/command", matches: ["/home", "/", "/command", "/dashboard"], icon: HomeIcon,   label: "홈" },
   { to: "/trade",   matches: ["/trade", "/arena"],                     icon: TrendingUp, label: "트레이딩" },
   { to: "/phon",    matches: ["/phon"],                                icon: Coins,      label: "PHON", fab: true },
-  { to: "/games",   matches: ["/games", "/casino", "/crash", "/jackpot"], icon: Gamepad2, label: "게임" },
-  { to: "/profile", matches: ["/profile", "/wallet", "/empire"],       icon: Crown,      label: "내 제국" },
+  { to: "/casino",  matches: ["/games", "/casino", "/crash", "/jackpot"], icon: Gamepad2, label: "게임" },
+  { to: "/empire",  matches: ["/profile", "/wallet", "/empire"],       icon: Crown,      label: "내 제국" },
 ];
 
-function isLeafActive(leaf: NavLeaf, pathname: string) {
-  return pathname === leaf.to || pathname.startsWith(leaf.to + "/");
-}
-function isGroupActive(g: NavGroup, pathname: string) {
-  return g.children.some((c) => isLeafActive(c, pathname));
+function matchActive(matches: string[] | undefined, fallbackTo: string, pathname: string) {
+  const list = matches ?? [fallbackTo];
+  return list.some((m) => pathname === m || pathname.startsWith(m + "/"));
 }
 function isBottomActive(b: BottomItem, pathname: string) {
-  return b.matches.some((m) => pathname === m || pathname.startsWith(m + "/"));
+  return matchActive(b.matches, b.to, pathname);
 }
 
-function GroupedMenu({
+function SlimMenu({
   pathname,
   isAdmin,
   onNavigate,
@@ -121,100 +78,49 @@ function GroupedMenu({
   isAdmin: boolean;
   onNavigate?: () => void;
 }) {
-  const activeGroupIds = useMemo(
-    () => GROUPS.filter((g) => isGroupActive(g, pathname)).map((g) => g.id),
-    [pathname]
-  );
-
   return (
     <div className="space-y-1">
-      {/* Single dashboard link (no group) */}
-      <NavLink
-        to="/command"
-        onClick={onNavigate}
-        className={({ isActive }) =>
-          `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition press ${
-            isActive || pathname.startsWith("/command")
-              ? "bg-gradient-imperial text-primary-foreground glow-imperial"
-              : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
-          }`
-        }
-      >
-        <LayoutDashboard className="w-4 h-4" />
-        <span>제국 대시보드</span>
-      </NavLink>
+      {SIDEBAR_NAV.map((item) => {
+        const Icon = item.icon;
+        const active = matchActive(item.matches, item.to, pathname);
+        return (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            onClick={onNavigate}
+            className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 press ${
+              active
+                ? "bg-gradient-imperial text-primary-foreground glow-imperial"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
+            }`}
+          >
+            {active && (
+              <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-[3px] rounded-r bg-[hsl(var(--gold))] shadow-[0_0_12px_hsl(var(--gold)/0.8)]" />
+            )}
+            <Icon className={`w-4 h-4 ${active ? "" : "group-hover:text-primary transition-colors"}`} />
+            <span className="tracking-wide">{item.label}</span>
+          </NavLink>
+        );
+      })}
 
-      <Accordion type="multiple" defaultValue={activeGroupIds} className="space-y-1">
-        {GROUPS.map((g) => {
-          const Icon = g.icon;
-          const groupActive = isGroupActive(g, pathname);
-          return (
-            <AccordionItem
-              key={g.id}
-              value={g.id}
-              className={`border-0 rounded-xl ${groupActive ? "bg-primary/10 ring-1 ring-primary/30" : ""}`}
-            >
-              <AccordionTrigger
-                className={`px-3 py-2.5 rounded-xl text-sm font-semibold hover:no-underline hover:bg-muted/40 [&[data-state=open]>svg]:rotate-180 ${
-                  groupActive ? "text-primary" : "text-foreground/90"
-                }`}
-              >
-                <span className="flex items-center gap-3">
-                  <Icon className="w-4 h-4" />
-                  {g.label}
-                </span>
-              </AccordionTrigger>
-              <AccordionContent className="pb-1 pt-0">
-                <div className="ml-4 pl-3 border-l border-border/40 space-y-0.5">
-                  {g.children.map((leaf) => {
-                    const LIcon = leaf.icon;
-                    const active = isLeafActive(leaf, pathname);
-                    return (
-                      <NavLink
-                        key={leaf.to}
-                        to={leaf.to}
-                        onClick={onNavigate}
-                        className={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-medium transition ${
-                          active
-                            ? "bg-gradient-imperial text-primary-foreground glow-imperial"
-                            : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
-                        }`}
-                      >
-                        <LIcon className="w-3.5 h-3.5" />
-                        <span>{leaf.label}</span>
-                        {active && <ChevronRight className="w-3 h-3 ml-auto" />}
-                      </NavLink>
-                    );
-                  })}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          );
-        })}
-      </Accordion>
-
-      <div className="my-2 border-t border-border/40" />
-      <NavLink
-        to="/support"
-        onClick={onNavigate}
-        className={({ isActive }) =>
-          `flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition ${
-            isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
-          }`
-        }
-      >
-        <MessageSquare className="w-4 h-4" />
-        <span>지원</span>
-      </NavLink>
       {isAdmin && (
-        <NavLink
-          to="/admin"
-          onClick={onNavigate}
-          className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold text-primary hover:bg-primary/10"
-        >
-          <ShieldCheck className="w-4 h-4" />
-          <span>Admin</span>
-        </NavLink>
+        <>
+          <div className="my-3 border-t border-border/40" />
+          <NavLink
+            to="/admin"
+            onClick={onNavigate}
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-bold transition ${
+                isActive
+                  ? "bg-primary/15 text-primary ring-1 ring-primary/30"
+                  : "text-primary/80 hover:bg-primary/10 hover:text-primary"
+              }`
+            }
+          >
+            <ShieldCheck className="w-4 h-4" />
+            <span>Admin</span>
+          </NavLink>
+        </>
       )}
     </div>
   );
