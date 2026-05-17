@@ -4470,6 +4470,39 @@ export type Database = {
         }
         Relationships: []
       }
+      mission_daily_status: {
+        Row: {
+          completed_count: number
+          created_at: string
+          day: string
+          failed: boolean
+          recovery_bonus_pct: number
+          recovery_claimed_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_count?: number
+          created_at?: string
+          day: string
+          failed?: boolean
+          recovery_bonus_pct?: number
+          recovery_claimed_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_count?: number
+          created_at?: string
+          day?: string
+          failed?: boolean
+          recovery_bonus_pct?: number
+          recovery_claimed_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       mission_history: {
         Row: {
           base_reward: number
@@ -6907,6 +6940,30 @@ export type Database = {
           status?: string
           trace_id?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      streak_milestones: {
+        Row: {
+          awarded_at: string
+          id: string
+          phon_bonus: number
+          streak_len: number
+          user_id: string
+        }
+        Insert: {
+          awarded_at?: string
+          id?: string
+          phon_bonus?: number
+          streak_len: number
+          user_id: string
+        }
+        Update: {
+          awarded_at?: string
+          id?: string
+          phon_bonus?: number
+          streak_len?: number
+          user_id?: string
         }
         Relationships: []
       }
@@ -10003,6 +10060,10 @@ export type Database = {
         Args: { _base: number; _source: string; _user_id: string }
         Returns: number
       }
+      apply_recovery_bonus: {
+        Args: { _base_amount: number; _kind: string }
+        Returns: Json
+      }
       apply_referral_code: { Args: { _code: string }; Returns: Json }
       approve_admin_recovery: { Args: { _request_id: string }; Returns: Json }
       arena_join_duel: { Args: { p_round_id: string }; Returns: Json }
@@ -10082,6 +10143,15 @@ export type Database = {
         Returns: {
           new_streak: number
           reward: number
+        }[]
+      }
+      claim_daily_attendance_v2: {
+        Args: never
+        Returns: {
+          milestone_hit: number
+          new_streak: number
+          reward: number
+          weekly_bonus: number
         }[]
       }
       claim_daily_quick_reward: { Args: { _kind: string }; Returns: Json }
@@ -10656,6 +10726,14 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_mission_recovery_state: {
+        Args: never
+        Returns: {
+          consecutive_fails: number
+          easy_mode: boolean
+          recovery_pct: number
+        }[]
+      }
       get_my_api_usage_24h: {
         Args: { _key_id: string }
         Returns: {
@@ -11008,6 +11086,13 @@ export type Database = {
           tier: Database["public"]["Enums"]["user_tier"]
           total_balance: number
           users: number
+        }[]
+      }
+      get_today_mission_completion_stats: {
+        Args: never
+        Returns: {
+          my_remaining: number
+          overall_pct: number
         }[]
       }
       get_top_emperor_24h: {
@@ -11476,6 +11561,10 @@ export type Database = {
       }
       record_legal_consent: {
         Args: { _doc_keys: string[]; _user_agent?: string }
+        Returns: Json
+      }
+      record_mission_outcome: {
+        Args: { _completed_today?: number }
         Returns: Json
       }
       record_paper_trade_outcome: {
