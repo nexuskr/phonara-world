@@ -18,7 +18,7 @@ function ArenaHeaderInner({ symbol, price, delta1s, mode, onModeChange, symbols,
     <div className="mb-3 contain-card">
       <div className="flex items-center justify-between gap-3 mb-3">
         <div className="space-y-1">
-          <div className="eyebrow-imperial">실전 아레나</div>
+          <div className="eyebrow-imperial">{FOMO.tradeEyebrow}</div>
           <h1
             data-tutorial="title"
             className="h-imperial text-2xl sm:text-3xl imperial-halfoff-text tracking-[0.18em] flex items-center gap-2"
