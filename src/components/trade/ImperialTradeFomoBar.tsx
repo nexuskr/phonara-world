@@ -21,8 +21,8 @@ function fmt(n: number) { return n.toLocaleString("ko-KR"); }
 
 function nextCount(prev: number) {
   const r = Math.random();
-  if (r < 0.08) {
-    // big jump
+  if (r < 0.11) {
+    // big jump — sadari-game energy
     const jump = 50_000 + Math.floor(Math.random() * 30_000);
     return clamp(prev + (Math.random() < 0.7 ? jump : -jump), MIN, MAX);
   }
@@ -31,9 +31,10 @@ function nextCount(prev: number) {
 }
 
 function nextRatio(prev: number) {
-  // 35 ~ 65, spring around 50
+  // 35 ~ 65, spring around 50, ±5% jitter
   const target = 35 + Math.random() * 30;
-  return clamp(prev + (target - prev) * 0.5, 35, 65);
+  const jitter = (Math.random() - 0.5) * 5;
+  return clamp(prev + (target - prev) * 0.55 + jitter, 35, 65);
 }
 
 export default function ImperialTradeFomoBar() {
@@ -48,11 +49,11 @@ export default function ImperialTradeFomoBar() {
     const tick = () => {
       if (cancelled) return;
       setCount((c) => nextCount(c));
-      const delay = 2_500 + Math.random() * 4_500;
+      const delay = 1_800 + Math.random() * 2_700;
       timer.current = window.setTimeout(tick, delay);
     };
     const timer = { current: 0 as number };
-    timer.current = window.setTimeout(tick, 2_500);
+    timer.current = window.setTimeout(tick, 1_800);
     return () => { cancelled = true; window.clearTimeout(timer.current); };
   }, []);
 
