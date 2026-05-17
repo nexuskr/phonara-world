@@ -1,77 +1,125 @@
-# 트레이딩 페이지 UX 대폭 개선 — Pass 1
+# 전체 UI/UX 및 메뉴 구조 리빌드 — Pass 1 (World #1)
 
-money-flow 8경로(`MegaOrderPanel.tsx` / `use-auto-bet.ts` / `bybit-feed.ts` 포함) / Operator Isolation / Bundle Budget / Realtime 4-Partition / Active Governor 모두 **무변경**.
-이번 Pass 는 `TradingArenaBybit.tsx` (FREEZE 미포함) 레이아웃과 **신규 sibling 컴포넌트**만 추가해 체감을 끌어올린다.
+money-flow 8경로 / Operator Isolation / Bundle Budget / Realtime 4-Partition / Active Governor 모두 **무변경**.
+이번 Pass는 **메뉴 단순화 + Home/PHON 허브 정리 + 디자인 토큰 통일** 에 집중. 페이지 내부의 비즈니스 로직은 손대지 않고, 기존 컴포넌트를 재배치·재활용.
 
-## 작업 범위 — 안전 경계
+## 0) 정직한 스코프
 
-| 범위 | 가능 여부 | 이유 |
+요청은 “전체 리빌드”지만 한 PR에 모두 우겨넣으면 머니플로 8경로·번들 예산·번역 키 등 파급이 너무 큼. 이번 Pass는 **체감 변화의 80%를 만드는 5개 변경**으로 한정하고, 나머지는 후속 Pass.
+
+| 항목 | 이번 Pass | 후속 |
 |---|---|---|
-| `TradingArenaBybit.tsx` 레이아웃·section 추가 | 가능 | FREEZE 미포함 |
-| 새로운 sibling 컴포넌트 (Hot Coin, PnL 헤더, 카운터 등) | 가능 | 신규 파일 |
-| `MegaOrderPanel` 내부 레버리지 슬라이더 디자인 변경 | **불가** | FREEZE |
-| `bybit-feed` / `use-auto-bet` / 주문 RPC 호출 흐름 변경 | **불가** | FREEZE |
-| Bottom Sheet로 `MegaOrderPanel` 자체를 감싸기 | 가능 | sibling wrapper만 추가, panel 내부 미변경 |
+| Bottom Nav 5탭 라벨/라우트 정비 | O | — |
+| 신규 `/phon` 허브 페이지 | O | 실제 Swap/Stake 백엔드 |
+| Home 페이지 카드 재배치 | O | — |
+| Trading Pass 1 강화 (이미 완료) | 유지 | — |
+| Profile 카드 그리드 통일 | O | 신규 위젯 |
+| 모든 페이지의 로딩/빈상태 표준화 | 부분 (Home/Profile/PHON) | 그 외 페이지 |
+| 디자인 토큰 (Gold/Hot Pink/Deep Black) 정리 | tailwind config 추가만 | 컴포넌트 전수 마이그레이션 |
+| Pull-to-Refresh 전면 적용 | **스킵** (realtime이 이미 갱신) | 필요 페이지만 별도 |
+| 라우트 대청소 (deprecated 라우트 redirect) | O (8~12개) | 나머지 |
 
-## 1) 페이지 레이아웃 재설계 (`TradingArenaBybit.tsx`)
+## 1) Bottom Nav 정비 (`src/components/Layout.tsx`)
+
+기존 5탭 → 요청 사양으로 라벨/라우트 정확히 매핑:
 
 ```text
-┌──────────────────────────────────────────────────────┐
-│ HubTabs                                             │
-│ <RedDisclaimerBanner /> (그대로)                    │
-│ <BigPnLHeader />          ← 신규: 총 미실현 PnL 큰 표시  │
-│ <PhonAdvantageRibbon />   ← 신규: PHON 20% 할인 + 레버리지 게이트 │
-│ <HotCoinRail />           ← 신규: 지금 핫한 코인 5종       │
-│ <ChartWithHeader />       (그대로, 확대)            │
-│ <LeveragePresetRail />    ← 신규: 5x/10x/25x/50x/100x 칩 + PHON 게이트 안내 │
-│ <LiveSideCounter />       ← 신규: 지금 N명 롱 / M명 숏     │
-│ ── 데스크톱: 우측 컬럼                                │
-│   <MegaOrderPanel />      (FREEZE — 그대로)         │
-│ ── 모바일: <MobileOrderSheet> 하단 고정 핸들 + 풀시트│
-│   내부에 <MegaOrderPanel /> 그대로 마운트            │
-│ <OpenPositionsLive />                              │
-│ <TradingHistoryGold />                             │
-└──────────────────────────────────────────────────────┘
+[홈]           /home        → Home
+[트레이딩]     /trade       → TradingArenaBybit
+[PHON]         /phon        → 신규 PhonHub (FAB 강조: gold→pink 그라디언트)
+[게임]         /games       → CasinoLobby
+[내 제국]      /profile     → Profile
 ```
 
-## 2) 신규 컴포넌트 (전부 lazy)
+- `BOTTOM_NAV` 배열만 교체. FAB(중앙)는 PHON.
+- `matches` 는 각 탭의 하위 경로까지 포함 (`/trade`, `/arena`, `/arena/army` 전부 [트레이딩] 활성화 등).
+- 데스크톱 사이드바는 유지하되 1차 그룹 라벨을 동일 5개와 정합되게 정렬.
 
-- `src/components/trading/v3/BigPnLHeader.tsx` — `useRealStore` / `usePaperStore` 의 미실현 PnL을 합산 후 **3xl ~ 5xl tabular-nums** 로 표시 + 양수 `text-money-strong` / 음수 `text-destructive` + 변화 시 펄스
-- `src/components/trading/v3/PhonAdvantageRibbon.tsx` — "PHON 베팅 시 하우스 에지 -20%" + 본인 PHON 보유량 기반 최대 레버리지 안내 (`useMyPower()`)
-- `src/components/trading/v3/HotCoinRail.tsx` — 신규 공개 RPC `get_hot_symbols_24h(_limit)` 호출, 24h 거래량/오픈 포지션 수 Top 5 → 칩 클릭 시 `setSymbol` 이벤트 (`window.dispatchEvent("phonara:set-symbol")`) — panel은 듣지 않으므로 현재는 차트 심볼만 prop drilling 으로 변경. (MegaOrderPanel 자체의 심볼 변경은 FREEZE 이므로 ChartWithHeader 만 반응)
-- `src/components/trading/v3/LeveragePresetRail.tsx` — 정보형 칩 5종, 비활성/활성 표시는 `useMyPower().maxLeverage` 기반, 클릭 시 토스트로 "패널에서 해당 레버리지를 선택하세요" 안내 + 패널까지 스크롤 (`scrollIntoView`)
-- `src/components/trading/v3/LiveSideCounter.tsx` — 신규 공개 RPC `get_symbol_side_counts(_symbol)` → "지금 N명이 BTC 롱 · M명 숏" + 다수 측 골드 강조
-- `src/components/trading/v3/MobileOrderSheet.tsx` — `vaul` 의존성 없이 framer-motion 으로 자체 구현(handle 드래그 + snap 30vh/85vh), children 으로 `MegaOrderPanel` 받음. desktop(`md`+)에서는 자기 자신을 렌더 안 함 — 기존 우측 컬럼 그대로.
+## 2) 신규 페이지 `src/pages/PhonHub.tsx` + `/phon` 라우트
 
-## 3) 신규 공개 RPC (SECURITY DEFINER + STABLE)
+기존 자산 재활용 only — 신규 RPC 없음:
 
-- `get_hot_symbols_24h(_limit int default 5)` → `(symbol text, open_positions int, traders_24h int, score numeric)` — `live_positions` + `live_position_open_audit` 기반 score 산정
-- `get_symbol_side_counts(_symbol text)` → `(longs int, shorts int)` — `live_positions WHERE status='open' AND symbol=_symbol`
-- 둘 다 `GRANT EXECUTE TO anon, authenticated`
+```text
+┌ <PhonHero/>            잔액 + 다음 NFT 임계값 (useMyPower)
+├ <PhonAdvantageRibbon/> (트레이딩에서 만든 것 재활용)
+├ <PhonBenefitsGrid/>    수수료 -20% / 레버리지 최대 100x / Crown ×1.5 카드 3종
+├ <NextTierProgress/>    nextThreshold 진행률 바 + 입금 CTA
+├ <EmpireCollection/>    (lazy 재활용, 본인 NFT 컬렉션)
+├ <ComingSoonCard/>      "스왑 · 스테이킹 · 일일 배당" 곧 공개 placeholder (가짜 데이터 금지)
+```
 
-## 4) 모바일 최적화
+- 모두 lazy. 신규 파일은 `src/components/phon/*` 디렉터리.
+- `/phon` 진입은 인증 필요 (`useRequireAuth`).
 
-- 모든 터치 타겟 `min-h-12` (48px), 본문 폰트 `text-base` 이상
-- `MobileOrderSheet` snap: 핸들탭 30vh / 풀시트 85vh
-- `<OpenPositionsLive />` 리스트는 **virtualize 없이도 모바일에서 부드럽도록** padding/divider 만 손봄 (스크롤 가벼움 우선)
-- Pull-to-refresh: 현재 데이터는 realtime 으로 자동 갱신되므로 별도 P2R 미도입 — overengineering 위험. (대신 `<LivePulseDot />` 으로 "실시간 갱신 중" 도트만 표시)
-- Infinite scroll: `TradingHistoryGold` 가 이미 페이지네이션이면 유지, 아니면 별도 PR 로 미룸 (이번 패스 미포함)
+## 3) Home (`src/pages/Home.tsx`) 카드 순서 정리
 
-## 5) FOMO + 게임화 연동
+현재 페이지를 “위에서 아래로 한 화면 = 한 결정”이 되도록 재배치 (코드 import는 그대로, JSX 순서만 조정):
 
-- `LiveSideCounter` = 종목별 "N명 롱/숏" 실시간 카운터 → 15s 폴링 + visibility-aware
-- `PhonAdvantageRibbon` = "PHON 보유 황제 전용 수수료 -20% · 레버리지 최대 100x" 정적 강조 + `useMyPower()` 로 실제 본인 게이트 표시
-- 트레이딩 XP: 이미 `phon_level_events` 트리거가 업적 기반으로 동작 중. 트레이드 직접 XP 부여는 머니플로 RPC 변경이 필요하므로 **별도 PR** 로 미룸 (현재는 후속 업적 ‘g_trade_*’ 들이 unlock 되면 기존 `trg_ua_grant_xp` 트리거가 자동 XP 부여 → 우회 연동)
+```text
+1. <BigPnLLine />          (간단 라인: 오늘 손익 한 줄, 신규)
+2. <ChurnReactivationBanner /> (있을 때만)
+3. <DailyChest /> + <LevelProgressBar />  (한 줄 2칸)
+4. <MissionsCard />         (오늘의 미션)
+5. <LiveFomoRow />          출금 + 트레이딩 + Founding 카운터 (신규 슬림 1행)
+6. <WhaleStrikeRail />      마키 (기존)
+7. <PersonalizedFeedRail /> (기존)
+```
 
-## 6) 검증
+“복잡한 배너 / 중복 위젯” 정리:
+- VipArrivalsTicker · RoutingMigrationBanner · OnboardingV2 같은 1주차 배너는 **App 루트** 마운트로 이미 통합되어 있어 Home 본문에서 추가 노출되면 중복 — Home 본문에 중복 마운트가 있다면 제거.
+
+## 4) Profile (`src/pages/Profile.tsx`) 그리드 통일
+
+상단 1열, 그 아래 2열 그리드 (mobile 1열):
+
+```text
+[ Avatar + Nickname + Empire Lv. + PHON Lv. + Streak Flame ]
+[ LevelProgressBar (PHON 1~100) ]
+[ BadgeCollection ] | [ MyFoundingSeat (lazy) ]
+[ NFT Collection (lazy) ] | [ 최근 트레이드 요약 ]
+```
+
+신규 위젯 없음 — 기존 컴포넌트 재배치 + 카드 컨테이너 통일 (rounded-2xl, border-border/40, bg-card/40).
+
+## 5) 디자인 토큰 정리 (가산 only)
+
+`tailwind.config.ts` 에 시맨틱 alias 추가 (기존 토큰 변경 금지):
+
+```ts
+colors: {
+  // 기존 그대로 + alias 추가
+  "warm-gold":  "hsl(var(--warm-gold) /  <alpha-value>)",
+  "hot-pink":   "hsl(var(--hot-pink)  /  <alpha-value>)",
+  "deep-space": "hsl(var(--deep-space)/  <alpha-value>)",
+}
+```
+
+`index.css` `:root` 에 변수 정의 (이미 비슷한 값 존재할 가능성 → 중복 시 alias만 추가):
+
+```css
+--warm-gold:  45 95% 60%;
+--hot-pink:  330 85% 60%;
+--deep-space: 240 25%  6%;
+```
+
+신규 컴포넌트(이번 Pass 추가분)에서만 이 토큰을 사용. 기존 컴포넌트 전수 마이그레이션은 별도 Pass.
+
+## 6) 라우트 대청소 (App.tsx)
+
+- 사용자에게 보이는 path 5개 (`/home`, `/trade`, `/phon`, `/games`, `/profile`) 외 — 사용 빈도 낮은 deprecated 경로는 **redirect 유지** (이미 다수 redirect 존재, 추가 redirect 1개: `/swap` → `/phon`).
+- 코드 삭제는 안 함 (다른 곳에서 link 깨질 수 있음).
+
+## 7) 검증
 
 - `node scripts/check-money-flow-freeze.mjs` → 0
-- `node scripts/check-operator-isolation.mjs` → PASS (CI 빌드)
-- `npm run size:check` → PASS (모든 신규 컴포넌트 lazy, index 청크 영향 0)
-- 모바일 (`375x812`) 에서 BigPnL/PhonRibbon/HotCoinRail/MobileOrderSheet 확인
+- `node scripts/check-operator-isolation.mjs` → PASS (빌드 단계, CI)
+- `npm run size:check` → PASS (PhonHub 포함 신규 4 파일 전부 lazy, index 청크 영향 0 목표)
+- 375x812 모바일에서 Bottom Nav 5탭 + FAB(PHON) + safe-area-inset 동작 확인
+- /home /trade /phon /games /profile 5개 페이지 진입 OK
 
-## 7) 의도적으로 미포함 (FREEZE 충돌 회피)
+## 8) 의도적으로 미포함 (안전 우선)
 
-- MegaOrderPanel 내부 슬라이더 → 큰 슬라이더 변경: panel 이 FREEZE 라 불가. **외부 LeveragePresetRail 로 가시성·교육 강화**로 대체.
-- 트레이딩 직접 XP 부여: 주문 RPC 수정 필요 → 후속 PR.
-- "지금 핫한 코인" 클릭 시 주문 패널 심볼 자동 변경: panel 이 FREEZE → 차트만 반응, 패널은 사용자가 수동 선택. (panel 외부에서 `setSymbol` 이벤트만 발행, 듣는 쪽은 추후 freeze 해제 시 연결.)
+- 실제 PHON Swap/Stake 백엔드: 머니플로 신규 RPC 필요 → 별도 PR.
+- 모든 페이지에 Pull-to-Refresh: 현재 realtime 이 더 빠르고 안전. UX 가치 낮음.
+- Skeleton Loading 전수 적용: 기존 `LoadingState` 가 이미 표준. 신규 페이지에서만 사용, 기존은 그대로.
+- 메뉴 “복잡 정리”: deprecated 경로 코드 삭제 — 외부 링크/SEO 영향 우려, 이번엔 redirect 유지로 충분.
