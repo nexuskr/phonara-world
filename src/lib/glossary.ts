@@ -26,6 +26,11 @@ export const FOMO = {
   dashEyebrow: "오늘의 제국",
   tradeEyebrow: "실전 아레나",
   phonEyebrow: "폐하의 황금 자산",
+  // Phase E Slice 3 — Imperial Card System
+  jackpotWaiting: "지금 이 슬롯에서 잭팟이 대기 중입니다",
+  rarePartsCard: "이 슬롯은 극소수의 황제만이 정복했습니다",
+  legendaryCrownCard: "Legendary Crown 보유자만의 무대",
+  gamesEyebrow: "제국의 놀이터",
 } as const;
 
 export const G = {
