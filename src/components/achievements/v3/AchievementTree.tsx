@@ -63,7 +63,7 @@ export default function AchievementTree() {
         {CATEGORIES.map((c) => (
           <TabsContent key={c.key} value={c.key} className="mt-4">
             {loading ? (
-              <LoadingList count={4} />
+              <LoadingList rows={4} />
             ) : categorized[c.key]?.length ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {categorized[c.key].map((row) => (

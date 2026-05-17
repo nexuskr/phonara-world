@@ -22,7 +22,7 @@ export function useClaimAchievement() {
       const r = (data ?? {}) as { ok?: boolean; reward_phon?: number; error?: string };
       if (!r.ok) {
         const msg = r.error ?? "unknown";
-        notify.warn("보상을 수령할 수 없습니다", { description: msg });
+        notify.warning("보상을 수령할 수 없습니다", { description: msg });
         return { ok: false, error: msg };
       }
       const reward = Number(r.reward_phon ?? 0);

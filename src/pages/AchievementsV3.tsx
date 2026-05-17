@@ -22,7 +22,7 @@ export default function AchievementsV3() {
           </p>
         </header>
 
-        <Suspense fallback={<LoadingList count={6} />}>
+        <Suspense fallback={<LoadingList rows={6} />}>
           <AchievementTree />
         </Suspense>
       </div>

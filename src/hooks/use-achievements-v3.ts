@@ -39,26 +39,16 @@ export function useAchievementsV3() {
     void load();
   }, [load]);
 
-  // Realtime — re-pull when own progress row changes (insert/update).
-  useWalletChannel(
-    userId ? `achv-progress:${userId}` : "achv-progress:anon",
-    (channel) => {
-      if (!userId) return;
-      channel.on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "achievement_progress",
-          filter: `user_id=eq.${userId}`,
-        },
-        () => {
-          void load();
-        }
-      );
+  useWalletChannel({
+    key: userId ? `achv-progress:${userId}` : "achv-progress:anon",
+    enabled: !!userId,
+    bindings: userId
+      ? [{ event: "*", schema: "public", table: "achievement_progress", filter: `user_id=eq.${userId}` }]
+      : [],
+    onEvent: () => {
+      void load();
     },
-    [userId, load]
-  );
+  });
 
   const byCategory = (cat: CategoryKey) =>
     rows.filter((r) => r.category === cat).sort((a, b) => a.sort - b.sort);

@@ -31,40 +31,31 @@ export default function AchievementUnlockListener() {
       });
   }, [userId]);
 
-  useWalletChannel(
-    userId ? `achv-unlock:${userId}` : "achv-unlock:anon",
-    (channel) => {
-      if (!userId) return;
-      channel.on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "achievement_progress",
-          filter: `user_id=eq.${userId}`,
-        },
-        (payload) => {
-          const row = (payload.new ?? {}) as { achievement_id?: string; unlocked_at?: string | null };
-          if (!row.achievement_id || !row.unlocked_at) return;
-          const key = `${row.achievement_id}:${row.unlocked_at}`;
-          if (seenRef.current.has(key)) return;
-          seenRef.current.add(key);
-          const meta = catalogRef.current.get(row.achievement_id);
-          const title = meta?.title ?? row.achievement_id;
-          const reward = meta?.reward_phon ?? 0;
-          notify.success(`🏆 새로운 업적 — ${title}`, {
-            description: `${reward.toLocaleString()} PHON 보상 준비 완료 — 업적 탭에서 수령하세요`,
-            duration: 5000,
-          });
-          setFireworks({
-            title: `👑 폐하의 위엄이 한 단계 더 깊어졌습니다`,
-            subtitle: title,
-          });
-        }
-      );
+  useWalletChannel({
+    key: userId ? `achv-unlock:${userId}` : "achv-unlock:anon",
+    enabled: !!userId,
+    bindings: userId
+      ? [{ event: "*", schema: "public", table: "achievement_progress", filter: `user_id=eq.${userId}` }]
+      : [],
+    onEvent: (payload) => {
+      const row = (payload.new ?? {}) as { achievement_id?: string; unlocked_at?: string | null };
+      if (!row.achievement_id || !row.unlocked_at) return;
+      const key = `${row.achievement_id}:${row.unlocked_at}`;
+      if (seenRef.current.has(key)) return;
+      seenRef.current.add(key);
+      const meta = catalogRef.current.get(row.achievement_id);
+      const title = meta?.title ?? row.achievement_id;
+      const reward = meta?.reward_phon ?? 0;
+      notify.success(`🏆 새로운 업적 — ${title}`, {
+        description: `${reward.toLocaleString()} PHON 보상 준비 완료 — 업적 탭에서 수령하세요`,
+        duration: 5000,
+      });
+      setFireworks({
+        title: `👑 폐하의 위엄이 한 단계 더 깊어졌습니다`,
+        subtitle: title,
+      });
     },
-    [userId]
-  );
+  });
 
   return (
     <Suspense fallback={null}>
