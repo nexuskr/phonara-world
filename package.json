@@ -7,6 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "build:dev": "vite build --mode development",
+    "build:prerender": "vite build && node scripts/prerender.mjs && node scripts/check-prerender-leak.mjs",
+    "preview:prerender": "serve dist -s -l 4173",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
