@@ -36,7 +36,7 @@ Props: `variant?: "full" | "compact"` — Dashboard 는 full(8행), Index 는 fu
 순수 프레젠테이션 — 백엔드/머니플로 무관. 비슷한 패턴이 이미 `useFakePlayerCount`, `MachineFomoTicker`, `LivePurchaseTicker` 에 존재.
 
 - **닉네임 풀** (40~50개 고정 배열): 한국 — 서준이, 민지99, 철수킹, 도윤맘, 지우엄빠, 하늘공주, 별이아빠, 태양킹, 윤서123, 지아88, 시우랜드 등 / 외국 — Alex92, LunaK, Kai007, NovaX, RyuMax, ZenoP, Mira88, Kairos, BladeX, NoctisR, OniK, SolarV, ArcKing 등. 닉네임 마스킹 안 함 — 전체 닉네임 노출 (유저가 요청).
-- **게임 풀**: 트레이딩(BTC/ETH/SOL 롱숏), Olympus 1000, Dragon Empire, Crash, Olympus Legacy 5000, Cosmic Forge 5000, Sugar Fever 3000, Viking Thunder 4000 — 가중치로 트레이딩 + Olympus 1000 자주 등장.
+- **게임 풀** (가중치): 트레이딩 BTC/ETH/SOL 롱숏(높음), Olympus 1000(높음), Dragon Empire(높음), Crash(높음), SixSixSix(높음), Olympus Legacy 5000, Cosmic Forge 5000, Sugar Fever 3000, Viking Thunder 4000, Pharaoh's Vault 2500.
 - **통화 풀**: KRW (50%) / PHON (30%) / USDT (20%).
 - **베팅·배율·당첨**: 게임별 자연스러운 베팅 레인지 + 배율 분포 (트레이딩 1.5~12x, 슬롯 1.5~120x, Crash 1.2~50x). 잭팟급(×80+)은 ~5% 확률로 등장 + 강한 글로우.
 - **중복 방지**: 최근 12행에 사용된 닉네임은 재사용 금지 (Set 기반).
