@@ -257,6 +257,7 @@ const App = () => (
           <Suspense fallback={null}><BigWinShareHost /></Suspense>
           <Suspense fallback={null}><AchievementUnlockListener /></Suspense>
           <Suspense fallback={null}><LobbyFab /></Suspense>
+          <ImperialDeepLinkListener />
           <Suspense fallback={<RouteFallback />}>
             <MaintenanceGate>
             <Routes>
