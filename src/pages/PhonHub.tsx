@@ -13,6 +13,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LoadingList } from "@/components/ui/loading-state";
 import { Sparkles, ArrowRight } from "lucide-react";
+import { FOMO } from "@/lib/glossary";
 
 const PhonAdvantageRibbon = lazy(() => import("@/components/trading/v3/PhonAdvantageRibbon"));
 const EmpireCollection = lazy(() => import("@/pages/EmpireCollection"));
