@@ -41,18 +41,18 @@ export default function PhonaraNav() {
                 onClick={() => haptics.tick()}
                 className={`relative flex flex-col items-center justify-center gap-0.5 px-2 py-2.5 rounded-xl border transition-all duration-200 press will-change-transform ${
                   active
-                    ? "bg-gradient-to-br from-amber-500/15 via-primary/15 to-pink-500/10 border-amber-300/45 text-foreground -translate-y-0.5 shadow-[0_8px_24px_-8px_hsl(38_92%_55%/0.55),0_0_0_1px_hsl(38_92%_60%/0.25)_inset]"
+                    ? "imperial-halfoff text-black border-amber-300/60 -translate-y-0.5 glow-imperial-xl pulse-halo"
                     : "bg-card/40 border-border/30 text-muted-foreground hover:text-foreground hover:border-border/60"
                 }`}
                 aria-current={active ? "page" : undefined}
               >
                 <div className="flex items-center gap-1.5">
                   <span className="text-base leading-none">{t.emoji}</span>
-                  <span className={`text-[13px] font-black tracking-wide ${active ? "text-gradient-imperial" : ""}`}>
+                  <span className={`text-[13px] font-black tracking-wide ${active ? "text-black" : ""}`}>
                     {t.label}
                   </span>
                 </div>
-                <span className="text-[10px] font-medium opacity-70 truncate max-w-full">
+                <span className={`text-[10px] font-medium truncate max-w-full ${active ? "text-black/75" : "opacity-70"}`}>
                   {t.tagline}
                 </span>
               </NavLink>

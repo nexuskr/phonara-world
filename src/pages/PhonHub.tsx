@@ -13,6 +13,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LoadingList } from "@/components/ui/loading-state";
 import { Sparkles, ArrowRight } from "lucide-react";
+import { FOMO } from "@/lib/glossary";
 
 const PhonAdvantageRibbon = lazy(() => import("@/components/trading/v3/PhonAdvantageRibbon"));
 const EmpireCollection = lazy(() => import("@/pages/EmpireCollection"));
@@ -104,13 +105,14 @@ export default function PhonHub() {
   return (
     <Layout>
       <div className="container py-5 space-y-5 max-w-3xl">
-        <div className="flex items-baseline gap-3">
-          <h1 className="font-imperial text-2xl md:text-3xl text-gradient-imperial tracking-[0.18em]">
+        <div className="contain-card stack-rhythm-sm">
+          <div className="eyebrow-imperial">{FOMO.phonEyebrow}</div>
+          <h1 className="h-imperial text-3xl md:text-4xl imperial-halfoff-text tracking-[0.18em]">
             PHON
           </h1>
-          <span className="text-[11px] text-muted-foreground tracking-wide">
-            폐하의 황금 자산
-          </span>
+          <p className="text-[12px] text-muted-foreground tracking-wide">
+            오늘도 폐하의 제국이 매일 자라고 있습니다.
+          </p>
         </div>
 
         <Suspense fallback={<LoadingList rows={3} />}>

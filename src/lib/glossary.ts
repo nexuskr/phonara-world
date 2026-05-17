@@ -8,6 +8,26 @@
  * 사용: import { G } from "@/lib/glossary";  →  <h1>{G.level}</h1>
  */
 
+/**
+ * FOMO — Imperial Luxury 카피 토큰 (Phase E Slice 2).
+ * UI 표면에서만 사용. 내부 코드/DB 영향 없음.
+ */
+export const FOMO = {
+  lobbyCrowd: (n = 187) =>
+    `폐하, 지금 제국 로비에는 ${n.toLocaleString()}명의 황제들이 모여 있습니다.`,
+  legendaryCrown:
+    "저 황제께서는 Legendary Crown을 착용하고 계십니다. 폐하께서도 곧 그 자리에 오르실 수 있습니다.",
+  friendProfit: (name: string, amount: number) =>
+    `친구 ${name}님께서 오늘 PHON으로 +${amount.toLocaleString()}을 거두셨습니다. 폐하께서도 지금 시작하시면 충분히 따라잡으실 수 있습니다.`,
+  rareParts: "이 파츠는 극소수의 황제만이 가질 수 있는 위엄입니다.",
+  exclusiveOwn: "축하드립니다, 폐하. 이제 이 모습은 오직 당신만의 것입니다.",
+  authEyebrow: "황제 입장",
+  authDisplay: "폐하의 자리가 비어 있습니다",
+  dashEyebrow: "오늘의 제국",
+  tradeEyebrow: "실전 아레나",
+  phonEyebrow: "폐하의 황금 자산",
+} as const;
+
 export const G = {
   // 4탭
   tabEarn: "수익",
