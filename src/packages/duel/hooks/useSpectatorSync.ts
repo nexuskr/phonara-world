@@ -39,17 +39,13 @@ export function useSpectatorSync(initial: number, heat: number) {
     let n = 0;
     const id = window.setInterval(() => {
       n++;
-      setArrivals((prev) =>
-        [
-          ...prev,
-          {
-            id: Date.now() + n,
-            nick: randomNick(),
-            side: Math.random() < 0.5 ? "left" : "right",
-            ts: Date.now(),
-          },
-        ].slice(-6),
-      );
+      const next: Arrival = {
+        id: Date.now() + n,
+        nick: randomNick(),
+        side: Math.random() < 0.5 ? "left" : "right",
+        ts: Date.now(),
+      };
+      setArrivals((prev) => [...prev, next].slice(-6));
     }, 6000);
     return () => window.clearInterval(id);
   }, []);

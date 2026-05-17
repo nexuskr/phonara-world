@@ -67,4 +67,5 @@ export type PersonalizedTrigger =
   | "win_drought"
   | "royal_pass_milestone"
   | "session_resurrection"
-  | "heat_surge";
+  | "heat_surge"
+  | "pool_imbalance";
