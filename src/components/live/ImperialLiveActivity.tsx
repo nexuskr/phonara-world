@@ -288,9 +288,9 @@ function AnimatedRows({
 }) {
   if (reduced) return <StaticRows rows={rows} variant={variant} />;
   return (
-    <AnimatePresenceLazy initial={false}>
+    <AnimatePresence initial={false}>
       {rows.map((r) => (
-        <MotionDiv
+        <motion.div
           key={r.id}
           layout
           initial={{ opacity: 0, y: -14, scale: 0.985 }}
@@ -299,8 +299,8 @@ function AnimatedRows({
           transition={{ duration: 0.42, ease: [0.2, 0.7, 0.2, 1] }}
         >
           <RowContent r={r} variant={variant} />
-        </MotionDiv>
+        </motion.div>
       ))}
-    </AnimatePresenceLazy>
+    </AnimatePresence>
   );
 }
