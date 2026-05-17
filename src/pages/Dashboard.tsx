@@ -36,6 +36,8 @@ import { useMyPower } from "@/hooks/use-my-power";
 import { useOnline } from "@/components/LiveStats";
 import RoutingMigrationBanner from "@/components/RoutingMigrationBanner";
 import ChurnReactivationBanner from "@/components/reactivation/ChurnReactivationBanner";
+const DailyChest = lazy(() => import("@/components/gamification/DailyChest"));
+const LevelProgressBar = lazy(() => import("@/components/gamification/LevelProgressBar"));
 
 // 접힘 영역에 들어가는 기존 컴포넌트들 — 모두 lazy
 const LiveRanking = lazy(() => import("@/components/LiveRanking"));
