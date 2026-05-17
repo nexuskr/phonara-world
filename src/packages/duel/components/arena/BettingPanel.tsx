@@ -31,9 +31,11 @@ const PRESETS = [100, 500, 2_000, 10_000, 50_000];
 export function BettingPanel({
   leftName, rightName, oddsLeft, oddsRight, disabled,
   nearMissSide, lastPayout, onPlace, myStake,
+  shadowBalance, serverSeedHashPreview,
 }: Props) {
   const [side, setSide] = useState<"left" | "right">("left");
   const [amount, setAmount] = useState(500);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   // 직전 라운드 결과 토스트
   const lastRef = useRef(lastPayout);
@@ -42,7 +44,7 @@ export function BettingPanel({
       lastRef.current = lastPayout;
       if (lastPayout.won) {
         notify.success(
-          `옥좌가 폐하의 손을 들었습니다 — +${lastPayout.amount.toLocaleString()} PHON (데모 베팅)`,
+          `옥좌가 폐하의 손을 들었습니다 — +${lastPayout.amount.toLocaleString()} PHON (Shadow)`,
         );
       } else {
         notify.warning(
@@ -52,8 +54,13 @@ export function BettingPanel({
     }
   }, [lastPayout]);
 
-  const handlePlace = () => {
+  const openConfirm = () => {
     if (disabled) return;
+    setConfirmOpen(true);
+  };
+
+  const confirmPlace = () => {
+    setConfirmOpen(false);
     onPlace(side, amount);
     const msg = `${side === "left" ? leftName : rightName} 진영에 ${amount.toLocaleString()} PHON 봉납 — 옥좌에 베팅을 올리소서`;
     if (notify.imperial) notify.imperial(msg);
