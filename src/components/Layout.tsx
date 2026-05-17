@@ -1,23 +1,18 @@
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
-  LayoutDashboard,
   Zap,
   Crown,
   Wallet,
-  Trophy,
   LogOut,
   ShieldCheck,
-  MessageSquare,
   User as UserIcon,
-  ChevronRight,
   TrendingUp,
   Menu,
-  Sparkles,
   Coins,
-  Lock,
   Home as HomeIcon,
   Gamepad2,
+  Radio,
 } from "lucide-react";
 import { useDB } from "@/lib/store";
 import React from "react";
@@ -29,9 +24,6 @@ import TopHUD, { TopHUDCompact } from "./TopHUD";
 import LanguageSwitcher from "./LanguageSwitcher";
 import FreezeBanner from "./FreezeBanner";
 import { useAchievementWatcher } from "@/hooks/use-achievement-watcher";
-import {
-  Accordion, AccordionContent, AccordionItem, AccordionTrigger,
-} from "@/components/ui/accordion";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 // v19 Phase 0-R: 글로벌 idle 오버레이 13종 전면 마운트 해제.
@@ -46,81 +38,38 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
  * Single source of truth for desktop sidebar, mobile sheet, and bottom-nav routing.
  */
 
-type NavLeaf = { to: string; label: string; icon: typeof LayoutDashboard };
-type NavGroup = { id: string; label: string; icon: typeof LayoutDashboard; children: NavLeaf[] };
+type IconType = typeof HomeIcon;
+type NavLeaf = { to: string; label: string; icon: IconType; matches?: string[] };
 
-const GROUPS: NavGroup[] = [
-  {
-    id: "trading",
-    label: "트레이딩",
-    icon: TrendingUp,
-    children: [
-      { to: "/trade", label: "Imperial Trade", icon: TrendingUp },
-    ],
-  },
-  {
-    id: "slots",
-    label: "슬롯",
-    icon: Zap,
-    children: [
-      { to: "/casino", label: "슬롯 로비", icon: Zap },
-      { to: "/crash", label: "🚀 Crash NEW", icon: Zap },
-      { to: "/casino/olympus-1000", label: "Olympus 1000", icon: Crown },
-    ],
-  },
-  {
-    id: "empire",
-    label: "제국 광장",
-    icon: Crown,
-    children: [
-      { to: "/empire", label: "제국 홀", icon: Crown },
-      { to: "/packages", label: "황실 패키지", icon: Sparkles },
-      { to: "/empire/my-seat", label: "내 좌석", icon: Crown },
-    ],
-  },
-  {
-    id: "missions",
-    label: "황제 미션",
-    icon: Trophy,
-    children: [
-      { to: "/missions", label: "데일리 미션", icon: Trophy },
-      { to: "/quests", label: "퀘스트", icon: Trophy },
-      { to: "/season-pass", label: "시즌 패스", icon: Sparkles },
-    ],
-  },
-  {
-    id: "treasury",
-    label: "내 제국",
-    icon: UserIcon,
-    children: [
-      { to: "/profile", label: "프로필", icon: UserIcon },
-      { to: "/wallet", label: "지갑", icon: Wallet },
-      { to: "/secure-wallet", label: "보안 금고", icon: Lock },
-    ],
-  },
+// v19 Slice 7.5: 좌측 사이드바 슬림화 — 6개 평탄 리스트 + Admin 최하단
+const SIDEBAR_NAV: NavLeaf[] = [
+  { to: "/command", label: "Home",   icon: HomeIcon,    matches: ["/command", "/home", "/dashboard"] },
+  { to: "/trade",   label: "Trade",  icon: TrendingUp,  matches: ["/trade", "/arena"] },
+  { to: "/casino",  label: "Slots",  icon: Zap,         matches: ["/casino", "/crash", "/jackpot", "/games"] },
+  { to: "/live",    label: "Live",   icon: Radio,       matches: ["/live"] },
+  { to: "/wallet",  label: "Wallet", icon: Wallet,      matches: ["/wallet", "/secure-wallet", "/phon"] },
+  { to: "/empire",  label: "Empire", icon: Crown,       matches: ["/empire", "/packages", "/profile"] },
 ];
 
 // Mobile bottom nav — 5 tabs, center FAB = PHON 허브
-type BottomItem = { to: string; matches: string[]; icon: typeof LayoutDashboard; label: string; fab?: boolean };
+type BottomItem = { to: string; matches: string[]; icon: IconType; label: string; fab?: boolean };
 const BOTTOM_NAV: BottomItem[] = [
-  { to: "/home",    matches: ["/home", "/", "/command", "/dashboard"], icon: HomeIcon,   label: "홈" },
+  { to: "/command", matches: ["/home", "/", "/command", "/dashboard"], icon: HomeIcon,   label: "홈" },
   { to: "/trade",   matches: ["/trade", "/arena"],                     icon: TrendingUp, label: "트레이딩" },
   { to: "/phon",    matches: ["/phon"],                                icon: Coins,      label: "PHON", fab: true },
-  { to: "/games",   matches: ["/games", "/casino", "/crash", "/jackpot"], icon: Gamepad2, label: "게임" },
-  { to: "/profile", matches: ["/profile", "/wallet", "/empire"],       icon: Crown,      label: "내 제국" },
+  { to: "/casino",  matches: ["/games", "/casino", "/crash", "/jackpot"], icon: Gamepad2, label: "게임" },
+  { to: "/empire",  matches: ["/profile", "/wallet", "/empire"],       icon: Crown,      label: "내 제국" },
 ];
 
-function isLeafActive(leaf: NavLeaf, pathname: string) {
-  return pathname === leaf.to || pathname.startsWith(leaf.to + "/");
-}
-function isGroupActive(g: NavGroup, pathname: string) {
-  return g.children.some((c) => isLeafActive(c, pathname));
+function matchActive(matches: string[] | undefined, fallbackTo: string, pathname: string) {
+  const list = matches ?? [fallbackTo];
+  return list.some((m) => pathname === m || pathname.startsWith(m + "/"));
 }
 function isBottomActive(b: BottomItem, pathname: string) {
-  return b.matches.some((m) => pathname === m || pathname.startsWith(m + "/"));
+  return matchActive(b.matches, b.to, pathname);
 }
 
-function GroupedMenu({
+function SlimMenu({
   pathname,
   isAdmin,
   onNavigate,
@@ -129,100 +78,49 @@ function GroupedMenu({
   isAdmin: boolean;
   onNavigate?: () => void;
 }) {
-  const activeGroupIds = useMemo(
-    () => GROUPS.filter((g) => isGroupActive(g, pathname)).map((g) => g.id),
-    [pathname]
-  );
-
   return (
     <div className="space-y-1">
-      {/* Single dashboard link (no group) */}
-      <NavLink
-        to="/command"
-        onClick={onNavigate}
-        className={({ isActive }) =>
-          `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition press ${
-            isActive || pathname.startsWith("/command")
-              ? "bg-gradient-imperial text-primary-foreground glow-imperial"
-              : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
-          }`
-        }
-      >
-        <LayoutDashboard className="w-4 h-4" />
-        <span>제국 대시보드</span>
-      </NavLink>
+      {SIDEBAR_NAV.map((item) => {
+        const Icon = item.icon;
+        const active = matchActive(item.matches, item.to, pathname);
+        return (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            onClick={onNavigate}
+            className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 press ${
+              active
+                ? "bg-gradient-imperial text-primary-foreground glow-imperial"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
+            }`}
+          >
+            {active && (
+              <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-[3px] rounded-r bg-[hsl(var(--gold))] shadow-[0_0_12px_hsl(var(--gold)/0.8)]" />
+            )}
+            <Icon className={`w-4 h-4 ${active ? "" : "group-hover:text-primary transition-colors"}`} />
+            <span className="tracking-wide">{item.label}</span>
+          </NavLink>
+        );
+      })}
 
-      <Accordion type="multiple" defaultValue={activeGroupIds} className="space-y-1">
-        {GROUPS.map((g) => {
-          const Icon = g.icon;
-          const groupActive = isGroupActive(g, pathname);
-          return (
-            <AccordionItem
-              key={g.id}
-              value={g.id}
-              className={`border-0 rounded-xl ${groupActive ? "bg-primary/10 ring-1 ring-primary/30" : ""}`}
-            >
-              <AccordionTrigger
-                className={`px-3 py-2.5 rounded-xl text-sm font-semibold hover:no-underline hover:bg-muted/40 [&[data-state=open]>svg]:rotate-180 ${
-                  groupActive ? "text-primary" : "text-foreground/90"
-                }`}
-              >
-                <span className="flex items-center gap-3">
-                  <Icon className="w-4 h-4" />
-                  {g.label}
-                </span>
-              </AccordionTrigger>
-              <AccordionContent className="pb-1 pt-0">
-                <div className="ml-4 pl-3 border-l border-border/40 space-y-0.5">
-                  {g.children.map((leaf) => {
-                    const LIcon = leaf.icon;
-                    const active = isLeafActive(leaf, pathname);
-                    return (
-                      <NavLink
-                        key={leaf.to}
-                        to={leaf.to}
-                        onClick={onNavigate}
-                        className={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-medium transition ${
-                          active
-                            ? "bg-gradient-imperial text-primary-foreground glow-imperial"
-                            : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
-                        }`}
-                      >
-                        <LIcon className="w-3.5 h-3.5" />
-                        <span>{leaf.label}</span>
-                        {active && <ChevronRight className="w-3 h-3 ml-auto" />}
-                      </NavLink>
-                    );
-                  })}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          );
-        })}
-      </Accordion>
-
-      <div className="my-2 border-t border-border/40" />
-      <NavLink
-        to="/support"
-        onClick={onNavigate}
-        className={({ isActive }) =>
-          `flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition ${
-            isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
-          }`
-        }
-      >
-        <MessageSquare className="w-4 h-4" />
-        <span>지원</span>
-      </NavLink>
       {isAdmin && (
-        <NavLink
-          to="/admin"
-          onClick={onNavigate}
-          className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold text-primary hover:bg-primary/10"
-        >
-          <ShieldCheck className="w-4 h-4" />
-          <span>Admin</span>
-        </NavLink>
+        <>
+          <div className="my-3 border-t border-border/40" />
+          <NavLink
+            to="/admin"
+            onClick={onNavigate}
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-bold transition ${
+                isActive
+                  ? "bg-primary/15 text-primary ring-1 ring-primary/30"
+                  : "text-primary/80 hover:bg-primary/10 hover:text-primary"
+              }`
+            }
+          >
+            <ShieldCheck className="w-4 h-4" />
+            <span>Admin</span>
+          </NavLink>
+        </>
       )}
     </div>
   );
@@ -259,7 +157,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </Link>
           </div>
           <nav className="flex-1 p-3 overflow-y-auto">
-            <GroupedMenu pathname={loc.pathname} isAdmin={!!user.isAdmin} />
+            <SlimMenu pathname={loc.pathname} isAdmin={!!user.isAdmin} />
           </nav>
           <button
             onClick={async () => {
@@ -301,7 +199,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     </Link>
                   </div>
                   <div className="p-3 overflow-y-auto h-[calc(100%-180px)]">
-                    <GroupedMenu pathname={loc.pathname} isAdmin={!!user.isAdmin} onNavigate={() => setSheetOpen(false)} />
+                    <SlimMenu pathname={loc.pathname} isAdmin={!!user.isAdmin} onNavigate={() => setSheetOpen(false)} />
                   </div>
                   <button
                     onClick={async () => {
@@ -376,15 +274,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
               if (item.fab) {
                 return (
-                  <NavLink key={item.to} to={item.to} className="relative -mt-7 flex-1 flex justify-center">
+                  <NavLink key={item.to} to={item.to} className="relative -mt-8 flex-1 flex justify-center">
                     <div
-                      className={`relative w-16 h-16 rounded-full flex items-center justify-center shadow-2xl press bg-gradient-to-br from-primary via-primary-glow to-pink ${
-                        active ? "ring-2 ring-pink/60 glow-imperial" : ""
+                      className={`relative w-[68px] h-[68px] rounded-full flex items-center justify-center press bg-gradient-to-br from-[hsl(var(--gold))] via-[hsl(var(--gold))] to-[hsl(var(--pink))] glow-pink-xl imperial-jackpot-breathe transition-transform duration-300 hover:scale-110 ${
+                        active ? "ring-2 ring-[hsl(var(--pink)/0.7)]" : "ring-1 ring-[hsl(var(--gold)/0.5)]"
                       }`}
                     >
-                      <div className="absolute inset-0 rounded-full bg-pink/30 blur-xl animate-ring-pulse -z-10" />
-                      <Icon className="w-7 h-7 text-primary-foreground drop-shadow" />
-                      <span className="absolute -bottom-5 text-[10px] font-imperial tracking-[0.2em] text-pink">
+                      <div className="absolute inset-0 rounded-full bg-[hsl(var(--pink)/0.35)] blur-2xl -z-10 animate-pulse" />
+                      <div className="absolute inset-[3px] rounded-full bg-gradient-to-br from-[hsl(var(--gold)/0.95)] to-[hsl(var(--pink)/0.85)] flex items-center justify-center">
+                        <Icon className="w-7 h-7 text-background drop-shadow-[0_2px_6px_rgba(0,0,0,0.45)]" />
+                      </div>
+                      <span className="absolute -bottom-5 text-[10px] font-imperial tracking-[0.22em] text-[hsl(var(--gold))] drop-shadow-[0_0_8px_hsl(var(--gold)/0.7)]">
                         {item.label.toUpperCase()}
                       </span>
                     </div>
@@ -396,15 +296,23 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <NavLink key={item.to} to={item.to} className="flex-1 press">
                   <div
                     className={`relative flex flex-col items-center gap-1 py-1.5 rounded-xl transition-all duration-300 ${
-                      active ? "bg-primary/10" : ""
+                      active ? "bg-[hsl(var(--gold)/0.08)]" : "hover:bg-muted/30"
                     }`}
                   >
                     {active && (
-                      <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-7 h-1 rounded-full bg-gradient-imperial glow-imperial" />
+                      <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-8 h-[3px] rounded-full bg-gradient-to-r from-[hsl(var(--gold))] to-[hsl(var(--pink))] shadow-[0_0_14px_hsl(var(--gold)/0.85)]" />
                     )}
-                    <Icon className={`w-5 h-5 ${active ? "text-primary" : "text-muted-foreground"}`} />
+                    <Icon
+                      className={`w-5 h-5 transition-all duration-200 ${
+                        active
+                          ? "text-[hsl(var(--gold))] scale-110 drop-shadow-[0_0_8px_hsl(var(--gold)/0.7)]"
+                          : "text-muted-foreground group-hover:text-foreground"
+                      }`}
+                    />
                     <span
-                      className={`text-[10px] font-semibold ${active ? "text-foreground" : "text-muted-foreground"}`}
+                      className={`text-[10px] font-bold tracking-wide transition-colors ${
+                        active ? "text-foreground" : "text-muted-foreground"
+                      }`}
                     >
                       {item.label}
                     </span>

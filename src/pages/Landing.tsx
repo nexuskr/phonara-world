@@ -92,11 +92,11 @@ function Hero() {
         >
           <Link
             to="/auth?mode=signup"
-            className="group inline-flex items-center gap-2.5 h-[64px] px-9 rounded-2xl bg-gradient-to-r from-[hsl(var(--gold))] to-[hsl(var(--pink))] text-background font-black text-lg md:text-xl press shadow-[0_18px_60px_-18px_hsl(var(--gold)/0.7)] hover:scale-[1.02] transition-transform"
+            className="group imperial-jackpot-breathe inline-flex items-center gap-2.5 h-[64px] px-9 rounded-2xl bg-gradient-to-r from-[hsl(var(--gold))] via-[hsl(var(--gold))] to-[hsl(var(--pink))] text-background font-black text-lg md:text-xl press glow-pink-xl hover:scale-[1.04] transition-transform"
           >
             <Crown className="w-5 h-5" />
             지금 무료로 황제가 되기
-            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
           </Link>
           <div className="text-[12px] sm:text-[13px] text-[hsl(var(--gold)/0.85)] flex items-center gap-1.5 font-bold">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
@@ -129,7 +129,7 @@ function Trust() {
               key={w.title}
               initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-60px" }}
               transition={{ duration: 0.35, delay: i * 0.05 }}
-              className="rounded-2xl border border-border/50 bg-card/40 p-5"
+              className="imperial-card-hover imperial-corner-shine rounded-2xl border border-[hsl(var(--gold)/0.35)] bg-card/40 p-5 relative overflow-hidden"
             >
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[hsl(var(--gold)/.2)] to-[hsl(var(--pink)/.15)] border border-border/50 flex items-center justify-center text-[hsl(var(--gold))] mb-3">
                 <Icon className="w-4 h-4" />
@@ -143,7 +143,7 @@ function Trust() {
       <div className="mt-10 text-center">
         <Link
           to="/auth?mode=signup"
-          className="inline-flex items-center gap-2 h-14 px-7 rounded-2xl bg-gradient-to-r from-[hsl(var(--gold))] to-[hsl(var(--pink))] text-background font-black text-base md:text-lg press shadow-[0_14px_40px_-18px_hsl(var(--gold)/.7)]"
+          className="imperial-jackpot-breathe inline-flex items-center gap-2 h-14 px-7 rounded-2xl bg-gradient-to-r from-[hsl(var(--gold))] to-[hsl(var(--pink))] text-background font-black text-base md:text-lg press glow-pink-xl hover:scale-[1.04] transition-transform"
         >
           <Sparkles className="w-5 h-5" />
           지금 무료로 황제가 되기 <ArrowRight className="w-4 h-4" />
