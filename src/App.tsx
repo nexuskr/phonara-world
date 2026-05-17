@@ -257,6 +257,9 @@ const App = () => (
 
               {/* v14.0 — 4탭 슬림 IA */}
               <Route path="/home" element={<Home />} />
+              <Route path="/phon" element={<PhonHub />} />
+              <Route path="/swap" element={<Navigate to="/phon" replace />} />
+              <Route path="/stake" element={<Navigate to="/phon" replace />} />
               <Route path="/earn" element={<Earn />} />
               <Route path="/live" element={<Live />} />
               <Route path="/games" element={<CasinoLobby />} />
