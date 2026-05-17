@@ -129,7 +129,7 @@ function Trust() {
               key={w.title}
               initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-60px" }}
               transition={{ duration: 0.35, delay: i * 0.05 }}
-              className="rounded-2xl border border-border/50 bg-card/40 p-5"
+              className="imperial-card-hover imperial-corner-shine rounded-2xl border border-[hsl(var(--gold)/0.35)] bg-card/40 p-5 relative overflow-hidden"
             >
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[hsl(var(--gold)/.2)] to-[hsl(var(--pink)/.15)] border border-border/50 flex items-center justify-center text-[hsl(var(--gold))] mb-3">
                 <Icon className="w-4 h-4" />
