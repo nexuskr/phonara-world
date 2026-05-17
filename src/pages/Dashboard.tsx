@@ -38,6 +38,10 @@ import RoutingMigrationBanner from "@/components/RoutingMigrationBanner";
 import ChurnReactivationBanner from "@/components/reactivation/ChurnReactivationBanner";
 const DailyChest = lazy(() => import("@/components/gamification/DailyChest"));
 const LevelProgressBar = lazy(() => import("@/components/gamification/LevelProgressBar"));
+const LivePayoutCounter = lazy(() => import("@/components/fomo/LivePayoutCounter"));
+const FriendLeaderboard = lazy(() => import("@/components/fomo/FriendLeaderboard"));
+const FriendGapToast = lazy(() => import("@/components/fomo/FriendGapToast"));
+const FoundingContendersBadge = lazy(() => import("@/components/fomo/FoundingContendersBadge"));
 
 // 접힘 영역에 들어가는 기존 컴포넌트들 — 모두 lazy
 const LiveRanking = lazy(() => import("@/components/LiveRanking"));
