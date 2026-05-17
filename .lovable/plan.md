@@ -1,61 +1,109 @@
-# PHON Pass 2 Final — Lock & Next Phase Kickoff
+# Phase A — 게임화 Pass 2 (레벨업 폭죽 + 업적 트리 + 30개 업적)
 
-## 1. Pass 2 마무리 (즉시 실행)
+Pass 2 Final Lock은 이미 완료 (cron jobid=64, mem 등재, 검증 PASS).
+이제 Phase A를 먼저 단독 실행한다. B/C는 A 완료 후 별도 plan으로 진행.
 
-### A. settle_phon_staking_daily cron 등록
-- Edge function `settle-phon-staking-daily` 신규 생성
-  - 내부에서 SQL RPC `settle_phon_staking_daily()` 호출 (이미 마이그레이션에 포함됨)
-  - 인증: service-role, verify_jwt=false
-- pg_cron 등록 (insert tool 사용 — anon key 포함이라 마이그레이션 금지)
-  - schedule: `10 15 * * *` (UTC 15:10 = KST 00:10)
-  - target: `net.http_post` → 해당 edge function URL
-- 실패 대비: edge function 내부에서 error_logs 적재
+## 목표
+1. 레벨업 / 업적 달성 순간을 **압도적으로 짜릿하게** (canvas-confetti + framer-motion)
+2. 30개 업적을 4개 카테고리 트리로 시각화, 진행도 실시간
+3. 모든 트리거는 기존 이벤트(베팅 정산, 입금, 스테이킹, Crown, 출석)에 **non-invasive** 후크 — money-flow 8경로 0줄
 
-### B. 메모리 인덱스 등재
-- 새 파일 `mem://features/phon-economy-pass2`
-  - 내용: 테이블(swap_audit, swap_limits_daily, staking_policies, phon_stakes, phon_stake_yields, phon_bet_audit), RPC(swap_phon_krw, stake_phon, unstake_phon, open_position_phon, close_position_phon, settle_phon_staking_daily, get_phon_traders_24h, get_recent_phon_wins, get_my_phon_leverage_bonus), kill switches(phon_swap/phon_staking/phon_betting), 컴포넌트 위치, AAL2 게이트, 20% 할인 공식, leverage +50% 보너스
-- `mem://index.md` Memories 섹션에 한 줄 추가
+## DB
+신규 마이그레이션 1개:
 
-### C. E2E 최종 검증
-- `node scripts/check-money-flow-freeze.mjs` — 0 diff
-- `node scripts/check-operator-isolation.mjs` — PASS
-- `npm run size:check` — PASS
-- read_query로 신규 RPC 존재 확인 + kill switch row 확인
-- cron 등록 후 `cron.job` 테이블 select로 정상 스케줄 확인
+```text
+achievements (정적 카탈로그, seed 30개)
+  id text PK, category text, tier int(1-3), title text, description text,
+  icon text, requirement jsonb, reward_phon int, parent_id text NULL, sort int
 
-## 2. 다음 Phase (사용자 선택 대기)
+user_achievements
+  user_id uuid, achievement_id text, unlocked_at timestamptz,
+  progress numeric default 0, claimed_at timestamptz NULL
+  PK (user_id, achievement_id)
+  RLS: self SELECT, internal INSERT/UPDATE only
 
-세 가지 모두 큰 작업이므로 한 번에 진행하지 않고 우선순위 확인 필요:
-
-- **A. 게임화 Pass 2** — 레벨업 폭죽(framer-motion + canvas-confetti), 업적 트리 UI, 업적 30종 정의 + RPC + 진행도 추적
-- **B. FOMO Engine v2** — 친구 그래프(referral 기반), realtime 친구 윈/입금 푸시, "친구가 XX PHON 벌었어요" 토스트 + 홈 띠
-- **C. PhonHub 고도화** — 스테이킹/배당/레버리지/스왑/잔액을 한 화면 중앙 허브로 재설계
-
-## 기술 세부
-
-### Cron SQL (insert tool로 실행)
-```sql
-select cron.schedule(
-  'settle-phon-staking-daily',
-  '10 15 * * *',
-  $$
-  select net.http_post(
-    url:='https://ketlqzfaplppmupaiwft.supabase.co/functions/v1/settle-phon-staking-daily',
-    headers:='{"Content-Type":"application/json","apikey":"<ANON>"}'::jsonb,
-    body:='{}'::jsonb
-  );
-  $$
-);
+achievement_events (감사)
+  id, user_id, achievement_id, kind(unlocked|progress|claimed), meta jsonb, created_at
 ```
 
-### 절대 불변
-- money-flow 8경로 0줄
-- Operator Isolation / Bundle Budget / Realtime Partition / Active Governor 무손상
-- 신규 컴포넌트는 React.lazy + v3 폴더 규칙
+### RPC (모두 SECURITY DEFINER)
+- `get_my_achievements()` → 30개 카탈로그 + 내 진행도/언락 상태 조인 반환
+- `claim_achievement(_id text)` → unlocked & not claimed 시 reward_phon 지급 (phon_transactions kind='achievement_reward', idempotent)
+- `record_achievement_progress(_uid, _id, _delta, _meta)` — internal, 100% 도달 시 자동 unlock + `fomo_notifications`(kind='achievement_unlocked') + realtime
+- `recompute_achievement_for(_uid, _event_kind, _payload)` — internal dispatcher
 
-## 승인 후 실행 순서
-1. Edge function 작성 + 배포
-2. insert tool로 cron 등록
-3. mem 파일 2개 작성 (features + index 업데이트)
-4. 검증 스크립트 3종 실행
-5. 최종 보고 + 다음 Phase(A/B/C) 우선순위 질문
+### 트리거 (기존 테이블 read-only 관찰)
+- AFTER INSERT on `crown_events` → `recompute_achievement_for(uid,'crown',...)`
+- AFTER UPDATE on `live_positions` (status→closed) → `recompute_achievement_for(uid,'trade_closed',...)`
+- AFTER INSERT on `phon_stakes` → `recompute_achievement_for(uid,'stake_open',...)`
+- AFTER INSERT on `phon_stake_yields` → 누적 배당 업적
+- AFTER UPDATE on `profiles.attendance_streak` → 출석 업적
+
+money-flow 8경로 파일은 건드리지 않음 — 트리거는 별도 SQL 객체로만 부착.
+
+### 30개 업적 카탈로그 (요약)
+- **Trade (8)**: 첫 거래 / 10·100·1000회 / PHON 베팅 첫승 / 100k PHON 누적 수익 / 10x·50x·100x 레버리지 승리
+- **Stake (6)**: 첫 스테이크 / 1k·10k·100k·1M PHON 스테이크 / 30일 누적 배당
+- **Empire (8)**: Lord(3)·Baron(7)·Emperor(10) 도달 / Crown 10·100·1000회 / Founding Seat / VIP 30일
+- **Social (4)**: 첫 친구 초대 / 친구 10명 / 첫 길드 / 길드 주간 1위
+- **Daily (4)**: 출석 7·30·100일 / 30일 일일 베팅
+
+## Edge Functions
+없음. 모든 로직은 DB 트리거 + RPC.
+
+## Frontend (모두 lazy + v3 폴더 규칙)
+```text
+src/components/achievements/v3/
+  AchievementTree.tsx        # 4 카테고리 탭 + 트리 그리드, framer-motion 카드
+  AchievementCard.tsx        # 잠금/진행/언락/수령 4상태, 진행 bar
+  AchievementClaimDialog.tsx # 수령 시 confetti + reward 표시
+  LevelUpFireworks.tsx       # 풀스크린 canvas-confetti 폭죽 (3.5s 후 자동 닫힘)
+
+src/hooks/
+  use-my-achievements.ts     # get_my_achievements() + realtime on user_achievements
+  use-claim-achievement.ts
+  use-achievement-fireworks.ts  # zustand store: fire(achievementId)
+
+src/pages/
+  Achievements.tsx           # /achievements 라우트, AchievementTree 마운트
+
+src/App.tsx
+  + <AchievementUnlockListener /> (realtime user_achievements INSERT → fireworks.fire)
+```
+
+기존 `<EmpireLevelBadge />` 승급 이벤트도 동일 fireworks 스토어 재사용.
+
+### 의존성
+- `canvas-confetti` 신규 추가 (~6KB gz, lazy import via `import("canvas-confetti")`)
+- framer-motion 기존 사용
+
+## 디자인 (Warm King)
+- 카드 잠금: 골드 톤 + 자물쇠, 잠금해제 조건 한 줄
+- 진행: 호박색 그라디언트 bar + "거의 다 왔어요 N/M"
+- 언락: 펄스 골드 링 + "수령하기" CTA
+- 수령: confetti + "🏆 새 업적: {title} — {reward_phon} PHON"
+
+토스트는 `@/lib/notify` 만 사용. 색상은 디자인 토큰.
+
+## 절대 불변
+- money-flow 8경로 git diff = 0
+- Operator Isolation / Bundle Budget / Realtime Partition 무손상
+- 모든 신규 컴포넌트 React.lazy
+- realtime은 `@pkg/realtime` `useWalletChannel` 래퍼로만 구독 (key prefix 자동)
+
+## 검증
+1. `node scripts/check-money-flow-freeze.mjs` PASS
+2. `node scripts/check-operator-isolation.mjs` PASS
+3. `npm run size:check` PASS (index 청크 변화 없음)
+4. supabase linter PASS
+5. E2E: 베팅 1회 → 진행도 1/10 → 수동 INSERT로 trigger 검증 → /achievements 트리에 잠금해제 카드 + fireworks
+
+## 실행 순서
+1. 마이그레이션 (테이블 + RLS + 30개 seed + 트리거 + RPC) — migration tool로 한 번에
+2. canvas-confetti 추가
+3. 훅 + 컴포넌트 작성 (5개 파일 병렬)
+4. /achievements 라우트 + App.tsx에 listener 마운트
+5. 검증 3종 + linter
+6. 보고 후 Phase B plan 작성
+
+승인 시 1번(migration) 먼저 호출하고 사용자 confirm 받음.
