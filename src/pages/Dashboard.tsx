@@ -1,132 +1,158 @@
-import { useEffect, useRef, lazy, Suspense } from "react";
+import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
-import { useDB } from "@/lib/store";
 import { useRequireAuth } from "@/hooks/use-require-auth";
-import { refreshWallet } from "@/lib/missions-rpc";
-import DashboardBetPanel, { type BetPanelHandle } from "@/components/dashboard/DashboardBetPanel";
-import RecoveryPrompt from "@/components/dashboard/RecoveryPrompt";
-import StreakBadge from "@/components/dashboard/StreakBadge";
-import WithdrawNudge from "@/components/dashboard/WithdrawNudge";
-import ImperialLivePulseRail from "@/components/empire/ImperialLivePulseRail";
-import ImperialLiveWinsRail from "@/components/empire/ImperialLiveWinsRail";
-import Disclaimer from "@/components/Disclaimer";
-
-// V3 — Imperial hero flow only
-import DashboardHeroV3 from "@/components/dashboard/v3/DashboardHeroV3";
-import TradingEntryCard from "@/components/dashboard/v3/TradingEntryCard";
-import ImperialJourneyMap from "@/components/journey/ImperialJourneyMap";
-const DailyBriefingCard = lazy(() => import("@/components/dashboard/DailyBriefingCard"));
-const VipWhalePreview = lazy(() => import("@/components/empire/VipWhalePreview"));
-import JourneyClaimPanel from "@/components/journey/JourneyClaimPanel";
-import KpiGridV3 from "@/components/dashboard/v3/KpiGridV3";
-import MoreSection, { type MoreSectionHandle } from "@/components/dashboard/v3/MoreSection";
-import { useMyPower } from "@/hooks/use-my-power";
-import { useOnline } from "@/components/LiveStats";
+import { Crown, Sparkles, Zap, TrendingUp, ChevronRight } from "lucide-react";
 
 /**
- * Dashboard — v19 Phase 0 Clean Rebuild.
- * Only the approved Imperial hero flow remains. All war / arena / battle /
- * legacy growth widgets are unmounted (files preserved for other pages).
+ * Dashboard — v19 Phase 0-R TRUE Clean Rebuild.
+ * Stake-style game catalog. 옛 위젯·산만한 마키·토스트 0개.
+ * Hero(검색-less) → 카테고리 칩 → Originals → Slots → Trading 진입.
  */
+type GameCard = {
+  to: string;
+  title: string;
+  badge?: string;
+  multiplier?: string;
+  tone: "gold" | "violet" | "rose" | "emerald" | "azure";
+};
+
+const ORIGINALS: GameCard[] = [
+  { to: "/casino/olympus-1000", title: "Olympus 1000", multiplier: "1000×", tone: "gold" },
+  { to: "/casino/wizard-2000", title: "Wizard 2000", multiplier: "2000×", tone: "violet" },
+  { to: "/casino/cosmic-forge-5000", title: "Cosmic Forge", multiplier: "5000×", tone: "azure" },
+  { to: "/casino/sugar-fever-3000", title: "Sugar Fever", multiplier: "3000×", tone: "rose" },
+  { to: "/casino/viking-thunder-4000", title: "Viking Thunder", multiplier: "4000×", tone: "azure" },
+  { to: "/casino/olympus-legacy-5000", title: "Olympus Legacy", multiplier: "5000×", tone: "gold" },
+];
+
+const SLOTS: GameCard[] = [
+  { to: "/casino/dragon-empire", title: "Dragon Empire", badge: "HOT", tone: "rose" },
+  { to: "/casino/pharaohs-vault-2500", title: "Pharaoh's Vault", multiplier: "2500×", tone: "gold" },
+  { to: "/casino/pirates-curse-1500", title: "Pirate's Curse", multiplier: "1500×", tone: "emerald" },
+  { to: "/casino/aztec-sun-1200", title: "Aztec Sun", multiplier: "1200×", tone: "gold" },
+  { to: "/casino/neon-tokyo-88", title: "Neon Tokyo 88", badge: "NEW", tone: "violet" },
+  { to: "/casino/cherry-sakura-500", title: "Cherry Sakura", multiplier: "500×", tone: "rose" },
+];
+
+const CATEGORIES = [
+  { to: "/casino", icon: Sparkles, label: "슬롯" },
+  { to: "/crash", icon: Zap, label: "Crash" },
+  { to: "/trade", icon: TrendingUp, label: "트레이딩" },
+  { to: "/empire", icon: Crown, label: "제국" },
+];
+
+function toneClasses(tone: GameCard["tone"]) {
+  switch (tone) {
+    case "gold":    return "from-amber-500/30 via-amber-700/15 to-stone-950";
+    case "violet":  return "from-violet-500/30 via-violet-700/15 to-stone-950";
+    case "rose":    return "from-rose-500/30 via-rose-700/15 to-stone-950";
+    case "emerald": return "from-emerald-500/30 via-emerald-700/15 to-stone-950";
+    case "azure":   return "from-sky-500/30 via-sky-700/15 to-stone-950";
+  }
+}
+
+function GameCardTile({ g }: { g: GameCard }) {
+  return (
+    <Link
+      to={g.to}
+      className={`group relative aspect-[3/4] rounded-xl overflow-hidden border border-border/40 bg-gradient-to-br ${toneClasses(g.tone)} hover:border-primary/50 transition press`}
+    >
+      <div className="absolute inset-x-0 top-0 p-2 flex items-start justify-between">
+        {g.badge && (
+          <span className="px-1.5 py-0.5 rounded text-[9px] font-black tracking-wider bg-primary text-primary-foreground">
+            {g.badge}
+          </span>
+        )}
+        {g.multiplier && (
+          <span className="ml-auto px-1.5 py-0.5 rounded text-[10px] font-mono font-black bg-background/60 text-foreground border border-border/40">
+            {g.multiplier}
+          </span>
+        )}
+      </div>
+      <div className="absolute inset-x-0 bottom-0 p-2.5 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
+        <div className="text-xs sm:text-sm font-bold text-foreground truncate">{g.title}</div>
+      </div>
+    </Link>
+  );
+}
+
+function Rail({ title, to, items }: { title: string; to: string; items: GameCard[] }) {
+  return (
+    <section className="space-y-3">
+      <div className="flex items-end justify-between">
+        <h2 className="text-base sm:text-lg font-bold tracking-tight">{title}</h2>
+        <Link
+          to={to}
+          className="text-[11px] text-muted-foreground hover:text-foreground inline-flex items-center gap-0.5"
+        >
+          모두 보기 <ChevronRight className="w-3 h-3" />
+        </Link>
+      </div>
+      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 sm:gap-3">
+        {items.map((g) => <GameCardTile key={g.to} g={g} />)}
+      </div>
+    </section>
+  );
+}
+
 export default function Dashboard() {
-  const [db] = useDB();
   const user = useRequireAuth();
-  const betRef = useRef<BetPanelHandle>(null);
-  const moreRef = useRef<MoreSectionHandle>(null);
-
-  useEffect(() => { void refreshWallet(); }, []);
-
-  // CTA / focus 이벤트 통합 — More 펼침 + 베팅 패널 포커스
-  useEffect(() => {
-    const focus = () => {
-      moreRef.current?.open();
-      setTimeout(() => betRef.current?.focusAmount(), 320);
-    };
-    const onFocusBet = () => focus();
-    const onFocusTrade = () => focus();
-    window.addEventListener("phonara:focus-bet", onFocusBet);
-    window.addEventListener("phonara:focus-trade", onFocusTrade);
-    try {
-      const url = new URL(window.location.href);
-      if (url.searchParams.get("focus") === "bet") {
-        setTimeout(focus, 500);
-        url.searchParams.delete("focus");
-        window.history.replaceState({}, "", url.toString());
-      }
-    } catch {}
-    return () => {
-      window.removeEventListener("phonara:focus-bet", onFocusBet);
-      window.removeEventListener("phonara:focus-trade", onFocusTrade);
-    };
-  }, []);
-
-  const { phon, nfts } = useMyPower();
-  const online = useOnline();
-
   if (!user) return null;
 
   return (
     <Layout>
-      <div className="container pt-3 flex flex-col gap-3">
-        <ImperialLivePulseRail />
-        <ImperialLiveWinsRail />
-      </div>
-
-      {/* 🌌 100vh Cosmic Hero — 단일 CTA */}
-      <DashboardHeroV3 phon={phon} nfts={nfts} online={online} />
-
-      <div className="container relative pt-6 pb-12 space-y-6">
-        {/* 🌅 Daily Imperial Briefing */}
-        <Suspense fallback={null}><DailyBriefingCard /></Suspense>
-
-        {/* 👑 VIP 30초 선공개 — VIP만 노출 */}
-        <Suspense fallback={null}><VipWhalePreview /></Suspense>
-
-        {/* 👑 Imperial Journey — 100단계 진행 + 다음 행동 1개 */}
-        <ImperialJourneyMap />
-
-        {/* 🎁 100-Stage Claim Panel */}
-        <JourneyClaimPanel />
-
-        {/* ⚡ 핵심 베팅 진입 카드 */}
-        <TradingEntryCard />
-
-        {/* 🎰 Olympus Slots 진입 */}
-        <a
-          href="/casino"
-          className="block rounded-2xl border-2 border-primary/40 hover:border-primary glow-imperial transition press p-4 bg-gradient-to-br from-amber-950/30 via-background to-stone-950/40 relative overflow-hidden"
-        >
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <div className="text-[10px] tracking-[0.3em] text-primary/80 font-bold">PHONARA SLOTS</div>
-              <div className="font-imperial text-lg text-gradient-imperial tracking-[0.18em] mt-1">
-                Olympus 1000
-              </div>
-              <div className="text-[11px] text-muted-foreground mt-1">
-                자체 슬롯 엔진 · DEMO 무료 · REAL은 PHON · RTP 96.0%
-              </div>
-            </div>
-            <div className="text-right">
-              <div className="text-[10px] text-muted-foreground tracking-wider">MAX</div>
-              <div className="font-mono text-xl font-black text-primary">1000×</div>
-            </div>
+      <div className="container pt-6 pb-12 space-y-8">
+        {/* Hero */}
+        <header className="space-y-4">
+          <div>
+            <div className="text-[10px] tracking-[0.3em] font-bold text-primary/80 uppercase">Phonara</div>
+            <h1 className="mt-1 font-imperial text-2xl sm:text-3xl text-foreground tracking-[0.04em]">
+              지금, 폐하의 무대
+            </h1>
           </div>
-        </a>
-
-        {/* 📊 KPI 4개 */}
-        <KpiGridV3 nfts={nfts} online={online} />
-
-        {/* 📦 더 보기 — 폐하의 전략 패널만 유지 */}
-        <MoreSection ref={moreRef}>
-          <div className="flex items-center justify-between gap-2 pt-2">
-            <div className="text-[10px] tracking-[0.3em] font-bold text-primary/80">폐하의 전략 패널</div>
-            <StreakBadge />
+          {/* Category chips */}
+          <div className="flex flex-wrap gap-2">
+            {CATEGORIES.map((c) => {
+              const Icon = c.icon;
+              return (
+                <Link
+                  key={c.to}
+                  to={c.to}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border/50 bg-card/40 hover:border-primary/60 hover:bg-primary/10 transition text-[12px] font-semibold text-foreground/90 press"
+                >
+                  <Icon className="w-3.5 h-3.5 text-primary" />
+                  {c.label}
+                </Link>
+              );
+            })}
           </div>
-          <RecoveryPrompt onResubmit={() => betRef.current?.resubmit()} />
-          <DashboardBetPanel ref={betRef} />
-          <WithdrawNudge />
-          <Disclaimer />
-        </MoreSection>
+        </header>
+
+        {/* Game catalogs */}
+        <Rail title="Phonara Originals" to="/casino" items={ORIGINALS} />
+        <Rail title="Slots" to="/casino" items={SLOTS} />
+
+        {/* Trading 진입 */}
+        <section className="space-y-3">
+          <div className="flex items-end justify-between">
+            <h2 className="text-base sm:text-lg font-bold tracking-tight">트레이딩</h2>
+          </div>
+          <Link
+            to="/trade"
+            className="block rounded-2xl border border-border/50 bg-gradient-to-r from-emerald-900/20 via-background to-rose-900/20 hover:border-primary/60 transition press p-5"
+          >
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <div className="text-[10px] tracking-[0.3em] text-primary/80 font-bold">BTC · ETH · SOL</div>
+                <div className="font-imperial text-lg mt-1 text-foreground">Imperial Trade</div>
+                <div className="text-[11px] text-muted-foreground mt-1">
+                  실시간 가격 · LONG / SHORT · PHON 잔액으로 즉시 진입
+                </div>
+              </div>
+              <ChevronRight className="w-5 h-5 text-primary shrink-0" />
+            </div>
+          </Link>
+        </section>
       </div>
     </Layout>
   );

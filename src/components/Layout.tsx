@@ -1,5 +1,5 @@
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { lazy, Suspense, useEffect as useEffectIdle, useState as useStateIdle, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   LayoutDashboard,
   Zap,
@@ -34,37 +34,12 @@ import {
 } from "@/components/ui/accordion";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
-// Heavy/non-critical UI deferred to idle to reduce TTI on mobile
-const FloatingChat = lazy(() => import("./FloatingChat"));
-const NeonNotificationFeed = lazy(() => import("./NeonNotificationFeed"));
-const BaronPromotionDialog = lazy(() => import("./empire/BaronPromotionDialog"));
-const EmpireBoosterTimer = lazy(() => import("./empire/EmpireBoosterTimer"));
-const EmpireConcierge = lazy(() => import("./empire/EmpireConcierge"));
-const ReplayShareGlobal = lazy(() => import("./empire/ReplayShareGlobal"));
-const CrownWarFinaleModal = lazy(() => import("./empire/CrownWarFinaleModal"));
-const PowerHeader = lazy(() => import("./empire/PowerHeader"));
-const FirstEmperorBurst = lazy(() => import("./empire/FirstEmperorBurst"));
-const CrownThroneOverlay = lazy(() => import("./empire/CrownThroneOverlay"));
-
-function useIdleMount(delayMs = 1500) {
-  const [ready, setReady] = useStateIdle(false);
-  useEffectIdle(() => {
-    const w: any = typeof window !== "undefined" ? window : null;
-    if (!w) return;
-    const ric = w.requestIdleCallback;
-    if (ric) {
-      const id = ric(() => setReady(true), { timeout: 3000 });
-      return () => w.cancelIdleCallback?.(id);
-    }
-    const t = window.setTimeout(() => setReady(true), delayMs);
-    return () => window.clearTimeout(t);
-  }, [delayMs]);
-  return ready;
-}
-const QuickAccessStrip = lazy(() => import("./QuickAccessStrip"));
-const ImperialInbox = lazy(() => import("./empire/ImperialInbox"));
-const EmpirePopulationPulse = lazy(() => import("./EmpirePopulationPulse"));
-const ImperialHud = lazy(() => import("./imperial/ImperialHud"));
+// v19 Phase 0-R: 글로벌 idle 오버레이 13종 전면 마운트 해제.
+// (FloatingChat, NeonNotificationFeed, BaronPromotionDialog, EmpireBoosterTimer,
+//  EmpireConcierge, ReplayShareGlobal, CrownWarFinaleModal, PowerHeader,
+//  FirstEmperorBurst, CrownThroneOverlay, ImperialInbox, QuickAccessStrip,
+//  EmpirePopulationPulse, ImperialHud)
+// 파일은 보존하여 다른 페이지에서 직접 import 가능.
 
 /**
  * Phonara — Cosmic Emperor V3 Grouped Navigation
@@ -263,7 +238,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   useUserNotifications(user?.id);
   useAdminNotifications(!!user?.isAdmin);
-  const idleReady = useIdleMount(1500);
+  // v19 Phase 0-R: idle 오버레이 모두 제거
   const [sheetOpen, setSheetOpen] = useState(false);
 
   return (
@@ -357,11 +332,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <div className="flex items-center gap-2">
             <TopHUD />
             <TopHUDCompact />
-            {user && (
-              <Suspense fallback={null}>
-                <ImperialInbox />
-              </Suspense>
-            )}
+            {/* v19 Phase 0-R: ImperialInbox 마운트 해제 */}
             {user && (
               <Link
                 to="/profile"
@@ -386,39 +357,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      {/* Live population pulse strip */}
-      {idleReady && (
-        <Suspense fallback={null}>
-          <EmpirePopulationPulse />
-          {user && <ImperialHud />}
-          {user && <QuickAccessStrip />}
-        </Suspense>
-      )}
+      {/* v19 Phase 0-R: EmpirePopulationPulse / ImperialHud / QuickAccessStrip / NeonNotificationFeed
+          / BaronPromotionDialog / EmpireBoosterTimer / EmpireConcierge / ReplayShareGlobal
+          / CrownWarFinaleModal / CrownThroneOverlay / PowerHeader / FirstEmperorBurst 모두 마운트 해제 */}
 
       <main className="relative">{children}</main>
-      {idleReady && (
-        <Suspense fallback={null}>
-          <NeonNotificationFeed />
-          <BaronPromotionDialog />
-          <EmpireBoosterTimer />
-          <EmpireConcierge />
-          <ReplayShareGlobal />
-          <CrownWarFinaleModal />
-          <CrownThroneOverlay />
-          <PowerHeader />
-          <FirstEmperorBurst onCta={() => {
-            try {
-              if (typeof window !== "undefined") {
-                if (window.location.pathname !== "/dashboard") {
-                  window.location.href = "/dashboard?focus=bet";
-                } else {
-                  window.dispatchEvent(new CustomEvent("phonara:focus-bet"));
-                }
-              }
-            } catch {}
-          }} />
-        </Suspense>
-      )}
 
       {/* Mobile bottom nav — 5 tabs with center FAB */}
       {user && (
@@ -473,11 +416,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </nav>
       )}
 
-      {user && idleReady && (
-        <Suspense fallback={null}>
-          <FloatingChat />
-        </Suspense>
-      )}
+      {/* v19 Phase 0-R: FloatingChat 마운트 해제 */}
     </div>
   );
 }

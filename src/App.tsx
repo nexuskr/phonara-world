@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect } from "react";
 // PR-B: framer-motion 정적 import 제거 — MotionConfig 의존성 한 줄 때문에
 // entry 그래프에 framer-motion(45KB gz) 전체가 정적 결합되어 Layer 1 부담.
 // reduced-motion 은 motion 컴포넌트가 prefers-reduced-motion CSS 미디어 쿼리로
@@ -24,7 +24,6 @@ import MaintenanceGate from "./components/MaintenanceGate";
 import { DegradeModeBinder } from "./components/system/DegradeModeBinder";
 import { DegradeModeBanner } from "./components/system/DegradeModeBanner";
 import { registerSW } from "./lib/pwa/registerSW";
-import ImperialDeepLinkListener from "./hooks/use-imperial-highlight";
 
 installGlobalErrorLogging();
 registerSW();
@@ -59,7 +58,6 @@ const EntropyChip = (import.meta as { env?: { DEV?: boolean } }).env?.DEV
   ? lazy(() => import("@pkg/entropy/EntropyChip"))
   : null;
 
-const Index = lazy(() => import("./pages/Index.tsx"));
 const Auth = lazy(() => import("./pages/Auth.tsx"));
 const Dashboard = lazy(() => import("./pages/Dashboard.tsx"));
 // v14.0 Great Simplification — 4탭 슬림 IA
@@ -119,7 +117,6 @@ const RecoverTotp = lazy(() => import("./pages/security/RecoverTotp.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 const Achievements = lazy(() => import("./pages/Achievements.tsx"));
 const AchievementsV3 = lazy(() => import("./pages/AchievementsV3.tsx"));
-const AchievementUnlockListener = lazy(() => import("./components/achievements/v3/AchievementUnlockListener.tsx"));
 const Empire = lazy(() => import("./pages/Empire.tsx"));
 const EmpireHall = lazy(() => import("./pages/EmpireHall.tsx"));
 const Unsubscribe = lazy(() => import("./pages/Unsubscribe.tsx"));
@@ -138,21 +135,11 @@ const Avatar = lazy(() => import("./pages/Avatar.tsx"));
 // Phase D — Avatar v3 + Virtual Lobby v3 (three3d 청크, Layer 1 미포함)
 const AvatarStudio = lazy(() => import("./pages/AvatarStudio.tsx"));
 const Lobby = lazy(() => import("./pages/Lobby.tsx"));
-const LobbyFab = lazy(() => import("./components/lobby/LobbyFab.tsx"));
 const Landing = lazy(() => import("./pages/Landing.tsx"));
 const Welcome = lazy(() => import("./pages/Welcome.tsx"));
-// v19 Slice 1: OnboardingV3 global overlay 마운트 해제 — /welcome 가 첫 진입 1회 흐름 담당.
 const DevConsole = lazy(() => import("./pages/DevConsole.tsx"));
-const ForcedShareDialog = lazy(() => import("./components/share/ForcedShareDialog.tsx"));
-const BigWinShareHost = lazy(() => import("./components/share/BigWinShareHost.tsx"));
-const VipArrivalAnnouncer = lazy(() => import("./components/empire/VipArrivalAnnouncer.tsx"));
-const ReactivationOfferDialog = lazy(() => import("./components/reactivation/ReactivationOfferDialog.tsx"));
-import { PracticeModeBanner } from "./components/practice/PracticeModeBanner";
+// v19 Phase 0-R: 글로벌 오버레이 17종 마운트 전면 해제. PracticeModeGate 만 라우트 가드용으로 보존.
 import { PracticeModeGate } from "./components/practice/PracticeModeGate";
-import SimGlobalBadge from "./components/SimGlobalBadge";
-import { FloatingDockHost } from "./components/ui/floating-dock";
-const EmpireMomentToast = lazy(() => import("./components/empire/EmpireMomentToast"));
-const FloatingCashLoopWidget = lazy(() => import("./components/empire/FloatingCashLoopWidget"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -195,15 +182,14 @@ function SessionWatcher() {
   return null;
 }
 
-/** Mount global overlays late, and never on auth/guide/landing routes. */
+/**
+ * v19 Phase 0-R: 글로벌 오버레이 전면 해제.
+ * 슬롯 사운드 preload 만 idle 시점에 1회 실행 (시각 마운트 없음).
+ */
 function GlobalOverlays() {
-  const loc = useLocation();
-  const [ready, setReady] = useState(false);
   useEffect(() => {
     if (typeof window === "undefined") return;
     const cb = () => {
-      setReady(true);
-      // 공통 사운드 1회 preload — 슬롯 진입 전에 캐시 워밍
       try {
         void import("@/lib/sounds/SlotSoundManager").then(({ soundManager }) => {
           soundManager.loadCommonSounds();
@@ -220,22 +206,7 @@ function GlobalOverlays() {
     const t = setTimeout(cb, 2500);
     return () => clearTimeout(t);
   }, []);
-  const HIDDEN = ["/guide", "/auth", "/secure-auth", "/welcome", "/forgot-password", "/reset-password", "/auth/callback", "/", "/unsubscribe", "/legal", "/live", "/i", "/casino"];
-  if (HIDDEN.some((r) => r === loc.pathname || (r !== "/" && loc.pathname.startsWith(r)))) return null;
-  if (!ready) return null;
-  return (
-    <>
-      <FloatingDockHost />
-      <PracticeModeBanner />
-      <SimGlobalBadge />
-      <Suspense fallback={null}><EmpireMomentToast /></Suspense>
-      <Suspense fallback={null}><FloatingCashLoopWidget /></Suspense>
-      <Suspense fallback={null}><ForcedShareDialog /></Suspense>
-      <Suspense fallback={null}><VipArrivalAnnouncer /></Suspense>
-      <Suspense fallback={null}><ReactivationOfferDialog /></Suspense>
-      
-    </>
-  );
+  return null;
 }
 
 const App = () => (
@@ -254,15 +225,12 @@ const App = () => (
           {EntropyChip && (
             <Suspense fallback={null}><EntropyChip /></Suspense>
           )}
-          <Suspense fallback={null}><BigWinShareHost /></Suspense>
-          <Suspense fallback={null}><AchievementUnlockListener /></Suspense>
-          <Suspense fallback={null}><LobbyFab /></Suspense>
-          <ImperialDeepLinkListener />
+          {/* v19 Phase 0-R: BigWinShareHost / AchievementUnlockListener / LobbyFab / ImperialDeepLinkListener 마운트 해제 */}
           <Suspense fallback={<RouteFallback />}>
             <MaintenanceGate>
             <Routes>
               <Route path="/" element={<Landing />} />
-              <Route path="/legacy-index" element={<Index />} />
+              {/* v19 Phase 0-R: /legacy-index 제거 */}
               <Route path="/auth" element={<Auth />} />
               <Route path="/welcome" element={<Welcome />} />
 

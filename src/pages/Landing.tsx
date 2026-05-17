@@ -2,21 +2,17 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowRight, Coins, Crown, Radio, ShieldCheck, Sparkles } from "lucide-react";
 import PhonaraTopBar from "@/components/nav/PhonaraTopBar";
-import ImperialLiveWinsRail from "@/components/empire/ImperialLiveWinsRail";
 
 /**
- * /  — v19 Phase 0 Clean Rebuild.
- * Hero(Imperial vignette) → Live Wins Rail(full) → Trust 3-line → Footer.
- * War / Arena / Battle 마키 및 옛 feature grid 전부 제거.
+ * /  — v19 Phase 0-R TRUE Clean Rebuild.
+ * Hero(Imperial vignette) → Trust 3-line → Footer.
+ * 라이브 마키 / pulse-halo / 광역 글로우 전부 제거.
  */
 export default function Landing() {
   return (
     <div className="min-h-screen bg-[#110d1a] text-foreground">
       <PhonaraTopBar />
       <Hero />
-      <section className="container py-4 md:py-6">
-        <ImperialLiveWinsRail variant="full" />
-      </section>
       <Trust />
       <Footer />
     </div>
@@ -96,17 +92,10 @@ function Hero() {
         >
           <Link
             to="/auth?mode=signup"
-            className="pulse-halo glow-pink-xl group inline-flex items-center gap-2.5 h-[68px] px-9 rounded-2xl bg-gradient-to-r from-[hsl(var(--gold))] via-[hsl(var(--gold))] to-[hsl(var(--pink))] text-background font-black text-lg md:text-xl press shadow-[0_28px_84px_-18px_hsl(var(--gold)/0.95),0_0_0_1px_hsl(var(--gold)/0.75)] glow-imperial hover:scale-[1.02] transition-transform"
+            className="group inline-flex items-center gap-2.5 h-[64px] px-9 rounded-2xl bg-gradient-to-r from-[hsl(var(--gold))] to-[hsl(var(--pink))] text-background font-black text-lg md:text-xl press shadow-[0_18px_60px_-18px_hsl(var(--gold)/0.7)] hover:scale-[1.02] transition-transform"
           >
             <Crown className="w-5 h-5" />
             지금 무료로 황제가 되기
-            <span className="ml-1 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-background/25 text-[11px] md:text-[12px] font-black tracking-wide">
-              <span className="relative inline-flex">
-                <span className="absolute inset-0 rounded-full bg-[hsl(var(--gold))] animate-ping opacity-80" />
-                <span className="relative inline-block w-1.5 h-1.5 rounded-full bg-[hsl(var(--gold))]" />
-              </span>
-              +10,000 PHON
-            </span>
             <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
           </Link>
           <div className="text-[12px] sm:text-[13px] text-[hsl(var(--gold)/0.85)] flex items-center gap-1.5 font-bold">
@@ -154,7 +143,7 @@ function Trust() {
       <div className="mt-10 text-center">
         <Link
           to="/auth?mode=signup"
-          className="pulse-halo inline-flex items-center gap-2 h-14 px-7 rounded-2xl bg-gradient-to-r from-[hsl(var(--gold))] to-[hsl(var(--pink))] text-background font-black text-base md:text-lg press shadow-[0_18px_60px_-18px_hsl(var(--gold)/.8)] glow-imperial"
+          className="inline-flex items-center gap-2 h-14 px-7 rounded-2xl bg-gradient-to-r from-[hsl(var(--gold))] to-[hsl(var(--pink))] text-background font-black text-base md:text-lg press shadow-[0_14px_40px_-18px_hsl(var(--gold)/.7)]"
         >
           <Sparkles className="w-5 h-5" />
           지금 무료로 황제가 되기 <ArrowRight className="w-4 h-4" />
