@@ -146,6 +146,118 @@ export type Database = {
         }
         Relationships: []
       }
+      achievement_audit: {
+        Row: {
+          achievement_id: string
+          created_at: string
+          id: number
+          kind: string
+          meta: Json | null
+          user_id: string
+        }
+        Insert: {
+          achievement_id: string
+          created_at?: string
+          id?: number
+          kind: string
+          meta?: Json | null
+          user_id: string
+        }
+        Update: {
+          achievement_id?: string
+          created_at?: string
+          id?: number
+          kind?: string
+          meta?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      achievement_catalog: {
+        Row: {
+          category: string
+          created_at: string
+          description: string
+          icon: string
+          id: string
+          parent_id: string | null
+          requirement: Json
+          reward_phon: number
+          sort: number
+          tier: number
+          title: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description: string
+          icon?: string
+          id: string
+          parent_id?: string | null
+          requirement: Json
+          reward_phon?: number
+          sort?: number
+          tier: number
+          title: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string
+          icon?: string
+          id?: string
+          parent_id?: string | null
+          requirement?: Json
+          reward_phon?: number
+          sort?: number
+          tier?: number
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "achievement_catalog_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "achievement_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      achievement_progress: {
+        Row: {
+          achievement_id: string
+          claimed_at: string | null
+          progress: number
+          unlocked_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          achievement_id: string
+          claimed_at?: string | null
+          progress?: number
+          unlocked_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          achievement_id?: string
+          claimed_at?: string | null
+          progress?: number
+          unlocked_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "achievement_progress_achievement_id_fkey"
+            columns: ["achievement_id"]
+            isOneToOne: false
+            referencedRelation: "achievement_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       achievements_catalog: {
         Row: {
           ap: number
@@ -9393,6 +9505,14 @@ export type Database = {
         Args: { _deposit_amount: number; _user_id: string }
         Returns: number
       }
+      _achv_increment: {
+        Args: { _delta?: number; _id: string; _meta?: Json; _uid: string }
+        Returns: undefined
+      }
+      _achv_record: {
+        Args: { _id: string; _meta?: Json; _new_progress: number; _uid: string }
+        Returns: undefined
+      }
       _check_daily_operator_pnl: { Args: never; Returns: Json }
       _crash_compute_multiplier: { Args: { _seed: string }; Returns: number }
       _crash_vip_limits: {
@@ -10451,6 +10571,7 @@ export type Database = {
       check_permission_drift: { Args: never; Returns: Json }
       check_rls_integrity: { Args: never; Returns: Json }
       chest_tier_for_streak: { Args: { _streak: number }; Returns: string }
+      claim_achievement: { Args: { _id: string }; Returns: Json }
       claim_ai_bot_run: { Args: { _run_id: string }; Returns: Json }
       claim_ai_mission: { Args: { _mission_id: string }; Returns: Json }
       claim_coin_first_win: { Args: never; Returns: Json }
@@ -11087,6 +11208,24 @@ export type Database = {
           consecutive_fails: number
           easy_mode: boolean
           recovery_pct: number
+        }[]
+      }
+      get_my_achievements: {
+        Args: never
+        Returns: {
+          category: string
+          claimed_at: string
+          description: string
+          icon: string
+          id: string
+          parent_id: string
+          progress: number
+          reward_phon: number
+          sort: number
+          target: number
+          tier: number
+          title: string
+          unlocked_at: string
         }[]
       }
       get_my_api_usage_24h: {
