@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useSwapPhonKrw } from "@/hooks/use-swap-phon-krw";
 import { KRW_PER_USDT } from "@/lib/trading/currency";
-import { notify } from "@/lib/notify";
 
 /**
  * CurrencyExchangeButton — Luxury gold pill, opens a swap dialog (PHON ↔ KRW),
@@ -31,11 +30,8 @@ export default function CurrencyExchangeButton() {
     if (!valid) return;
     const res = await swap(dir, n);
     if (res?.ok) {
-      notify.success("교환 완료", { description: `${dir === "phon_to_krw" ? "PHON → KRW" : "KRW → PHON"} ${n.toLocaleString()}` });
       setOpen(false);
       setAmount("");
-    } else if (res?.error) {
-      notify.error("교환 실패", { description: res.error });
     }
   };
 
