@@ -180,6 +180,9 @@ export default function SlotSignatureWrapper({
           unitLabel="DEMO 칩"
           maxMultiplier={triggerAt}
         />
+
+        {/* DEV sound timing panel — production 자동 제거 */}
+        {import.meta.env.DEV && <SoundTimingPanel slotId={slotId} />}
       </div>
     </CasinoLayout>
   );
