@@ -3,7 +3,7 @@ import { lazy, Suspense } from "react";
 import SlimShell from "@/components/layout/SlimShell";
 import WorldHero from "@/components/nav/WorldHero";
 import { useRequireAuth } from "@/hooks/use-require-auth";
-import { Coins, Gamepad2, TrendingUp, Radio, ArrowRight } from "lucide-react";
+import { Coins, Gamepad2, TrendingUp, Radio, ArrowRight, Swords } from "lucide-react";
 import { G } from "@/lib/glossary";
 
 const WhaleStrikeRail = lazy(() => import("@/components/empire/WhaleStrikeRail"));
@@ -104,6 +104,34 @@ export default function Home() {
             );
           })}
         </div>
+
+        {/* Imperial Duel — 황제의 결투장 */}
+        <Link
+          to="/duel"
+          className="imperial-card imperial-card-hover imperial-corner-shine relative block overflow-hidden rounded-3xl p-5 border border-amber-400/35 bg-gradient-to-br from-[#160a05] via-[#0A0503] to-[#1a0a14] active:scale-[0.985] will-change-transform"
+          style={{ boxShadow: "0 0 22px hsl(38 92% 60% / 0.22), 0 0 44px hsl(330 90% 60% / 0.14)" }}
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="text-[10px] tracking-[0.32em] font-black uppercase text-amber-400/85 mb-1">
+                Imperial Duel — NEW
+              </div>
+              <div className="font-imperial text-lg text-amber-100 leading-tight"
+                   style={{ textShadow: "0 0 12px hsl(38 92% 60% / 0.5)" }}>
+                황제의 대관전 — 폐하의 순간이 기다립니다
+              </div>
+              <div className="text-sm text-amber-200/75 mt-0.5">
+                1:1 결투 · HMAC 검증 · 실시간 관전
+              </div>
+            </div>
+            <div className="shrink-0 w-11 h-11 rounded-xl grid place-items-center bg-gradient-to-br from-amber-400 to-pink-500 text-[#1a0a05]">
+              <Swords className="w-5 h-5" />
+            </div>
+          </div>
+          <div className="mt-3 inline-flex items-center gap-1 text-[11px] font-black tracking-[0.18em] uppercase text-pink-300">
+            옥좌에 오르소서 <ArrowRight className="w-3 h-3" />
+          </div>
+        </Link>
 
         {/* 실시간 빅윈 마키 — 5번째이자 마지막 카드 (≤6 룰) */}
         <Suspense fallback={null}>

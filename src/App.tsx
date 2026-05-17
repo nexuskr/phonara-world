@@ -138,6 +138,8 @@ const Lobby = lazy(() => import("./pages/Lobby.tsx"));
 const Landing = lazy(() => import("./pages/Landing.tsx"));
 const Welcome = lazy(() => import("./pages/Welcome.tsx"));
 const DevConsole = lazy(() => import("./pages/DevConsole.tsx"));
+const ImperialDuelLobby = lazy(() => import("./pages/ImperialDuelLobby.tsx"));
+const ImperialDuelArena = lazy(() => import("./pages/ImperialDuelArena.tsx"));
 // v19 Phase 0-R: 글로벌 오버레이 17종 마운트 전면 해제. PracticeModeGate 만 라우트 가드용으로 보존.
 import { PracticeModeGate } from "./components/practice/PracticeModeGate";
 
@@ -243,6 +245,8 @@ const App = () => (
               <Route path="/live" element={<Live />} />
               <Route path="/games" element={<CasinoLobby />} />
               <Route path="/trade" element={<TradingArenaBybit />} />
+              <Route path="/duel" element={<ImperialDuelLobby />} />
+              <Route path="/duel/arena/:roomId" element={<ImperialDuelArena />} />
               <Route path="/events" element={<Navigate to="/missions?tab=daily" replace />} />
               <Route path="/avatar" element={<Navigate to="/profile" replace />} />
               <Route path="/guild" element={<Navigate to="/lounge" replace />} />
