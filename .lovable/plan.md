@@ -1,92 +1,78 @@
-# v19 — Ultimate Stake Crusher: Dashboard & Landing Final
+# v19 Final Polish Round 3 — Imperial Empire World #1
 
-목표: 들어가자마자 3초 만에 "와… 미쳤다" 충격을 주는 Stake/Rollbit/Freecash 압도 수준의 Dashboard + Landing. 새 백엔드/머니플로 변경 0줄. 시각·FOMO·모바일 UX만 손본다.
+순수 프론트엔드 + DB constraint 수정만. money-flow 8경로, Operator Isolation, Bundle Budget, Phase D/F 0줄 변경.
 
-## 결과물 (사용자가 보게 될 것)
+## 1. Final Clean Rebuild (군대/배틀 잔재 영구 삭제)
 
-1. **Landing (`/`)** — 단일 히어로 "0원으로 시작해서 매일 돈을 버는 제국" + Live Activity Engine + Trust 3-line + CTA. 군대/배틀/산만 카드 0개.
-2. **Dashboard (`/command`, `/dashboard`)** — Hero → Live Activity Engine → Quick Action Chips → Imperial Trade Section (큰 차트 + LONG/SHORT) → Phonara Originals 캐러셀 → Popular Slots 캐러셀 → More Section(미션/스트릭/랭킹 작은 카드).
-3. **Mobile** — 기존 5탭 하단 nav + 중앙 PHON FAB 유지(이미 슬림됨). 썸존·breathing glow 최종 점검.
-4. **성능** — Layer 1 번들 미증가, LCP 1.2s 목표, reduced-motion 가드.
+- `src/pages/TradingArenaWithArmy.tsx`, `src/pages/WarTradingArena.tsx`, `src/components/empire/ArenaTutorialOverlay.tsx` 등 "Army/War/Arena Battle" 잔재 제거 또는 라우트에서 차단
+- `App.tsx`/`Layout.tsx`/Sidebar/BottomNav 에서 "군대 배틀" 탭 및 링크 모두 grep 후 제거
+- Trade 경로는 순수 `/trade`(차트+LONG/SHORT)만 남김
 
-## Scope (지금 손대는 파일)
+## 2. Imperial Live Activity — Fixed Luxury Engine
 
-- `src/pages/Landing.tsx` — Hero 직후에 ImperialLiveActivity 삽입. 그 외 구조 유지.
-- `src/pages/Dashboard.tsx` — 전면 재구성(아래 레이아웃대로). 기존 ORIGINALS/SLOTS 데이터는 그대로 재활용.
-- `src/components/live/ImperialLiveActivity.tsx` *(신규, 시뮬레이션 전용 / DB·RPC 0)* — 8~12초마다 새 행 slide-in. 닉네임 풀(한국+해외), KRW/PHON/USDT 비율, 잭팟 행 골드 글로우.
-- `src/components/dashboard/ImperialTradeSection.tsx` *(신규, presentation 전용)* — 기존 `useBybitTicker` 훅 1개만 사용해 BTC mini sparkline + LONG/SHORT 큰 버튼 → `/trade` 이동. 신규 RPC 0, money-flow 0.
-- `src/index.css` — 필요한 토큰 보강(있으면 재사용). gold/pink glow, particle overlay, breathing 키프레임은 이미 존재 → 추가 없음 원칙, 부족할 때만 1~2개.
+`src/components/live/ImperialLiveActivity.tsx` 리팩토링:
+- 외곽: `relative` + 고정 `h-[420px] md:h-[480px]` + `overflow-hidden` + `contain: layout paint`
+- 리스트: `absolute inset-0`, 각 row `position: absolute; transform: translateY()` 로 슬롯 머신처럼 위로 밀어올림 (레이아웃 reflow 0)
+- `will-change: transform`, `backface-visibility: hidden`, `transform: translateZ(0)`
+- Jackpot row(8% 확률): 트리플 글로우 링 + Crown 아이콘 + Hot Pink→Gold gradient + "BIG WIN" 칩 + Imperial Seal SVG + 펄스 (다른 행과 동일 높이 유지)
+- `IntersectionObserver` + `visibilitychange` 가드 유지
+- variant `compact`도 동일 패턴(고정 높이만 더 짧게)
 
-## 손대지 않는 것 (불변)
+## 3. Database & Console Zero Tolerance
 
-- `src/App.tsx` (라우트·Provider), `src/components/Layout.tsx` (사이드바·하단 nav·FAB는 Slice 7.5 결과 유지).
-- money-flow 8경로, Operator Isolation, Bundle Budget, Phase D/F push, Realtime 파티션.
-- 백엔드(Supabase) 마이그레이션 0, edge function 0, RPC 0.
-- 옛 글로벌 오버레이(EmpireMomentToast/PowerHeader/BoosterTimer 등) — 이미 마운트 해제 상태 유지.
+마이그레이션 1건:
+- `fomo_notifications.kind_check` constraint 에 `level_up`, `imperial_level_up`, `emperor_reward` 추가 (기존 값 보존)
 
-## Dashboard 최종 레이아웃
+콘솔 정리:
+- `use-now-tick.ts` `setInterval` 에 `{ meta: { owner, category: 'cosmetic' } }` 부여 → entropy warning 제거
+- AudioContext: 첫 user gesture 이후에만 `resume()` 호출하는 가드 추가 (`useSlotSound`)
+- Dialog accessibility: 누락된 `DialogTitle`/`DialogDescription` 또는 `aria-describedby={undefined}` 보강
 
-```text
-[ Hero ]
-  Cinzel 초대형 헤드라인 — "0원으로 시작해서 / 매일 돈을 버는 제국"
-  Gold→Pink gradient text + multi-layer drop-shadow + 정적 골드 입자 오버레이
-  ambient radial glow 배경
+## 4. Phonara Originals Visual Masterpiece
 
-[ Imperial Live Activity Engine ]  ← Hero 직후 (full variant)
-  · 6행 표시, 8~12s 마다 새 행 slide-in (framer-motion)
-  · 컬럼: 시간 · 닉네임(마스킹) · 액션(승리/출금/잭팟/입금) · 금액
-  · 닉네임 풀: 서준이, 민지99, 하린님, 도윤2, Alex92, LunaK, Kai007, Sora_jp 등
-  · 통화 비율: KRW 45 / PHON 35 / USDT 20
-  · 잭팟 행: gold glow + Crown 아이콘 + scale pulse + "JACKPOT" badge
-  · reduced-motion: 슬라이드 → 즉시 fade
+`src/pages/Dashboard.tsx` `GameCardTile` 업그레이드:
+- 게임별 cinematic SVG/그라데이션 배경 매핑 테이블 (`bgArt[gameId]`): 라디얼 다층 글로우 + particle SVG 오버레이 + 다이아몬드/번개/물결 모티프
+- Hover: `translateY(-4px) scale(1.02)` + 다중 box-shadow (gold inner + pink outer) + corner-shine sweep
+- Multiplier 배지: 3D 느낌 — 골드 그라데이션 + inset highlight + drop-shadow + 미세한 tilt
+- 모두 디자인 토큰(`--gold`/`--pink`) 기반, 새 이미지 에셋 없이 SVG 인라인
 
-[ Quick Action Chips ]
-  Slots · Live · Crash · Trade · Empire (이미 있는 칩 톤 강화)
+## 5. Imperial Presence Counter
 
-[ Imperial Trade Section ]
-  좌: BTC/ETH/SOL 토글 + 큰 sparkline (useBybitTicker 1개 훅 재사용)
-  우: 큰 LONG (emerald glow) / SHORT (rose glow) 버튼 2개 → /trade?side=long|short
-  하단 1줄: "PHON 잔액으로 즉시 진입 · 평균 체결 0.8초"
+신규 컴포넌트 `src/components/live/ImperialPresenceBar.tsx`:
+- "현재 **128,459명**이 제국에서 실시간으로 황제의 거래에 참여 중"
+- 시드 = 시간 기반 의사난수 (110k~145k), 4~12초마다 ±수십~수백 자연스러운 drift, 가끔 +수천 점프
+- `useCountUp` 으로 부드러운 tween, Warm Gold glow + subtle pulse
+- Hero 바로 아래, Live Activity 위에 마운트 (Dashboard/Landing)
 
-[ Phonara Originals ]  가로 캐러셀 (snap-x, 모바일 1.5장씩 보임)
-[ Popular Slots ]      가로 캐러셀
+## 6. Mobile 60fps
 
-[ More Section ]  3-up 작은 카드: 오늘의 미션 / 출석 스트릭 / 친구 랭킹 진입
-```
+- `<ImperialTradeSection />` 모바일: 가격 폰트 `clamp(28px, 9vw, 44px)`, LONG/SHORT 카드 `min-h-[64px]` thumb zone, `touch-action: manipulation`
+- 스파크라인 throttle 1.2s 유지, `requestAnimationFrame` 으로 push
+- BottomNav + FAB: `transform-gpu`, FAB breathing `@keyframes` (scale 1→1.06 2.4s ease-in-out infinite), hover `scale-1.08`
+- 모든 인터랙티브에 `press` 클래스 + `will-change: transform`
 
-## Landing 최종 레이아웃
+## 7. Hero Banner Peak
 
-```text
-[ Hero ]  (현행 유지, 카피·글로우 그대로)
-[ Imperial Live Activity Engine ]  ← Hero 직후 (compact variant: 4행)
-[ Trust 3-line ]  (현행 유지)
-[ Footer ]
-```
+`src/pages/Dashboard.tsx` & `src/pages/Landing.tsx` Hero:
+- 폰트: `font-imperial`(Cinzel) `clamp(2.25rem, 7vw, 4.5rem)`, `tracking-[0.04em]`, `text-shadow-imperial-xl`
+- 텍스트 gradient: gold → hot pink → warm amber 3-stop
+- 배경: radial ambient(`gold/0.18` 중심 + `pink/0.12` 우상단) + 인라인 SVG particle 12개 `animate-float` (랜덤 delay)
+- 서브카피 1줄, CTA 2개("지금 무료로 시작" gold pulse / "라이브 보기" outline)
 
-## FOMO / 카피 가이드라인
+## 기술 노트
 
-- 모든 표현은 "황제 / 폐하 / 제국 / 승전보 / Imperial Duel" 톤. "battle / war / army / 전투 / 전쟁" 0건.
-- Live 행 예시: "민지99 님이 Olympus 1000에서 ₩1,240,000 승전" · "Alex92 님이 320 USDT 출금 완료" · "👑 하린님 JACKPOT 8,400,000 PHON".
+변경 파일(예상):
+- 신규: `src/components/live/ImperialPresenceBar.tsx`
+- 수정: `ImperialLiveActivity.tsx`, `ImperialTradeSection.tsx`, `Dashboard.tsx`, `Landing.tsx`, `Layout.tsx`(잔재 링크 제거), `use-now-tick.ts`, `useSlotSound.ts`, dialog 누락 컴포넌트
+- 삭제/라우트 차단: `TradingArenaWithArmy.tsx`, `WarTradingArena.tsx`, `ArenaTutorialOverlay.tsx` import 지점
+- 마이그레이션 1건: fomo_notifications kind_check 확장
 
-## 성능 가드
+불변 가드:
+- money-flow 8경로 / `@pkg/realtime` 4-파티션 / Operator chunk / Bundle Budget / Phase D·F push — diff 0
+- 디자인 토큰만 사용, 새 RPC/edge function 0, 새 외부 이미지 에셋 0
 
-- ImperialLiveActivity: setInterval 1개, `runtime.registry`로 trackInterval. 탭 hidden 시 자동 일시정지(IntersectionObserver).
-- framer-motion 은 이미 사용 페이지에서만 async — 신규 정적 import 금지, 이 컴포넌트도 `motion/react` 동적 import 사용.
-- Trade Section sparkline은 SVG 폴리라인(라이브러리 X).
-- 모바일에서 캐러셀은 CSS scroll-snap만 — JS carousel lib 추가 금지.
-- LCP 측정: Hero 텍스트(현행) 유지 → LCP element 동일.
+## 검증
 
-## 기술 세부 (체크리스트)
-
-1. `ImperialLiveActivity.tsx` 작성 — props: `variant: "full" | "compact"`, `rows?: number`. 시드 풀 상수, weighted random pick, jackpot 8% 확률.
-2. `ImperialTradeSection.tsx` — `useBybitTicker("BTCUSDT")` 등 기존 훅 호출. 심볼 토글은 useState.
-3. `Dashboard.tsx` 재배치 — 기존 `Rail`, `GameCardTile`, ORIGINALS/SLOTS 유지하되, 그리드 대신 가로 스크롤(`flex overflow-x-auto snap-x`)로 전환. 카테고리 칩 그대로.
-4. `Landing.tsx` — `<Hero/>` 와 `<Trust/>` 사이에 `<ImperialLiveActivity variant="compact" rows={4} />` 한 줄 삽입.
-5. 군대/배틀 어휘 sweep — `Dashboard.tsx`/`Landing.tsx`에서 잔존 텍스트 grep 후 교체(없을 가능성 큼).
-6. QA: 데스크탑/모바일 스크린샷 + 콘솔 에러 0 + 라우트 `/`, `/command` 진입.
-
-## Out of scope (이번에 안 함)
-
-- 신규 라우트, 신규 페이지, 신규 RPC/edge function.
-- Sidebar/Bottom Nav 구조 변경 (Slice 7.5 결과 그대로).
-- 다른 페이지(/casino, /trade, /wallet 등) 내부 수정.
+- `code--read_console_logs` 로 entropy / AudioContext / Dialog warning 0 확인
+- Desktop(1440) + Mobile(390) 스크린샷: Dashboard 전체, Mobile Trade 섹션
+- LCP 1.2s 이하 목표(Hero 텍스트 LCP, inline SVG only)
