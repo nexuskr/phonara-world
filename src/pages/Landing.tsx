@@ -2,20 +2,29 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowRight, Coins, Crown, Radio, ShieldCheck, Sparkles } from "lucide-react";
 import PhonaraTopBar from "@/components/nav/PhonaraTopBar";
+import ImperialLiveActivity from "@/components/live/ImperialLiveActivity";
 
 /**
- * /  — v19 Phase 0-R TRUE Clean Rebuild.
- * Hero(Imperial vignette) → Trust 3-line → Footer.
- * 라이브 마키 / pulse-halo / 광역 글로우 전부 제거.
+ * /  — v19 Ultimate Stake Crusher.
+ * Hero → Imperial Live Activity (compact) → Trust 3-line → Footer.
  */
 export default function Landing() {
   return (
     <div className="min-h-screen bg-[#110d1a] text-foreground">
       <PhonaraTopBar />
       <Hero />
+      <LiveActivityBand />
       <Trust />
       <Footer />
     </div>
+  );
+}
+
+function LiveActivityBand() {
+  return (
+    <section className="container py-6">
+      <ImperialLiveActivity variant="compact" rows={4} />
+    </section>
   );
 }
 
