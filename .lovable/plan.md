@@ -1,56 +1,44 @@
-# Slice 5 — Imperial Notification System Cleanup
+# Landing Page Final Visual & FOMO MAX Overhaul
 
-산만한 토스트/실시간 알림을 정리하고 Warm King + Imperial Empire 톤으로 통일한다. 중요 이벤트만 강하게 띄우고, 잔돈성 알림은 "황제 소식함"으로 옮기거나 silent 처리한다.
-
-money-flow 8경로, Operator Isolation, Bundle Budget, Phase D, Phase F Push 인프라는 0줄 변경. 디자인 토큰만 사용.
+랜딩 첫 화면 최종 마감. Hero 카피 / 서브 / CTA 영역만 손보고, 나머지 섹션과 인프라는 그대로 둡니다.
 
 ## 변경 범위
 
-### 1. `src/lib/notify.ts` 강화
-- `imperial(title, opts)` — Warm Gold 헤더 + 황실 카피 톤 헬퍼 (important tier 기반)
-- `result({ kind: "win"|"loss"|"jackpot"|"liq", amount, symbol?, meta? })` — 게임/트레이딩/슬롯 결과 단일 진입점.
-  - jackpot/대형 승리 → `imperial()` (강력 6s, Crown emoji, gold pulse)
-  - 일반 win/loss(임계 미만) → `passive()` 또는 `silent()` + Inbox로 적재
-  - liquidation → `critical()` 톤 (단, duration 8s, 무한 아님)
-- `dedupeMap` (LRU 64, 4s TTL) — 동일 `(tier+title+key)` 반복 차단. 모든 tier 헬퍼 진입 시 통과.
-- `inbox(item)` — Inbox 큐에 push (localStorage `phonara:inbox:v1`, 최대 50개) + `window.dispatchEvent("phonara:inbox-add")`.
-- 기존 `success/error/info/warning/passive/important/critical/silent`는 유지(시그니처 호환).
+`src/pages/Landing.tsx` (Hero 함수 + AnimatedEarning 사용처) 한 파일만 수정. 다른 파일/머니플로/Operator/Bundle/Phase D·F 무관.
 
-### 2. `src/lib/notify-thresholds.ts` (신규)
-- `JACKPOT_MIN_PHON = 50000`
-- `BIG_WIN_MIN_PHON = 10000`
-- `LIQ_LOSS_MIN_PHON = 5000`
-- `WITHDRAW_BIG_PHON = 100000`
-- helper: `classifyWinAmount(phon)` → `"jackpot"|"big"|"normal"|"small"`
+## 구체 작업
 
-### 3. `src/components/empire/ImperialInbox.tsx` (신규)
-- 우측 상단 Bell 아이콘 + unread dot, 클릭 시 BottomSheet/Popover로 최근 50건.
-- localStorage 기반 + 4-tier 채널 (`fomo_notifications` realtime은 기존 hook 그대로 활용).
-- Warm Gold 헤더 "황제 소식함", 빈 상태 EmptyState 프리미티브.
-- "모두 읽음" / 항목 클릭 시 deep link 이동.
-- 마운트 위치: `src/components/layout/Layout.tsx` 헤더 우측 (기존 마운트 슬롯 있으면 재사용).
+1. **메인 카피 정리 (기존 그대로 유지)**
+   - `0원으로 시작해서 / 매일 돈을 버는 제국` (이미 있음) → 유지하되 글자 크기 한 단계 키우고 (`md:text-7xl lg:text-8xl`) drop-shadow 강화.
 
-### 4. 결과 토스트 통합
-다음 호출부를 `notify.result()` 또는 `notify.imperial()`로 교체:
-- `src/hooks/use-close-phon-position.ts` — close 결과 (이미 notify.success/info, result로 정리)
-- `src/hooks/use-paper-positions.ts` — paper 청산 → `result({kind:"liq"})`
-- `src/hooks/use-open-phon-position.ts` — 진입 성공 → `passive()`
-- 슬롯 결과 토스트 (rg로 찾는 슬롯 페이지들의 `notify.*("당첨…")` 호출)
-- `NeonNotificationFeed.tsx` — 풀화면 toast.custom 제거, Inbox 적재 + 중요 kind만 imperial()
+2. **서브 카피 교체 (강력 FOMO)**
+   - 기존: `지금 가입하면 첫 입금 10,000 PHON 즉시 지급 + 실시간으로 전 세계 황제들의 승전보를 확인하세요`
+   - 신규:
+     - line1 (큼·강조): **"지금 이 순간에도 수만 명의 황제들이 실시간으로 수익을 창출하고 있습니다"**
+     - line2 (서브): **"전 세계 황제들이 오늘도 평균 ₩347,000+ 수익 · 가입 즉시 10,000 PHON"**
+   - 숫자(`₩347,000+`, `10,000 PHON`)는 Warm Gold + drop-shadow.
 
-### 5. 정리/축소
-- `use-user-notifications.ts` — `package_settle`/`profit_share` 등 잔돈성 → Inbox만 (toast 제거), `deposit_credit`/`withdrawal_complete`만 imperial() 유지.
-- 군사·전쟁 어휘(쳐들어옴/전투/승전/전쟁 등) 카피 sweep → Warm King(황제/제국/소식/승전보).
+3. **"오늘 사용자 평균 수익 4,800원" 라인 제거**
+   - 152번 라인 블록과 `AnimatedEarning` 컴포넌트 함께 제거.
+
+4. **CTA 강화**
+   - 버튼 높이 `h-16` → `h-[68px]`, 폰트 `text-lg md:text-xl`.
+   - `pulse-halo` + `glow-imperial` 위에 외곽 `shadow-[0_0_0_1px_hsl(var(--gold)/.7)]` 골드 hairline 추가.
+   - "+10,000 PHON" 칩 옆 펄싱 dot (Warm Gold) 추가.
+   - 보조 라인 `가입 즉시 무료 PHON · 신용카드 필요 없음 · 30초 안에 시작` 유지.
+
+5. **신뢰 라인 (실시간 출금 중 · 한국 1위...) 유지**, 단 폰트 weight `font-bold`로 한 단계 키워 가독성 향상.
+
+6. **Imperial Live Wins Rail**
+   - 위치(`<ImperialLiveWinsRail variant="full" />`)는 이미 Hero 직후에 마운트되어 있음 → 유지.
+   - rail 자체의 jackpot glow/pulse/crown 효과는 Slice 직전 작업에서 이미 강화됨 → 추가 변경 없음.
 
 ## 절대 불변
-- 입출금 RPC, 머니플로 8경로, raw `supabase.channel` 호출은 일절 손대지 않음.
-- Phase F push edge function / sw-push.js 변경 없음 (Inbox는 in-app 전용).
-- 기존 sonner Toaster 컴포넌트 스타일 유지.
 
-## 검증
-- `rg "from \"sonner\"" src/` 직접 호출 0 유지 (NeonNotificationFeed 토스트 제거 후).
-- 게임 1회 플레이 시 동일 결과 토스트 2회 이상 안 뜸 (dedupe).
-- 잭팟 시뮬레이션 → imperial() 1회 + Inbox 1행.
+- money-flow 8경로, Operator Isolation, Bundle Budget, Phase D (Avatar+Lobby), Phase F Push 0줄 변경.
+- 디자인 토큰만 사용 (`hsl(var(--gold))`, `hsl(var(--pink))`, `font-imperial`, `glow-imperial`, `pulse-halo`).
+- 다른 섹션(TabPreview/LiveBand/Why/FinalCTA/Footer) 변경 없음.
 
-## 완료 보고
-"✅ Slice 5 Imperial Notification System Cleanup 완료" + Slice 6 (Imperial Polish + 세계관 sweep) 준비 상태.
+## 완료 후 보고
+
+`✅ Landing Page Final Visual & FOMO MAX Overhaul 완료`
