@@ -406,6 +406,8 @@ export default function TradingArenaBybit() {
           <BigPnLHeader positions={positions} prices={prices} unit={unit} />
         </Suspense>
         <Suspense fallback={null}><PhonAdvantageRibbon /></Suspense>
+        <Suspense fallback={null}><PhonBettingNudge /></Suspense>
+        <Suspense fallback={null}><VipTradingRoom /></Suspense>
 
         {/* v3: hot coins */}
         <Suspense fallback={null}>
