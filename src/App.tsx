@@ -135,6 +135,10 @@ const LiveOverlay = lazy(() => import("./pages/LiveOverlay.tsx"));
 const InfluencerLanding = lazy(() => import("./pages/InfluencerLanding.tsx"));
 const Vip = lazy(() => import("./pages/Vip.tsx"));
 const Avatar = lazy(() => import("./pages/Avatar.tsx"));
+// Phase D — Avatar v3 + Virtual Lobby v3 (three3d 청크, Layer 1 미포함)
+const AvatarStudio = lazy(() => import("./pages/AvatarStudio.tsx"));
+const Lobby = lazy(() => import("./pages/Lobby.tsx"));
+const LobbyFab = lazy(() => import("./components/lobby/LobbyFab.tsx"));
 const Landing = lazy(() => import("./pages/Landing.tsx"));
 const OnboardingV3 = lazy(() => import("./components/onboarding/OnboardingV3.tsx"));
 const DevConsole = lazy(() => import("./pages/DevConsole.tsx"));
@@ -251,6 +255,7 @@ const App = () => (
           )}
           <Suspense fallback={null}><BigWinShareHost /></Suspense>
           <Suspense fallback={null}><AchievementUnlockListener /></Suspense>
+          <Suspense fallback={null}><LobbyFab /></Suspense>
           <Suspense fallback={<RouteFallback />}>
             <MaintenanceGate>
             <Routes>
@@ -283,6 +288,8 @@ const App = () => (
               <Route path="/empire/galaxy" element={<GalaxyAuction />} />
               <Route path="/vip" element={<Vip />} />
               <Route path="/avatar" element={<Avatar />} />
+              <Route path="/avatar/studio" element={<AvatarStudio />} />
+              <Route path="/lobby" element={<Lobby />} />
               <Route path="/guild" element={<Navigate to="/lounge" replace />} />
               <Route path="/dynasty" element={<Dynasty />} />
               <Route path="/treasury" element={<Navigate to="/wallet" replace />} />
