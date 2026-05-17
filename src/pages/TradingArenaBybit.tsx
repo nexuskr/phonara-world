@@ -31,7 +31,7 @@ const BigPnLHeader = lazy(() => import("@/components/trading/v3/BigPnLHeader"));
 const PhonAdvantageRibbon = lazy(() => import("@/components/trading/v3/PhonAdvantageRibbon"));
 const HotCoinRail = lazy(() => import("@/components/trading/v3/HotCoinRail"));
 const LeveragePresetRail = lazy(() => import("@/components/trading/v3/LeveragePresetRail"));
-const LiveSideCounter = lazy(() => import("@/components/trading/v3/LiveSideCounter"));
+
 const MobileOrderSheet = lazy(() => import("@/components/trading/v3/MobileOrderSheet"));
 const PhonBettingNudge = lazy(() => import("@/components/trading/v3/PhonBettingNudge"));
 const VipTradingRoom = lazy(() => import("@/components/trading/v3/VipTradingRoom"));
@@ -436,7 +436,6 @@ export default function TradingArenaBybit() {
               height={420}
             />
             <Suspense fallback={null}><LeveragePresetRail /></Suspense>
-            <Suspense fallback={null}><LiveSideCounter symbol={symbol} /></Suspense>
           </div>
 
           {/* Desktop: 사이드 컬럼에 PHON 사이드카 + KRW 패널 그대로. Mobile: 숨기고 BottomSheet로 노출 */}
