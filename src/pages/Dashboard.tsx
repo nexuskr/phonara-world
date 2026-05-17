@@ -39,6 +39,7 @@ import ChurnReactivationBanner from "@/components/reactivation/ChurnReactivation
 const DailyChest = lazy(() => import("@/components/gamification/DailyChest"));
 const LevelProgressBar = lazy(() => import("@/components/gamification/LevelProgressBar"));
 const LivePayoutCounter = lazy(() => import("@/components/fomo/LivePayoutCounter"));
+const YesterdayPayoutsBanner = lazy(() => import("@/components/fomo/YesterdayPayoutsBanner"));
 const FriendLeaderboard = lazy(() => import("@/components/fomo/FriendLeaderboard"));
 const FriendGapToast = lazy(() => import("@/components/fomo/FriendGapToast"));
 const FoundingContendersBadge = lazy(() => import("@/components/fomo/FoundingContendersBadge"));
