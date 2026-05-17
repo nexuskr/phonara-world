@@ -62,12 +62,12 @@ export const SLOT_SOUND_MAP: Record<
   }
 > = {
   cosmic_forge: {
-    sfx: ["cosmic_explosion"],
+    sfx: ["spin_start", "cosmic_explosion"],
     voice: ["emperor_voice"],
     legendary: { primary: "legendary_win", voice: "emperor_voice" },
   },
   neon_tokyo_88: {
-    sfx: ["neon_jingle"],
+    sfx: ["spin_start", "neon_jingle"],
     voice: ["cyber_announce"],
     legendary: { primary: "legendary_win", voice: "cyber_announce" },
   },
@@ -77,39 +77,52 @@ export const SLOT_SOUND_MAP: Record<
     legendary: { primary: "legendary_win", voice: "wizard_decree" },
   },
   dragon_empire: {
-    sfx: ["flame_whoosh"],
+    sfx: ["spin_start", "flame_whoosh"],
     voice: ["dragon_roar"],
     legendary: { primary: "legendary_win", voice: "dragon_roar" },
   },
   pirate_curse: {
-    sfx: ["cannon_fire", "treasure_open"],
+    // spin_start uses uploaded deepsea_spin.mp3 (해적/심해 호환)
+    sfx: ["spin_start", "cannon_fire", "treasure_open"],
     voice: ["pirate_laugh"],
     legendary: { primary: "legendary_win", voice: "pirate_laugh" },
   },
   pharaoh_vault: {
-    sfx: ["ankh_chime", "sand_wind"],
+    sfx: ["spin_start", "ankh_chime", "sand_wind"],
     voice: ["pharaoh_voice"],
     legendary: { primary: "legendary_win", voice: "pharaoh_voice" },
   },
   cherry_sakura: {
-    sfx: ["sakura_petal_fall", "lantern_glow"],
+    sfx: ["spin_start", "sakura_petal_fall", "lantern_glow"],
     voice: [], // 우아하게 voice 생략 — Low volatility 정책
     legendary: { primary: "legendary_win" },
   },
   olympus_legacy: {
     // Reuses olympus voice/sfx pack. zeus_decree is the legendary voice line.
-    sfx: ["zeus_strike", "marble_chime"],
+    sfx: ["spin_start", "zeus_strike", "marble_chime"],
     voice: ["zeus_decree"],
     legendary: { primary: "legendary_win", voice: "zeus_decree" },
   },
   sugar_fever: {
     // Dedicated candy SFX/voice keys. Howl auto-registers under
-    //   /sounds/sugar_fever/sfx/{candy_pop,chocolate_splash,lollipop_chime}.mp3
+    //   /sounds/sugar_fever/sfx/{spin_start,candy_pop,chocolate_splash,lollipop_chime}.mp3
     //   /sounds/sugar_fever/voice/sugar_announce.mp3
     // Missing mp3 → SlotSoundManager fails silent (warn only), game keeps running.
-    sfx: ["candy_pop", "chocolate_splash", "lollipop_chime"],
+    sfx: ["spin_start", "candy_pop", "chocolate_splash", "lollipop_chime"],
     voice: ["sugar_announce"],
     legendary: { primary: "legendary_win", voice: "sugar_announce" },
+  },
+  viking_thunder_4000: {
+    // Uploaded viking_spin.mp3 only — voice/legendary 모두 공통 fallback.
+    sfx: ["spin_start"],
+    voice: [],
+    legendary: { primary: "legendary_win" },
+  },
+  aztec_sun_1200: {
+    // Uploaded aztec_spin.mp3 only.
+    sfx: ["spin_start"],
+    voice: [],
+    legendary: { primary: "legendary_win" },
   },
 };
 
@@ -128,8 +141,12 @@ export const SLOT_ID_TO_SOUND_KEY: Record<string, keyof typeof SLOT_SOUND_MAP> =
   cherry_sakura_500: "cherry_sakura",
   olympus_legacy: "olympus_legacy",
   olympus_legacy_5000: "olympus_legacy",
+  olympus_1000: "olympus_legacy",
+  olympus: "olympus_legacy",
   sugar_fever: "sugar_fever",
   sugar_fever_3000: "sugar_fever",
+  viking_thunder_4000: "viking_thunder_4000",
+  aztec_sun_1200: "aztec_sun_1200",
 };
 
 export type WinTier = "big" | "mega" | "epic" | "legendary";
