@@ -1,21 +1,26 @@
 import { Link } from "react-router-dom";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, Coins, Gamepad2, Radio, ShieldCheck, Sparkles, TrendingUp, Zap } from "lucide-react";
+import { ArrowRight, Coins, Crown, Gamepad2, Radio, ShieldCheck, Sparkles, TrendingUp, Zap } from "lucide-react";
 import PhonaraTopBar from "@/components/nav/PhonaraTopBar";
+import ImperialLiveWinsRail from "@/components/empire/ImperialLiveWinsRail";
 
 const WhaleStrikeRail = lazy(() => import("@/components/empire/WhaleStrikeRail"));
 
 /**
- * /  — v14.0 신규 랜딩.
- * 5섹션 cinematic: Hero / 4탭 프리뷰 / 실시간 빅윈 / Why / 최종 CTA.
- * 비로그인도 접근 가능. 5초 안에 "무료로 돈 버는 가상세계"라고 답할 수 있어야 통과.
+ * /  — v19 Imperial First Impression.
+ * Hero(Warm Deep Black + Gold particles) → Imperial Live Wins Rail(full)
+ *   → 4탭 프리뷰 → 빅윈 마키 → Why → Final CTA → Footer.
+ * money-flow / Operator Isolation / Bundle Budget / Phase D·F 0줄 변경.
  */
 export default function Landing() {
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-[#110d1a] text-foreground">
       <PhonaraTopBar />
       <Hero />
+      <section className="container py-4 md:py-6">
+        <ImperialLiveWinsRail variant="full" />
+      </section>
       <TabPreview />
       <LiveBand />
       <Why />
@@ -41,69 +46,110 @@ function AnimatedEarning() {
   return <span className="tabular-nums">{n.toLocaleString()}</span>;
 }
 
+/** 정적 골드 입자 오버레이 — JS 0, CSS radial-gradient만 */
+function GoldParticles() {
+  return (
+    <div
+      aria-hidden
+      className="absolute inset-0 -z-10 opacity-[0.45] mix-blend-screen pointer-events-none"
+      style={{
+        backgroundImage: [
+          "radial-gradient(1.5px 1.5px at 12% 22%, hsl(var(--gold)/0.7), transparent 60%)",
+          "radial-gradient(1px 1px at 78% 18%, hsl(var(--gold)/0.55), transparent 60%)",
+          "radial-gradient(1.5px 1.5px at 32% 70%, hsl(var(--pink)/0.5), transparent 60%)",
+          "radial-gradient(1px 1px at 64% 52%, hsl(var(--gold)/0.6), transparent 60%)",
+          "radial-gradient(2px 2px at 88% 78%, hsl(var(--gold)/0.55), transparent 60%)",
+          "radial-gradient(1px 1px at 22% 88%, hsl(var(--gold)/0.5), transparent 60%)",
+          "radial-gradient(1.5px 1.5px at 52% 12%, hsl(var(--pink)/0.45), transparent 60%)",
+          "radial-gradient(1px 1px at 8% 58%, hsl(var(--gold)/0.55), transparent 60%)",
+        ].join(", "),
+      }}
+    />
+  );
+}
+
 function Hero() {
   return (
     <section className="relative overflow-hidden">
-      <div className="absolute inset-0 -z-10">
-        <div className="absolute inset-0 bg-gradient-to-b from-background via-background to-card/60" />
-        <div className="absolute top-[-160px] left-[-120px] w-[520px] h-[520px] rounded-full bg-[hsl(var(--gold)/.18)] blur-[140px]" />
-        <div className="absolute bottom-[-160px] right-[-100px] w-[520px] h-[520px] rounded-full bg-[hsl(var(--pink)/.18)] blur-[140px]" />
+      {/* Warm Deep Black + Imperial halos */}
+      <div className="absolute inset-0 -z-20 bg-[#110d1a]" />
+      <div className="absolute inset-0 -z-10 pointer-events-none">
+        <div className="absolute top-[-160px] left-[-120px] w-[560px] h-[560px] rounded-full bg-[hsl(var(--gold)/.22)] blur-[160px]" />
+        <div className="absolute bottom-[-180px] right-[-120px] w-[560px] h-[560px] rounded-full bg-[hsl(var(--pink)/.18)] blur-[160px]" />
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[hsl(var(--gold)/.55)] to-transparent" />
       </div>
+      <GoldParticles />
 
-      <div className="container min-h-[calc(100svh-3.5rem)] md:min-h-[calc(100svh-4rem)] flex flex-col items-center justify-center text-center py-12">
+      <div className="container min-h-[calc(100svh-3.5rem)] md:min-h-[calc(100svh-4rem)] flex flex-col items-center justify-center text-center py-12 md:py-16">
         <motion.div
           initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45 }}
-          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-[hsl(var(--gold)/.4)] bg-card/50 text-[10px] font-bold tracking-[0.28em] text-[hsl(var(--gold))] uppercase"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[hsl(var(--gold)/.45)] bg-[hsl(var(--gold)/.08)] text-[10px] font-black tracking-[0.32em] text-[hsl(var(--gold))] uppercase"
         >
-          <Sparkles className="w-3 h-3" /> THE DIGITAL WORLD
+          <Crown className="w-3 h-3" /> The Imperial World
         </motion.div>
 
         <motion.h1
-          initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, delay: 0.05 }}
-          className="mt-5 font-imperial text-[34px] leading-[1.08] sm:text-5xl md:text-6xl lg:text-7xl tracking-tight text-foreground"
+          initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.05 }}
+          className="mt-6 font-imperial text-[36px] leading-[1.05] sm:text-5xl md:text-6xl lg:text-7xl tracking-[0.04em] text-foreground"
         >
-          오늘도{" "}
-          <span className="bg-gradient-to-r from-[hsl(var(--gold))] to-[hsl(var(--pink))] bg-clip-text text-transparent">
-            <AnimatedEarning />원
-          </span>{" "}
-          벌었어요
+          <span className="block">
+            <span className="bg-gradient-to-r from-[hsl(var(--gold))] via-[hsl(var(--gold))] to-[hsl(var(--pink))] bg-clip-text text-transparent drop-shadow-[0_4px_24px_hsl(var(--gold)/0.35)]">
+              0원
+            </span>
+            <span className="text-foreground">으로 시작해서</span>
+          </span>
+          <span className="block mt-2 sm:mt-3">
+            <span className="text-foreground">매일 돈을 버는 </span>
+            <span className="bg-gradient-to-r from-[hsl(var(--gold))] to-[hsl(var(--pink))] bg-clip-text text-transparent drop-shadow-[0_4px_24px_hsl(var(--pink)/0.35)]">
+              제국
+            </span>
+          </span>
         </motion.h1>
 
         <motion.p
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.55, delay: 0.15 }}
-          className="mt-4 text-sm sm:text-base md:text-lg text-muted-foreground max-w-xl mx-auto"
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.55, delay: 0.18 }}
+          className="mt-6 text-base sm:text-lg md:text-xl max-w-2xl mx-auto leading-relaxed font-semibold text-[hsl(var(--gold)/0.92)]"
         >
-          부업하면서 게임도 하고 코인 트레이딩까지.<br className="hidden sm:inline" />
-          한국에서 제일 쉽게 돈 버는 가상세계.
+          지금 가입하면 첫 입금 <span className="text-[hsl(var(--gold))] font-black">10,000 PHON</span> 즉시 지급<br className="hidden sm:inline" />
+          <span className="text-foreground/80 font-medium"> + 실시간으로 전 세계 황제들의 승전보를 확인하세요</span>
         </motion.p>
 
         <motion.div
-          initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.22 }}
-          className="mt-7 flex flex-col items-center gap-3"
+          initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, delay: 0.28 }}
+          className="mt-9 flex flex-col items-center gap-3"
         >
           <Link
             to="/auth?mode=signup"
-            className="group inline-flex items-center gap-2 h-14 px-7 rounded-2xl bg-gradient-to-r from-[hsl(var(--gold))] to-[hsl(var(--pink))] text-background font-black text-base md:text-lg press shadow-[0_18px_60px_-18px_hsl(var(--gold)/.7)]"
+            className="pulse-halo group inline-flex items-center gap-2.5 h-16 px-8 rounded-2xl bg-gradient-to-r from-[hsl(var(--gold))] via-[hsl(var(--gold))] to-[hsl(var(--pink))] text-background font-black text-base md:text-lg press shadow-[0_24px_72px_-18px_hsl(var(--gold)/0.85)] glow-imperial"
           >
-            지금 무료로 시작하기
-            <span className="ml-1 inline-flex items-center gap-1 px-2 py-1 rounded-full bg-background/20 text-[11px] font-black">
-              +500 PHON
+            <Crown className="w-5 h-5" />
+            지금 무료로 황제가 되기
+            <span className="ml-1 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-background/25 text-[11px] font-black tracking-wide">
+              +10,000 PHON
             </span>
             <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
           </Link>
-          <div className="text-[11px] text-muted-foreground flex items-center gap-1.5">
-            <ShieldCheck className="w-3 h-3 text-emerald-400" />
-            가입 즉시 무료 PHON · 신용카드 필요 없음
+          <div className="text-[12px] text-[hsl(var(--gold)/0.75)] flex items-center gap-1.5 font-semibold">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+            가입 즉시 무료 PHON · 신용카드 필요 없음 · 30초 안에 시작
           </div>
         </motion.div>
 
         <motion.div
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.45 }}
-          className="mt-10 flex items-center gap-4 text-[11px] text-muted-foreground"
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.5 }}
+          className="mt-10 flex items-center gap-4 text-[12px] text-foreground/70"
         >
-          <span className="inline-flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> 실시간 출금 중</span>
-          <span>·</span>
-          <span>한국 1위 가상세계 플랫폼</span>
+          <span className="inline-flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> 실시간 출금 중</span>
+          <span className="text-[hsl(var(--gold)/0.5)]">·</span>
+          <span className="font-semibold">한국 1위 가상세계 플랫폼</span>
+        </motion.div>
+
+        {/* 오늘 누적 — 작게 */}
+        <motion.div
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.7 }}
+          className="mt-6 text-[12px] text-foreground/55"
+        >
+          오늘 사용자 평균 수익 <span className="font-mono font-black text-[hsl(var(--gold))]"><AnimatedEarning />원</span>
         </motion.div>
       </div>
     </section>
@@ -170,7 +216,7 @@ function LiveBand() {
 }
 
 const WHY = [
-  { icon: Coins, title: "무료로 돈 버는 곳", line: "가입만 해도 500 PHON. 출석·미션으로 매일 벌어요." },
+  { icon: Coins, title: "무료로 돈 버는 곳", line: "가입만 해도 보너스 PHON. 출석·미션으로 매일 벌어요." },
   { icon: Zap, title: "부업 + 게임 한 곳", line: "잠깐 쉴 때 슬롯 한판, 친구초대로 보너스까지." },
   { icon: Sparkles, title: "헤어날 수 없는 재미", line: "VIP, 길드, 실시간 빅윈. 매일 들어오게 되는 세계." },
 ];
@@ -192,7 +238,7 @@ function Why() {
               className="rounded-2xl border border-border/50 bg-card/40 p-5"
             >
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[hsl(var(--gold)/.2)] to-[hsl(var(--pink)/.15)] border border-border/50 flex items-center justify-center text-[hsl(var(--gold))] mb-3">
-                <Icon className="w-4.5 h-4.5" />
+                <Icon className="w-4 h-4" />
               </div>
               <div className="font-imperial text-lg text-foreground">{w.title}</div>
               <div className="text-sm text-muted-foreground mt-1 leading-relaxed">{w.line}</div>
@@ -207,21 +253,22 @@ function Why() {
 function FinalCTA() {
   return (
     <section className="container py-16 md:py-24">
-      <div className="relative overflow-hidden rounded-3xl border border-[hsl(var(--gold)/.3)] p-8 md:p-14 text-center bg-gradient-to-br from-card/80 to-background">
-        <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-[420px] h-[420px] rounded-full bg-[hsl(var(--gold)/.18)] blur-[120px] -z-0" />
+      <div className="relative overflow-hidden rounded-3xl border border-[hsl(var(--gold)/.35)] p-8 md:p-14 text-center bg-gradient-to-br from-[#1a1320] to-[#110d1a]">
+        <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-[420px] h-[420px] rounded-full bg-[hsl(var(--gold)/.22)] blur-[120px] -z-0" />
         <div className="relative">
-          <h3 className="font-imperial text-3xl md:text-5xl text-foreground leading-tight">
+          <h3 className="font-imperial text-3xl md:text-5xl text-foreground leading-tight tracking-[0.04em]">
             지금 가입하면<br className="sm:hidden" />
-            <span className="bg-gradient-to-r from-[hsl(var(--gold))] to-[hsl(var(--pink))] bg-clip-text text-transparent"> +500 PHON</span> 즉시 지급
+            <span className="bg-gradient-to-r from-[hsl(var(--gold))] to-[hsl(var(--pink))] bg-clip-text text-transparent"> +10,000 PHON</span> 즉시 지급
           </h3>
-          <p className="mt-3 text-sm md:text-base text-muted-foreground">
+          <p className="mt-3 text-sm md:text-base text-foreground/70">
             한 번 들어오면 헤어나기 힘들어요. 진심으로요.
           </p>
           <Link
             to="/auth?mode=signup"
-            className="mt-7 inline-flex items-center gap-2 h-14 px-7 rounded-2xl bg-gradient-to-r from-[hsl(var(--gold))] to-[hsl(var(--pink))] text-background font-black text-base md:text-lg press shadow-[0_18px_60px_-18px_hsl(var(--gold)/.7)]"
+            className="pulse-halo mt-7 inline-flex items-center gap-2 h-14 px-7 rounded-2xl bg-gradient-to-r from-[hsl(var(--gold))] to-[hsl(var(--pink))] text-background font-black text-base md:text-lg press shadow-[0_18px_60px_-18px_hsl(var(--gold)/.8)] glow-imperial"
           >
-            무료로 시작하기 <ArrowRight className="w-4 h-4" />
+            <Crown className="w-5 h-5" />
+            지금 무료로 황제가 되기 <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
       </div>

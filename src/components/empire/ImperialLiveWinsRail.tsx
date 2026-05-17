@@ -161,10 +161,12 @@ const CCY_CHIP: Record<Currency, string> = {
 // Component
 // ─────────────────────────────────────────────────────────────
 
-const INITIAL_ROWS = 8;
-const MAX_ROWS = 8;
+type Variant = "compact" | "full";
 
-export default function ImperialLiveWinsRail() {
+export default function ImperialLiveWinsRail({ variant = "compact" }: { variant?: Variant } = {}) {
+  const isFull = variant === "full";
+  const INITIAL_ROWS = isFull ? 10 : 8;
+  const MAX_ROWS = isFull ? 10 : 8;
   const [rows, setRows] = useState<WinRow[]>([]);
   const [, force] = useState(0);
   const navigate = useNavigate();
@@ -211,7 +213,11 @@ export default function ImperialLiveWinsRail() {
   return (
     <section
       aria-label="Imperial Live Wins"
-      className="relative overflow-hidden rounded-2xl border border-secondary/30 bg-gradient-to-br from-amber-950/40 via-background to-stone-950/50 backdrop-blur-md shadow-[0_0_40px_-12px_hsl(var(--secondary)/0.35)]"
+      className={
+        isFull
+          ? "relative overflow-hidden rounded-2xl border border-[hsl(var(--gold)/0.45)] bg-gradient-to-br from-[#1a1320] via-[#110d1a] to-[#1a0f18] backdrop-blur-md shadow-[0_24px_80px_-20px_hsl(var(--gold)/0.45)] glow-imperial"
+          : "relative overflow-hidden rounded-2xl border border-secondary/30 bg-gradient-to-br from-amber-950/40 via-background to-stone-950/50 backdrop-blur-md shadow-[0_0_40px_-12px_hsl(var(--secondary)/0.35)]"
+      }
     >
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-secondary/80 to-transparent" />
 
@@ -269,8 +275,10 @@ export default function ImperialLiveWinsRail() {
                 transition={{ type: "spring", stiffness: 320, damping: 28 }}
                 className={
                   r.jackpot
-                    ? "relative my-0.5 rounded-lg overflow-hidden bg-gradient-to-r from-amber-500/10 via-pink-500/10 to-amber-500/10 border border-amber-400/30 animate-pulse"
-                    : "my-0 border-b border-border/20"
+                    ? (isFull
+                      ? "relative my-1 rounded-xl overflow-hidden bg-gradient-to-r from-[hsl(var(--gold)/0.18)] via-[hsl(var(--pink)/0.16)] to-[hsl(var(--gold)/0.18)] border border-[hsl(var(--gold)/0.55)] shadow-[0_0_28px_-4px_hsl(var(--gold)/0.55)] pulse-halo"
+                      : "relative my-0.5 rounded-lg overflow-hidden bg-gradient-to-r from-amber-500/10 via-pink-500/10 to-amber-500/10 border border-amber-400/30 animate-pulse")
+                    : (isFull ? "my-0 border-b border-[hsl(var(--gold)/0.12)]" : "my-0 border-b border-border/20")
                 }
               >
                 {r.jackpot && (
@@ -278,26 +286,26 @@ export default function ImperialLiveWinsRail() {
                 )}
 
                 {/* Desktop row */}
-                <div className="hidden sm:grid grid-cols-[1.4fr_1fr_56px_56px_1fr_56px_1.2fr] gap-2 items-center px-2 py-2 min-h-[52px]">
+                <div className={`hidden sm:grid grid-cols-[1.4fr_1fr_56px_56px_1fr_56px_1.2fr] gap-2 items-center px-2 ${isFull ? "py-2.5 min-h-[60px]" : "py-2 min-h-[52px]"}`}>
                   <div className="flex items-center gap-1.5 min-w-0">
-                    {r.jackpot && <Crown className="w-3.5 h-3.5 text-amber-300 shrink-0" />}
-                    <span className="text-base shrink-0">{r.gameEmoji}</span>
-                    <span className="text-[12px] font-bold truncate">{r.game}</span>
+                    {r.jackpot && <Crown className={`${isFull ? "w-4 h-4" : "w-3.5 h-3.5"} text-amber-300 shrink-0 drop-shadow-[0_0_6px_hsl(var(--gold)/0.7)]`} />}
+                    <span className={`${isFull ? "text-lg" : "text-base"} shrink-0`}>{r.gameEmoji}</span>
+                    <span className={`${isFull ? "text-[13px]" : "text-[12px]"} font-bold truncate`}>{r.game}</span>
                   </div>
-                  <span className="text-[12px] text-foreground/90 truncate">{r.nick}</span>
+                  <span className={`${isFull ? "text-[13px]" : "text-[12px]"} text-foreground/90 truncate`}>{r.nick}</span>
                   <span className="text-[10px] text-muted-foreground tabular-nums text-right">{fmtTime(r.ts)}</span>
                   <span className={`mx-auto px-1.5 py-0.5 rounded text-[9px] font-black border ${CCY_CHIP[r.currency]}`}>
                     {r.currency}
                   </span>
-                  <span className="text-[11px] font-mono tabular-nums text-muted-foreground text-right">{fmtAmount(r.bet, r.currency)}</span>
-                  <span className={`text-[11px] font-mono font-black tabular-nums text-right ${r.jackpot ? "text-amber-300" : r.mult >= 10 ? "text-secondary" : "text-foreground/80"}`}>
+                  <span className={`${isFull ? "text-[12px]" : "text-[11px]"} font-mono tabular-nums text-muted-foreground text-right`}>{fmtAmount(r.bet, r.currency)}</span>
+                  <span className={`${isFull ? "text-[12px]" : "text-[11px]"} font-mono font-black tabular-nums text-right ${r.jackpot ? "text-amber-300" : r.mult >= 10 ? "text-secondary" : "text-foreground/80"}`}>
                     ×{r.mult.toFixed(2)}
                   </span>
                   <span
                     className={
                       r.jackpot
-                        ? "text-[14px] font-mono font-black tabular-nums text-right bg-gradient-to-r from-amber-300 via-yellow-200 to-pink-300 bg-clip-text text-transparent drop-shadow-[0_0_10px_hsl(var(--secondary)/0.7)]"
-                        : "text-[13px] font-mono font-black tabular-nums text-right bg-gradient-to-r from-amber-300 via-yellow-200 to-pink-300 bg-clip-text text-transparent drop-shadow-[0_0_6px_hsl(var(--secondary)/0.45)]"
+                        ? `${isFull ? "text-[17px]" : "text-[14px]"} font-mono font-black tabular-nums text-right bg-gradient-to-r from-amber-200 via-yellow-100 to-pink-300 bg-clip-text text-transparent drop-shadow-[0_0_14px_hsl(var(--gold)/0.85)]`
+                        : `${isFull ? "text-[15px]" : "text-[13px]"} font-mono font-black tabular-nums text-right bg-gradient-to-r from-amber-300 via-yellow-200 to-pink-300 bg-clip-text text-transparent drop-shadow-[0_0_8px_hsl(var(--gold)/0.55)]`
                     }
                   >
                     {fmtAmount(r.payout, r.currency)}
