@@ -1,8 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
 
-// Public VAPID key — safe to embed in client.
+// Public VAPID key — safe to embed in client. Rotated 2026-05-17 (Phase F).
 export const VAPID_PUBLIC_KEY =
-  "BGqXPodts2tt4ZiOI1tZww8BgisT2_VEJufNW1iIDA8RcEjAYO7JasGuMbrjDBwU6l7KUQEE-4HKP2CQd8DYPqw";
+  "BMfwLBG20DrJp7DxWWb4yV__c1aESDE08XG1AZkWUEQH8u7ACixP15nibjRe8HJAw-Jk4bDRYYZdHT8UY3NRtqA";
 
 const SW_PATH = "/sw-push.js";
 
