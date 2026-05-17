@@ -1,18 +1,21 @@
 /**
- * FOMO Engine — Adaptive Global + Personalized Triggers + Variable Reward 5단계.
+ * FOMO Engine — Adaptive Global + Personalized + Spectator Pressure + Pool Imbalance.
+ * Variable Reward Tier 분포 재튜닝 (House Edge 6.2% 보존).
  */
 import type { FomoSignals, PersonalizedTrigger, RewardTier } from "../types";
 
 export interface FomoInput {
   spectators: number;
   jackpotPct: number;
-  recentNearMisses: number;     // last 10 rounds
+  recentNearMisses: number;
   consecutiveLosses: number;
-  royalPassProgress: number;    // 0..100
+  royalPassProgress: number;
   minutesSinceLastVisit: number;
   dynamicOffset: number;
   nearMissFlag: boolean;
   threshold: number;
+  /** 한쪽 풀 점유율 0..1 (poolImbalance) */
+  poolImbalance?: number;
 }
 
 export function computeFomo(input: FomoInput): FomoSignals {
@@ -28,6 +31,13 @@ export function computeFomo(input: FomoInput): FomoSignals {
   const heatVal = Math.min(5, Math.max(1, Math.ceil(globalRaw * 5))) as 1 | 2 | 3 | 4 | 5;
   if (heatVal >= 4) triggers.push("heat_surge");
 
+  const imbalance = input.poolImbalance ?? 0;
+  if (imbalance >= 0.30) triggers.push("pool_imbalance");
+
+  const spectatorPressure =
+    Math.min(40, input.spectators / 25) +
+    Math.min(35, imbalance * 70);
+
   const personalScore = Math.min(
     100,
     Math.round(
@@ -35,7 +45,8 @@ export function computeFomo(input: FomoInput): FomoSignals {
         input.consecutiveLosses * 4 +
         Math.max(0, input.royalPassProgress - 50) * 0.6 +
         Math.min(60, input.minutesSinceLastVisit) * 0.35 +
-        heatVal * 6,
+        heatVal * 6 +
+        spectatorPressure * 0.35,
     ),
   );
 
@@ -49,21 +60,25 @@ export function computeFomo(input: FomoInput): FomoSignals {
   };
 }
 
-/** Variable Reward 5단계 — roll(0..1) → tier. 황실 분포(꼬리 두텁게). */
+/**
+ * Variable Reward 5단계.
+ * Base 64% / Surge 23% / Crown 8.5% / Empyrean 3.2% / Divine 1.3%
+ * (꼬리 두텁게 — 잭팟 체감 유지, expected payout ≈ 0.938)
+ */
 export function rewardTierFromRoll(roll: number): RewardTier {
-  if (roll < 0.62) return "base";
-  if (roll < 0.86) return "surge";
-  if (roll < 0.965) return "crown";
-  if (roll < 0.995) return "empyrean";
+  if (roll < 0.640) return "base";
+  if (roll < 0.870) return "surge";
+  if (roll < 0.955) return "crown";
+  if (roll < 0.987) return "empyrean";
   return "divine";
 }
 
 export const REWARD_LABEL: Record<RewardTier, string> = {
-  base: "황실의 기본 영광",
-  surge: "옥좌의 파동",
-  crown: "왕관의 광휘",
-  empyrean: "천상의 황좌",
-  divine: "신성한 대관식",
+  base: "황실의 영광",
+  surge: "황금이 끓습니다",
+  crown: "왕관이 빛납니다",
+  empyrean: "천계가 열립니다",
+  divine: "신성한 대관식입니다 — JACKPOT",
 };
 
 export const HEAT_LABEL: Record<number, string> = {
