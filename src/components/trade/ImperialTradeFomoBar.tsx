@@ -21,8 +21,8 @@ function fmt(n: number) { return n.toLocaleString("ko-KR"); }
 
 function nextCount(prev: number) {
   const r = Math.random();
-  if (r < 0.08) {
-    // big jump
+  if (r < 0.11) {
+    // big jump — sadari-game energy
     const jump = 50_000 + Math.floor(Math.random() * 30_000);
     return clamp(prev + (Math.random() < 0.7 ? jump : -jump), MIN, MAX);
   }
@@ -31,9 +31,10 @@ function nextCount(prev: number) {
 }
 
 function nextRatio(prev: number) {
-  // 35 ~ 65, spring around 50
+  // 35 ~ 65, spring around 50, ±5% jitter
   const target = 35 + Math.random() * 30;
-  return clamp(prev + (target - prev) * 0.5, 35, 65);
+  const jitter = (Math.random() - 0.5) * 5;
+  return clamp(prev + (target - prev) * 0.55 + jitter, 35, 65);
 }
 
 export default function ImperialTradeFomoBar() {
@@ -48,11 +49,11 @@ export default function ImperialTradeFomoBar() {
     const tick = () => {
       if (cancelled) return;
       setCount((c) => nextCount(c));
-      const delay = 2_500 + Math.random() * 4_500;
+      const delay = 1_800 + Math.random() * 2_700;
       timer.current = window.setTimeout(tick, delay);
     };
     const timer = { current: 0 as number };
-    timer.current = window.setTimeout(tick, 2_500);
+    timer.current = window.setTimeout(tick, 1_800);
     return () => { cancelled = true; window.clearTimeout(timer.current); };
   }, []);
 
@@ -108,10 +109,12 @@ export default function ImperialTradeFomoBar() {
 
         <div className="flex items-center gap-2 text-[10px] sm:text-[11px] font-black tracking-wide">
           <span className="inline-flex items-center gap-1 text-emerald-300">
-            <TrendingUp className="w-3 h-3" /> LONG {longPct.toFixed(1)}%
+            <TrendingUp className={`w-3 h-3 ${reduce ? "" : "animate-pulse"} will-change-transform`} />
+            LONG <span className="tabular-nums">{longPct.toFixed(1)}%</span>
           </span>
           <span className="inline-flex items-center gap-1 text-rose-300">
-            <TrendingDown className="w-3 h-3" /> SHORT {shortPct.toFixed(1)}%
+            <TrendingDown className={`w-3 h-3 ${reduce ? "" : "animate-pulse"} will-change-transform`} />
+            SHORT <span className="tabular-nums">{shortPct.toFixed(1)}%</span>
           </span>
         </div>
       </div>
@@ -122,14 +125,14 @@ export default function ImperialTradeFomoBar() {
           className="absolute inset-y-0 left-0 bg-gradient-to-r from-emerald-500 via-emerald-400 to-teal-300"
           initial={false}
           animate={{ width: `${longPct}%` }}
-          transition={reduce ? { duration: 0 } : { type: "spring", stiffness: 90, damping: 18, mass: 0.8 }}
+          transition={reduce ? { duration: 0 } : { type: "spring", stiffness: 110, damping: 16, mass: 0.7 }}
           style={{ boxShadow: "0 0 18px hsl(160 80% 45% / 0.45)" }}
         />
         <motion.div
           className="absolute inset-y-0 right-0 bg-gradient-to-l from-rose-500 via-pink-500 to-fuchsia-400"
           initial={false}
           animate={{ width: `${shortPct}%` }}
-          transition={reduce ? { duration: 0 } : { type: "spring", stiffness: 90, damping: 18, mass: 0.8 }}
+          transition={reduce ? { duration: 0 } : { type: "spring", stiffness: 110, damping: 16, mass: 0.7 }}
           style={{ boxShadow: "0 0 18px hsl(340 80% 55% / 0.45)" }}
         />
         {/* center divider */}

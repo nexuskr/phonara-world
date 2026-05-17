@@ -1,6 +1,7 @@
 import { useState, useEffect, type ReactNode } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { ChevronUp, ChevronDown, Crown } from "lucide-react";
+import ImperialLogo from "@/components/brand/ImperialLogo";
 
 interface Props {
   children: ReactNode;
@@ -120,9 +121,7 @@ export default function MobileOrderSheet({ children }: Props) {
               <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-amber-400/20 px-4 py-3 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-10 h-1.5 rounded-full bg-gradient-to-r from-amber-300 to-rose-400" aria-hidden />
-                  <span className="text-sm font-black tracking-[0.12em] ml-2 font-imperial bg-gradient-to-r from-amber-200 to-rose-300 bg-clip-text text-transparent">
-                    황제의 주문 패널
-                  </span>
+                  <ImperialLogo size="sm" withWordmark withWorld={false} to="" ariaLabel="황제의 주문 패널" className="ml-2" />
                 </div>
                 <button
                   type="button"

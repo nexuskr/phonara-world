@@ -8,7 +8,18 @@
  *  - prefers-reduced-motion 가드
  */
 import { Link } from "react-router-dom";
-import { memo } from "react";
+import { memo, useEffect } from "react";
+
+const KEYFRAME_ID = "imperial-mark-pulse-keyframes";
+function ensureKeyframes() {
+  if (typeof document === "undefined") return;
+  if (document.getElementById(KEYFRAME_ID)) return;
+  const s = document.createElement("style");
+  s.id = KEYFRAME_ID;
+  s.textContent =
+    "@keyframes imperialMarkPulse{0%,100%{opacity:.25;transform:translate(-50%,-50%) var(--imp-tf,rotate(0)) scale(.7)}50%{opacity:1;transform:translate(-50%,-50%) var(--imp-tf,rotate(0)) scale(1)}}";
+  document.head.appendChild(s);
+}
 
 interface Props {
   size?: "sm" | "md" | "lg";
@@ -29,25 +40,48 @@ const WORD_CLASS = {
 function ImperialMark({ px }: { px: number }) {
   const gradId = `imperial-mark-grad-${px}`;
   const strokeId = `imperial-mark-stroke-${px}`;
+  // 6 hover particles on a ring around the mark (transform/opacity only).
+  const particles = [0, 60, 120, 180, 240, 300];
   return (
     <span
       className="relative inline-flex items-center justify-center shrink-0 [&_svg]:will-change-transform motion-reduce:[&_svg]:!transform-none"
-      style={{ width: px, height: px }}
+      style={{ width: px, height: px, transform: "translateZ(0)" }}
       aria-hidden
     >
-      {/* multi-layer halo */}
+      {/* multi-layer halo: gold core + pink mid + rose outer ring */}
       <span
-        className="absolute inset-0 rounded-2xl opacity-70 blur-[10px] transition-opacity duration-300 group-hover:opacity-100"
+        className="absolute inset-0 rounded-2xl opacity-70 blur-[10px] transition-opacity duration-300 group-hover:opacity-100 will-change-[opacity]"
         style={{
           background:
             "radial-gradient(60% 60% at 50% 50%, hsl(var(--gold) / 0.55), transparent 70%), radial-gradient(80% 80% at 50% 60%, hsl(var(--pink) / 0.35), transparent 75%)",
         }}
       />
+      <span
+        className="absolute -inset-1 rounded-full opacity-0 group-hover:opacity-90 transition-opacity duration-300 blur-[6px] motion-reduce:!opacity-0"
+        style={{
+          background:
+            "conic-gradient(from 0deg, hsl(330 90% 60% / 0.55), hsl(var(--gold) / 0.45), hsl(330 90% 60% / 0.55))",
+        }}
+      />
+      {/* 6 particle dots — pure transform/opacity, GPU-friendly */}
+      <span className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 motion-reduce:!opacity-0">
+        {particles.map((deg, i) => (
+          <span
+            key={deg}
+            className="absolute left-1/2 top-1/2 block w-1 h-1 rounded-full bg-[hsl(var(--gold))] shadow-[0_0_6px_hsl(var(--gold)/0.9)] will-change-transform"
+            style={{
+              transform: `translate(-50%, -50%) rotate(${deg}deg) translateY(-${px * 0.62}px) translateZ(0)`,
+              animation: `imperialMarkPulse 1.6s ${(i * 0.12).toFixed(2)}s ease-in-out infinite`,
+            }}
+          />
+        ))}
+      </span>
       <svg
         viewBox="0 0 48 48"
         width={px}
         height={px}
-        className="relative transition-transform duration-500 group-hover:rotate-[0.5deg] motion-reduce:transition-none"
+        className="relative transition-transform duration-500 group-hover:rotate-[1.2deg] group-active:scale-[0.96] motion-reduce:transition-none"
+        style={{ transform: "translateZ(0)" }}
       >
         <defs>
           <linearGradient id={gradId} x1="0" y1="0" x2="1" y2="1">
@@ -102,13 +136,14 @@ function ImperialLogoBase({
 }: Props) {
   const px = MARK_SIZE[size];
   const word = WORD_CLASS[size];
+  useEffect(() => { ensureKeyframes(); }, []);
 
   const inner = (
     <span className={`group inline-flex items-center gap-2.5 ${className}`}>
       <ImperialMark px={px} />
       {withWordmark && (
         <span
-          className={`font-imperial font-black ${word} bg-clip-text text-transparent transition-[filter] duration-300 group-hover:[filter:drop-shadow(0_0_10px_hsl(var(--gold)/0.55))]`}
+          className={`font-imperial font-black ${word} bg-clip-text text-transparent transition-[filter] duration-300 group-hover:[filter:drop-shadow(0_0_14px_hsl(var(--gold)/0.7))_drop-shadow(0_0_22px_hsl(330_90%_60%/0.45))] group-active:[filter:drop-shadow(0_0_18px_hsl(var(--gold)/0.85))]`}
           style={{
             backgroundImage:
               "linear-gradient(95deg, hsl(var(--gold)) 0%, hsl(var(--gold)) 50%, hsl(var(--pink)) 100%)",

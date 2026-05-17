@@ -130,7 +130,7 @@ export default function PhonOrderPanel({ symbol, price }: Props) {
       </div>
 
       {/* Currency unit segmented toggle */}
-      <div role="tablist" aria-label="베팅 통화 선택" className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-background/60 border border-border/40">
+      <div role="tablist" aria-label="베팅 통화 선택" className="relative grid grid-cols-2 gap-1 p-1 rounded-xl bg-background/60 border border-border/40 overflow-hidden">
         {(["PHON", "USDT"] as const).map((u) => {
           const active = unit === u;
           return (
@@ -141,13 +141,19 @@ export default function PhonOrderPanel({ symbol, price }: Props) {
               aria-selected={active}
               onClick={() => switchUnit(u)}
               className={[
-                "min-h-9 rounded-lg text-[11px] font-black tracking-[0.18em] press transition",
+                "relative min-h-9 rounded-lg text-[11px] font-black tracking-[0.18em] press transition-all duration-200 will-change-transform",
                 active
-                  ? "bg-gradient-to-r from-amber-400/30 to-pink-500/30 text-amber-100 border border-amber-300/60 shadow-[0_0_18px_-6px_hsl(var(--gold)/0.55)]"
-                  : "text-muted-foreground hover:text-foreground",
+                  ? "bg-gradient-to-r from-amber-400/30 to-pink-500/30 text-amber-100 border border-amber-300/60 shadow-[0_0_22px_-6px_hsl(var(--gold)/0.7)] ring-1 ring-amber-300/40"
+                  : "text-muted-foreground hover:text-foreground hover:bg-card/50",
               ].join(" ")}
             >
               {u}
+              {active && (
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute left-2 right-2 -bottom-0.5 h-[2px] rounded-full bg-gradient-to-r from-amber-300 via-amber-400 to-pink-500 shadow-[0_0_10px_hsl(var(--gold)/0.7)]"
+                />
+              )}
             </button>
           );
         })}
@@ -244,8 +250,8 @@ export default function PhonOrderPanel({ symbol, price }: Props) {
         <div className="mt-1 text-right text-[10px] tabular-nums text-muted-foreground/90">
           {amountPhon > 0 ? (
             unit === "USDT"
-              ? <>≈ <span className="text-amber-200 font-bold">{amountPhon.toLocaleString("ko-KR")} PHON</span> 으로 정산</>
-              : <>≈ <span className="text-amber-200 font-bold">{amountUsdt.toLocaleString(undefined, { maximumFractionDigits: 2 })} USDT</span> 환산</>
+              ? <>≈ <span className="text-amber-200 font-black text-[11px] [text-shadow:0_0_8px_hsl(var(--gold)/0.5)]">{amountPhon.toLocaleString("ko-KR")} PHON</span> 으로 정산</>
+              : <>≈ <span className="text-amber-200 font-black text-[11px] [text-shadow:0_0_8px_hsl(var(--gold)/0.5)]">{amountUsdt.toLocaleString(undefined, { maximumFractionDigits: 2 })} USDT</span> 환산</>
           ) : (
             <>1 USDT = {PHON_PER_USDT.toLocaleString("ko-KR")} PHON 으로 환산되어 즉시 체결</>
           )}
@@ -256,12 +262,13 @@ export default function PhonOrderPanel({ symbol, price }: Props) {
               key={p}
               type="button"
               onClick={() => fillPct(p)}
-              className="min-h-10 rounded-lg bg-card/60 border border-border/40 text-[11px] font-black text-muted-foreground hover:border-amber-300/60 press"
+              className="min-h-10 rounded-lg bg-card/60 border border-border/40 text-[11px] font-black text-muted-foreground hover:border-amber-300/60 hover:text-amber-100 hover:ring-1 hover:ring-amber-300/40 hover:shadow-[0_0_14px_-4px_hsl(var(--gold)/0.6)] active:scale-[0.97] transition-all duration-150 will-change-transform press"
             >
               {p === 1 ? "MAX" : `${p * 100}%`}
             </button>
           ))}
         </div>
+
       </div>
 
       {/* Discount + Liq preview */}
