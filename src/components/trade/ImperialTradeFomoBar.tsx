@@ -109,10 +109,12 @@ export default function ImperialTradeFomoBar() {
 
         <div className="flex items-center gap-2 text-[10px] sm:text-[11px] font-black tracking-wide">
           <span className="inline-flex items-center gap-1 text-emerald-300">
-            <TrendingUp className="w-3 h-3" /> LONG {longPct.toFixed(1)}%
+            <TrendingUp className={`w-3 h-3 ${reduce ? "" : "animate-pulse"} will-change-transform`} />
+            LONG <span className="tabular-nums">{longPct.toFixed(1)}%</span>
           </span>
           <span className="inline-flex items-center gap-1 text-rose-300">
-            <TrendingDown className="w-3 h-3" /> SHORT {shortPct.toFixed(1)}%
+            <TrendingDown className={`w-3 h-3 ${reduce ? "" : "animate-pulse"} will-change-transform`} />
+            SHORT <span className="tabular-nums">{shortPct.toFixed(1)}%</span>
           </span>
         </div>
       </div>
