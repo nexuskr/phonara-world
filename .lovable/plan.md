@@ -1,112 +1,98 @@
-# Slice 7.5 Final Touch + Slice 8 Imperial Duel PVP
+# Clean Rebuild Phase + Slice 7.5 Final Touch (+ Slice 8 Imperial Duel PVP next)
 
-두 단계로 진행. **Slice 7.5 시각 폴리시 완료 → 보고 → Slice 8 PVP 시스템 구현.**
+3단계 진행. **Phase 0 Clean Rebuild → Phase A Slice 7.5 Visual Touch → Phase B Slice 8 Imperial Duel PVP**. 각 Phase 종료 시 보고.
+
+핵심 원칙: **money-flow 8경로 / Operator Isolation / Bundle Budget / Phase D(Avatar+Lobby) / Phase F Push 0줄 변경**. 트레이딩/베팅/출금 RPC와 그 호출 hook은 절대 미터치. 정리는 "마운트 해제 + 카피 교체 + 라우트 노출 차단" 수준으로 진행하고 파일 자체는 보존(다른 페이지에서 import 가능성).
+
+---
+
+## Phase 0 — Clean Rebuild (군대·전쟁 정리 + Imperial 리셋)
+
+### 0.1 정리 대상 (마운트 해제·라우트 비공개, 파일 보존)
+
+Dashboard:
+- `CrownWarHUD`, `LiveRankingMarquee`, `HubTabs hub="command"`, `CommandHero`, `BoostHeroCard`, `EmpireP2EDashboard`, `MachineFomoTicker`, `LiveRanking`, `JackpotBanner`(중복), `EmpireDayCountdown`, `SevenDayChallengeCard`, `FirstMissionCard`, `RoutingMigrationBanner`(만료) 마운트 해제.
+- 남기는 hero 라인: `<ImperialLivePulseRail/>` → `<ImperialLiveWinsRail variant="full"/>` → `<DashboardHeroV3/>` → `<DailyBriefingCard/>` → `<VipWhalePreview/>` → `<ImperialJourneyMap/>` → `<JourneyClaimPanel/>` → `<TradingEntryCard/>` → Olympus 슬롯 진입 카드 → `<KpiGridV3/>` → `<MoreSection/>` (베팅 패널 + 출금 nudge + 환원 위주, 카피만 Imperial로).
+
+Layout / Nav:
+- `src/components/Layout.tsx`에 잔존하는 BattleResultOverlay / Arena 관련 위젯 마운트 제거.
+- `src/components/nav/PhonaraNav.tsx` 5탭 + 중앙 Half-Off Imperial FAB 외 모두 정리. Arena/War 링크 제거, 대신 `/trading`(또는 `/dashboard?focus=bet`)으로 흡수.
+
+Landing(`src/pages/Landing.tsx` + `src/pages/Index.tsx`):
+- Hero + `<ImperialLiveWinsRail variant="full"/>` + Trust 3-line + CTA만 남기고, 군사/배틀 마키·중복 ticker 제거.
+
+Routes (`src/App.tsx`):
+- `/empire/arena`, `/arena`, `/trading/army`, `/trading/war` 경로 — **사용자 진입 라우트에서 제외**(컴포넌트 import는 유지하되, Route 등록만 주석/제거). 사용자 메뉴/내비/링크에서 노출 전면 제거.
+- 기존 깊은 링크 호환을 위해 `<Navigate to="/trading" replace/>` 리다이렉트로 대체.
+
+### 0.2 카피 일괄 sweep (사용자 노출 텍스트만)
+
+대상 파일 화이트리스트(머니플로 코드 제외): Landing, Index, Dashboard, Layout, PhonaraNav, PhonaraTopBar, WorldHero, DashboardHeroV3, KpiGridV3, MoreSection, ImperialLivePulseRail, ImperialLiveWinsRail, Onboarding60s, AuthFeatureGrid, Guide(s), JackpotEmpireBanner, CrownThroneOverlay, Empire/EmpireHall/EmpireCollection.
+
+치환 사전 (정확히 사용자 노출 문자열만):
+- "전투" → "대결", "전쟁" → "왕좌전", "배틀" → "듀얼", "army"/"Army" → "Imperial Guard"
+- "Crown War"/"크라운 워" → "Crown Throne", "Empire Arena"/"엠파이어 아레나" → "Imperial Hall"
+- "battle" UI 문구 → "duel" / "Imperial Duel"
+- 일관 톤: "황제", "제국", "폐하", "Imperial", "왕좌"
+
+내부 변수/함수/파일명은 **변경 금지**(머니플로/타입 안정성). 화면에 보이는 string literal만 치환.
+
+### 0.3 디자인 토큰 sweep
+- 모든 잔존 하드코딩 색상 → semantic token으로 일괄 정리(0.1에서 살아남는 파일 한정).
+- 카드 표준화: 사용자 페이지의 1차 카드는 `imperial-card-hover imperial-corner-shine`, 2차 카드는 `imperial-card-thin`.
+
+### 0.4 검증
+- `bunx tsc --noEmit`
+- `rg "battle|군대|전투|전쟁|crown war|empire arena" src/pages/{Landing,Index,Dashboard}.tsx src/components/{Layout,nav/*,empire/ImperialLive*}.tsx` ⇒ 0건.
+- money-flow 파일 (`request_withdrawal`/`credit_crypto_deposit`/`bet_*` 호출 hook/엣지 등) git diff = 0줄.
 
 ---
 
 ## Phase A — Slice 7.5 Final Visual Touch (Stake Crusher)
 
-### 목표
-Dashboard / Navigation / Landing / 글로벌 토큰을 World #1 Imperial Luxury로 끌어올린다. "와… 미쳤다" 첫인상.
-
 ### A1. 글로벌 토큰 강화 (`src/index.css`)
-- `imperial-vignette` — radial vignette 강도 ↑ (중앙 투명도 1.0 → 가장자리 deep-black, gold tint 0.06 add).
-- `text-shadow-imperial` / `-xl` — gold/pink 다층 drop-shadow에 hot-pink 0.45 외곽 1px hairline 추가.
-- `glow-pink-xl` — box-shadow를 2-layer로 (inner gold hairline + outer pink 56px bloom).
-- `imperial-card-hover` — `transition: transform 220ms cubic-bezier(.2,.8,.2,1), box-shadow 220ms`, hover 시 `translateY(-3px)` + gold hairline + pink bloom 동시.
-- `imperial-corner-shine` — 좌상 12% 사이즈 gold sweep, 4s ease-in-out infinite.
-- `imperial-card-thin` — 1px gold 0.18 + bg `hsl(var(--background)/0.6)` backdrop-blur.
-- `imperial-breathe-soft` — scale 1.000 → 1.006, 3.6s, prefers-reduced-motion guard.
-- `--shadow-imperial-deep` 토큰 추가(전역 카드 표준 그림자).
+- `imperial-vignette` — radial vignette + gold 0.06 tint.
+- `text-shadow-imperial-xl` — gold/pink 다층 + hot-pink 0.45 1px hairline.
+- `glow-pink-xl` — inner gold hairline + outer 56px pink bloom 2-layer.
+- `imperial-card-hover` — `translateY(-3px)` + 220ms cubic-bezier + dual shadow.
+- `imperial-corner-shine` 12% 사이즈 gold sweep 4s infinite.
+- `imperial-card-thin` — 1px gold 0.18 + backdrop-blur.
+- `imperial-breathe-soft` — scale 1.000→1.006, 3.6s, prefers-reduced-motion guard.
+- 토큰 `--shadow-imperial-deep` 추가, 카드 표준 그림자로 채택.
 
-### A2. Landing (`src/pages/Landing.tsx`, `src/components/empire/ImperialLiveWinsRail.tsx`)
-- Hero에 SVG gold particle layer(20 dot, blur-md, opacity 0.18, slow drift CSS anim).
-- H1 글자 자간 -0.02em, line-height 1.05, `text-shadow-imperial-xl` 유지 + `imperial-breathe-soft`.
-- CTA 버튼: `glow-pink-xl` + hover scale 1.025 + active scale 0.985 + 내부 gold→pink gradient 회전 4s.
-- Wins Rail jackpot 행: gold border 0.7→0.82, outer pink bloom 44→60px, crown ✨ 회전 + 텍스트 `text-shadow-imperial-xl`.
+### A2. Landing 폴리시
+- Hero `imperial-vignette` + SVG gold particle 20dot drift.
+- H1 letter-spacing -0.02em + `text-shadow-imperial-xl` + `imperial-breathe-soft`.
+- CTA: `glow-pink-xl`, hover scale 1.025, gradient 회전 4s, `+10,000 PHON` chip ping 유지.
+- `<ImperialLiveWinsRail/>` jackpot 행: gold border 0.7→0.82, outer pink bloom 44→60px, crown 회전.
 
-### A3. Dashboard (`src/pages/Dashboard.tsx` + 관련 카드)
-- 산만함 정리: 최상단에 `<ImperialLivePulseRail/>` → `<ImperialLiveWinsRail variant="full"/>` 2단만 hero로. 그 외 위젯은 그리드 2단 아래 `섹션 헤더` + `imperial-card-hover` 단일 톤으로 묶음.
-- KpiGridV3 카드: `imperial-card-hover imperial-corner-shine` 적용, 숫자에 `text-gradient-imperial` + `text-shadow-imperial`.
-- 카지노/슬롯 진입 카드: `imperial-card-hover` + 우상단 `imperial-pulse-dot`.
+### A3. Dashboard 폴리시
+- KpiGridV3 카드 `imperial-card-hover imperial-corner-shine`, 숫자 `text-gradient-imperial` + `text-shadow-imperial`.
+- 슬롯/카지노 진입 카드: `imperial-card-hover` + `imperial-pulse-dot`.
+- MoreSection 토글: 골드 hairline + 호흡.
 
-### A4. Navigation (`src/components/nav/PhonaraNav.tsx` + FAB)
-- Bottom nav 5탭: active indicator를 gold→pink 그라디언트 hairline + 상단 6px glow.
-- 중앙 FAB(Half-Off Imperial): `glow-pink-xl` + `imperial-breathe-soft` + hover scale 1.06 + gold ring(2px) on hover, active 시 ring 펄스.
-- 모바일 ≥48px 터치 타깃 보장.
+### A4. Navigation 폴리시
+- Bottom Nav 5탭 active indicator = gold→pink 그라디언트 hairline + 상단 6px glow.
+- 중앙 FAB: `glow-pink-xl` + `imperial-breathe-soft`, hover scale 1.06 + 2px gold ring, active ring 펄스.
+- 모바일 ≥48px 터치 타깃.
 
 ### A5. 검증
-- `bunx tsc --noEmit`
-- `/`, `/dashboard` 시각 확인
-- money-flow / Operator / Bundle / Phase D·F 0줄 변경
+- `bunx tsc --noEmit`, `/`, `/dashboard` 시각 확인 스크린샷.
+- 머니플로 / Operator / Bundle / Phase D·F 0줄.
 
-**Phase A 완료 보고**: "✅ Slice 7.5 Final Touch 완료" → 즉시 Phase B 진행.
+**Phase 0 + A 완료 보고**: "✅ Clean Rebuild Phase + Slice 7.5 Final Touch 완료" + Dashboard / Navigation / Landing 스크린샷.
 
 ---
 
-## Phase B — Slice 8 Imperial Duel PVP
+## Phase B — Slice 8 Imperial Duel PVP (요약, 상세는 승인 후 즉시 실행)
 
-### 핵심
-- **1:1 Duel / Royal Battle(4~6) / Emperor Throne(2~8)**
-- 모드: **Trade / Slot / Crash**
-- PHON 참가비 Lock → 자동 정산, **House Edge 12~15%**
-- Realtime Room + Crown Point + 시즌 리더보드 + 연패 보호
-- **money-flow 8경로 git diff 0** — 별도 `pvp_ledger` + 전용 RPC
+- 신규 테이블: `pvp_duels`, `pvp_duel_participants`, `pvp_ledger`, `pvp_season`, `pvp_season_stats` + kill switch `pvp_engine`.
+- RPC (SECURITY DEFINER, idempotent): `pvp_create_duel/join/leave/cancel/settle`, `pvp_get_open_lobby/my_active/leaderboard`, 관리자 `admin_pvp_force_settle/get_metrics_24h`.
+- 내부: `_pvp_lock_funds`, `_pvp_credit`, `_pvp_compute_result`. `phon_balances` 변경은 신규 SECURITY DEFINER 함수에서만, 모든 변동 `pvp_ledger` 미러.
+- Realtime: `pvp_duels`/`pvp_duel_participants` publication, `useGameChannel`만.
+- UI: `/pvp` Lobby, `<DuelCreatePanel/>`, `/pvp/:id` Room, `<DuelResultOverlay/>`, `/pvp/hall` Leaderboard, `<DuelEntryFAB/>` (전역).
+- 모드: Trade / Slot / Crash. 포맷: 1v1 / Royal(4~6) / Throne(2~8). House edge 12~15%. 연패 보호 적용.
+- 디자인: Phase A 토큰 적극 활용(gold=승리, hot-pink=도전).
+- 체크리스트: money-flow freeze 0, ledger 본인-only, settle idempotent, kill switch ON 시 차단, 닉 마스킹, Bundle Budget 통과.
 
-### B1. 데이터 모델 (신규 테이블)
-```text
-pvp_duels(id, mode, format, capacity, entry_phon, status, seed, symbol,
-          created_by, starts_at, ends_at, settled_at, metadata)
-pvp_duel_participants(duel_id, user_id, joined_at, position, payout_phon, result)
-pvp_ledger(id, user_id, duel_id, kind in (lock|refund|payout|fee), amount_phon, created_at)
-pvp_season(id, name, starts_at, ends_at, prize_pool_phon, active)
-pvp_season_stats(season_id, user_id, duels_played, wins, crown_points, net_phon, loss_streak)
-platform_kill_switches: 'pvp_engine'
-```
-RLS:
-- duels / participants SELECT = authenticated (공개 로비), 변경은 RPC만.
-- pvp_ledger SELECT = 본인 + admin.
-- season_stats SELECT = authenticated (리더보드), 변경은 RPC만.
-
-### B2. RPC (SECURITY DEFINER, idempotent, kill-switch 가드)
-- `pvp_create_duel(_mode,_format,_capacity,_entry,_symbol)`
-- `pvp_join_duel(_id)` / `pvp_leave_duel(_id)` / `pvp_cancel_duel(_id)`
-- `pvp_settle_duel(_id)` — 시드 기반 순위 산출 + payout/fee 적재 + season_stats upsert(Crown +20/+8/+3, 연패 보호 적용)
-- `pvp_get_open_lobby(_limit)` / `pvp_get_my_active()` / `pvp_get_leaderboard(_season?,_limit)` (닉 마스킹)
-- 관리자: `admin_pvp_force_settle(_id)`, `admin_pvp_get_metrics_24h()`
-- 내부: `_pvp_lock_funds`, `_pvp_credit`, `_pvp_compute_result`
-
-Realtime publication: `pvp_duels`, `pvp_duel_participants` 추가 (구독은 `useGameChannel`만).
-
-### B3. UI (`src/pages/pvp/*`, `src/components/pvp/*`)
-- `/pvp` Duel Lobby — 모드·포맷 필터 + 오픈 듀얼 카드 + "도전" CTA + 내 활성 듀얼 핀
-- `<DuelCreatePanel/>` — 모드/포맷/capacity/entry PHON 슬라이더 + house edge 안내
-- `/pvp/:id` `<DuelRoom/>` — 참가자 슬롯, 카운트다운, 실시간 입퇴장, 긴장 빌드업
-- `<DuelResultOverlay/>` — 순위 / Crown Point 변화 / "다시 도전"
-- `/pvp/hall` `<DuelLeaderboard/>` — 시즌 Top 50 + 마이 랭크
-- `<DuelEntryFAB/>` — 전역(데스크탑 우하단, 모바일 nav 옆), 진행 중 듀얼 시 펄스
-- 클라 래퍼: `src/lib/pvp.ts`
-- 디자인: Slice 7.5 토큰 적극 활용 (gold 승리, hot-pink 도전)
-
-### B4. 절대 불변
-- money-flow 8경로 / Operator Isolation / Bundle Budget / Phase D / Phase F **0줄 변경**
-- raw `supabase.channel(...)` 금지 — `useGameChannel`만
-- 디자인 토큰만, sonner 직접 호출 금지(`@/lib/notify`)
-- 신규 SECURITY DEFINER 함수는 `function_permissions_baseline` 등록
-
-### B5. 작업 순서
-1. Migration A — 테이블 + RLS + 인덱스 + kill switch 시드
-2. Migration B — RPC + 내부 함수 + permission baseline
-3. Realtime publication
-4. 클라 라이브러리 + 컴포넌트 + 라우트 + FAB 마운트
-5. 검증 — `bunx tsc --noEmit`, /pvp 수동 흐름, force_settle 확인, freeze CI
-
-### B6. 체크리스트
-- [ ] money-flow freeze 0 줄
-- [ ] pvp_ledger SELECT 본인 전용
-- [ ] pvp_settle_duel 중복 idempotent
-- [ ] kill switch ON 시 create/join 차단
-- [ ] 리더보드 닉 마스킹
-- [ ] Bundle Budget 통과
-
-**Phase B 완료 보고**: "✅ Slice 8 Imperial Duel PVP System 완료" + 주요 스크린샷.
+**Phase B 완료 보고**: "✅ Slice 8 Imperial Duel PVP System 완료" + 주요 스크린샷(Lobby/Room/Result/Hall).
