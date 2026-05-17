@@ -9,3 +9,5 @@ export { computeThreshold } from "./engine/dynamicThreshold";
 export { detectNearMiss, nearMissEase, strongNearMissIntensity } from "./engine/nearMiss";
 export { computeFomo, rewardTierFromRoll, REWARD_LABEL, HEAT_LABEL } from "./engine/fomo";
 export { computeOdds, poolImbalance, settlePayout, HOUSE_EDGE, type PoolState, type BetRecord } from "./engine/odds";
+export { shadowLedger, SHADOW_START_BALANCE, type ShadowEntry } from "./engine/shadowLedger";
+export { useShadowBetting } from "./hooks/useShadowBetting";

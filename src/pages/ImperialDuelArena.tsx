@@ -1,11 +1,12 @@
 /**
  * /duel/arena/:roomId — Imperial Duel Arena (Spectator + Live Betting + Cinematic v2).
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ShieldCheck } from "lucide-react";
 import {
   useDuelRoom, useDuelTick, useFomoOracle, useOddsEngine, useSpectatorSync,
+  useShadowBetting,
   rollHmac, randomSeed, sha256Hex,
   computeThreshold, detectNearMiss, strongNearMissIntensity, rewardTierFromRoll, REWARD_LABEL,
   poolImbalance,
@@ -15,6 +16,7 @@ import { ThroneStage } from "@pkg/duel/components/arena/ThroneStage";
 import { DuelistProfile } from "@pkg/duel/components/arena/DuelistProfile";
 import { DuelObject } from "@pkg/duel/components/arena/DuelObject";
 import { NearMissBurst } from "@pkg/duel/components/arena/NearMissBurst";
+import { NearMissEdgeVignette } from "@pkg/duel/components/arena/NearMissEdgeVignette";
 import { DuelHud } from "@pkg/duel/components/arena/DuelHud";
 import { BettingPanel } from "@pkg/duel/components/arena/BettingPanel";
 import { SpectatorDeck } from "@pkg/duel/components/arena/SpectatorDeck";
@@ -22,6 +24,8 @@ import { RewardTierBanner } from "@pkg/duel/components/arena/RewardTierBanner";
 import { VerificationOracleModal, type BettingAuditEntry } from "@pkg/duel/components/oracle/VerificationOracleModal";
 import { HeatLevelBadge } from "@pkg/duel/components/lobby/HeatLevelBadge";
 import { notify } from "@/lib/notify";
+
+const DivineJackpotOverlay = lazy(() => import("@pkg/duel/components/arena/DivineJackpotOverlay"));
 
 const DURATION_MS = 2800;
 
@@ -41,6 +45,7 @@ export default function ImperialDuelArena() {
     poolImbalance: imbalance,
   });
 
+  const shadow = useShadowBetting();
   const [round, setRound] = useState(1);
   const [state, setState] = useState<"idle" | "rolling" | "settled">("idle");
   const [result, setResult] = useState<DuelRoundResult | null>(null);
@@ -50,6 +55,9 @@ export default function ImperialDuelArena() {
   const [nearMissSide, setNearMissSide] = useState<"left" | "right" | null>(null);
   const [lastPayout, setLastPayout] = useState<{ won: boolean; amount: number; stake: number } | null>(null);
   const [auditLog, setAuditLog] = useState<BettingAuditEntry[]>([]);
+  const [divineOpen, setDivineOpen] = useState(false);
+  const [divineWinnerName, setDivineWinnerName] = useState("");
+  const [lastSeedHash, setLastSeedHash] = useState<string>("");
   const historyRef = useRef<Array<"left" | "right">>([]);
 
   const easeStrong = (result?.nearMiss ?? false) || nearMissIntensity > 0.4;

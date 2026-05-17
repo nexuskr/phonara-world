@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Crown, Swords } from "lucide-react";
 import { notify } from "@/lib/notify";
+import { ConfirmBetSheet } from "./ConfirmBetSheet";
 
 interface Props {
   leftName: string;
@@ -19,6 +20,10 @@ interface Props {
   lastPayout?: { won: boolean; amount: number; stake: number } | null;
   onPlace: (side: "left" | "right", amount: number) => void;
   myStake?: { side: "left" | "right"; amount: number } | null;
+  /** Shadow PROOF MODE 잔고 */
+  shadowBalance?: number;
+  /** Confirm Sheet 에 보여줄 서버 시드 해시 (직전 라운드 봉인값) */
+  serverSeedHashPreview?: string;
 }
 
 const PRESETS = [100, 500, 2_000, 10_000, 50_000];
@@ -26,9 +31,11 @@ const PRESETS = [100, 500, 2_000, 10_000, 50_000];
 export function BettingPanel({
   leftName, rightName, oddsLeft, oddsRight, disabled,
   nearMissSide, lastPayout, onPlace, myStake,
+  shadowBalance, serverSeedHashPreview,
 }: Props) {
   const [side, setSide] = useState<"left" | "right">("left");
   const [amount, setAmount] = useState(500);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   // 직전 라운드 결과 토스트
   const lastRef = useRef(lastPayout);
@@ -37,7 +44,7 @@ export function BettingPanel({
       lastRef.current = lastPayout;
       if (lastPayout.won) {
         notify.success(
-          `옥좌가 폐하의 손을 들었습니다 — +${lastPayout.amount.toLocaleString()} PHON (데모 베팅)`,
+          `옥좌가 폐하의 손을 들었습니다 — +${lastPayout.amount.toLocaleString()} PHON (Shadow)`,
         );
       } else {
         notify.warning(
@@ -47,8 +54,13 @@ export function BettingPanel({
     }
   }, [lastPayout]);
 
-  const handlePlace = () => {
+  const openConfirm = () => {
     if (disabled) return;
+    setConfirmOpen(true);
+  };
+
+  const confirmPlace = () => {
+    setConfirmOpen(false);
     onPlace(side, amount);
     const msg = `${side === "left" ? leftName : rightName} 진영에 ${amount.toLocaleString()} PHON 봉납 — 옥좌에 베팅을 올리소서`;
     if (notify.imperial) notify.imperial(msg);
@@ -120,9 +132,16 @@ export function BettingPanel({
         </div>
       </div>
 
+      {typeof shadowBalance === "number" && (
+        <div className="flex items-center justify-between text-[11px] text-amber-200/85 tabular-nums px-0.5">
+          <span>가상 잔고 (Shadow)</span>
+          <span className="font-black text-amber-100">{shadowBalance.toLocaleString()} PHON</span>
+        </div>
+      )}
+
       <button
         type="button"
-        onClick={handlePlace}
+        onClick={openConfirm}
         disabled={disabled}
         className="w-full inline-flex items-center justify-center gap-2 rounded-2xl py-4 font-imperial tracking-[0.22em] text-sm bg-gradient-to-r from-amber-400 via-amber-300 to-pink-500 text-[#1a0a05] font-black active:scale-[0.97] will-change-transform disabled:opacity-50"
         style={{ minHeight: 56, boxShadow: "0 0 18px hsl(38 92% 60% / 0.5)" }}
@@ -132,8 +151,20 @@ export function BettingPanel({
       </button>
 
       <p className="text-[10px] text-amber-300/70 text-center break-keep leading-snug">
-        시뮬레이션 PHON — 실제 잔액 변동 없음. 황실 검증 오라클에서 모든 라운드를 재계산할 수 있습니다.
+        PROOF MODE · Shadow PHON — 실잔액 변동 없음. 황실 검증 오라클에서 모든 라운드를 재계산할 수 있습니다.
       </p>
+
+      <ConfirmBetSheet
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        side={side}
+        sideName={side === "left" ? leftName : rightName}
+        amount={amount}
+        odds={side === "left" ? oddsLeft : oddsRight}
+        shadowBalance={shadowBalance ?? 0}
+        serverSeedHashPreview={serverSeedHashPreview}
+        onConfirm={confirmPlace}
+      />
     </div>
   );
 }
