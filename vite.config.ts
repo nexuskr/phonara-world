@@ -43,6 +43,8 @@ export default defineConfig(({ mode }) => ({
           !/\/motion-[^/]+\.js$/.test(d) &&
           !/\/icons-[^/]+\.js$/.test(d) &&
           !/\/supabase-[^/]+\.js$/.test(d) &&
+          // Phase D — three3d 청크(아바타/로비)는 Layer 1 preload 금지.
+          !/\/three3d-[^/]+\.js$/.test(d) &&
           // PR-K: operator chunk(s) must NEVER preload on Layer 1.
           // Loaded only when user hits /admin/* via React.lazy.
           !/\/operator(-[^/]+)?\.js$/.test(d),
