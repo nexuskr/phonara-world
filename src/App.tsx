@@ -119,6 +119,8 @@ const SecurityOverview = lazy(() => import("./pages/security/Overview.tsx"));
 const RecoverTotp = lazy(() => import("./pages/security/RecoverTotp.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 const Achievements = lazy(() => import("./pages/Achievements.tsx"));
+const AchievementsV3 = lazy(() => import("./pages/AchievementsV3.tsx"));
+const AchievementUnlockListener = lazy(() => import("./components/achievements/v3/AchievementUnlockListener.tsx"));
 const Empire = lazy(() => import("./pages/Empire.tsx"));
 const EmpireHall = lazy(() => import("./pages/EmpireHall.tsx"));
 const Unsubscribe = lazy(() => import("./pages/Unsubscribe.tsx"));
@@ -248,6 +250,7 @@ const App = () => (
             <Suspense fallback={null}><EntropyChip /></Suspense>
           )}
           <Suspense fallback={null}><BigWinShareHost /></Suspense>
+          <Suspense fallback={null}><AchievementUnlockListener /></Suspense>
           <Suspense fallback={<RouteFallback />}>
             <MaintenanceGate>
             <Routes>
@@ -344,6 +347,7 @@ const App = () => (
               <Route path="/security/passkey" element={<SecurityPasskey />} />
               <Route path="/security/recover" element={<RecoverTotp />} />
               <Route path="/achievements" element={<Achievements />} />
+              <Route path="/achievements/quest" element={<AchievementsV3 />} />
               <Route path="/season-pass" element={<Navigate to="/missions?tab=daily" replace />} />
               <Route path="/quests" element={<Navigate to="/missions?tab=daily" replace />} />
               <Route path="/unsubscribe" element={<Unsubscribe />} />
