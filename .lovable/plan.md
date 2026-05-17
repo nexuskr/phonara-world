@@ -73,6 +73,7 @@ Props: `variant?: "full" | "compact"` — Dashboard 는 full(8행), Index 는 fu
 ### Dashboard 마운트
 
 `src/pages/Dashboard.tsx` — `ImperialLivePulseRail` 직후에 `<ImperialLiveWinsRail />` 한 줄 추가.
+`src/pages/Index.tsx` — 히어로 직후에 `<ImperialLiveWinsRail />` 한 줄 추가 (랜딩 진입 즉시 강력 FOMO).
 
 ---
 
