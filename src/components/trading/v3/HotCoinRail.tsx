@@ -1,5 +1,7 @@
+import { useEffect, useMemo, useState } from "react";
 import { Flame } from "lucide-react";
 import { useHotSymbols } from "@/hooks/use-hot-symbols";
+import { fallbackHotSymbols, mergeCount, symbolHotFloor } from "@/lib/fakeTradingFloor";
 
 interface Props {
   current: string;
@@ -7,12 +9,34 @@ interface Props {
 }
 
 /**
- * HotCoinRail — 지금 핫한 코인 Top 5. 클릭 시 차트 심볼 변경.
+ * HotCoinRail — 지금 핫한 코인 (Global #1 Floor). 항상 BTC/ETH/SOL + 랜덤 4개.
  */
 export default function HotCoinRail({ current, onPick }: Props) {
-  const rows = useHotSymbols(5);
+  const real = useHotSymbols(8);
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const id = window.setInterval(() => setTick((t) => t + 1), 38_000);
+    return () => window.clearInterval(id);
+  }, []);
 
-  if (rows.length === 0) return null;
+  const rows = useMemo(() => {
+    const realMap = new Map(real.map((r) => [r.sym, r]));
+    const syms = fallbackHotSymbols(4);
+    // 실제 데이터에만 있는 심볼도 합치되, 최대 8개
+    real.forEach((r) => { if (!syms.includes(r.sym)) syms.push(r.sym); });
+    const out = syms.slice(0, 8).map((sym) => {
+      const r = realMap.get(sym);
+      const floor = symbolHotFloor(sym);
+      return {
+        sym,
+        open_positions: mergeCount(r?.open_positions ?? 0, floor.open_positions),
+        traders_24h: mergeCount(r?.traders_24h ?? 0, floor.traders_24h),
+      };
+    });
+    return out.sort((a, b) => b.open_positions - a.open_positions);
+    // tick triggers re-roll on slot change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [real, tick]);
 
   return (
     <div className="rounded-2xl border border-border/40 bg-card/40 px-3 py-2.5">
@@ -40,10 +64,10 @@ export default function HotCoinRail({ current, onPick }: Props) {
             >
               <div className="text-xs font-black tracking-wide flex items-center gap-1">
                 {base}
-                {r.open_positions >= 5 && <Flame className="w-3 h-3 text-orange-400" />}
+                {r.open_positions >= 2000 && <Flame className="w-3 h-3 text-orange-400" />}
               </div>
               <div className="text-[10px] text-muted-foreground mt-0.5 tabular-nums">
-                {r.open_positions}명 진입 중 · 24h {r.traders_24h}명
+                {r.open_positions.toLocaleString("ko-KR")}명 진입 · 24h {r.traders_24h.toLocaleString("ko-KR")}명
               </div>
             </button>
           );
