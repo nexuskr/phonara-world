@@ -117,7 +117,7 @@ export default function SpinHistorySheet({ gameCode }: { gameCode: string }) {
             const won = Number(r.payout_phon) > 0;
             const mult = Number(r.bet_phon) > 0 ? Number(r.payout_phon) / Number(r.bet_phon) : 0;
             return (
-              <div key={r.id} className="rounded-lg border border-border/40 bg-muted/20 p-3 text-xs space-y-2">
+              <div key={r.id} className={`rounded-lg border p-3 text-xs space-y-2 ${won ? (mult >= 50 ? "border-amber-300/60 bg-gradient-to-r from-amber-400/10 via-amber-300/5 to-pink-500/10 shadow-[0_0_18px_-8px_hsl(38_92%_60%/0.5)]" : "border-emerald-400/30 bg-emerald-500/5") : "border-border/40 bg-muted/20"}`}>
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] text-muted-foreground tabular-nums">
@@ -131,6 +131,13 @@ export default function SpinHistorySheet({ gameCode }: { gameCode: string }) {
                     {won && <span className="text-[10px] opacity-70 ml-1">{mult.toFixed(2)}×</span>}
                   </div>
                 </div>
+
+                {!won && (
+                  <div className="flex items-center justify-between gap-2 rounded-md bg-background/40 border border-border/30 px-2 py-1.5">
+                    <span className="text-[10.5px] text-amber-200/90">다음 전투에서 승리하실 겁니다, 폐하</span>
+                    <a href="/wallet?from=loss_recover" className="text-[10px] font-black text-pink-300 hover:text-pink-200">역전 입금</a>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-[80px_1fr_auto] gap-x-2 gap-y-1 items-center">
                   <span className="text-muted-foreground">hash</span>
