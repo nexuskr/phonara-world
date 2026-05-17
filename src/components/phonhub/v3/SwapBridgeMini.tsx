@@ -1,5 +1,5 @@
+import { lazy, Suspense } from "react";
 import { ArrowLeftRight } from "lucide-react";
-import { lazy, Suspense, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { PhonHubSummary } from "@/hooks/use-phon-hub-summary";
@@ -7,7 +7,6 @@ import type { PhonHubSummary } from "@/hooks/use-phon-hub-summary";
 const PhonSwapDialog = lazy(() => import("@/components/phon/PhonSwapDialog"));
 
 export default function SwapBridgeMini({ data }: { data: PhonHubSummary }) {
-  const [open, setOpen] = useState(false);
   const pct = Math.min(100, (data.swap_used_today / Math.max(1, data.swap_daily_cap)) * 100);
   const remaining = Math.max(0, data.swap_daily_cap - data.swap_used_today);
   return (
@@ -30,16 +29,17 @@ export default function SwapBridgeMini({ data }: { data: PhonHubSummary }) {
       <div className="text-[11px] text-muted-foreground mt-2">
         남은 한도 {Math.floor(remaining).toLocaleString("ko-KR")} PHON
       </div>
-      <Button
-        size="sm"
-        className="w-full mt-3 bg-gradient-imperial text-primary-foreground"
-        onClick={() => setOpen(true)}
-      >
-        스왑 실행
-      </Button>
-      <Suspense fallback={null}>
-        {open && <PhonSwapDialog open={open} onOpenChange={setOpen} />}
-      </Suspense>
+      <div className="mt-3">
+        <Suspense fallback={<Button size="sm" className="w-full" disabled>스왑 실행</Button>}>
+          <PhonSwapDialog
+            trigger={
+              <Button size="sm" className="w-full bg-gradient-imperial text-primary-foreground">
+                스왑 실행
+              </Button>
+            }
+          />
+        </Suspense>
+      </div>
     </Card>
   );
 }
