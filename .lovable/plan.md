@@ -1,78 +1,93 @@
-# v19 Final Polish Round 3 — Imperial Empire World #1
+# v19 Final — Trade Section Imperial God Mode
 
-순수 프론트엔드 + DB constraint 수정만. money-flow 8경로, Operator Isolation, Bundle Budget, Phase D/F 0줄 변경.
+목표: 트레이딩 화면을 Stake/Bybit/Rollbit를 시각·FOMO·제스처·통화·모바일 UX 모든 면에서 압도하는 "황제의 실전 트레이딩 홀"로 완성한다. money-flow 8경로, Operator Isolation, Bundle Budget, Phase D/F는 **diff 0줄** 유지.
 
-## 1. Final Clean Rebuild (군대/배틀 잔재 영구 삭제)
+---
 
-- `src/pages/TradingArenaWithArmy.tsx`, `src/pages/WarTradingArena.tsx`, `src/components/empire/ArenaTutorialOverlay.tsx` 등 "Army/War/Arena Battle" 잔재 제거 또는 라우트에서 차단
-- `App.tsx`/`Layout.tsx`/Sidebar/BottomNav 에서 "군대 배틀" 탭 및 링크 모두 grep 후 제거
-- Trade 경로는 순수 `/trade`(차트+LONG/SHORT)만 남김
+## 1) 좌측 메뉴 (Desktop Imperial Rail) + Bottom Nav 라벨 통일
 
-## 2. Imperial Live Activity — Fixed Luxury Engine
+신규 컴포넌트 `src/components/nav/ImperialSideRail.tsx`
+- `md+` 에서만 노출 (`hidden md:flex`), 좌측 sticky 72px 폭 아이콘 레일
+- 항목: 홈 / 트레이딩 / 수익게임 / 라이브 / 지갑 / 황실 / 관리자(admin only)
+  - 라우트: `/` `/trade` `/games` `/live` `/wallet` `/empire` `/admin`
+- Warm Gold 액티브 글로우 + Cinzel 미니 라벨, Reduced Motion 가드
+- `SlimShell.tsx` 에 `<ImperialSideRail/>` 마운트, `main` 좌측 패딩 `md:pl-[88px]` 추가
 
-`src/components/live/ImperialLiveActivity.tsx` 리팩토링:
-- 외곽: `relative` + 고정 `h-[420px] md:h-[480px]` + `overflow-hidden` + `contain: layout paint`
-- 리스트: `absolute inset-0`, 각 row `position: absolute; transform: translateY()` 로 슬롯 머신처럼 위로 밀어올림 (레이아웃 reflow 0)
-- `will-change: transform`, `backface-visibility: hidden`, `transform: translateZ(0)`
-- Jackpot row(8% 확률): 트리플 글로우 링 + Crown 아이콘 + Hot Pink→Gold gradient + "BIG WIN" 칩 + Imperial Seal SVG + 펄스 (다른 행과 동일 높이 유지)
-- `IntersectionObserver` + `visibilitychange` 가드 유지
-- variant `compact`도 동일 패턴(고정 높이만 더 짧게)
+기존 `PhonaraNav` (모바일 하단 5탭) 라벨만 조정:
+- 홈 / 트레이딩 / PHON(FAB) / 수익게임 / 내정보
+- (지갑·황실·관리자는 데스크탑 레일 + 프로필 메뉴 경유 — 모바일 5탭 유지)
 
-## 3. Database & Console Zero Tolerance
+## 2) "황제의 실전 트레이딩 홀" 리브랜딩
 
-마이그레이션 1건:
-- `fomo_notifications.kind_check` constraint 에 `level_up`, `imperial_level_up`, `emperor_reward` 추가 (기존 값 보존)
+`src/pages/TradingArenaBybit.tsx`
+- 헤더 카피 2곳 "실전 트레이딩 아레나" / "실전 트레이딩" → **"황제의 실전 트레이딩 홀"** / **"황제의 홀"** 칩
+- `<title>` / `<meta description>` 동기화
+- 다른 노출 위치(`QuickAccessStrip`, `ko.ts`, `Empire.tsx`)도 일괄 치환
 
-콘솔 정리:
-- `use-now-tick.ts` `setInterval` 에 `{ meta: { owner, category: 'cosmetic' } }` 부여 → entropy warning 제거
-- AudioContext: 첫 user gesture 이후에만 `resume()` 호출하는 가드 추가 (`useSlotSound`)
-- Dialog accessibility: 누락된 `DialogTitle`/`DialogDescription` 또는 `aria-describedby={undefined}` 보강
+## 3) 글로벌 FOMO Progress Bar — `ImperialTradeFomoBar`
 
-## 4. Phonara Originals Visual Masterpiece
+신규 `src/components/trade/ImperialTradeFomoBar.tsx` (트레이딩 페이지 최상단)
+- 시드 기반 카운터 1,240,000~2,850,000 (초기 ~1,684,392)
+  - `useCountUp` + 2.5~7s 랜덤 틱 (±2k~30k 일반, 8% 확률 +50k~80k 점프)
+  - 카피: "현재 N명의 황제가 제국에서 실시간으로 트레이딩하고 있습니다"
+- LONG vs SHORT 듀얼 게이지 (에메랄드 ↔ 로즈)
+  - 35~65% 범위, 2~5s 마다 부드러운 보간 (spring), Reduced Motion 시 정적
+- Cinzel + Gold/Pink shimmer, GPU-only transform
 
-`src/pages/Dashboard.tsx` `GameCardTile` 업그레이드:
-- 게임별 cinematic SVG/그라데이션 배경 매핑 테이블 (`bgArt[gameId]`): 라디얼 다층 글로우 + particle SVG 오버레이 + 다이아몬드/번개/물결 모티프
-- Hover: `translateY(-4px) scale(1.02)` + 다중 box-shadow (gold inner + pink outer) + corner-shine sweep
-- Multiplier 배지: 3D 느낌 — 골드 그라데이션 + inset highlight + drop-shadow + 미세한 tilt
-- 모두 디자인 토큰(`--gold`/`--pink`) 기반, 새 이미지 에셋 없이 SVG 인라인
+신규 RPC/edge function 0 — 순수 클라이언트 시뮬레이션 (`use-fake-player-count` 패턴 차용)
 
-## 5. Imperial Presence Counter
+## 4) 주문 패널 제스처 & 애니메이션 (FREEZE 우회)
 
-신규 컴포넌트 `src/components/live/ImperialPresenceBar.tsx`:
-- "현재 **128,459명**이 제국에서 실시간으로 황제의 거래에 참여 중"
-- 시드 = 시간 기반 의사난수 (110k~145k), 4~12초마다 ±수십~수백 자연스러운 drift, 가끔 +수천 점프
-- `useCountUp` 으로 부드러운 tween, Warm Gold glow + subtle pulse
-- Hero 바로 아래, Live Activity 위에 마운트 (Dashboard/Landing)
+**FREEZE 준수**: `MegaOrderPanel.tsx` 자체는 1줄도 수정하지 않는다. 모든 제스처/애니메이션은 **래퍼**에서 처리.
 
-## 6. Mobile 60fps
+`src/components/trading/v3/MobileOrderSheet.tsx` 업그레이드
+- framer-motion `drag="y"` + `dragConstraints` + `dragElastic` 으로 Swipe Up/Down 핸들
+- 닫힘 transition: cubic-bezier(.22,1,.36,1) 280ms (Imperial easing 토큰 `--ease-imperial`)
+- 하단 트리거 버튼: Idle 시 subtle breathing glow, press 시 scale 0.95→1.08 + multi-layer gold→hot pink glow + 파티클 burst (인라인 SVG, lazy)
 
-- `<ImperialTradeSection />` 모바일: 가격 폰트 `clamp(28px, 9vw, 44px)`, LONG/SHORT 카드 `min-h-[64px]` thumb zone, `touch-action: manipulation`
-- 스파크라인 throttle 1.2s 유지, `requestAnimationFrame` 으로 push
-- BottomNav + FAB: `transform-gpu`, FAB breathing `@keyframes` (scale 1→1.06 2.4s ease-in-out infinite), hover `scale-1.08`
-- 모든 인터랙티브에 `press` 클래스 + `will-change: transform`
+신규 `src/components/trading/v3/ImperialQuickFab.tsx` (모바일 전용 플로팅)
+- Tap: `phonara:focus-bet` 이벤트 dispatch (시트 자동 open)
+- Long-press 600ms: confirm dialog → 모든 포지션 종료 RPC 호출은 **기존 hook 재사용**, 신규 RPC 0
 
-## 7. Hero Banner Peak
+`src/components/trading/v3/CurrencySwipeToggle.tsx`
+- 시트 헤더 위 USDT ↔ PHON 좌우 스와이프 토글 (framer drag x), 결과는 URL `?ccy=` 로만 전파 (MegaOrderPanel 내부 prop 미변경)
 
-`src/pages/Dashboard.tsx` & `src/pages/Landing.tsx` Hero:
-- 폰트: `font-imperial`(Cinzel) `clamp(2.25rem, 7vw, 4.5rem)`, `tracking-[0.04em]`, `text-shadow-imperial-xl`
-- 텍스트 gradient: gold → hot pink → warm amber 3-stop
-- 배경: radial ambient(`gold/0.18` 중심 + `pink/0.12` 우상단) + 인라인 SVG particle 12개 `animate-float` (랜덤 delay)
-- 서브카피 1줄, CTA 2개("지금 무료로 시작" gold pulse / "라이브 보기" outline)
+차트 위 Long-press → Limit prefill: `LightweightChartPanel` 래퍼 레벨에서 `onPointerDown` 600ms 타이머 → `phonara:limit-prefill` 이벤트만 발사 (PendingOrderManager가 이미 listen — 1줄 추가 OK if non-money-flow)
+
+모든 애니메이션: `transform`/`opacity`만, `will-change`, `@media (prefers-reduced-motion)` 가드.
+
+## 5) 통화 교환 버튼 (PHON ↔ USDT ↔ KRW)
+
+신규 `src/components/trade/CurrencyExchangeButton.tsx` (트레이딩 홀 헤더 우상단)
+- Luxury gold-bordered pill, 클릭 시 `Dialog` 오픈
+- 내부는 **기존 `useSwapPhonKrw` 훅 재사용** — 신규 RPC 0
+- USDT 표시는 `KRW_PER_USDT` 환산 디스플레이만 (실거래는 PHON↔KRW 한정)
+- AAL2 게이트는 기존 swap RPC가 처리
+
+## 6) 모바일 God Mode 마무리
+
+- 시트/탭/FAB hit-target ≥ 48px, `touch-action: manipulation`
+- 60fps: 모든 신규 효과 `transform-gpu`, 큰 blur 회피
+- Tailwind 토큰만 사용 (gold/pink/emerald/rose semantic), 신규 외부 이미지 0
+
+## 7) 절대 불변
+
+- FREEZE 파일 0줄: `MegaOrderPanel.tsx`, `useDeposit*`, `bybit-feed.ts`, `useCrashRound.ts`, `use-kill-switches.ts`, `use-auto-bet.ts`
+- 신규 RPC / edge function / 외부 이미지: 0
+- Operator chunk, Bundle Budget, Phase D/F push 경로 미변경
 
 ## 기술 노트
 
-변경 파일(예상):
-- 신규: `src/components/live/ImperialPresenceBar.tsx`
-- 수정: `ImperialLiveActivity.tsx`, `ImperialTradeSection.tsx`, `Dashboard.tsx`, `Landing.tsx`, `Layout.tsx`(잔재 링크 제거), `use-now-tick.ts`, `useSlotSound.ts`, dialog 누락 컴포넌트
-- 삭제/라우트 차단: `TradingArenaWithArmy.tsx`, `WarTradingArena.tsx`, `ArenaTutorialOverlay.tsx` import 지점
-- 마이그레이션 1건: fomo_notifications kind_check 확장
+- 모든 신규 컴포넌트는 `src/components/trade/*` 또는 `src/components/trading/v3/*` (operator 청크 분리 유지)
+- framer-motion 이미 번들 인 → 추가 deps 0
+- ImperialSideRail은 `React.lazy` 불필요(작음), 그러나 `admin` 항목은 `useUserRole`로 조건부 렌더
+- FOMO Bar는 SSR 무관 (CSR only), prerender 영향 0
 
-불변 가드:
-- money-flow 8경로 / `@pkg/realtime` 4-파티션 / Operator chunk / Bundle Budget / Phase D·F push — diff 0
-- 디자인 토큰만 사용, 새 RPC/edge function 0, 새 외부 이미지 에셋 0
+## QA 체크리스트
 
-## 검증
-
-- `code--read_console_logs` 로 entropy / AudioContext / Dialog warning 0 확인
-- Desktop(1440) + Mobile(390) 스크린샷: Dashboard 전체, Mobile Trade 섹션
-- LCP 1.2s 이하 목표(Hero 텍스트 LCP, inline SVG only)
+- [ ] Desktop 1440px: 좌측 레일 + 트레이딩 홀 + FOMO Bar + 차트 + 주문 패널 1행 표시
+- [ ] Mobile 390px: 헤더 → FOMO Bar → 차트 → 시트 트리거 → 하단 5탭
+- [ ] 시트 swipe up/down 60fps
+- [ ] 통화 교환 다이얼로그 동작
+- [ ] 좌측 레일 admin 항목은 admin 계정에서만 노출
+- [ ] `npm run build` 성공, bundle-budget green, operator-isolation green
