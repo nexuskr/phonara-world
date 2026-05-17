@@ -17,6 +17,7 @@ import {
 import Particles from "@/components/Particles";
 import PayoutTicker from "@/components/PayoutTicker";
 import WhaleStrikeRail from "@/components/empire/WhaleStrikeRail";
+import ImperialLiveWinsRail from "@/components/empire/ImperialLiveWinsRail";
 const WhaleStrikeRailV3 = lazy(() => import("@/components/empire/WhaleStrikeRailV3"));
 const ImperialStoryRail = lazy(() => import("@/components/empire/ImperialStoryRail"));
 const WorldDominationWall = lazy(() => import("@/components/landing/WorldDominationWall"));
