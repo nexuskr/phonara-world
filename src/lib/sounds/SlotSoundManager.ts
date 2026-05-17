@@ -295,6 +295,7 @@ class SlotSoundManagerImpl {
     this.slotHowls.clear();
     this.slotId = "";
     this.themeKey = null;
+    try { SoundManager.setSlotId?.(null); } catch { /* */ }
     if (this.duckActive) this.restoreBgm(120);
   }
 
