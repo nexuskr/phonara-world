@@ -80,7 +80,7 @@ const GROUPS: NavGroup[] = [
     label: "트레이딩",
     icon: TrendingUp,
     children: [
-      { to: "/arena", label: "Long/Short Arena", icon: TrendingUp },
+      { to: "/trade", label: "Imperial Trade", icon: TrendingUp },
     ],
   },
   {
