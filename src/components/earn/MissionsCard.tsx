@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Target, Check, Users } from "lucide-react";
+import { Target, Check, Users, Sparkles, HeartHandshake } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { notify } from "@/lib/notify";
 import type { QuickKind } from "@/hooks/use-earn-hub";
+import { useMissionRecovery, applyRecoveryBonus } from "@/hooks/use-mission-recovery";
 
 interface Mission { kind: QuickKind; label: string; sub: string; amount: number; claimed: boolean; }
 
