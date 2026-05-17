@@ -124,14 +124,14 @@ const GROUPS: NavGroup[] = [
   },
 ];
 
-// Bottom nav for mobile (5 tabs, center FAB = slot)
+// Mobile bottom nav — 5 tabs, center FAB = PHON 허브
 type BottomItem = { to: string; matches: string[]; icon: typeof LayoutDashboard; label: string; fab?: boolean };
 const BOTTOM_NAV: BottomItem[] = [
-  { to: "/command",  matches: ["/command", "/dashboard"], icon: LayoutDashboard, label: "대시보드" },
-  { to: "/arena",    matches: ["/arena"],                 icon: TrendingUp,      label: "트레이딩" },
-  { to: "/casino",   matches: ["/casino"],                icon: Zap,             label: "슬롯", fab: true },
-  { to: "/empire",   matches: ["/empire", "/packages"],   icon: Crown,           label: "광장" },
-  { to: "/profile",  matches: ["/profile", "/wallet"],    icon: UserIcon,        label: "내 제국" },
+  { to: "/home",    matches: ["/home", "/", "/command", "/dashboard"], icon: HomeIcon,   label: "홈" },
+  { to: "/trade",   matches: ["/trade", "/arena"],                     icon: TrendingUp, label: "트레이딩" },
+  { to: "/phon",    matches: ["/phon"],                                icon: Coins,      label: "PHON", fab: true },
+  { to: "/games",   matches: ["/games", "/casino", "/crash", "/jackpot"], icon: Gamepad2, label: "게임" },
+  { to: "/profile", matches: ["/profile", "/wallet", "/empire"],       icon: Crown,      label: "내 제국" },
 ];
 
 function isLeafActive(leaf: NavLeaf, pathname: string) {
