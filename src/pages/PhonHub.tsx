@@ -18,7 +18,7 @@ const PhonAdvantageRibbon = lazy(() => import("@/components/trading/v3/PhonAdvan
 const EmpireCollection = lazy(() => import("@/pages/EmpireCollection"));
 const PhonEconomyExplainer = lazy(() => import("@/components/phon/PhonEconomyExplainer"));
 const PhonSwapBridge = lazy(() => import("@/components/phon/PhonSwapBridge"));
-const PhonStakingComingSoon = lazy(() => import("@/components/phon/PhonStakingComingSoon"));
+const PhonStakingPanel = lazy(() => import("@/components/phon/PhonStakingPanel"));
 
 function fmt(n: number) {
   return new Intl.NumberFormat("ko-KR").format(Math.floor(n));
@@ -129,7 +129,7 @@ export default function PhonHub() {
         <NextTierProgress />
 
         <Suspense fallback={null}>
-          <PhonStakingComingSoon />
+          <PhonStakingPanel />
         </Suspense>
 
         <div>

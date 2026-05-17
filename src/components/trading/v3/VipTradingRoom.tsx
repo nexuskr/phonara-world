@@ -5,6 +5,7 @@
  * 클릭 시 phonara:set-symbol 커스텀 이벤트로 차트 심볼 교체 시그널.
  */
 import { useVipRoom } from "@/hooks/use-vip-room";
+import { useMyPhonLeverageBonus } from "@/hooks/use-my-phon-leverage-bonus";
 import { useHotSymbols } from "@/hooks/use-hot-symbols";
 import { Crown, Flame, Lock } from "lucide-react";
 import { Link } from "react-router-dom";
