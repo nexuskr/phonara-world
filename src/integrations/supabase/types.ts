@@ -6103,6 +6103,27 @@ export type Database = {
         }
         Relationships: []
       }
+      push_send_log: {
+        Row: {
+          id: string
+          kind: string
+          sent_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          kind: string
+          sent_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          kind?: string
+          sent_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       push_subscriptions: {
         Row: {
           auth: string
@@ -11928,6 +11949,13 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      list_dormant_users: {
+        Args: { _days: number[] }
+        Returns: {
+          dormant_days: number
+          user_id: string
+        }[]
+      }
       list_my_api_keys: {
         Args: never
         Returns: {
@@ -11950,6 +11978,13 @@ export type Database = {
         Args: never
         Returns: {
           proname: string
+        }[]
+      }
+      list_streak_at_risk_users: {
+        Args: never
+        Returns: {
+          attendance_streak: number
+          user_id: string
         }[]
       }
       live_account_equity: { Args: { p_user_id: string }; Returns: Json }
@@ -12706,6 +12741,10 @@ export type Database = {
           hit: boolean
           pool_after: number
         }[]
+      }
+      try_log_push_send: {
+        Args: { _daily_cap?: number; _kind: string; _user_id: string }
+        Returns: boolean
       }
       unfreeze_expired: { Args: never; Returns: Json }
       unlock_achievement: { Args: { _key: string }; Returns: Json }

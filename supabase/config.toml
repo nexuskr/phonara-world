@@ -49,3 +49,5 @@ project_id = "ketlqzfaplppmupaiwft"
     verify_jwt = false
   [functions.earn-share-card]
     verify_jwt = false
+  [functions.reengagement-tick]
+    verify_jwt = false

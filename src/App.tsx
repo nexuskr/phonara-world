@@ -24,6 +24,7 @@ import MaintenanceGate from "./components/MaintenanceGate";
 import { DegradeModeBinder } from "./components/system/DegradeModeBinder";
 import { DegradeModeBanner } from "./components/system/DegradeModeBanner";
 import { registerSW } from "./lib/pwa/registerSW";
+import ImperialDeepLinkListener from "./hooks/use-imperial-highlight";
 
 installGlobalErrorLogging();
 registerSW();
@@ -256,6 +257,7 @@ const App = () => (
           <Suspense fallback={null}><BigWinShareHost /></Suspense>
           <Suspense fallback={null}><AchievementUnlockListener /></Suspense>
           <Suspense fallback={null}><LobbyFab /></Suspense>
+          <ImperialDeepLinkListener />
           <Suspense fallback={<RouteFallback />}>
             <MaintenanceGate>
             <Routes>
