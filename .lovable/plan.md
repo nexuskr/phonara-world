@@ -1,117 +1,76 @@
-# Slice 8 Phase 2 — Imperial Duel: Spectator + Live Betting + Cinematic Arena
+# Slice 8 Phase 3 — Cosmic Shadow Real Betting + Halo2 Recursive / zk-STARK FRI / R1CS God Mode
 
-인프라 트랙(Consul/Envoy/Prometheus/cert-manager/자체 WS)은 `phonara-unicorn/` 으로 분리 합의 완료. 본 플랜은 **프론트엔드 단독 끝판왕** 구현에 집중합니다.
+## 목표
+Phase 2의 시뮬레이션 베팅을 **Real-like Shadow Betting** 으로 끌어올리고, Verification Oracle 을 5-Tab Cosmic 시스템(Classic / Groth16 / **Halo2 Recursive** / **zk-STARK FRI + R1CS** / Betting Audit)으로 확장한다. 실잔액 변동 0, 신규 RPC/edge 0, money-flow 8경로 diff 0 을 절대 유지하면서 "실제 돈이 걸린 것 같은" 강도의 UX/FOMO/시네마틱 시각화를 완성한다.
 
-## 절대 게이트 (diff 0)
-- money-flow 8경로 (`MegaOrderPanel`, `useDeposit*`, `useWithdraw`, `bybit-feed`, `useCrashRound`, `use-auto-bet`, `use-kill-switches`)
-- Operator Isolation chunk / Bundle Budget 180KB index
-- Phase D/F push, FREEZE 인벤토리
-- 신규 RPC / edge function = 0
-- 잔액 변동 0 (베팅은 전부 시뮬레이션)
+진짜 wallet 차감/정산은 **Phase 3.5** 로 분리 (별도 플랜·AAL2·kill switch·RLS 감사 필요).
 
----
+## 절대 불변 철칙
+- money-flow 8경로 파일 diff = 0 줄
+- 신규 RPC / edge function / DB 테이블 = 0
+- Operator Isolation, Bundle Budget(index ≤180KB br) 유지
+- Phase D/F Push, FREEZE 파일 미터치
+- 모든 애니메이션 transform/opacity only, 60fps, will-change, GPU
+- Warm King Imperial Empire 톤 200%
+- sonner 직접 import 금지 → `@/lib/notify` 만 사용
+- realtime 직접 호출 금지 → `@pkg/realtime` 래퍼만 사용 (이번 Phase는 realtime 신규 추가 없음, 기존 시뮬레이션 유지)
 
-## 1. Odds Engine + Variable Reward
+## 스코프 (포함 / 제외)
 
-`src/packages/duel/engine/odds.ts` (NEW)
-- 양측 풀: `{ leftPool, rightPool, totalBets }` 시뮬레이션 ledger.
-- 배당: `odds(side) = (total / sidePool) * (1 - HOUSE_EDGE)`, `HOUSE_EDGE = 0.062`.
-- Variable Reward Tier (확률 + 멀티, House Edge 6.2% 보존):
-  ```text
-  Base       64.0%   ×1.00 .. ×1.85
-  Surge      23.0%   ×2.10 .. ×4.80
-  Crown       8.5%   ×5.50 .. ×12.5
-  Empyrean    3.2%   ×15   .. ×38
-  Divine      1.3%   ×45   .. ×120   -- 황실 잭팟
-  ```
-  - Tier 멀티는 tier 내부 균등 분포 + house edge 보정 후 expected payout = 0.938.
-  - `rewardTierFromRoll(roll)` 시그니처 유지, 내부 분포만 재튜닝.
-- Strong Near-Miss zone: `roll ∈ [0.46, 0.54]` AND winner=opponent → `nearMiss=true`, `intensity = 1 - |roll-0.5|/0.04` (0..1).
-  - Near-Miss 효과는 intensity 에 비례 — slow-down 길이, glow 강도, particle 양, 진동 폭이 모두 동적 스케일.
+**포함**
+1. Shadow Real Betting Layer — 기존 `useOddsEngine` 위에 "내 가상 잔액(local PHON pot)" 가상 차감/지급 + 라운드별 트랜잭션 로그 (메모리/세션 only).
+2. PROOF MODE 칩 + Real-like Confirm Sheet (베팅 확정 BottomSheet) + Imperial 햅틱 사운드 없음 (CSS shake/glow만).
+3. ThroneStage v3 — 7-Layer Imperial Glow (outer halo / mid corona / inner sweep / floor parallax / pink near-miss aura / divine ray / crown particle ring), nearMissIntensity / rewardTier 둘 다 반응.
+4. Divine Jackpot Effect — Tier=divine 시 화면 풀스크린 Imperial Seal + Gold→HotPink particle storm (canvas-confetti lazy 재사용) + `notify.imperial` 대형 토스트.
+5. NearMissBurst 강화 — intensity 0.7+ 에서 화면 가장자리 핑크 비네트 + 진동 카피 "황실의 운이 한 끗 차이로 스쳤습니다".
+6. Verification Oracle 5-Tab v2 — Classic / Groth16 / **Halo2 Recursive** / **zk-STARK FRI** / Betting Audit. (Personal Tab 은 Classic 안으로 흡수)
+   - Halo2 Tab: Pallas↔Vesta cycle SVG 다이어그램 + Accumulator state hash(HMAC 결정적) + Recursive depth slider(시각만) + Imperial Glow.
+   - zk-STARK Tab: FRI Folding 단계 시각화(다항식이 절반씩 접히는 SVG 애니메이션 5단계) + R1CS Modular Addition Gate 회로도(64-bit ripple carry SVG, transform-only) + Constraint count 표.
+   - 모든 proof hash = HMAC-SHA512 기반 결정적 placeholder. 같은 seed → 같은 hash. "교육용 시각화" 디스클레이머.
+7. BettingPanel 강화 — Pool imbalance(>70%) 시 "황실이 한쪽으로 기울고 있습니다 — 배당 폭발 임박" 토스트(30s 쓰로틀), 직전 라운드 winner 진영 골드 ring 0.5s.
+8. SpectatorDeck 강화 — Divine Jackpot 라운드 시 "신성한 대관식을 목격한 ◯◯명의 관전자" 카피 + spectator count +30~50 임시 spike (시뮬레이션).
 
-`src/packages/duel/hooks/useOddsEngine.ts` (NEW)
-- `useGameChannel({ key: "duel:room:" + roomId })` broadcast 로 풀 ledger 동기화 (presence + broadcast 이벤트만, DB 무영향).
-- 0.5s 시뮬레이션 tick 으로 가짜 베터 입장 → 풀 변동.
-- API: `{ left, right, odds: {left, right}, place(side, amount), myStake, settleRound(winner) → payout }`.
+**제외 (Phase 3.5 이후)**
+- 실제 wallet balance 차감 / RPC `place_duel_bet`
+- 새 테이블 `duel_bets` / `duel_rounds`
+- 실제 Halo2/STARK proof 생성 (WASM 번들 추가)
+- Supabase realtime 신규 채널
+- AAL2 / kill switch `duel_betting`
 
-## 2. Spectator Mode
+## 작업 순서
 
-`src/pages/ImperialDuelArena.tsx` (EDIT)
-- URL: `?as=spectator` → 결투 시작 버튼 숨김, BettingPanel 만 활성.
-- 모드와 무관하게 양측 응원 사이드바, 라이브 입장 토스트 노출.
+1. **Shadow Ledger** — `src/packages/duel/engine/shadowLedger.ts` (local PHON pot starting at 100,000, round entries `{round, side, stake, payout, balance_after, hmac_short}`, sessionStorage persist `phonara:duel:shadow:v1`).
+2. **useShadowBetting hook** — wraps useOddsEngine, settles each round against current oddsLeft/oddsRight, applies House Edge 6.2% already in odds, updates ledger, exposes `place/cancel/balance/history`.
+3. **ConfirmBetSheet** — BottomSheet, 베팅액·진영·예상 payout·HMAC seed preview, "옥좌에 봉납하시겠습니까" CTA.
+4. **ThroneStage v3** — extend props `rewardTier` + `divineActive`, add 3 new layers (divine ray, crown particle ring, edge vignette), all transform/opacity.
+5. **DivineJackpotOverlay** — fullscreen lazy component, canvas-confetti reuse (이미 lazy chunk 존재), Imperial Seal SVG, auto-dismiss 3.2s.
+6. **NearMissEdgeVignette** — `position:fixed` pink radial gradient overlay, opacity = intensity*0.55, pointer-events-none.
+7. **Halo2RecursivePanel** — SVG Pallas/Vesta cycle, framer-motion stroke-dash animation, accumulator HMAC hash from current round seed.
+8. **StarkFriPanel** — SVG polynomial folding (5 steps, each halves width), R1CS modular addition gate SVG (8x8 grid representing 64-bit ripple carry, transform only).
+9. **VerificationOracleModal v2** — Tabs 5개 재구성 (Personal → Classic 내부 sub-section), Betting Audit 그대로 유지, BettingAuditEntry 에 ledger balance_after 추가.
+10. **ArenaPage 통합** — `useShadowBetting` 결과를 BettingPanel/SpectatorDeck/ThroneStage v3 에 배선, Divine 발생 시 DivineJackpotOverlay 마운트, Near-miss intensity > 0.7 시 NearMissEdgeVignette.
+11. **PROOF MODE 칩** — Arena 헤더에 영구 표시, 클릭 시 Oracle 모달 오픈.
+12. **QA** — 1440px / 390px 스크린샷 5종(Idle / Confirm / Near-miss / Divine / Halo2 Tab / STARK Tab), `npm run build` 로 index/duel chunk 측정, money-flow diff 0 grep 확인, console 0 확인.
 
-`SpectatorDeck.tsx` (NEW)
-- 좌/우 군중 비율 게이지 (gold→pink gradient bar) — 실시간 풀 비율과 동기.
-- 관중 수 실시간 변동(±1~4명 매 2.5s, cap 활성 룸 heat 기반) + "황실이 뜨겁게 끓고 있습니다" 펄스 헤더.
-- 가짜 마스킹 닉네임 ("황제#3094 ▸ 적군 합류") 6초 폴링 토스트.
+## 기술 메모
 
-`useSpectatorSync.ts` (NEW) — `useGameChannel` wrapper, presence count.
+- 신규 파일은 모두 `src/packages/duel/**` 하위 — Layer 경계 위반 없음.
+- canvas-confetti 는 이미 `useWinCelebration` 등에서 lazy 로 쓰는 청크 재사용 (Bundle 증가 0).
+- HMAC placeholder hash = `sha256Hex(`${serverSeed}|halo2:${nonce}`)` / `sha256Hex(`${serverSeed}|stark:fri:${step}:${nonce}`)` — `engine/rng.ts` 재사용.
+- ThroneStage 새 레이어 4개 모두 `pointer-events:none` + `will-change:transform,opacity`.
+- DivineJackpotOverlay 는 React.lazy + Suspense(null) → Arena chunk 안에 머무름, index bundle 영향 0.
+- SVG 회로도는 정적 viewBox + 결정적 좌표 (랜덤 X), 1회 렌더 후 framer-motion `animate` 만 사용.
 
-## 3. Betting Panel
+## 영향 없음 보증
+- `src/packages/wallet/**`, `src/hooks/use-wallet.ts`, `phon_balances`, withdraw RPC, push engine 전체 미터치.
+- 신규 supabase 호출 0 — Network 탭에 duel 관련 신규 요청 없음.
+- 기존 `src/pages/ImperialDuelArena.tsx` 만 수정, 라우트/메뉴 변경 없음.
 
-`BettingPanel.tsx` (NEW)
-- Desktop: arena 우측 dock. Mobile: `BottomSheet` (이미 존재).
-- Left/Right 진영 카드 — 실시간 odds **펄스 애니메이션** (odds 변동 시 scale 1.04 + gold glow 220ms).
-- Near-Miss 발생 시 "졌지만 아슬했던" 진영 카드에 **2s 핑크 ring + shake** 강조 → "한 끗 차이였습니다 — 폐하, 다시 옥좌에 베팅을 올리소서".
-- 슬라이더(시뮬레이션 PHON 100~50,000), `placeBet` CTA, 라운드 정산 시 가상 토스트 (`notify.success`) — 명시 "데모 베팅".
-- Thumb-zone: 슬라이더 하단 56px, CTA 56px 높이.
+## QA 기준 (PASS 조건)
+- Console error/warning = 0 (entropy 잔존 허용)
+- index bundle ≤ 180KB br (현재 105KB → 변동 ±2KB 이내 목표)
+- ImperialDuelArena lazy chunk ≤ 60KB br (현재 7.5KB → +SVG/패널 추가로 ~25KB br 예상, 여전히 여유)
+- `git diff` 에 `wallet/` `phon_balances` `withdraw` 단어 0회
+- 1440 + 390 스크린샷에서 Near-miss vignette / Divine overlay / Halo2 cycle / STARK folding 시각 확인
+- Divine Jackpot 1회 강제 트리거(dev only) 후 60fps 유지 (Performance profile)
 
-## 4. Cinematic Arena v2
-
-`ThroneStage.tsx` (EDIT)
-- 다층 글로우: outer radial + inner highlight + sweep (`background-position` keyframe).
-- **Dynamic glow**: prop `nearMissIntensity?: number (0..1)` → outer radial alpha 0.18 → 0.55, sweep 속도 6s → 1.8s, pink layer scale.
-- Crown particle: `canvas-confetti` lazy. Particle count = `60 + intensity*180`; Empyrean/Divine + strong near-miss(>0.6) 만 트리거.
-
-`RewardTierBanner.tsx` (NEW)
-- 라운드 결과 헤더에 5단계 tier별 카피 + 색상 토큰:
-  - Base "황실의 영광" / Surge "황금이 끓습니다" / Crown "왕관이 빛납니다" / Empyrean "천계가 열립니다" / Divine "신성한 대관식입니다 — JACKPOT".
-
-`NearMissBurst.tsx` (EDIT — 강화)
-- Near-miss 시 `useDuelTick` 의 `easeStrong=true` → 마지막 0.4s 슬로우 + 화면 scale 1.012 펄스 + 진동 시뮬레이션 (`translateY ±2px` 8Hz).
-- "아슬아슬하게 빗나갔습니다 — 폐하의 운이 스치고 지나갔습니다." 토스트.
-
-## 5. Verification Oracle 5th Tab
-
-`VerificationOracleModal.tsx` (EDIT)
-- 신규 "Betting Audit" tab — 라운드별 leftPool/rightPool/winnerSide/payout 을 `proof.hmacHex.slice(0,16)` 와 묶어 표 형태로 노출.
-- 시뮬레이션이지만 동일 HMAC seed 로 누구나 재계산 가능함을 명시.
-
-## 6. FOMO Layering
-
-`useFomoOracle.ts` (EDIT)
-- `spectatorPressure`: `(spectators / 100) + (|leftPool-rightPool| / total) * 25` → `personalScore` 가산 (cap 100).
-- 새 트리거 `pool_imbalance` (한쪽 풀 65%+ 시).
-- `FomoFloatingOracle` 카피 확장.
-
-## 7. 신규/수정 파일
-
-```text
-src/packages/duel/engine/odds.ts                           NEW
-src/packages/duel/hooks/useOddsEngine.ts                   NEW
-src/packages/duel/hooks/useSpectatorSync.ts                NEW
-src/packages/duel/components/arena/BettingPanel.tsx        NEW
-src/packages/duel/components/arena/SpectatorDeck.tsx       NEW
-src/packages/duel/components/arena/RewardTierBanner.tsx    NEW
-src/packages/duel/components/arena/ThroneStage.tsx         EDIT
-src/packages/duel/components/arena/NearMissBurst.tsx       EDIT
-src/packages/duel/components/oracle/VerificationOracleModal.tsx  EDIT
-src/packages/duel/hooks/useFomoOracle.ts                   EDIT
-src/packages/duel/engine/fomo.ts                           EDIT  (tier 분포 재튜닝)
-src/pages/ImperialDuelArena.tsx                            EDIT
-src/packages/duel/index.ts                                 EDIT  (re-export)
-```
-
-## 8. QA 체크리스트
-- Desktop 1440 + Mobile 390 스크린샷 (Spectator / Better / Near-miss / Divine 잭팟).
-- 60fps: framer-motion transform/opacity only, will-change 적용.
-- `npm run build` PASS + bundle-budget index ≤180KB.
-- `scripts/check-money-flow-freeze.mjs` PASS.
-- Console error/warning 0 (기존 entropy/sandbox 잔존만 허용).
-
-## 9. 톤 (Warm King)
-- "옥좌에 베팅을 올리소서"
-- "폐하의 진영에 N명이 합류했습니다"
-- "황실이 뜨겁게 끓고 있습니다 — 배당이 폭발합니다"
-- "신성한 대관식입니다 — JACKPOT"
-- "아슬아슬하게 빗나갔습니다 — 폐하의 운이 스치고 지나갔습니다"
