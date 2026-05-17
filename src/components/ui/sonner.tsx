@@ -19,18 +19,19 @@ const Toaster = ({ ...props }: ToasterProps) => {
       closeButton
       toastOptions={{
         classNames: {
+          // Warm King: glass + amber inner ring + deep golden shadow + 24px radius
           toast:
-            "group toast group-[.toaster]:bg-card/95 group-[.toaster]:text-foreground group-[.toaster]:border group-[.toaster]:border-border/60 group-[.toaster]:backdrop-blur-xl group-[.toaster]:shadow-[0_8px_32px_hsl(240_50%_1%/0.7)] group-[.toaster]:rounded-2xl",
-          title: "group-[.toast]:font-semibold group-[.toast]:text-foreground",
-          description: "group-[.toast]:text-muted-foreground group-[.toast]:text-xs",
+            "group toast group-[.toaster]:bg-card/90 group-[.toaster]:text-foreground group-[.toaster]:border group-[.toaster]:border-amber-300/25 group-[.toaster]:backdrop-blur-2xl group-[.toaster]:shadow-[0_12px_40px_-8px_hsl(35_85%_45%/0.35),0_2px_0_hsl(38_92%_60%/0.15)_inset] group-[.toaster]:rounded-[24px] group-[.toaster]:px-4 group-[.toaster]:py-3.5",
+          title: "group-[.toast]:font-bold group-[.toast]:tracking-wide group-[.toast]:text-foreground",
+          description: "group-[.toast]:text-muted-foreground group-[.toast]:text-xs group-[.toast]:mt-0.5",
           actionButton:
-            "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground group-[.toast]:rounded-xl",
+            "group-[.toast]:bg-gradient-to-r group-[.toast]:from-amber-500 group-[.toast]:to-orange-500 group-[.toast]:text-black group-[.toast]:font-bold group-[.toast]:rounded-xl",
           cancelButton:
             "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground group-[.toast]:rounded-xl",
-          success: "group-[.toaster]:border-primary/40",
-          error: "group-[.toaster]:border-destructive/50",
-          info: "group-[.toaster]:border-secondary/40",
-          warning: "group-[.toaster]:border-accent/40",
+          success: "group-[.toaster]:border-amber-400/45 group-[.toaster]:shadow-[0_12px_40px_-8px_hsl(38_92%_55%/0.45)]",
+          error: "group-[.toaster]:border-destructive/55",
+          info: "group-[.toaster]:border-secondary/45",
+          warning: "group-[.toaster]:border-accent/50",
         },
       }}
       {...props}

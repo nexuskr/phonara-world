@@ -1,6 +1,7 @@
 import { NavLink, useLocation } from "react-router-dom";
 import { Coins, Gamepad2, TrendingUp, Radio } from "lucide-react";
 import { G } from "@/lib/glossary";
+import { haptics } from "@/lib/haptics";
 
 /**
  * 4-tab sticky nav — 수익 / 게임 / 투자 / 실시간
@@ -37,9 +38,10 @@ export default function PhonaraNav() {
               <NavLink
                 key={t.to}
                 to={t.to}
-                className={`flex flex-col items-center justify-center gap-0.5 px-2 py-2.5 rounded-xl border transition press ${
+                onClick={() => haptics.tick()}
+                className={`relative flex flex-col items-center justify-center gap-0.5 px-2 py-2.5 rounded-xl border transition-all duration-200 press will-change-transform ${
                   active
-                    ? "bg-gradient-to-br from-primary/20 to-pink-500/10 border-primary/50 text-foreground"
+                    ? "bg-gradient-to-br from-amber-500/15 via-primary/15 to-pink-500/10 border-amber-300/45 text-foreground -translate-y-0.5 shadow-[0_8px_24px_-8px_hsl(38_92%_55%/0.55),0_0_0_1px_hsl(38_92%_60%/0.25)_inset]"
                     : "bg-card/40 border-border/30 text-muted-foreground hover:text-foreground hover:border-border/60"
                 }`}
                 aria-current={active ? "page" : undefined}
