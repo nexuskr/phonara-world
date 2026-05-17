@@ -39,6 +39,8 @@ const PhonOrderPanel = lazy(() => import("@/components/trading/v3/PhonOrderPanel
 const PhonLiveSocialProof = lazy(() => import("@/components/trading/v3/PhonLiveSocialProof"));
 const PhonPositionsList = lazy(() => import("@/components/trading/v3/PhonPositionsList"));
 const LiveTradingCounter = lazy(() => import("@/components/fomo/LiveTradingCounter"));
+const ImperialTradeFomoBar = lazy(() => import("@/components/trade/ImperialTradeFomoBar"));
+const CurrencyExchangeButton = lazy(() => import("@/components/trade/CurrencyExchangeButton"));
 
 function usePriceStore() {
   return useSyncExternalStore(priceStore.subscribe, priceStore.getSnapshot, priceStore.getSnapshot);
@@ -347,11 +349,14 @@ export default function TradingArenaBybit() {
         className="container pt-3 animate-fade-in space-y-3"
         style={{ paddingBottom: "max(env(safe-area-inset-bottom), 2.5rem)" }}
       >
-        {/* Title — matches ArenaHeader typography for design consistency */}
+        {/* Imperial 글로벌 FOMO Bar */}
+        <Suspense fallback={null}><ImperialTradeFomoBar /></Suspense>
+
+        {/* Title — 황제의 실전 트레이딩 홀 */}
         <header className="flex items-end justify-between gap-3 flex-wrap">
           <div>
             <h1 className="font-imperial text-2xl sm:text-3xl tracking-[0.18em] text-gradient-imperial flex items-center gap-2">
-              <Crown className="w-5 h-5 text-gold" /> 실전 트레이딩 아레나
+              <Crown className="w-5 h-5 text-gold" /> 황제의 실전 트레이딩 홀
             </h1>
             <p className="text-[11px] text-muted-foreground mt-0.5 tracking-wide">
               바이비트급 차트 · 25 페어 · 최대 100× · Paper ↔ Real
@@ -361,14 +366,17 @@ export default function TradingArenaBybit() {
               <Suspense fallback={null}><LiveTradingCounter /></Suspense>
             </div>
           </div>
-          <div className="inline-flex gap-1.5 glass rounded-full p-1 border border-primary/30">
-            <button
-              type="button"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black tracking-wide bg-gradient-imperial text-primary-foreground glow-imperial"
-              aria-current="page"
-            >
-              <Flame className="w-3.5 h-3.5" /> 실전 트레이딩
-            </button>
+          <div className="inline-flex items-center gap-2">
+            <Suspense fallback={null}><CurrencyExchangeButton /></Suspense>
+            <div className="inline-flex gap-1.5 glass rounded-full p-1 border border-primary/30">
+              <button
+                type="button"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black tracking-wide bg-gradient-imperial text-primary-foreground glow-imperial"
+                aria-current="page"
+              >
+                <Flame className="w-3.5 h-3.5" /> 황제의 홀
+              </button>
+            </div>
           </div>
         </header>
 
