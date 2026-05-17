@@ -11372,6 +11372,7 @@ export type Database = {
         }
       }
       get_phon_balance: { Args: never; Returns: number }
+      get_phon_traders_24h: { Args: never; Returns: number }
       get_public_crown_replay: { Args: { _token: string }; Returns: Json }
       get_public_stats_json: { Args: never; Returns: Json }
       get_queue_sla_stats: { Args: never; Returns: Json }
@@ -11406,6 +11407,14 @@ export type Database = {
           masked_nick: string
           minutes_to_complete: number
           tier: Database["public"]["Enums"]["user_tier"]
+        }[]
+      }
+      get_recent_phon_wins: {
+        Args: { _limit?: number }
+        Returns: {
+          closed_at: string
+          masked_nick: string
+          pnl_phon: number
         }[]
       }
       get_recent_roulette_spins: {
