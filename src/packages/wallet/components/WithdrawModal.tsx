@@ -213,15 +213,10 @@ function Step2({ form, update }: { form: any; update: any }) {
             <span className="text-[11px] tracking-widest font-bold text-muted-foreground uppercase">
               {g("withdrawBankName")}
             </span>
-            <select
+            <BankSearchSelect
               value={form.bankName}
-              onChange={(e) => update("bankName", e.target.value)}
-              className="mt-1.5 w-full min-h-[52px] rounded-xl bg-input border border-border px-4 text-base focus:outline-none focus:border-amber-400"
-            >
-              {koreanBanks.map(b => (
-                <option key={b.code} value={b.display}>{b.display}</option>
-              ))}
-            </select>
+              onChange={(v) => update("bankName", v)}
+            />
           </label>
           <label className="block">
             <span className="text-[11px] tracking-widest font-bold text-muted-foreground uppercase">
