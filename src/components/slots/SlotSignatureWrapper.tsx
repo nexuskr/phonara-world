@@ -11,6 +11,7 @@ import CasinoLayout from "@/components/casino/CasinoLayout";
 import OlympusSlot from "@/components/slots/OlympusSlot";
 import Disclaimer from "@/components/Disclaimer";
 import DevWinCheats from "@/components/slots/DevWinCheats";
+import SoundTimingPanel from "@/components/dev/SoundTimingPanel";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { useSlotSound } from "@/hooks/useSlotSound";
 import { useEmpireCrown } from "@/hooks/useEmpireCrown";
