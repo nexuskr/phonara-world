@@ -116,56 +116,43 @@ export default function Dashboard() {
         />
 
         {/* Hero */}
-        <header className="space-y-4">
-          <div>
-            <div className="text-[10px] tracking-[0.3em] font-black text-[hsl(var(--gold))] uppercase drop-shadow-[0_0_10px_hsl(var(--gold)/0.55)]">Phonara</div>
-            <h1 className="mt-1 font-imperial text-2xl sm:text-3xl text-foreground tracking-[0.04em] text-shadow-imperial">
-              지금, <span className="bg-gradient-to-r from-[hsl(var(--gold))] to-[hsl(var(--pink))] bg-clip-text text-transparent">폐하의 무대</span>
-            </h1>
-          </div>
-          {/* Category chips */}
-          <div className="flex flex-wrap gap-2">
-            {CATEGORIES.map((c) => {
-              const Icon = c.icon;
-              return (
-                <Link
-                  key={c.to}
-                  to={c.to}
-                  className="group inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[hsl(var(--gold)/0.35)] bg-card/40 hover:border-[hsl(var(--gold)/0.8)] hover:bg-[hsl(var(--gold)/0.08)] hover:shadow-[0_0_18px_hsl(var(--gold)/0.35)] transition-all duration-200 text-[12px] font-semibold text-foreground/90 press"
-                >
-                  <Icon className="w-3.5 h-3.5 text-[hsl(var(--gold))] group-hover:scale-110 transition-transform" />
-                  {c.label}
-                </Link>
-              );
-            })}
-          </div>
+        <header className="space-y-3">
+          <div className="text-[10px] tracking-[0.3em] font-black text-[hsl(var(--gold))] uppercase drop-shadow-[0_0_10px_hsl(var(--gold)/0.55)]">Phonara</div>
+          <h1 className="font-imperial text-3xl sm:text-4xl md:text-5xl text-foreground tracking-[0.04em] text-shadow-imperial-xl leading-[1.05]">
+            <span className="bg-gradient-to-r from-[hsl(var(--gold))] via-[hsl(var(--gold))] to-[hsl(var(--pink))] bg-clip-text text-transparent drop-shadow-[0_6px_30px_hsl(var(--gold)/0.6)]">0원</span>
+            <span>으로 시작해서 </span>
+            <br className="hidden sm:inline" />
+            <span>매일 돈을 버는 </span>
+            <span className="bg-gradient-to-r from-[hsl(var(--gold))] to-[hsl(var(--pink))] bg-clip-text text-transparent drop-shadow-[0_6px_30px_hsl(var(--pink)/0.55)]">제국</span>
+          </h1>
         </header>
+
+        {/* Imperial Live Activity Engine — Hero 직후 full variant */}
+        <ImperialLiveActivity variant="full" />
+
+        {/* Quick Action Chips */}
+        <div className="flex flex-wrap gap-2">
+          {CATEGORIES.map((c) => {
+            const Icon = c.icon;
+            return (
+              <Link
+                key={c.to}
+                to={c.to}
+                className="group inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[hsl(var(--gold)/0.35)] bg-card/40 hover:border-[hsl(var(--gold)/0.8)] hover:bg-[hsl(var(--gold)/0.08)] hover:shadow-[0_0_18px_hsl(var(--gold)/0.35)] hover:-translate-y-0.5 transition-all duration-200 text-[12px] font-semibold text-foreground/90 press"
+              >
+                <Icon className="w-3.5 h-3.5 text-[hsl(var(--gold))] group-hover:scale-110 transition-transform" />
+                {c.label}
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* Imperial Trade Section — 큰 차트 + LONG/SHORT */}
+        <ImperialTradeSection />
 
         {/* Game catalogs */}
         <Rail title="Phonara Originals" to="/casino" items={ORIGINALS} />
-        <Rail title="Slots" to="/casino" items={SLOTS} />
-
-        {/* Trading 진입 */}
-        <section className="space-y-3">
-          <div className="flex items-end justify-between">
-            <h2 className="text-base sm:text-lg font-bold tracking-tight">트레이딩</h2>
-          </div>
-          <Link
-            to="/trade"
-            className="imperial-card-hover imperial-corner-shine imperial-jackpot-breathe block rounded-2xl border border-[hsl(var(--gold)/0.45)] bg-gradient-to-r from-emerald-900/25 via-background to-rose-900/25 hover:border-[hsl(var(--gold)/0.8)] transition press p-5 relative overflow-hidden"
-          >
-            <div className="flex items-center justify-between gap-4 relative z-10">
-              <div>
-                <div className="text-[10px] tracking-[0.3em] text-[hsl(var(--gold))] font-black drop-shadow-[0_0_8px_hsl(var(--gold)/0.5)]">BTC · ETH · SOL</div>
-                <div className="font-imperial text-xl mt-1 text-foreground text-shadow-imperial">Imperial Trade</div>
-                <div className="text-[11px] text-muted-foreground mt-1">
-                  실시간 가격 · LONG / SHORT · PHON 잔액으로 즉시 진입
-                </div>
-              </div>
-              <ChevronRight className="w-5 h-5 text-[hsl(var(--gold))] shrink-0 drop-shadow-[0_0_8px_hsl(var(--gold)/0.7)]" />
-            </div>
-          </Link>
-        </section>
+        <Rail title="Popular Slots" to="/casino" items={SLOTS} />
       </div>
     </Layout>
   );
