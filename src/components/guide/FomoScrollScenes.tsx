@@ -74,7 +74,7 @@ export function SceneProblem({ large = false }: { large?: boolean }) {
   );
 }
 
-/* ───────────────── 씬3 — SOLUTION (SVG 군대 배틀) ───────────────── */
+/* ───────────────── 씬3 — SOLUTION (SVG 트레이딩 배틀) ───────────────── */
 function SoldierRow({ side, count = 5 }: { side: "left" | "right"; count?: number }) {
   const color = side === "left" ? "hsl(var(--gold))" : "hsl(var(--destructive))";
   return (
@@ -99,7 +99,7 @@ export function SceneSolution({ large = false }: { large?: boolean }) {
       <div className="relative max-w-md mx-auto w-full">
         <div className="text-center mb-6">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full glass border border-gold/50 text-[10px] font-black tracking-[0.3em] text-gold mb-3">
-            <Swords className="w-3 h-3" /> 60초 군대 배틀
+            <Swords className="w-3 h-3" /> 60초 트레이딩 배틀
           </div>
           <h2 className={`font-imperial text-3xl sm:text-4xl break-keep leading-[1.15] ${senior.h2}`}>
             버튼은 단 2개<br />
@@ -287,7 +287,7 @@ export function ScenePersona({ large = false }: { large?: boolean }) {
 export function ScenePackage({ large = false }: { large?: boolean }) {
   const reduce = useReducedMotion();
   const perks = [
-    { icon: "💎", title: "손실 자동 보상 (Recovery)", sub: "군대 배틀 패배 시 일정 비율 자동 환급", boom: true },
+    { icon: "💎", title: "손실 자동 보상 (Recovery)", sub: "트레이딩 배틀 패배 시 일정 비율 자동 환급", boom: true },
     { icon: "⚡", title: "보상 4배 가속", sub: "모든 미션 보상 최대 4배 가속" },
     { icon: "👑", title: "우선 출금", sub: "평균 23분 → 최대 5분 이내 처리" },
     { icon: "🎁", title: "VIP 룰렛", sub: "최대 100만원 + 메가 잭팟 1탭" },
