@@ -286,26 +286,26 @@ export default function ImperialLiveWinsRail({ variant = "compact" }: { variant?
                 )}
 
                 {/* Desktop row */}
-                <div className="hidden sm:grid grid-cols-[1.4fr_1fr_56px_56px_1fr_56px_1.2fr] gap-2 items-center px-2 py-2 min-h-[52px]">
+                <div className={`hidden sm:grid grid-cols-[1.4fr_1fr_56px_56px_1fr_56px_1.2fr] gap-2 items-center px-2 ${isFull ? "py-2.5 min-h-[60px]" : "py-2 min-h-[52px]"}`}>
                   <div className="flex items-center gap-1.5 min-w-0">
-                    {r.jackpot && <Crown className="w-3.5 h-3.5 text-amber-300 shrink-0" />}
-                    <span className="text-base shrink-0">{r.gameEmoji}</span>
-                    <span className="text-[12px] font-bold truncate">{r.game}</span>
+                    {r.jackpot && <Crown className={`${isFull ? "w-4 h-4" : "w-3.5 h-3.5"} text-amber-300 shrink-0 drop-shadow-[0_0_6px_hsl(var(--gold)/0.7)]`} />}
+                    <span className={`${isFull ? "text-lg" : "text-base"} shrink-0`}>{r.gameEmoji}</span>
+                    <span className={`${isFull ? "text-[13px]" : "text-[12px]"} font-bold truncate`}>{r.game}</span>
                   </div>
-                  <span className="text-[12px] text-foreground/90 truncate">{r.nick}</span>
+                  <span className={`${isFull ? "text-[13px]" : "text-[12px]"} text-foreground/90 truncate`}>{r.nick}</span>
                   <span className="text-[10px] text-muted-foreground tabular-nums text-right">{fmtTime(r.ts)}</span>
                   <span className={`mx-auto px-1.5 py-0.5 rounded text-[9px] font-black border ${CCY_CHIP[r.currency]}`}>
                     {r.currency}
                   </span>
-                  <span className="text-[11px] font-mono tabular-nums text-muted-foreground text-right">{fmtAmount(r.bet, r.currency)}</span>
-                  <span className={`text-[11px] font-mono font-black tabular-nums text-right ${r.jackpot ? "text-amber-300" : r.mult >= 10 ? "text-secondary" : "text-foreground/80"}`}>
+                  <span className={`${isFull ? "text-[12px]" : "text-[11px]"} font-mono tabular-nums text-muted-foreground text-right`}>{fmtAmount(r.bet, r.currency)}</span>
+                  <span className={`${isFull ? "text-[12px]" : "text-[11px]"} font-mono font-black tabular-nums text-right ${r.jackpot ? "text-amber-300" : r.mult >= 10 ? "text-secondary" : "text-foreground/80"}`}>
                     ×{r.mult.toFixed(2)}
                   </span>
                   <span
                     className={
                       r.jackpot
-                        ? "text-[14px] font-mono font-black tabular-nums text-right bg-gradient-to-r from-amber-300 via-yellow-200 to-pink-300 bg-clip-text text-transparent drop-shadow-[0_0_10px_hsl(var(--secondary)/0.7)]"
-                        : "text-[13px] font-mono font-black tabular-nums text-right bg-gradient-to-r from-amber-300 via-yellow-200 to-pink-300 bg-clip-text text-transparent drop-shadow-[0_0_6px_hsl(var(--secondary)/0.45)]"
+                        ? `${isFull ? "text-[17px]" : "text-[14px]"} font-mono font-black tabular-nums text-right bg-gradient-to-r from-amber-200 via-yellow-100 to-pink-300 bg-clip-text text-transparent drop-shadow-[0_0_14px_hsl(var(--gold)/0.85)]`
+                        : `${isFull ? "text-[15px]" : "text-[13px]"} font-mono font-black tabular-nums text-right bg-gradient-to-r from-amber-300 via-yellow-200 to-pink-300 bg-clip-text text-transparent drop-shadow-[0_0_8px_hsl(var(--gold)/0.55)]`
                     }
                   >
                     {fmtAmount(r.payout, r.currency)}
