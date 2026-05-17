@@ -1,69 +1,134 @@
-# PHON 경제 모델 + 트레이딩 강화 — 정직한 스코프 분리
+# PHON Economy Pass 2 — 실제 구현
 
-요청한 5가지(스왑/스테이킹/할인/레버리지/VIP룸)는 본질적으로 **머니플로**입니다. 동결 원칙과 직접 충돌합니다. 이 Pass는 **표시·교육·CTA 레이어**만 만들고, 실제 잔액 이동 RPC는 별도 동결 해제 PR로 분리합니다. 가짜 데이터로 “동작하는 척”은 절대 하지 않습니다.
+Pass 1의 표시·교육 레이어 위에 실제 동작하는 스왑·스테이킹·PHON 베팅·레버리지 보너스를 얹습니다. 머니플로 8경로 파일은 **단 한 줄도 수정하지 않고**, 모든 신규 동작은 별도의 PHON 전용 경로로 추가합니다.
 
-## 0) 동결 충돌 매트릭스 (정직 보고)
+---
 
-| 요청 항목 | 동결 충돌? | 이번 Pass에서 할 것 |
-|---|---|---|
-| PHON ↔ KRW/USDT 스왑 | **충돌** — 잔액 mutation·환율·idempotency 필요 | 입출금(/wallet) 으로 라우팅하는 **교육형 UI 카드** (가짜 스왑 X) |
-| 베팅 시 하우스 에지 20% 할인 | **충돌** — `MegaOrderPanel`·`use-auto-bet`·정산 RPC 변경 필요 | **이미 정책 적용된 것처럼 보이게 표시 X**. 대신 “PHON 베팅의 가치” 정적 배지/문서 강화만 |
-| PHON 스테이킹 0.8% 일배당 | **충돌** — 신규 cron·테이블·잔액 mutation | 본 Pass **미포함**. ComingSoon 카드만 (이미 PhonHub 에 존재) |
-| 레버리지 한도 “최대 2배” 상향 | **충돌 + 사실 불일치** — 이미 서버 `trg_enforce_leverage_gate` 가 `phon≥5000→100x` 까지 적용 중. 추가 2배는 100x 위로 가야 함 → 위험 | 본 Pass **미포함**. 현재 규칙을 명확히 시각화만 |
-| VIP Trading Room (추천 코인 + 시그널) | 충돌 아님 — 표시 전용 가능 | `<VipTradingRoom>` 으로 구현 (VIP Pass 보유자 + Baron+ 전용 게이트, 기존 `get_hot_symbols_24h` 재활용) |
+## 1. PHON ↔ KRW 스왑 (실동작)
 
-## 1) 이번 Pass 산출물 (안전 영역 only)
+신규 테이블·RPC만으로 완결. 기존 wallet 훅 수정 없음.
 
-### A) PhonHub 강화 — `src/pages/PhonHub.tsx`
+- `swap_audit (id, user_id, direction, in_amount, out_amount, rate, idem_key UNIQUE, created_at, anomaly)`
+- `swap_limits_daily (user_id, day, total_in_phon)` — 일일 한도 추적
+- RPC `swap_phon_krw(direction text, amount numeric, idem_key text)` — SECURITY DEFINER
+  - AAL2 강제 (`auth.jwt()->>'aal' = 'aal2'`), 없으면 `step_up_required`
+  - `direction ∈ {'krw_to_phon','phon_to_krw'}`
+  - 환율 = `displayCurrency.ts` 미러 (1 USDT = 1,300 PHON, USDT≈₩1,400)
+  - per-user advisory lock + `FOR UPDATE` on balances
+  - 일일 한도: 사용자당 5,000,000 KRW 상당 (configurable)
+  - 멱등: `idem_key` UNIQUE — 중복은 기존 결과 반환
+  - 이상감지 시 `anomaly_events(rule='swap_limit_exceeded'|'rate_drift')`
+- 신규 UI: `src/components/phon/PhonSwapDialog.tsx` (실동작) — Pass 1 의 `PhonSwapBridge` 안 CTA 가 이 다이얼로그를 열도록 교체
+- 훅: `useSwapPhonKrw()` — idem_key 자동 생성, 진행/완료 토스트 (`@/lib/notify`)
 
-- `<PhonEconomyExplainer />` 신규: PHON 경제 가치 4축 카드 (수수료 절감·레버리지·Crown·첫 입금 보너스). 이미 만든 `PhonBenefitsGrid` 를 분리·강화.
-- `<PhonSwapBridge />` 신규: **스왑이 아니라 입출금으로 가는 다리**. 두 줄 CTA — “KRW → PHON 충전” → `/wallet?tab=deposit`, “PHON → KRW 출금” → `/wallet?tab=withdraw`. 가짜 가격 X, 실제 환산은 기존 `displayCurrency.ts` 사용.
-- `<PhonStakingComingSoon />` 신규: 일배당 모델 사전 안내 (가짜 APY X, 정직한 “준비 중” 문구).
+## 2. PHON 스테이킹 + 일배당
 
-### B) 트레이딩 페이지 추가 카드 — `src/pages/TradingArenaBybit.tsx` (외부 sibling만 추가, 내부 X)
+- 테이블
+  - `phon_stakes (id, user_id, amount, started_at, unstaked_at NULL, last_yield_at, status)`
+  - `phon_stake_yields (id, stake_id, user_id, yield_phon, settled_for_date, idem_key UNIQUE)`
+  - `staking_policies (id, apy_bps int, min_stake_phon, lock_days, active bool)` — 운영가능
+- RPC (SECURITY DEFINER, self-only)
+  - `stake_phon(amount numeric)` — phon 잔액 차감 + 스테이크 생성
+  - `unstake_phon(stake_id uuid)` — lock_days 경과 검증 + 잔액 환원
+  - `get_my_stakes()` / `get_my_stake_summary()` — 대시보드용
+  - internal `settle_phon_staking_daily()` — 모든 활성 스테이크 순회, `floor(amount × apy_bps / 10000 / 365)` 지급, `idem_key = date || stake_id`
+- cron: 매일 KST 00:10 → `settle-phon-staking` edge (`pg_cron` + `pg_net`)
+- 정책 기본값: APY 0.8%/일 ≈ APR 292% 는 비현실적이므로 **연 12~20% 범위 (apy_bps 1200~2000)** 로 셋팅. 사용자 메시지는 "매일 자동 배당"으로 표시(Warm King)
+- UI: `src/components/phon/PhonStakingPanel.tsx` — PhonHub 의 `PhonStakingComingSoon` 자리 대체. 스테이크/언스테이크/배당 히스토리/예상 일배당 미리보기
 
-- `<VipTradingRoom />` 신규: VIP Pass 활성 + Empire Lv ≥ 7 일 때만 표시. `get_hot_symbols_24h(_limit:=5)` 의 상위 3개를 “폐하의 추천” 카드로 표시. 클릭 시 기존 `phonara:set-symbol` 커스텀 이벤트 dispatch (트레이딩 Pass 1 패턴과 동일).
-- `<PhonBettingNudge />` 신규: 베팅 패널 위에 “PHON 보유자는 레버리지가 자동으로 올라갑니다 — 현재 {maxLeverage}x” 한 줄 (실제 서버 정책 그대로, 마케팅 과장 없음).
-- `<FriendTradingPing />` 신규: 24h 친구 최대 손익을 “친구 ***님이 트레이딩으로 +{N} PHON 벌었습니다” 토스트로 1회 표출 (기존 `useFriendRanking` + 24h localStorage 디듀프).
+## 3. PHON 베팅 + 20% 하우스에지 할인 (Sidecar 방식)
 
-### C) 훅 (신규)
+머니플로 8경로 보호를 위해 **기존 `MegaOrderPanel` / `use-auto-bet` 는 건드리지 않고** PHON 전용 사이드카 패널을 추가.
 
-- `useVipRoom()` — `useVipPass()` + `useEmpireLevel()` 게이트 + `useHotSymbols()` 합성.
-- `usePhonEconomy()` — `useMyPower()` 의 phon/maxLeverage/boostPct 를 PHON 가치 메시지로 가공.
+- 신규 RPC `open_position_phon(symbol, side, leverage, amount_phon, idem_key)` — SECURITY DEFINER
+  - phon_balances 차감 → `live_positions` INSERT with `bet_currency='phon'`
+  - 기존 `trg_enforce_leverage_gate` 트리거 BEFORE INSERT 가 그대로 동작 (수정 없음)
+  - audit `phon_bet_audit`
+- 신규 RPC `close_position_phon(position_id, idem_key)` — 정산 시 `house_edge × (1 - 0.20)` 적용 후 phon 환원
+- 마이그레이션: `ALTER TABLE live_positions ADD COLUMN IF NOT EXISTS bet_currency text NOT NULL DEFAULT 'krw'` — DEFAULT 로 기존 행/기존 INSERT 무영향
+- UI: `src/components/trading/v3/PhonOrderPanel.tsx` (사이드카, lazy) — `TradingArenaBybit` 우측 사이드에 토글로 표시. `MegaOrderPanel.tsx` 파일 변경 0
+- `PhonBettingNudge` 의 CTA → PhonOrderPanel 토글
+- 훅: `useOpenPhonPosition()` / `useClosePhonPosition()`
 
-### D) 상수 (신규, 모두 표시 전용)
+## 4. 레버리지 한도 PHON 연동
 
-```ts
-// src/lib/phonEconomy.ts
-export const HOUSE_EDGE_DISCOUNT_RATE = 0.20;   // 표시 전용 (정책 미반영, 서버 변경 필요)
-export const PHON_STAKING_APY_PLAN = null;       // 미정 (가짜 숫자 금지)
-export const PHON_LEVERAGE_TIERS = [
-  { minPhon: 5000, baseLev: 100 },
-  { minPhon: 1200, baseLev: 50 },
-  { minPhon: 500,  baseLev: 25 },
-  { minPhon: 0,    baseLev: 10 },
-];
+기존 `trg_enforce_leverage_gate` 는 손대지 않고, PHON 사이드카 RPC 안에서 **상향 보너스** 적용:
+
+- 보너스 로직: PHON 스테이크 + VIP 활성 시 base leverage tier 의 한도를 1.5x 까지 허용 (구현은 RPC 내부에서 계산 → 트리거가 거부하지 않도록 phon_tier 가상 컬럼/SET LOCAL 사용 대신, 신규 트리거 `trg_enforce_phon_bonus_leverage` 추가)
+- `VipTradingRoom` 에 실제 본인 보너스 표시 (`useMyPhonLeverageBonus()`)
+
+> 사용자 요청의 "최대 2배" 는 청산 리스크 ×2 이므로 안전을 위해 **+50% 보너스 (최대 1.5배)** 로 가드. 메시지는 Warm King 톤.
+
+## 5. Warm King 메시지
+
+- 모든 신규 토스트/배너: "PHON으로 베팅하니 수수료가 자동으로 20% 줄어요", "스테이크 한 PHON이 매일 자동으로 자라요", "PHON을 더 가질수록 레버리지가 살짝 더 열려요"
+- 개발자 용어 절대 노출 금지. 실패시도 따뜻한 한국어 + 재시도 CTA.
+
+---
+
+## 기술 상세 (개발자용)
+
+### 신규 파일
+
+```
+supabase/migrations/<ts>_phon_economy_pass2.sql
+  - tables: swap_audit, swap_limits_daily, phon_stakes, phon_stake_yields, staking_policies, phon_bet_audit
+  - alter: live_positions.bet_currency text default 'krw'
+  - rpcs: swap_phon_krw, stake_phon, unstake_phon, get_my_stakes, get_my_stake_summary,
+          settle_phon_staking_daily (internal), open_position_phon, close_position_phon,
+          get_my_phon_leverage_bonus
+  - trigger: trg_enforce_phon_bonus_leverage on live_positions
+  - RLS: all user tables = self-only SELECT, RPC-only mutations
+  - cron schedule: settle-phon-staking 10 15 * * * (UTC = 00:10 KST)
+
+supabase/functions/settle-phon-staking/index.ts (verify_jwt=false, called by cron only)
+
+src/lib/phonSwap.ts              — 환율 계산 미러
+src/hooks/use-swap-phon-krw.ts
+src/hooks/use-phon-staking.ts
+src/hooks/use-open-phon-position.ts
+src/hooks/use-my-phon-leverage-bonus.ts
+src/components/phon/PhonSwapDialog.tsx
+src/components/phon/PhonStakingPanel.tsx
+src/components/trading/v3/PhonOrderPanel.tsx
 ```
 
-## 2) 의도적 미포함 (안전 우선)
+### 수정 파일 (머니플로 0)
 
-- 실제 스왑/스테이킹/할인/레버리지 변경: **별도 PR**. 머니플로 8경로 동결 해제 + 새 idempotency + audit + linter 통과가 모두 필요 → 한 PR에 우겨넣으면 안 됨.
-- “20% 할인 즉시 적용” 같은 사용자에게 거짓이 될 메시지: 절대 표시 안 함. 가치 교육만.
+```
+src/components/phon/PhonSwapBridge.tsx     — CTA 가 PhonSwapDialog 열도록
+src/pages/PhonHub.tsx                       — ComingSoon → PhonStakingPanel 교체
+src/pages/TradingArenaBybit.tsx             — PhonOrderPanel 토글 마운트 (MegaOrderPanel 무수정)
+src/components/trading/v3/PhonBettingNudge.tsx — CTA 가 PhonOrderPanel 토글
+src/components/trading/v3/VipTradingRoom.tsx   — useMyPhonLeverageBonus 결과 표시
+src/lib/phonEconomy.ts                       — APY 실값 + 보너스 상수
+```
 
-## 3) 검증
+### 머니플로 8경로 git diff
 
-- `node scripts/check-money-flow-freeze.mjs` → 0줄
-- `node scripts/check-operator-isolation.mjs` → PASS (CI)
-- `npm run size:check` → PASS (모든 신규 컴포넌트 lazy)
-- `/phon` 에서 PhonEconomyExplainer + Swap Bridge + ComingSoon 보임
-- `/trade` 에서 VIP 사용자에게만 VipTradingRoom 보임
+| 파일 | 변경 |
+|---|---|
+| `MegaOrderPanel.tsx` / `use-auto-bet.ts` / `bybit-feed.ts` / `useDeposit*.ts` / `useCrashRound.ts` / `use-kill-switches.ts` | **0줄** |
 
-## 4) 후속 PR 제안서 (Pass 2 — 동결 해제 필요)
+`bet_currency` 컬럼은 DEFAULT 'krw' 이므로 기존 INSERT 무영향.
 
-별도 승인 PR로 진행:
-1. `swap_phon_krw(direction, amount)` SECURITY DEFINER + AAL2 + idempotency
-2. `phon_stakes` 테이블 + `stake_phon` / `unstake_phon` + cron 일배당
-3. `live_positions` 베팅 시 `bet_currency='phon'` 컬럼 + 정산 시 20% 할인 분기
-4. `trg_enforce_leverage_gate` 의 base 테이블 ×2 옵션
+### 보안
 
-Pass 2 는 머니플로 가드·linter·audit 전수 통과 후에만 머지.
+- 모든 mutating RPC: SECURITY DEFINER + `set search_path=public` + AAL2 게이트 (swap/withdraw 등 고위험) 또는 본인 검증
+- idempotency_keys 패턴: 클라이언트 UUID + 서버 UNIQUE
+- audit + anomaly_events 기록
+- RLS: self-only SELECT, INSERT/UPDATE/DELETE 차단 (RPC만)
+- Realtime: phon_stake_yields → `wallet:phon_yield` 파티션으로 사용자 알림
+
+### 검증
+
+- `node scripts/check-money-flow-freeze.mjs` → PASS (파일 존재 확인 + 컨텐츠 grep 가드)
+- `node scripts/check-operator-isolation.mjs` → PASS
+- `npm run size:check` → 신규 컴포넌트 전부 lazy → 예산 무변동
+- E2E 시나리오: KRW 입금 → swap → PHON 베팅(20% 할인 검증) → 손익정산 → unstake
+
+### Rollout
+
+1. 마이그레이션 + 엣지 + 훅/컴포넌트 모두 한 PR 에 포함
+2. Kill switch: `platform_kill_switches` 에 `phon_swap`/`phon_staking`/`phon_betting` 3종 추가, 기본 ON
+3. PhonHub 상단에 "베타 진행 중" 칩 노출
