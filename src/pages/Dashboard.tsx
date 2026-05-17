@@ -103,23 +103,18 @@ export default function Dashboard() {
   return (
     <Layout>
       <RoutingMigrationBanner />
-      <div className="container pt-3 flex flex-col gap-2">
+      <div className="container pt-3 flex flex-col gap-3">
         <ChurnReactivationBanner />
-        <Suspense fallback={null}><LivePayoutCounter /></Suspense>
-        <Suspense fallback={null}><YesterdayPayoutsBanner /></Suspense>
-        <Suspense fallback={null}><FriendGapToast /></Suspense>
-      </div>
-      <div className="container pt-3 grid gap-3 md:grid-cols-2">
-        <Suspense fallback={null}><DailyChest /></Suspense>
-        <Suspense fallback={null}><LevelProgressBar /></Suspense>
+        {/* v19 Slice 2: Imperial Empire Hub 단일 라이브 카드 */}
+        <ImperialLivePulseRail />
       </div>
       <Suspense fallback={null}>
         <LivePurchaseTicker />
       </Suspense>
-      <EmpireSignature />
 
       {/* 🌌 100vh Cosmic Hero — 단일 CTA */}
       <DashboardHeroV3 phon={phon} nfts={nfts} online={online} />
+
 
       <div className="container relative pt-6 pb-12 space-y-6">
         {/* 🌅 Daily AI Briefing — 5장 카드 */}
