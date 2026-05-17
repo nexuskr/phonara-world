@@ -55,6 +55,15 @@ Deno.serve(async (req) => {
     const badge = typeof body.badge === "string" ? body.badge.slice(0, 200) : "/icon-192.png";
 
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
+
+    // Phase F: kill switch + per-user daily cap (3/day default). Admin override via body.bypass_cap=true.
+    if (!body.bypass_cap) {
+      const { data: allowed, error: capErr } = await admin
+        .rpc("try_log_push_send", { _user_id: userId, _kind: kind, _daily_cap: 3 });
+      if (capErr) return json({ ok: false, error: capErr.message }, 500);
+      if (!allowed) return json({ ok: true, sent: 0, throttled: true });
+    }
+
     const { data: subs, error } = await admin
       .from("push_subscriptions")
       .select("id,endpoint,p256dh,auth")
@@ -104,10 +113,25 @@ function json(b: unknown, s = 200) {
   return new Response(JSON.stringify(b), { status: s, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 }
 
+// Imperial Deep Link router — every push lands on the most relevant focused screen.
+// All URLs include `from=push` so the client can apply Imperial Glow on the highlighted element.
 function payloadUrl(kind: string): string {
-  if (kind.startsWith("withdraw")) return "/wallet";
-  if (kind.startsWith("deposit") || kind.startsWith("package")) return "/wallet";
-  return "/dashboard";
+  if (kind === "streak_protect" || kind === "streak_break_risk")
+    return "/dashboard?focus=streak&from=push";
+  if (kind === "personal_mission" || kind === "mission_reward" || kind === "mission")
+    return "/dashboard?focus=mission&from=push";
+  if (kind === "comeback_3d" || kind === "comeback_7d" || kind === "comeback_14d" || kind === "comeback_30d")
+    return `/dashboard?focus=comeback&campaign=${encodeURIComponent(kind)}&from=push`;
+  if (kind === "vip_imperial" || kind === "vip_arrival" || kind.startsWith("vip_"))
+    return "/vip?from=push";
+  if (kind === "phon_staking" || kind === "phon_dividend" || kind.startsWith("phon_"))
+    return "/phon?tab=staking&highlight=true&from=push";
+  if (kind === "live_fomo" || kind === "lobby_call" || kind === "whale_strike")
+    return "/lobby?from=push";
+  if (kind === "jackpot_alert") return "/casino?from=push";
+  if (kind.startsWith("withdraw")) return "/wallet?tab=withdraw&from=push";
+  if (kind.startsWith("deposit") || kind.startsWith("package")) return "/wallet?tab=deposit&from=push";
+  return "/dashboard?from=push";
 }
 
 // SECURITY: Strict whitelist payload builder. Strips any non-allowed field.
