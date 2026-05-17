@@ -238,7 +238,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   useUserNotifications(user?.id);
   useAdminNotifications(!!user?.isAdmin);
-  const idleReady = useIdleMount(1500);
+  // v19 Phase 0-R: idle 오버레이 모두 제거
   const [sheetOpen, setSheetOpen] = useState(false);
 
   return (
@@ -332,11 +332,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <div className="flex items-center gap-2">
             <TopHUD />
             <TopHUDCompact />
-            {user && (
-              <Suspense fallback={null}>
-                <ImperialInbox />
-              </Suspense>
-            )}
+            {/* v19 Phase 0-R: ImperialInbox 마운트 해제 */}
             {user && (
               <Link
                 to="/profile"
@@ -361,39 +357,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      {/* Live population pulse strip */}
-      {idleReady && (
-        <Suspense fallback={null}>
-          <EmpirePopulationPulse />
-          {user && <ImperialHud />}
-          {user && <QuickAccessStrip />}
-        </Suspense>
-      )}
+      {/* v19 Phase 0-R: EmpirePopulationPulse / ImperialHud / QuickAccessStrip / NeonNotificationFeed
+          / BaronPromotionDialog / EmpireBoosterTimer / EmpireConcierge / ReplayShareGlobal
+          / CrownWarFinaleModal / CrownThroneOverlay / PowerHeader / FirstEmperorBurst 모두 마운트 해제 */}
 
       <main className="relative">{children}</main>
-      {idleReady && (
-        <Suspense fallback={null}>
-          <NeonNotificationFeed />
-          <BaronPromotionDialog />
-          <EmpireBoosterTimer />
-          <EmpireConcierge />
-          <ReplayShareGlobal />
-          <CrownWarFinaleModal />
-          <CrownThroneOverlay />
-          <PowerHeader />
-          <FirstEmperorBurst onCta={() => {
-            try {
-              if (typeof window !== "undefined") {
-                if (window.location.pathname !== "/dashboard") {
-                  window.location.href = "/dashboard?focus=bet";
-                } else {
-                  window.dispatchEvent(new CustomEvent("phonara:focus-bet"));
-                }
-              }
-            } catch {}
-          }} />
-        </Suspense>
-      )}
 
       {/* Mobile bottom nav — 5 tabs with center FAB */}
       {user && (
@@ -448,11 +416,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </nav>
       )}
 
-      {user && idleReady && (
-        <Suspense fallback={null}>
-          <FloatingChat />
-        </Suspense>
-      )}
+      {/* v19 Phase 0-R: FloatingChat 마운트 해제 */}
     </div>
   );
 }
