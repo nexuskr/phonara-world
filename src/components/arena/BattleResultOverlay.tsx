@@ -20,7 +20,7 @@ type Props = {
 
 const COPY: Record<Result, { emoji: string; title: (s: Side) => string; tone: string; sub: string }> = {
   win:       { emoji: "🏆", title: (s) => `${s === "long" ? "Conquest" : "Raid"} 승리`, tone: "text-money-strong", sub: "영광스러운 진군" },
-  loss:      { emoji: "💀", title: () => "제국 함락", tone: "text-rose-400", sub: "다음 전투를 준비하라" },
+  loss:      { emoji: "💀", title: () => "제국 함락", tone: "text-rose-400", sub: "다음 승부를 준비하소서" },
   near_miss: { emoji: "⚠️", title: () => "적장 도주 — Near Miss", tone: "text-gold", sub: "30초 안에 Recovery 발동" },
 };
 

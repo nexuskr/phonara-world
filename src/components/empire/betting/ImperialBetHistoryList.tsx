@@ -1,5 +1,5 @@
 /**
- * ImperialBetHistoryList — 황제의 전투 기록.
+ * ImperialBetHistoryList — 황제의 승전 기록.
  * Won = Crown + Gold row + Replay. Lost = Warm King 위로 + 역전 입금 CTA.
  * 데이터 fetching 은 부모가 담당. (money-flow 미터치)
  */
@@ -28,15 +28,15 @@ export default function ImperialBetHistoryList({ rows, onReplay }: Props) {
   if (rows === null) {
     return (
       <div className="text-xs text-muted-foreground py-6 text-center">
-        전투 기록을 불러오는 중…
+        승전 기록을 불러오는 중…
       </div>
     );
   }
   if (rows.length === 0) {
     return (
       <EmptyState
-        title="아직 전투 기록이 없습니다"
-        description="첫 전투를 시작해 제국의 역사를 새기세요."
+        title="아직 승전 기록이 없습니다"
+        description="첫 승부로 황실의 역사를 새기소서."
       />
     );
   }
@@ -44,7 +44,7 @@ export default function ImperialBetHistoryList({ rows, onReplay }: Props) {
     <div className="space-y-2">
       <div className="flex items-center justify-between px-1">
         <span className="text-[11px] font-black tracking-[0.22em] text-amber-300">
-          황제의 전투 기록
+          황제의 승전 기록
         </span>
         <ProvablyFairBadge size="sm" />
       </div>
