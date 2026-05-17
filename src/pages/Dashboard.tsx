@@ -38,6 +38,10 @@ import RoutingMigrationBanner from "@/components/RoutingMigrationBanner";
 import ChurnReactivationBanner from "@/components/reactivation/ChurnReactivationBanner";
 const DailyChest = lazy(() => import("@/components/gamification/DailyChest"));
 const LevelProgressBar = lazy(() => import("@/components/gamification/LevelProgressBar"));
+const LivePayoutCounter = lazy(() => import("@/components/fomo/LivePayoutCounter"));
+const FriendLeaderboard = lazy(() => import("@/components/fomo/FriendLeaderboard"));
+const FriendGapToast = lazy(() => import("@/components/fomo/FriendGapToast"));
+const FoundingContendersBadge = lazy(() => import("@/components/fomo/FoundingContendersBadge"));
 
 // 접힘 영역에 들어가는 기존 컴포넌트들 — 모두 lazy
 const LiveRanking = lazy(() => import("@/components/LiveRanking"));
@@ -112,7 +116,11 @@ export default function Dashboard() {
   return (
     <Layout>
       <RoutingMigrationBanner />
-      <div className="container pt-3"><ChurnReactivationBanner /></div>
+      <div className="container pt-3 flex flex-col gap-2">
+        <ChurnReactivationBanner />
+        <Suspense fallback={null}><LivePayoutCounter /></Suspense>
+        <Suspense fallback={null}><FriendGapToast /></Suspense>
+      </div>
       <div className="container pt-3 grid gap-3 md:grid-cols-2">
         <Suspense fallback={null}><DailyChest /></Suspense>
         <Suspense fallback={null}><LevelProgressBar /></Suspense>
@@ -179,6 +187,8 @@ export default function Dashboard() {
           <FomoNotificationStrip />
           <CrownWarHUD />
           <WhaleStrikeRail compact />
+          <Suspense fallback={null}><FoundingContendersBadge /></Suspense>
+          <Suspense fallback={null}><FriendLeaderboard /></Suspense>
 
           <div className="flex items-center justify-between gap-2 pt-2">
             <div className="text-[10px] tracking-[0.3em] font-bold text-primary/80">우주 황제 베팅 패널</div>

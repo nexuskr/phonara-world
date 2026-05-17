@@ -13,6 +13,7 @@ import { useAutoBet } from "@/hooks/use-auto-bet";
 import { notify } from "@/lib/notify";
 import { track } from "@/lib/telemetry";
 import { useMyPower } from "@/hooks/use-my-power";
+import LiveTradingCounter from "@/components/fomo/LiveTradingCounter";
 
 type Side = "long" | "short";
 
@@ -140,6 +141,7 @@ const DashboardBetPanel = forwardRef<BetPanelHandle>(function DashboardBetPanel(
             {credit.toLocaleString(undefined, { maximumFractionDigits: 2 })} <span className="text-xs font-bold text-muted-foreground">USDT</span>
           </div>
           <div className="text-[11px] text-muted-foreground tabular-nums">PHON {phon.toLocaleString()}</div>
+          <div className="mt-1"><LiveTradingCounter compact /></div>
         </div>
         <div className="text-right">
           <div className="text-[10px] tracking-[0.2em] font-bold text-muted-foreground">{SYMBOL}</div>

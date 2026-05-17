@@ -10831,6 +10831,15 @@ export type Database = {
           user_mask: string
         }[]
       }
+      get_live_fomo_counters: {
+        Args: never
+        Returns: {
+          founding_seat_contenders: number
+          online_now: number
+          trading_now: number
+          withdrawing_now: number
+        }[]
+      }
       get_main_nft: {
         Args: { _user_id: string }
         Returns: {
@@ -10948,6 +10957,24 @@ export type Database = {
           season_id: string
           season_title: string
           seat_no: number
+        }[]
+      }
+      get_my_friend_gap: {
+        Args: never
+        Returns: {
+          direction: string
+          gap_phon: number
+          other_nickname: string
+        }[]
+      }
+      get_my_friend_ranking: {
+        Args: { _limit?: number }
+        Returns: {
+          is_me: boolean
+          nickname: string
+          rnk: number
+          user_id: string
+          weekly_phon: number
         }[]
       }
       get_my_godmode_status: {

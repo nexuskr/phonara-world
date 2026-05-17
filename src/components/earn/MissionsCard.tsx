@@ -73,9 +73,15 @@ export default function MissionsCard({ missions, onClaim }: Props) {
           <div className="text-xs text-muted-foreground">5분 안에 다 받을 수 있어요</div>
         </div>
         {fomo && fomo.remaining > 0 && (
-          <div className="text-right shrink-0">
-            <div className="text-[10px] text-muted-foreground">오늘 완료율</div>
-            <div className="text-sm font-black text-amber-300 tabular-nums">{fomo.pct}%</div>
+          <div className="text-right shrink-0 flex items-center gap-1.5">
+            <span className="relative inline-flex h-1.5 w-1.5">
+              <span className="absolute inset-0 rounded-full bg-amber-300/70 animate-ping" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-amber-300" />
+            </span>
+            <div>
+              <div className="text-[10px] text-muted-foreground">오늘 완료율</div>
+              <div className="text-sm font-black text-amber-300 tabular-nums">{fomo.pct}%</div>
+            </div>
           </div>
         )}
       </header>
@@ -83,7 +89,7 @@ export default function MissionsCard({ missions, onClaim }: Props) {
       {fomo && fomo.remaining > 0 && (
         <div className="rounded-xl border border-amber-400/30 bg-amber-500/5 px-3 py-2 text-[11px] text-amber-200/90 flex items-center gap-2">
           <Sparkles className="w-3.5 h-3.5 shrink-0" />
-          오늘 미션 완료율 {fomo.pct}%. 당신은 아직 {fomo.remaining}개 남았어요.
+          폐하, 오늘은 {fomo.remaining}개만 더 완수하시면 됩니다 · {fomo.pct}%의 황제가 이미 완료
         </div>
       )}
 
