@@ -100,6 +100,9 @@ class SlotSoundManagerImpl {
     this.slotId = slotId;
     const theme = SLOT_ID_TO_THEME[slotId] ?? null;
     this.themeKey = theme;
+    // 신규 mp3 override 라우팅 — legacy SoundManager 가 slotId 를 알아야
+    // /sounds/{slotId}/sfx/spin_start.mp3 를 reel_spin 시점에 재생할 수 있다.
+    try { SoundManager.setSlotId?.(slotId); } catch { /* */ }
     if (theme) {
       try { await SoundManager.loadPack(theme); } catch { /* */ }
     }
@@ -292,6 +295,7 @@ class SlotSoundManagerImpl {
     this.slotHowls.clear();
     this.slotId = "";
     this.themeKey = null;
+    try { SoundManager.setSlotId?.(null); } catch { /* */ }
     if (this.duckActive) this.restoreBgm(120);
   }
 

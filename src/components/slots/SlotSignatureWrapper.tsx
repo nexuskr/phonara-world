@@ -11,6 +11,7 @@ import CasinoLayout from "@/components/casino/CasinoLayout";
 import OlympusSlot from "@/components/slots/OlympusSlot";
 import Disclaimer from "@/components/Disclaimer";
 import DevWinCheats from "@/components/slots/DevWinCheats";
+import SoundTimingPanel from "@/components/dev/SoundTimingPanel";
 import { useRequireAuth } from "@/hooks/use-require-auth";
 import { useSlotSound } from "@/hooks/useSlotSound";
 import { useEmpireCrown } from "@/hooks/useEmpireCrown";
@@ -179,6 +180,9 @@ export default function SlotSignatureWrapper({
           unitLabel="DEMO 칩"
           maxMultiplier={triggerAt}
         />
+
+        {/* DEV sound timing panel — production 자동 제거 */}
+        {import.meta.env.DEV && <SoundTimingPanel slotId={slotId} />}
       </div>
     </CasinoLayout>
   );
