@@ -102,13 +102,23 @@ export default function Dashboard() {
 
   return (
     <Layout>
-      <div className="container pt-6 pb-12 space-y-8">
+      <div className="container pt-6 pb-12 space-y-8 relative">
+        {/* Hero ambient glow */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 -top-10 h-[280px] -z-10 opacity-70"
+          style={{
+            background:
+              "radial-gradient(60% 100% at 50% 0%, hsl(var(--gold)/0.15), transparent 70%), radial-gradient(40% 80% at 80% 10%, hsl(var(--pink)/0.10), transparent 70%)",
+          }}
+        />
+
         {/* Hero */}
         <header className="space-y-4">
           <div>
-            <div className="text-[10px] tracking-[0.3em] font-bold text-primary/80 uppercase">Phonara</div>
-            <h1 className="mt-1 font-imperial text-2xl sm:text-3xl text-foreground tracking-[0.04em]">
-              지금, 폐하의 무대
+            <div className="text-[10px] tracking-[0.3em] font-black text-[hsl(var(--gold))] uppercase drop-shadow-[0_0_10px_hsl(var(--gold)/0.55)]">Phonara</div>
+            <h1 className="mt-1 font-imperial text-2xl sm:text-3xl text-foreground tracking-[0.04em] text-shadow-imperial">
+              지금, <span className="bg-gradient-to-r from-[hsl(var(--gold))] to-[hsl(var(--pink))] bg-clip-text text-transparent">폐하의 무대</span>
             </h1>
           </div>
           {/* Category chips */}
@@ -119,9 +129,9 @@ export default function Dashboard() {
                 <Link
                   key={c.to}
                   to={c.to}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border/50 bg-card/40 hover:border-primary/60 hover:bg-primary/10 transition text-[12px] font-semibold text-foreground/90 press"
+                  className="group inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[hsl(var(--gold)/0.35)] bg-card/40 hover:border-[hsl(var(--gold)/0.8)] hover:bg-[hsl(var(--gold)/0.08)] hover:shadow-[0_0_18px_hsl(var(--gold)/0.35)] transition-all duration-200 text-[12px] font-semibold text-foreground/90 press"
                 >
-                  <Icon className="w-3.5 h-3.5 text-primary" />
+                  <Icon className="w-3.5 h-3.5 text-[hsl(var(--gold))] group-hover:scale-110 transition-transform" />
                   {c.label}
                 </Link>
               );
@@ -140,17 +150,17 @@ export default function Dashboard() {
           </div>
           <Link
             to="/trade"
-            className="block rounded-2xl border border-border/50 bg-gradient-to-r from-emerald-900/20 via-background to-rose-900/20 hover:border-primary/60 transition press p-5"
+            className="imperial-card-hover imperial-corner-shine imperial-jackpot-breathe block rounded-2xl border border-[hsl(var(--gold)/0.45)] bg-gradient-to-r from-emerald-900/25 via-background to-rose-900/25 hover:border-[hsl(var(--gold)/0.8)] transition press p-5 relative overflow-hidden"
           >
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center justify-between gap-4 relative z-10">
               <div>
-                <div className="text-[10px] tracking-[0.3em] text-primary/80 font-bold">BTC · ETH · SOL</div>
-                <div className="font-imperial text-lg mt-1 text-foreground">Imperial Trade</div>
+                <div className="text-[10px] tracking-[0.3em] text-[hsl(var(--gold))] font-black drop-shadow-[0_0_8px_hsl(var(--gold)/0.5)]">BTC · ETH · SOL</div>
+                <div className="font-imperial text-xl mt-1 text-foreground text-shadow-imperial">Imperial Trade</div>
                 <div className="text-[11px] text-muted-foreground mt-1">
                   실시간 가격 · LONG / SHORT · PHON 잔액으로 즉시 진입
                 </div>
               </div>
-              <ChevronRight className="w-5 h-5 text-primary shrink-0" />
+              <ChevronRight className="w-5 h-5 text-[hsl(var(--gold))] shrink-0 drop-shadow-[0_0_8px_hsl(var(--gold)/0.7)]" />
             </div>
           </Link>
         </section>
