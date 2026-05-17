@@ -268,18 +268,7 @@ export default function PhonOrderPanel({ symbol, price }: Props) {
             </button>
           ))}
         </div>
-        <div className="grid grid-cols-4 gap-1.5 mt-2">
-          {[0.25, 0.5, 0.75, 1].map((p) => (
-            <button
-              key={p}
-              type="button"
-              onClick={() => fillPct(p)}
-              className="min-h-10 rounded-lg bg-card/60 border border-border/40 text-[11px] font-black text-muted-foreground hover:border-amber-300/60 press"
-            >
-              {p === 1 ? "MAX" : `${p * 100}%`}
-            </button>
-          ))}
-        </div>
+
       </div>
 
       {/* Discount + Liq preview */}
