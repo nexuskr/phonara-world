@@ -1993,6 +1993,42 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_chest_opens: {
+        Row: {
+          booster_hours: number
+          opened_at: string
+          opened_date: string
+          payload: Json
+          phon_reward: number
+          streak_day: number
+          tier: string
+          user_id: string
+          xp_reward: number
+        }
+        Insert: {
+          booster_hours?: number
+          opened_at?: string
+          opened_date?: string
+          payload?: Json
+          phon_reward?: number
+          streak_day: number
+          tier: string
+          user_id: string
+          xp_reward?: number
+        }
+        Update: {
+          booster_hours?: number
+          opened_at?: string
+          opened_date?: string
+          payload?: Json
+          phon_reward?: number
+          streak_day?: number
+          tier?: string
+          user_id?: string
+          xp_reward?: number
+        }
+        Relationships: []
+      }
       daily_combo_progress: {
         Row: {
           date: string
@@ -5229,6 +5265,81 @@ export type Database = {
           snapshot_balance?: number | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      phon_level_events: {
+        Row: {
+          created_at: string
+          id: number
+          kind: string
+          source_ref: string | null
+          user_id: string
+          xp_delta: number
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          kind: string
+          source_ref?: string | null
+          user_id: string
+          xp_delta: number
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          kind?: string
+          source_ref?: string | null
+          user_id?: string
+          xp_delta?: number
+        }
+        Relationships: []
+      }
+      phon_level_rewards_claimed: {
+        Row: {
+          booster_granted: boolean
+          claimed_at: string
+          level: number
+          phon_bonus: number
+          user_id: string
+        }
+        Insert: {
+          booster_granted?: boolean
+          claimed_at?: string
+          level: number
+          phon_bonus?: number
+          user_id: string
+        }
+        Update: {
+          booster_granted?: boolean
+          claimed_at?: string
+          level?: number
+          phon_bonus?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      phon_levels: {
+        Row: {
+          level: number
+          total_xp: number
+          updated_at: string
+          user_id: string
+          xp: number
+        }
+        Insert: {
+          level?: number
+          total_xp?: number
+          updated_at?: string
+          user_id: string
+          xp?: number
+        }
+        Update: {
+          level?: number
+          total_xp?: number
+          updated_at?: string
+          user_id?: string
+          xp?: number
         }
         Relationships: []
       }
@@ -10134,6 +10245,7 @@ export type Database = {
       check_escalation: { Args: { _user_id: string }; Returns: number }
       check_permission_drift: { Args: never; Returns: Json }
       check_rls_integrity: { Args: never; Returns: Json }
+      chest_tier_for_streak: { Args: { _streak: number }; Returns: string }
       claim_ai_bot_run: { Args: { _run_id: string }; Returns: Json }
       claim_ai_mission: { Args: { _mission_id: string }; Returns: Json }
       claim_coin_first_win: { Args: never; Returns: Json }
@@ -10201,6 +10313,13 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      claim_phon_level_reward: {
+        Args: { _level: number }
+        Returns: {
+          granted: boolean
+          phon_bonus: number
+        }[]
       }
       claim_quest: { Args: { _quest_key: string }; Returns: Json }
       claim_reactivation_offer: { Args: { _send_id: string }; Returns: Json }
@@ -10591,6 +10710,15 @@ export type Database = {
           week_start_kst: string
         }[]
       }
+      get_daily_chest_state: {
+        Args: never
+        Returns: {
+          can_open: boolean
+          last_opened_at: string
+          streak_day: number
+          tier_preview: string
+        }[]
+      }
       get_daily_headlines: {
         Args: { _limit?: number; _locale?: string }
         Returns: {
@@ -10897,6 +11025,15 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_my_phon_level: {
+        Args: never
+        Returns: {
+          level: number
+          total_xp: number
+          xp: number
+          xp_to_next: number
+        }[]
+      }
       get_my_quests: { Args: never; Returns: Json }
       get_my_reactivation_offer: {
         Args: never
@@ -11171,6 +11308,19 @@ export type Database = {
       grant_phon_for_deposit: {
         Args: { _phon: number; _ref: string; _user: string }
         Returns: number
+      }
+      grant_phon_xp: {
+        Args: {
+          _kind: string
+          _source_ref?: string
+          _user_id: string
+          _xp: number
+        }
+        Returns: {
+          leveled_up: boolean
+          new_level: number
+          new_xp: number
+        }[]
       }
       grant_recovery_bonus: {
         Args: { p_amount: number; p_source?: string }
@@ -11459,9 +11609,20 @@ export type Database = {
         }
         Returns: string
       }
+      open_daily_chest: {
+        Args: never
+        Returns: {
+          booster_hours: number
+          payload: Json
+          phon_reward: number
+          tier: string
+          xp_reward: number
+        }[]
+      }
       pay_emperor_daily_dividend: { Args: never; Returns: Json }
       pay_weekly_leaderboard: { Args: never; Returns: Json }
       pay_weekly_leaderboard_dry_run: { Args: never; Returns: Json }
+      phon_xp_to_next: { Args: { _level: number }; Returns: number }
       pin_lockout_status: { Args: { _user?: string }; Returns: Json }
       pin_record_attempt: { Args: { _success: boolean }; Returns: Json }
       policy_assertions_status: { Args: never; Returns: Json }
