@@ -1059,6 +1059,54 @@ export type Database = {
           },
         ]
       }
+      avatar_parts: {
+        Row: {
+          active: boolean
+          asset_url: string | null
+          color_hex: string | null
+          created_at: string
+          emoji: string | null
+          id: string
+          name: string
+          price_phon: number
+          rarity: Database["public"]["Enums"]["avatar_rarity"]
+          shader_id: string | null
+          slot: Database["public"]["Enums"]["avatar_slot"]
+          slug: string
+          vip_only: boolean
+        }
+        Insert: {
+          active?: boolean
+          asset_url?: string | null
+          color_hex?: string | null
+          created_at?: string
+          emoji?: string | null
+          id?: string
+          name: string
+          price_phon?: number
+          rarity?: Database["public"]["Enums"]["avatar_rarity"]
+          shader_id?: string | null
+          slot: Database["public"]["Enums"]["avatar_slot"]
+          slug: string
+          vip_only?: boolean
+        }
+        Update: {
+          active?: boolean
+          asset_url?: string | null
+          color_hex?: string | null
+          created_at?: string
+          emoji?: string | null
+          id?: string
+          name?: string
+          price_phon?: number
+          rarity?: Database["public"]["Enums"]["avatar_rarity"]
+          shader_id?: string | null
+          slot?: Database["public"]["Enums"]["avatar_slot"]
+          slug?: string
+          vip_only?: boolean
+        }
+        Relationships: []
+      }
       badges_catalog: {
         Row: {
           created_at: string
@@ -7978,6 +8026,68 @@ export type Database = {
           },
         ]
       }
+      user_avatar_loadout: {
+        Row: {
+          anim_phase: number
+          color_hex: string | null
+          pos_x: number
+          pos_y: number
+          slots: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          anim_phase?: number
+          color_hex?: string | null
+          pos_x?: number
+          pos_y?: number
+          slots?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          anim_phase?: number
+          color_hex?: string | null
+          pos_x?: number
+          pos_y?: number
+          slots?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_avatar_parts_owned: {
+        Row: {
+          acquired_at: string
+          id: string
+          part_id: string
+          price_paid_phon: number
+          user_id: string
+        }
+        Insert: {
+          acquired_at?: string
+          id?: string
+          part_id: string
+          price_paid_phon?: number
+          user_id: string
+        }
+        Update: {
+          acquired_at?: string
+          id?: string
+          part_id?: string
+          price_paid_phon?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_avatar_parts_owned_part_id_fkey"
+            columns: ["part_id"]
+            isOneToOne: false
+            referencedRelation: "avatar_parts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_avatars: {
         Row: {
           acquired_at: string
@@ -10890,6 +11000,13 @@ export type Database = {
         Returns: undefined
       }
       equip_avatar: { Args: { _avatar_id: string }; Returns: Json }
+      equip_avatar_part: {
+        Args: {
+          _part_id: string
+          _slot: Database["public"]["Enums"]["avatar_slot"]
+        }
+        Returns: Json
+      }
       equip_badge: {
         Args: { _badge_key: string; _slot: number }
         Returns: Json
@@ -10989,6 +11106,22 @@ export type Database = {
         }[]
       }
       get_avatar_catalog: { Args: never; Returns: Json }
+      get_avatar_parts_catalog: {
+        Args: never
+        Returns: {
+          asset_url: string
+          color_hex: string
+          emoji: string
+          id: string
+          name: string
+          price_phon: number
+          rarity: Database["public"]["Enums"]["avatar_rarity"]
+          shader_id: string
+          slot: Database["public"]["Enums"]["avatar_slot"]
+          slug: string
+          vip_only: boolean
+        }[]
+      }
       get_beta_funnel_stats: { Args: never; Returns: Json }
       get_bot_feed: {
         Args: { _limit?: number }
@@ -11235,6 +11368,7 @@ export type Database = {
           minute_bucket: string
         }[]
       }
+      get_my_avatar_loadout: { Args: never; Returns: Json }
       get_my_bequests: {
         Args: never
         Returns: {
@@ -12094,6 +12228,7 @@ export type Database = {
       public_uptime_summary: { Args: never; Returns: Json }
       public_withdrawal_sla: { Args: never; Returns: Json }
       purchase_avatar: { Args: { _avatar_id: string }; Returns: Json }
+      purchase_avatar_part: { Args: { _part_id: string }; Returns: Json }
       purchase_season_pass: { Args: never; Returns: Json }
       rank_feed_for_user: {
         Args: { _limit?: number }
@@ -12325,6 +12460,15 @@ export type Database = {
       run_reactivation_campaigns: { Args: never; Returns: Json }
       run_security_self_audit: { Args: { _source?: string }; Returns: Json }
       run_uptime_canary: { Args: never; Returns: undefined }
+      save_avatar_pose: {
+        Args: {
+          _anim_phase: number
+          _color_hex: string
+          _pos_x: number
+          _pos_y: number
+        }
+        Returns: Json
+      }
       search_support_kb: {
         Args: { _limit?: number; _query: string }
         Returns: {
@@ -12710,6 +12854,20 @@ export type Database = {
       ai_bot_kind: "content" | "trading" | "image"
       ai_bot_status: "running" | "ready" | "claimed" | "failed" | "expired"
       app_role: "admin" | "user"
+      avatar_rarity: "common" | "rare" | "epic" | "legendary"
+      avatar_slot:
+        | "hair"
+        | "face"
+        | "eyes"
+        | "mouth"
+        | "top"
+        | "bottom"
+        | "shoes"
+        | "gloves"
+        | "cape"
+        | "effect"
+        | "background"
+        | "title"
       deposit_method: "bank" | "coin" | "voucher"
       deposit_status: "pending" | "approved" | "rejected" | "cancelled"
       live_idem_status: "reserved" | "completed" | "failed"
@@ -12877,6 +13035,21 @@ export const Constants = {
       ai_bot_kind: ["content", "trading", "image"],
       ai_bot_status: ["running", "ready", "claimed", "failed", "expired"],
       app_role: ["admin", "user"],
+      avatar_rarity: ["common", "rare", "epic", "legendary"],
+      avatar_slot: [
+        "hair",
+        "face",
+        "eyes",
+        "mouth",
+        "top",
+        "bottom",
+        "shoes",
+        "gloves",
+        "cape",
+        "effect",
+        "background",
+        "title",
+      ],
       deposit_method: ["bank", "coin", "voucher"],
       deposit_status: ["pending", "approved", "rejected", "cancelled"],
       live_idem_status: ["reserved", "completed", "failed"],

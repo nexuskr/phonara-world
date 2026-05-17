@@ -43,6 +43,8 @@ export default defineConfig(({ mode }) => ({
           !/\/motion-[^/]+\.js$/.test(d) &&
           !/\/icons-[^/]+\.js$/.test(d) &&
           !/\/supabase-[^/]+\.js$/.test(d) &&
+          // Phase D — three3d 청크(아바타/로비)는 Layer 1 preload 금지.
+          !/\/three3d-[^/]+\.js$/.test(d) &&
           // PR-K: operator chunk(s) must NEVER preload on Layer 1.
           // Loaded only when user hits /admin/* via React.lazy.
           !/\/operator(-[^/]+)?\.js$/.test(d),
@@ -91,6 +93,13 @@ export default defineConfig(({ mode }) => ({
           if (id.includes("lucide-react")) return "icons";
           if (id.includes("i18next")) return "i18n";
           if (id.includes("framer-motion") || id.includes("motion-dom") || id.includes("motion-utils")) return "motion";
+          // Phase D — Avatar v3 + Lobby v3: three.js + r3f + drei 분리.
+          // 사용 페이지(/avatar/studio, /lobby)가 router-lazy 이므로 자연 코드 스플리팅에 맡기되,
+          // 명시적 그룹으로 묶어 두 페이지가 같은 청크를 공유하도록 강제 (중복 방지).
+          if (
+            id.includes("/node_modules/three/") ||
+            id.includes("/node_modules/@react-three/")
+          ) return "three3d";
           // PR-B: pickers 수동 그룹 제거.
           // cmdk/vaul/embla/day-picker는 admin/special 페이지만 사용하며
           // 해당 페이지는 router-lazy. 수동 그룹화 시 공용 청크로 승격되어
