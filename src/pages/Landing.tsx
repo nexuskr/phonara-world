@@ -1,17 +1,13 @@
 import { Link } from "react-router-dom";
-import { lazy, Suspense, useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, Coins, Crown, Gamepad2, Radio, ShieldCheck, Sparkles, TrendingUp, Zap } from "lucide-react";
+import { ArrowRight, Coins, Crown, Radio, ShieldCheck, Sparkles } from "lucide-react";
 import PhonaraTopBar from "@/components/nav/PhonaraTopBar";
 import ImperialLiveWinsRail from "@/components/empire/ImperialLiveWinsRail";
 
-const WhaleStrikeRail = lazy(() => import("@/components/empire/WhaleStrikeRail"));
-
 /**
- * /  — v19 Imperial First Impression.
- * Hero(Warm Deep Black + Gold particles) → Imperial Live Wins Rail(full)
- *   → 4탭 프리뷰 → 빅윈 마키 → Why → Final CTA → Footer.
- * money-flow / Operator Isolation / Bundle Budget / Phase D·F 0줄 변경.
+ * /  — v19 Phase 0 Clean Rebuild.
+ * Hero(Imperial vignette) → Live Wins Rail(full) → Trust 3-line → Footer.
+ * War / Arena / Battle 마키 및 옛 feature grid 전부 제거.
  */
 export default function Landing() {
   return (
@@ -21,10 +17,7 @@ export default function Landing() {
       <section className="container py-4 md:py-6">
         <ImperialLiveWinsRail variant="full" />
       </section>
-      <TabPreview />
-      <LiveBand />
-      <Why />
-      <FinalCTA />
+      <Trust />
       <Footer />
     </div>
   );
@@ -55,7 +48,6 @@ function GoldParticles() {
 function Hero() {
   return (
     <section className="imperial-vignette relative overflow-hidden">
-      {/* Warm Deep Black + Imperial halos */}
       <div className="absolute inset-0 -z-20 bg-[#110d1a]" />
       <div className="absolute inset-0 -z-10 pointer-events-none">
         <div className="absolute top-[-160px] left-[-120px] w-[560px] h-[560px] rounded-full bg-[hsl(var(--gold)/.22)] blur-[160px]" />
@@ -98,16 +90,6 @@ function Hero() {
           <span> 실시간으로 수익을 창출하고 있습니다</span>
         </motion.p>
 
-        <motion.p
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.55, delay: 0.24 }}
-          className="mt-3 text-sm sm:text-base md:text-lg max-w-2xl mx-auto leading-relaxed font-semibold text-[hsl(var(--gold)/0.92)]"
-        >
-          전 세계 황제들이 오늘도 평균{" "}
-          <span className="font-mono font-black text-[hsl(var(--gold))] drop-shadow-[0_0_14px_hsl(var(--gold)/0.55)]">₩347,000+</span>{" "}
-          수익 ·{" "}
-          <span className="font-black text-[hsl(var(--gold))] drop-shadow-[0_0_14px_hsl(var(--gold)/0.55)]">가입 즉시 10,000 PHON</span> 지급
-        </motion.p>
-
         <motion.div
           initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, delay: 0.32 }}
           className="mt-9 flex flex-col items-center gap-3"
@@ -132,93 +114,26 @@ function Hero() {
             가입 즉시 10,000 PHON 지급 · 폐하의 자리는 언제나 열려 있습니다
           </div>
         </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.5 }}
-          className="mt-10 flex items-center gap-4 text-[12px] sm:text-[13px] text-foreground/75 font-bold"
-        >
-          <span className="inline-flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> 실시간 출금 중</span>
-          <span className="text-[hsl(var(--gold)/0.5)]">·</span>
-          <span>한국 1위 가상세계 플랫폼</span>
-        </motion.div>
       </div>
     </section>
   );
 }
 
-const TABS = [
-  { to: "/earn", icon: Coins, title: "수익", line: "출석 · 미션 · 친구초대로 무료 PHON", accent: "from-amber-500/25 to-yellow-500/10 border-amber-500/40" },
-  { to: "/games", icon: Gamepad2, title: "게임", line: "슬롯 12종 · 룰렛 · 크래쉬", accent: "from-pink-500/25 to-rose-500/10 border-pink-500/40" },
-  { to: "/trade", icon: TrendingUp, title: "투자", line: "BTC·ETH 가격 베팅 · 데모 연습", accent: "from-emerald-500/25 to-teal-500/10 border-emerald-500/40" },
-  { to: "/live", icon: Radio, title: "실시간", line: "지금 누가 얼마 벌고 있나", accent: "from-violet-500/25 to-fuchsia-500/10 border-violet-500/40" },
+const TRUST = [
+  { icon: Coins, title: "가입 즉시 +10,000 PHON", line: "회원가입만으로 폐하의 첫 보상이 즉시 입금됩니다." },
+  { icon: ShieldCheck, title: "환불·손실 보호", line: "초기 7일 보호 기간 동안 순손실의 일부를 PHON으로 환급합니다." },
+  { icon: Radio, title: "라이브 출금 중", line: "지금 이 순간에도 황제들의 출금이 실시간으로 처리되고 있습니다." },
 ];
 
-function TabPreview() {
+function Trust() {
   return (
-    <section className="container py-12 md:py-20">
-      <div className="text-center mb-6">
-        <div className="text-[10px] tracking-[0.3em] font-black text-[hsl(var(--gold))] uppercase mb-2">4가지 모드</div>
-        <h2 className="font-imperial text-2xl md:text-4xl text-foreground">한 화면에 다 있어요</h2>
-      </div>
-      <div className="flex md:grid gap-3 md:grid-cols-4 overflow-x-auto md:overflow-visible snap-x snap-mandatory -mx-5 px-5 md:mx-0 md:px-0">
-        {TABS.map((t, i) => {
-          const Icon = t.icon;
-          return (
-            <motion.div
-              key={t.to}
-              initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-80px" }}
-              transition={{ duration: 0.35, delay: i * 0.06 }}
-              className="snap-start min-w-[78%] md:min-w-0"
-            >
-              <Link
-                to={t.to}
-                className={`block h-full rounded-2xl border bg-gradient-to-br ${t.accent} p-5 press transition hover:border-primary/60`}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="text-[11px] tracking-[0.3em] font-black text-foreground/70 uppercase mb-1">{t.title}</div>
-                    <div className="font-imperial text-lg text-foreground leading-tight">{t.line}</div>
-                  </div>
-                  <div className="shrink-0 w-11 h-11 rounded-xl bg-background/50 border border-border/40 flex items-center justify-center text-[hsl(var(--gold))]">
-                    <Icon className="w-5 h-5" />
-                  </div>
-                </div>
-                <div className="mt-5 inline-flex items-center gap-1 text-[11px] font-bold text-[hsl(var(--gold))]">
-                  들어가기 <ArrowRight className="w-3 h-3" />
-                </div>
-              </Link>
-            </motion.div>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
-
-function LiveBand() {
-  return (
-    <section className="container py-6">
-      <Suspense fallback={null}>
-        <WhaleStrikeRail compact />
-      </Suspense>
-    </section>
-  );
-}
-
-const WHY = [
-  { icon: Coins, title: "무료로 돈 버는 곳", line: "가입만 해도 보너스 PHON. 출석·미션으로 매일 벌어요." },
-  { icon: Zap, title: "부업 + 게임 한 곳", line: "잠깐 쉴 때 슬롯 한판, 친구초대로 보너스까지." },
-  { icon: Sparkles, title: "헤어날 수 없는 재미", line: "VIP, 길드, 실시간 빅윈. 매일 들어오게 되는 세계." },
-];
-function Why() {
-  return (
-    <section className="container py-14 md:py-24">
+    <section className="container py-14 md:py-20">
       <div className="text-center mb-8">
-        <div className="text-[10px] tracking-[0.3em] font-black text-[hsl(var(--pink))] uppercase mb-2">WHY PHONARA</div>
-        <h2 className="font-imperial text-2xl md:text-4xl text-foreground">왜 다들 들어와 있을까요</h2>
+        <div className="text-[10px] tracking-[0.3em] font-black text-[hsl(var(--gold))] uppercase mb-2">Imperial Trust</div>
+        <h2 className="font-imperial text-2xl md:text-4xl text-foreground">폐하를 위한 약속</h2>
       </div>
       <div className="grid sm:grid-cols-3 gap-3">
-        {WHY.map((w, i) => {
+        {TRUST.map((w, i) => {
           const Icon = w.icon;
           return (
             <motion.div
@@ -236,31 +151,14 @@ function Why() {
           );
         })}
       </div>
-    </section>
-  );
-}
-
-function FinalCTA() {
-  return (
-    <section className="container py-16 md:py-24">
-      <div className="relative overflow-hidden rounded-3xl border border-[hsl(var(--gold)/.35)] p-8 md:p-14 text-center bg-gradient-to-br from-[#1a1320] to-[#110d1a]">
-        <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-[420px] h-[420px] rounded-full bg-[hsl(var(--gold)/.22)] blur-[120px] -z-0" />
-        <div className="relative">
-          <h3 className="font-imperial text-3xl md:text-5xl text-foreground leading-tight tracking-[0.04em]">
-            지금 가입하면<br className="sm:hidden" />
-            <span className="bg-gradient-to-r from-[hsl(var(--gold))] to-[hsl(var(--pink))] bg-clip-text text-transparent"> +10,000 PHON</span> 즉시 지급
-          </h3>
-          <p className="mt-3 text-sm md:text-base text-foreground/70">
-            한 번 들어오면 헤어나기 힘들어요. 진심으로요.
-          </p>
-          <Link
-            to="/auth?mode=signup"
-            className="pulse-halo mt-7 inline-flex items-center gap-2 h-14 px-7 rounded-2xl bg-gradient-to-r from-[hsl(var(--gold))] to-[hsl(var(--pink))] text-background font-black text-base md:text-lg press shadow-[0_18px_60px_-18px_hsl(var(--gold)/.8)] glow-imperial"
-          >
-            <Crown className="w-5 h-5" />
-            지금 무료로 황제가 되기 <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
+      <div className="mt-10 text-center">
+        <Link
+          to="/auth?mode=signup"
+          className="pulse-halo inline-flex items-center gap-2 h-14 px-7 rounded-2xl bg-gradient-to-r from-[hsl(var(--gold))] to-[hsl(var(--pink))] text-background font-black text-base md:text-lg press shadow-[0_18px_60px_-18px_hsl(var(--gold)/.8)] glow-imperial"
+        >
+          <Sparkles className="w-5 h-5" />
+          지금 무료로 황제가 되기 <ArrowRight className="w-4 h-4" />
+        </Link>
       </div>
     </section>
   );

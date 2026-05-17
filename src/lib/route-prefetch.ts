@@ -20,9 +20,9 @@ const REGISTRY: Record<string, Loader> = {
   "/profile": () => import("@/pages/Profile.tsx"),
   "/empire": () => import("@/pages/Empire.tsx"),
   "/empire/hall": () => import("@/pages/EmpireHall.tsx"),
-  "/empire/arena": () => import("@/pages/EmpireArena.tsx"),
+  // v19 Phase 0: /empire/arena, /trading (army/war) prefetch 제거 (라우트 차단됨)
   "/lounge": () => import("@/pages/Lounge.tsx"),
-  "/trading": () => import("@/pages/TradingArenaWithArmy.tsx"),
+  "/trade": () => import("@/pages/TradingArenaBybit.tsx"),
   "/support": () => import("@/pages/Support.tsx"),
   "/guide": () => import("@/pages/Guide.tsx"),
   "/achievements": () => import("@/pages/Achievements.tsx"),

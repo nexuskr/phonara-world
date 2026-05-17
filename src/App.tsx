@@ -66,10 +66,8 @@ const Dashboard = lazy(() => import("./pages/Dashboard.tsx"));
 const Home = lazy(() => import("./pages/Home.tsx"));
 const Earn = lazy(() => import("./pages/Earn.tsx"));
 const Live = lazy(() => import("./pages/Live.tsx"));
-const EmpireArena = lazy(() => import("./pages/EmpireArena.tsx"));
-const TradingArenaWithArmy = lazy(() => import("./pages/TradingArenaWithArmy.tsx"));
+// v19 Phase 0: war/arena/battle 라우트 사용자 진입 차단. 파일은 보존.
 const TradingArenaBybit = lazy(() => import("./pages/TradingArenaBybit.tsx"));
-const WarTradingArena = lazy(() => import("./pages/WarTradingArena.tsx"));
 const Pay = lazy(() => import("./pages/Pay.tsx"));
 const MyFoundingSeat = lazy(() => import("./pages/MyFoundingSeat.tsx"));
 const EmpireCollection = lazy(() => import("./pages/EmpireCollection.tsx"));
@@ -304,14 +302,18 @@ const App = () => (
               {/* 초직관 6대 메뉴 alias — 20~70대 한국인용 */}
               <Route path="/start" element={<Navigate to="/dashboard" replace />} />
               <Route path="/earnings" element={<Navigate to="/missions" replace />} />
-              <Route path="/arena" element={<TradingArenaBybit />} />
-              <Route path="/war" element={<WarTradingArena />} />
+              {/* v19 Phase 0: war/arena/battle 라우트 → /trade 흡수 */}
+              <Route path="/arena" element={<Navigate to="/trade" replace />} />
+              <Route path="/arena/army" element={<Navigate to="/trade" replace />} />
+              <Route path="/arena/classic" element={<Navigate to="/trade" replace />} />
+              <Route path="/war" element={<Navigate to="/trade" replace />} />
+              <Route path="/empire-arena" element={<Navigate to="/trade" replace />} />
+              <Route path="/empire-arena/army" element={<Navigate to="/trade" replace />} />
+              <Route path="/empire-arena/classic" element={<Navigate to="/trade" replace />} />
+              <Route path="/empire/arena" element={<Navigate to="/trade" replace />} />
+              <Route path="/trading/army" element={<Navigate to="/trade" replace />} />
+              <Route path="/trading/war" element={<Navigate to="/trade" replace />} />
               <Route path="/pay" element={<Pay />} />
-              <Route path="/arena/army" element={<TradingArenaWithArmy />} />
-              <Route path="/arena/classic" element={<EmpireArena />} />
-              <Route path="/empire-arena" element={<Navigate to="/arena" replace />} />
-              <Route path="/empire-arena/army" element={<Navigate to="/arena/army" replace />} />
-              <Route path="/empire-arena/classic" element={<EmpireArena />} />
               <Route path="/lounge" element={<Lounge />} />
               <Route path="/whales" element={<Whales />} />
               <Route path="/jackpot" element={<Roulette />} />
