@@ -9,6 +9,9 @@ import { G } from "@/lib/glossary";
 const WhaleStrikeRail = lazy(() => import("@/components/empire/WhaleStrikeRail"));
 const LiveTicker = lazy(() => import("@pkg/live/components/LiveTicker"));
 const Onboarding60s = lazy(() => import("@pkg/earn/components/Onboarding60s"));
+const LivePayoutCounter = lazy(() => import("@/components/fomo/LivePayoutCounter"));
+const LiveTradingCounter = lazy(() => import("@/components/fomo/LiveTradingCounter"));
+const FoundingContendersBadge = lazy(() => import("@/components/fomo/FoundingContendersBadge"));
 
 /**
  * /home — Sprint 0 슬림 홈.
