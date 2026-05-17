@@ -10787,6 +10787,15 @@ export type Database = {
           total_contribution: number
         }[]
       }
+      get_hot_symbols_24h: {
+        Args: { _limit?: number }
+        Returns: {
+          open_positions: number
+          score: number
+          sym: string
+          traders_24h: number
+        }[]
+      }
       get_imperial_stories: {
         Args: { _limit?: number }
         Returns: {
@@ -11244,6 +11253,13 @@ export type Database = {
         }[]
       }
       get_starter_trust_stats: { Args: never; Returns: Json }
+      get_symbol_side_counts: {
+        Args: { _symbol: string }
+        Returns: {
+          longs: number
+          shorts: number
+        }[]
+      }
       get_tier_distribution: {
         Args: never
         Returns: {

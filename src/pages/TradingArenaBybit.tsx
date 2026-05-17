@@ -26,6 +26,14 @@ import { triggerFx } from "@/components/trading/DopamineLayer";
 const DopamineLayer = lazy(() => import("@/components/trading/DopamineLayer"));
 const ComboStreakHUD = lazy(() => import("@/components/trading/ComboStreakHUD"));
 
+// v3 trading UX — sibling, FREEZE-safe presentational layers
+const BigPnLHeader = lazy(() => import("@/components/trading/v3/BigPnLHeader"));
+const PhonAdvantageRibbon = lazy(() => import("@/components/trading/v3/PhonAdvantageRibbon"));
+const HotCoinRail = lazy(() => import("@/components/trading/v3/HotCoinRail"));
+const LeveragePresetRail = lazy(() => import("@/components/trading/v3/LeveragePresetRail"));
+const LiveSideCounter = lazy(() => import("@/components/trading/v3/LiveSideCounter"));
+const MobileOrderSheet = lazy(() => import("@/components/trading/v3/MobileOrderSheet"));
+
 function usePriceStore() {
   return useSyncExternalStore(priceStore.subscribe, priceStore.getSnapshot, priceStore.getSnapshot);
 }
@@ -391,25 +399,57 @@ export default function TradingArenaBybit() {
         )}
 
 
+        {/* v3: big PnL + PHON advantage ribbon */}
+        <Suspense fallback={null}>
+          <BigPnLHeader positions={positions} prices={prices} unit={unit} />
+        </Suspense>
+        <Suspense fallback={null}><PhonAdvantageRibbon /></Suspense>
+
+        {/* v3: hot coins */}
+        <Suspense fallback={null}>
+          <HotCoinRail current={symbol} onPick={setSymbol} />
+        </Suspense>
+
         {/* Chart + Order grid */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-3">
-          <ChartWithHeader
-            symbol={symbol}
-            setSymbol={setSymbol}
-            price={price}
-            stat={stat}
-            overlays={overlays}
-            height={420}
-          />
-          <MegaOrderPanel
-            mode={mode}
-            symbol={symbol}
-            setSymbol={setSymbol}
-            price={price}
-            balance={balance}
-            onSubmit={handleSubmit}
-            busy={busy}
-          />
+          <div className="space-y-3 min-w-0">
+            <ChartWithHeader
+              symbol={symbol}
+              setSymbol={setSymbol}
+              price={price}
+              stat={stat}
+              overlays={overlays}
+              height={420}
+            />
+            <Suspense fallback={null}><LeveragePresetRail /></Suspense>
+            <Suspense fallback={null}><LiveSideCounter symbol={symbol} /></Suspense>
+          </div>
+
+          {/* Desktop: 사이드 컬럼에 패널 그대로. Mobile: 숨기고 BottomSheet로 노출 */}
+          <div className="hidden lg:block" data-mega-order-panel>
+            <MegaOrderPanel
+              mode={mode}
+              symbol={symbol}
+              setSymbol={setSymbol}
+              price={price}
+              balance={balance}
+              onSubmit={handleSubmit}
+              busy={busy}
+            />
+          </div>
+          <Suspense fallback={null}>
+            <MobileOrderSheet>
+              <MegaOrderPanel
+                mode={mode}
+                symbol={symbol}
+                setSymbol={setSymbol}
+                price={price}
+                balance={balance}
+                onSubmit={handleSubmit}
+                busy={busy}
+              />
+            </MobileOrderSheet>
+          </Suspense>
         </div>
 
         {/* Live positions */}
