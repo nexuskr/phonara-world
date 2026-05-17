@@ -12056,6 +12056,7 @@ export type Database = {
       pay_emperor_daily_dividend: { Args: never; Returns: Json }
       pay_weekly_leaderboard: { Args: never; Returns: Json }
       pay_weekly_leaderboard_dry_run: { Args: never; Returns: Json }
+      phon_hub_summary: { Args: never; Returns: Json }
       phon_xp_to_next: { Args: { _level: number }; Returns: number }
       pin_lockout_status: { Args: { _user?: string }; Returns: Json }
       pin_record_attempt: { Args: { _success: boolean }; Returns: Json }
