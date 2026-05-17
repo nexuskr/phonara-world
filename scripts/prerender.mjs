@@ -32,7 +32,7 @@ const ORIGIN = `http://127.0.0.1:${PORT}`;
 const PAGE_TIMEOUT_MS = 18_000;
 const MAX_RETRIES = 3;
 
-/** Public routes — keep in sync with `.lovable/plan.md`. */
+/** Public routes — keep in sync with `.lovable/plan.md` (8 routes). */
 const PUBLIC_ROUTES = [
   "/",
   "/trust",
@@ -41,6 +41,7 @@ const PUBLIC_ROUTES = [
   "/status",
   "/vip",
   "/empire",
+  "/live",
 ];
 
 const MIME = {
