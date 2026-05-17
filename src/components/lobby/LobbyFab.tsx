@@ -28,7 +28,7 @@ export default function LobbyFab() {
         ariaLabel="제국 로비 입장 — 지금 황제들이 모여 있습니다"
         icon="👑"
         pulse
-        variant="gold"
+        variant="imperial"
       />
     </FloatingSlot>
   );
