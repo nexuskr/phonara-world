@@ -78,10 +78,18 @@ const CUE_TO_PROC: Partial<Record<CueKey, ProcCue>> = {
 
 class SoundManagerImpl {
   private theme: SlotThemeKey | null = null;
+  private slotId: string | null = null;
   private cache = new Map<string, Howl>();
+  /** override mp3 (cueOverrides.ts 결과) 의 Howl 캐시. key = url. */
+  private overrideCache = new Map<string, Howl>();
+  /** 한 번이라도 로드 실패한 url — 재요청 차단. */
+  private overrideMissing = new Set<string>();
   private bgm: Howl | null = null;
   private bgmIsProc = false;
   private unlocked = false;
+
+  /** SlotSoundManager.loadSlotSounds() 에서 호출 — override 라우팅에 사용. */
+  setSlotId(slotId: string | null) { this.slotId = slotId; }
 
   async loadPack(theme: SlotThemeKey) {
     if (this.theme === theme) return;
