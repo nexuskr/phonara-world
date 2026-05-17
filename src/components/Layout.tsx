@@ -118,7 +118,6 @@ const GROUPS: NavGroup[] = [
       { to: "/profile", label: "프로필", icon: UserIcon },
       { to: "/wallet", label: "지갑", icon: Wallet },
       { to: "/secure-wallet", label: "보안 금고", icon: Lock },
-      { to: "/treasury", label: "Treasury", icon: Coins },
     ],
   },
 ];

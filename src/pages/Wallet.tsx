@@ -42,16 +42,8 @@ type ActionTab = "withdraw" | "deposit" | "history";
 type DepositChannel = "bank" | "voucher" | "coin";
 type VoucherBrand = "culture" | "happy" | "cultureland";
 
-const BANKS = ["KB", "Shinhan", "Woori", "Hana", "Nonghyup", "Kakao Bank", "Toss Bank"] as const;
-const BANK_LABEL: Record<string, { ko: string; en: string }> = {
-  "KB": { ko: "KB국민", en: "KB Kookmin" },
-  "Shinhan": { ko: "신한", en: "Shinhan" },
-  "Woori": { ko: "우리", en: "Woori" },
-  "Hana": { ko: "하나", en: "Hana" },
-  "Nonghyup": { ko: "농협", en: "Nonghyup" },
-  "Kakao Bank": { ko: "카카오뱅크", en: "Kakao Bank" },
-  "Toss Bank": { ko: "토스뱅크", en: "Toss Bank" },
-};
+import { koreanBanks, DEFAULT_KOREAN_BANK_DISPLAY } from "@/lib/koreanBanks";
+const BANKS = koreanBanks.map(b => b.display);
 
 export default function Wallet() {
   const [db, setDb] = useDB();
@@ -81,7 +73,7 @@ export default function Wallet() {
   // shared
   const [amount, setAmount] = useState("");
   // bank
-  const [bank, setBank] = useState<string>("KB");
+  const [bank, setBank] = useState<string>(DEFAULT_KOREAN_BANK_DISPLAY);
   const [account, setAccount] = useState("");
   // coin
   const [coinAddr, setCoinAddr] = useState("");
@@ -125,7 +117,8 @@ export default function Wallet() {
   function sendCode() {
     const c = gen6();
     setSentCode(c);
-    toast({ title: tw("codeSent"), description: tw("codeSentDesc", { code: c }) });
+    // 운영 톤: 코드 값은 절대 화면에 노출하지 않음.
+    toast({ title: tw("codeSent"), description: tw("codeSentDesc") });
   }
 
   function ensureWithdrawPw() {
@@ -489,8 +482,8 @@ export default function Wallet() {
             {asset === "bank" && action === "withdraw" && (
               <>
                 <Field label={t("bank")}>
-                  <select value={bank} onChange={e => setBank(e.target.value)} className="w-full min-h-[52px] bg-input/60 border border-border rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:border-primary">
-                    {BANKS.map(b => <option key={b} value={b}>{BANK_LABEL[b][lng]}</option>)}
+                  <select value={bank} onChange={e => setBank(e.target.value)} className="w-full min-h-[52px] bg-input/60 border border-border rounded-xl px-4 py-3.5 text-base focus:outline-none focus:border-primary">
+                    {BANKS.map(b => <option key={b} value={b}>{b}</option>)}
                   </select>
                 </Field>
                 <Field label={t("account")}>

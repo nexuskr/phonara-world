@@ -981,8 +981,8 @@ export default {
       seatsNote: "※ 좌석 1~100 · 본인 외 다른 Founding 멤버 정보는 비공개",
     },
     walletToast: {
-      codeSent: "📲 인증번호 발송됨",
-      codeSentDesc: "테스트용 인증번호: {{code}}",
+      codeSent: "인증번호를 보냈어요",
+      codeSentDesc: "등록한 연락처로 6자리 인증번호가 발송됐어요. 1~2분 내 도착하지 않으면 다시 받기를 눌러주세요.",
       pinPrompt: "출금 비밀번호 6자리를 새로 설정해주세요",
       pinInvalid: "출금 비밀번호 6자리를 정확히 입력해주세요",
       minWithdraw: "최소 10,000원부터 출금 가능",

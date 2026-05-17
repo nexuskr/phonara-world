@@ -980,8 +980,8 @@ export default {
       seatsNote: "※ Seats 1–30 · Other founders' info is private",
     },
     walletToast: {
-      codeSent: "📲 Auth code sent",
-      codeSentDesc: "Test auth code: {{code}}",
+      codeSent: "Verification code sent",
+      codeSentDesc: "A 6-digit code has been sent to your registered contact. If it doesn't arrive within 1–2 minutes, tap Resend.",
       pinPrompt: "Set a new 6-digit withdraw PIN",
       pinInvalid: "Please enter exactly 6 digits for your withdraw PIN",
       minWithdraw: "Minimum withdraw is 10,000 KRW",
