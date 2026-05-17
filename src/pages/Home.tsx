@@ -79,7 +79,7 @@ export default function Home() {
               <Link
                 key={c.to}
                 to={c.to}
-                className={`group relative overflow-hidden rounded-2xl border bg-gradient-to-br ${c.accent} p-5 press transition hover:border-primary/60`}
+                className={`imperial-card imperial-card-hover imperial-corner-shine group relative overflow-hidden bg-gradient-to-br ${c.accent} p-5 press`}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
