@@ -1,6 +1,7 @@
 import { useState, useEffect, type ReactNode } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { ChevronUp, ChevronDown, Crown } from "lucide-react";
+import ImperialLogo from "@/components/brand/ImperialLogo";
 
 interface Props {
   children: ReactNode;
