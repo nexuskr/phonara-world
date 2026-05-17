@@ -205,6 +205,67 @@
   .glow-gold-xl { box-shadow: var(--glow-gold-xl); }
   .tilt-card { transition: transform 0.6s var(--transition-smooth), box-shadow 0.6s var(--transition-smooth); transform-style: preserve-3d; }
   .tilt-card:hover { transform: perspective(1000px) rotateX(6deg) rotateY(-6deg) translateY(-6px); }
+
+  /* ====== Phase E Slice 2 — Imperial Half-Off Gradient System ====== */
+  .imperial-halfoff {
+    background-image: linear-gradient(100deg, hsl(38 92% 55%) 0% 50%, hsl(330 85% 60%) 50% 100%);
+    color: hsl(240 28% 3%);
+  }
+  .imperial-halfoff-text {
+    background-image: linear-gradient(100deg, hsl(38 92% 55%) 0% 50%, hsl(330 85% 60%) 50% 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .ring-imperial { box-shadow: 0 12px 32px -10px hsl(38 92% 55% / 0.55), 0 0 0 1px hsl(330 85% 60% / 0.35) inset; }
+  .glow-imperial-xl {
+    box-shadow:
+      0 14px 38px -10px hsl(38 92% 55% / 0.65),
+      0 0 0 1px hsl(330 85% 60% / 0.40) inset,
+      0 0 60px -10px hsl(330 85% 60% / 0.40);
+  }
+  /* Pulse halo — soft amber↔pink breathing ring behind FAB / active tab. */
+  .pulse-halo { position: relative; }
+  .pulse-halo::before {
+    content: ""; position: absolute; inset: -6px;
+    border-radius: inherit;
+    background: radial-gradient(closest-side, hsl(38 92% 55% / 0.55), hsl(330 85% 60% / 0.18) 60%, transparent 75%);
+    opacity: 0; will-change: opacity, transform;
+    animation: pulseHalo 1.4s ease-in-out infinite;
+    pointer-events: none; z-index: -1;
+  }
+  @keyframes pulseHalo {
+    0%, 100% { opacity: 0; transform: scale(0.94); }
+    50%      { opacity: 0.55; transform: scale(1.04); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .pulse-halo::before { animation: none; opacity: 0; }
+  }
+  /* CSS containment for hero cards — avoid global reflow on inner changes. */
+  .contain-card { contain: layout paint; }
+
+  /* ====== Typography hierarchy — Slice 2 ====== */
+  .eyebrow-imperial {
+    font-size: 11px; line-height: 1; letter-spacing: 0.32em;
+    font-weight: 900; text-transform: uppercase;
+    background-image: linear-gradient(100deg, hsl(38 92% 55%) 0% 50%, hsl(330 85% 60%) 50% 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .h-display {
+    font-family: 'Fraunces', 'Italiana', serif;
+    font-weight: 700; letter-spacing: -0.01em;
+    line-height: 1.05;
+  }
+  .h-imperial {
+    font-family: 'Italiana', 'Fraunces', serif;
+    letter-spacing: 0.18em; line-height: 1.1;
+  }
+
+  /* Spacing rhythm tokens (4·8·12·16·20·24). */
+  :root {
+    --rhythm-1: 4px; --rhythm-2: 8px; --rhythm-3: 12px;
+    --rhythm-4: 16px; --rhythm-5: 20px; --rhythm-6: 24px;
+  }
+  .stack-rhythm > * + * { margin-top: var(--rhythm-4); }
+  .stack-rhythm-sm > * + * { margin-top: var(--rhythm-3); }
 }
 @layer components {
   /* Premium press feedback — subtle haptic-like scale */
