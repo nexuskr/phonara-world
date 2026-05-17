@@ -16,16 +16,18 @@
 `src/packages/duel/engine/odds.ts` (NEW)
 - 양측 풀: `{ leftPool, rightPool, totalBets }` 시뮬레이션 ledger.
 - 배당: `odds(side) = (total / sidePool) * (1 - HOUSE_EDGE)`, `HOUSE_EDGE = 0.062`.
-- Variable Reward Tier (확률 + 멀티):
+- Variable Reward Tier (확률 + 멀티, House Edge 6.2% 보존):
   ```text
-  Base       (≥0.30 from threshold)   85.0%   ×1.00
-  Surge      (0.18..0.30)               9.5%   ×1.30
-  Crown      (0.08..0.18)               3.5%   ×1.75
-  Empyrean   (0.02..0.08)               0.7%   ×2.40
-  Divine     (<0.02)                    1.3%   ×3.20  -- 황실 잭팟
+  Base       64.0%   ×1.00 .. ×1.85
+  Surge      23.0%   ×2.10 .. ×4.80
+  Crown       8.5%   ×5.50 .. ×12.5
+  Empyrean    3.2%   ×15   .. ×38
+  Divine      1.3%   ×45   .. ×120   -- 황실 잭팟
   ```
-  (기존 `rewardTierFromRoll` 시그니처 유지하면서 분포 재튜닝)
-- Near-miss zone: `|roll - threshold| ∈ [0.005, 0.025]` → `nearMiss=true` + margin 0..1 정규화.
+  - Tier 멀티는 tier 내부 균등 분포 + house edge 보정 후 expected payout = 0.938.
+  - `rewardTierFromRoll(roll)` 시그니처 유지, 내부 분포만 재튜닝.
+- Strong Near-Miss zone: `roll ∈ [0.46, 0.54]` AND winner=opponent → `nearMiss=true`, `intensity = 1 - |roll-0.5|/0.04` (0..1).
+  - Near-Miss 효과는 intensity 에 비례 — slow-down 길이, glow 강도, particle 양, 진동 폭이 모두 동적 스케일.
 
 `src/packages/duel/hooks/useOddsEngine.ts` (NEW)
 - `useGameChannel({ key: "duel:room:" + roomId })` broadcast 로 풀 ledger 동기화 (presence + broadcast 이벤트만, DB 무영향).
@@ -39,9 +41,9 @@
 - 모드와 무관하게 양측 응원 사이드바, 라이브 입장 토스트 노출.
 
 `SpectatorDeck.tsx` (NEW)
-- 좌/우 군중 비율 게이지 (gold→pink gradient bar).
+- 좌/우 군중 비율 게이지 (gold→pink gradient bar) — 실시간 풀 비율과 동기.
+- 관중 수 실시간 변동(±1~4명 매 2.5s, cap 활성 룸 heat 기반) + "황실이 뜨겁게 끓고 있습니다" 펄스 헤더.
 - 가짜 마스킹 닉네임 ("황제#3094 ▸ 적군 합류") 6초 폴링 토스트.
-- "지금 N명이 폐하의 결투를 지켜보고 있습니다" 라이브 헤더.
 
 `useSpectatorSync.ts` (NEW) — `useGameChannel` wrapper, presence count.
 
@@ -49,15 +51,17 @@
 
 `BettingPanel.tsx` (NEW)
 - Desktop: arena 우측 dock. Mobile: `BottomSheet` (이미 존재).
-- Left/Right 진영 카드 (실시간 odds 펄스), 슬라이더(시뮬레이션 PHON 100~50,000), `placeBet` CTA.
-- 라운드 종료 시 가상 정산 토스트 (`notify.success`) — 실잔액 변동 없음, 명시 표기 "데모 베팅".
+- Left/Right 진영 카드 — 실시간 odds **펄스 애니메이션** (odds 변동 시 scale 1.04 + gold glow 220ms).
+- Near-Miss 발생 시 "졌지만 아슬했던" 진영 카드에 **2s 핑크 ring + shake** 강조 → "한 끗 차이였습니다 — 폐하, 다시 옥좌에 베팅을 올리소서".
+- 슬라이더(시뮬레이션 PHON 100~50,000), `placeBet` CTA, 라운드 정산 시 가상 토스트 (`notify.success`) — 명시 "데모 베팅".
 - Thumb-zone: 슬라이더 하단 56px, CTA 56px 높이.
 
 ## 4. Cinematic Arena v2
 
 `ThroneStage.tsx` (EDIT)
 - 다층 글로우: outer radial + inner highlight + sweep (`background-position` keyframe).
-- Crown particle: `canvas-confetti` lazy (이미 의존성), Empyrean/Divine 만 트리거.
+- **Dynamic glow**: prop `nearMissIntensity?: number (0..1)` → outer radial alpha 0.18 → 0.55, sweep 속도 6s → 1.8s, pink layer scale.
+- Crown particle: `canvas-confetti` lazy. Particle count = `60 + intensity*180`; Empyrean/Divine + strong near-miss(>0.6) 만 트리거.
 
 `RewardTierBanner.tsx` (NEW)
 - 라운드 결과 헤더에 5단계 tier별 카피 + 색상 토큰:
