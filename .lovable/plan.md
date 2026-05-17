@@ -1,73 +1,66 @@
-# Phase E — Slice 2: 핵심 화면 4종 Imperial Polish
+# Phase E — Slice 3: 게임 로비 + Imperial Card System
 
-목표: Auth · Dashboard · /trade · /phon 네 화면을 Stake.com급 시각 위계 + Warm King 톤으로 끌어올리되, 페이지 구조·라우팅·비즈니스 로직은 1줄도 건드리지 않는다. money-flow 8경로 / Operator Isolation / Bundle Budget 전부 무손상.
+목표: `/games` · `/casino` 카드 시스템을 Stake.com 압살 수준의 Imperial Card로 통일. 슬롯 내부(Phase D 동결) / 라우팅 / 비즈니스 로직은 1줄도 건드리지 않는다. money-flow 8경로, Operator Isolation, Bundle Budget, three3d 청크 무손상.
 
-## 범위 (이번 슬라이스에서 하는 것)
+## 범위
 
-1. **공통 타이포 / 스페이싱 토큰 정렬 (`src/index.css`)**
-   - `--rhythm-1..6` (4·8·12·16·20·24) CSS 변수 추가, `.section-rhythm`, `.stack-rhythm-*` 유틸 클래스.
-   - `.h-display`, `.h-imperial`, `.eyebrow-imperial` 타이포 유틸 (LCP 텍스트 letter-spacing / leading 통일).
-   - 기존 토큰 덮어쓰지 않음 — 추가만.
+1. **공통 Imperial Card 토큰 (`src/index.css` 추가만)**
+   - `.imperial-card` — 20px radius, glassmorphism(`backdrop-blur-md` + `hsl(var(--card)/0.55)`), Warm Gold 보더(`hsl(38 92% 55% / 0.45)`), inner gold ring, `contain: layout paint`, `will-change: transform`.
+   - `.imperial-card-hover` — 220ms ease-out, `translateY(-4px) scale(1.015)`, Imperial Half-Off glow shadow 강화.
+   - `.imperial-pulse-dot` — "지금 잭팟 대기 중" 우상단 빨강↔골드 펄스 닷(1.4s, `prefers-reduced-motion` OFF).
+   - `.imperial-corner-shine` — hover 시 좌상단 → 우하단 골드 sheen 라인(2.2s, opacity 0.0↔0.35).
 
-2. **Slice 1 프리미티브 확장 — Imperial Half-Off Gradient**
-   - `src/components/ui/floating-fab.tsx` 에 `gold-pink` 변형 추가 (Gold → Hot Pink half-off gradient + strong glow ring + 옵셔널 pulse halo). 기본 `gold` 동작 그대로 유지.
-   - `src/components/nav/PhonaraNav.tsx` active 탭에 Half-Off 글로우 한 단계 강화 (현재 amber 단색 → amber↔pink 절반 분할 후광). 비활성 외형 동일.
+2. **FOMO 카피 토큰 추가 (`src/lib/glossary.ts` `FOMO` 네임스페이스 확장)**
+   - `FOMO.jackpotWaiting = "지금 이 슬롯에서 잭팟이 대기 중입니다"`
+   - `FOMO.rarePartsCard = "이 슬롯은 극소수의 황제만이 정복했습니다"`
+   - `FOMO.legendaryCrownCard = "Legendary Crown 보유자만의 무대"`
+   - 기존 5종 그대로 유지, 추가만.
 
-3. **Auth 화면 (`src/pages/Auth.tsx`) 비주얼 폴리시 only**
-   - 헤더 hierarchy: eyebrow `황제 입장` / display `폐하의 자리가 비어 있습니다` / 서브 카피.
-   - 입력 카드 24px radius + 백드롭 블러 + warm gold inner ring.
-   - 버튼 톤을 `gold-pink` half-off 그라디언트로 통일, min-h 48.
-   - 폼 로직 / 라우팅 / Supabase 호출 0줄 변경.
+3. **`src/pages/Casino.tsx` 카드 폴리시**
+   - 기존 카드 wrapper `div`(border-2 + bg-cover)를 `.imperial-card .imperial-card-hover` 로 교체, aspect-ratio / 로고 / 메타 위치 유지.
+   - 카드 우상단에 `<JackpotPulseDot/>` (locally inlined span + `imperial-pulse-dot`) — 비-coming soon 항목 무작위 30% 또는 RTP ≥ 96.0 카드에 표기.
+   - hover 시 `imperial-corner-shine` 골드 sheen overlay.
+   - 카드 `<Link>` 에 `onMouseEnter` / `onFocus` 로 `void import(...)` **prefetch** — 각 슬롯 페이지의 lazy 청크를 hover 시 워밍업. 매핑 테이블은 카드 데이터에 `prefetch: () => import("@/pages/casino/...")` 추가(기존 코드 패턴 유지, 슬롯 내부 무변경).
+   - 타이틀 라인 아래 FOMO 미세 카피(`FOMO.jackpotWaiting` 등) `text-[10px] text-amber-200/80` 한 줄 추가.
 
-4. **Dashboard 헤더 영역 (`src/pages/Dashboard.tsx`) only**
-   - 상단 히어로 블록 spacing rhythm 적용 (mb-3/5, gap-3, p-5).
-   - 인사 타이포 hierarchy (eyebrow + display + warm gold 그라디언트).
-   - 기존 위젯 마운트 순서 / 컴포넌트 props 0줄 변경.
+4. **`/games` 라우트**
+   - 현재 `/games` 도 `CasinoLobby` 렌더 — 별도 페이지 신설 없이 위 카드 변경이 그대로 반영. 라우트 추가/이동 없음.
 
-5. **/trade 화면 헤더 (`src/pages/TradingArenaWithArmy.tsx` 헤더 영역)**
-   - 페이지 상단 타이틀 + 서브카피 + 거래소 페어 칩 영역만 hierarchy 정리.
-   - 차트 / 주문 패널 / 포지션 컴포넌트 손대지 않음.
+5. **(옵션, Slice 3 한정) `src/pages/Home.tsx` `/games` 진입 CTA 영역**
+   - 기존 카드 컨테이너에만 `.imperial-card .imperial-card-hover` 클래스 부여(구조/문구 유지). 다른 홈 섹션은 손대지 않음.
 
-6. **/phon 화면 (`src/pages/PhonHub.tsx` 상단 H1 영역)**
-   - eyebrow `폐하의 황금 자산` / display `PHON` / FOMO 1줄 서브카피.
-   - 그 아래 `PhonHubDashboard` 등 기존 섹션 그대로.
+## 비범위
 
-7. **FOMO 카피 토큰화 (`src/lib/glossary.ts` 에 `FOMO` 네임스페이스 추가)**
-   - 5종 Imperial FOMO 문구를 상수로 등록 (`FOMO.lobbyCrowd`, `FOMO.legendaryCrown`, `FOMO.friendProfit(name, amount)`, `FOMO.rareParts`, `FOMO.exclusiveOwn`).
-   - LobbyFab / Dashboard 인사 영역 / Auth 서브카피 등에서 토큰만 호출.
+- 슬롯 페이지 내부(`src/components/slots/**`, `src/pages/casino/<Game>.tsx`) — Phase D 동결.
+- 라우팅 / 신규 페이지 / RPC / 마이그레이션 / 엣지 / 인증 / 결제 로직.
+- Lobby v3(three3d), Avatar Studio, money-flow 8경로(`PRJ_FREEZE_RAW_CHANNEL`).
+- Bottom Nav 본체, FAB 본체(Slice 1/2에서 완료).
 
-## 비범위 (이번 슬라이스에서 안 함)
+## 보호 가드
 
-- 신규 페이지 / 라우트 / RPC / 마이그레이션 / 엣지 함수.
-- IA · 네비 구조 · 페이지 컴포넌트 마운트 순서 변경.
-- 게임 로비 카드 (Slice 3), Streak / 출금 카운터 (Slice 4).
-- three3d 청크, Lobby v3 내부 (Phase D 동결).
-- money-flow 8경로 파일 (`PRJ_FREEZE_RAW_CHANNEL`).
-
-## 보호 가드 (모든 변경 통과해야 함)
-
-- money-flow 8경로 git diff = 0줄
+- money-flow 8경로 git diff = 0
 - `node scripts/check-operator-isolation.mjs` PASS
-- `npm run size:check` PASS — index ≤ 180KB gz, three3d / lobby / wallet / slots 청크 변동 0
-- raw `supabase.channel(...)` 0건 추가
-- 색상은 HSL 토큰만, 인라인 hex 금지 (lobby v3 three.js 입력은 예외 유지)
-- ESLint: no-direct-sonner / no-raw-channel 유지
-
-## 검증 절차
-
-1. `git diff --name-only` 로 변경된 파일이 위 7개 항목 범위 내인지 확인
-2. money-flow grep diff `scripts/check-money-flow-freeze.mjs` 또는 수동 grep 0줄
-3. `node scripts/check-operator-isolation.mjs`
-4. `npm run size:check`
-5. 프리뷰에서 Auth → Dashboard → /trade → /phon 순회, FAB / Bottom Nav active glow / FOMO 카피 노출 확인
-6. `mem://features/phase-e-slice-2-core-screens` 신규 등재 + `mem://index.md` 갱신
+- `npm run size:check` PASS (index ≤ 180KB gz, three3d / lobby / wallet / slots 청크 변동 0)
+- raw `supabase.channel(...)` 0건 추가, ESLint no-direct-sonner / no-raw-channel 유지
+- HSL 토큰만, 인라인 hex 금지
+- `prefers-reduced-motion` 에서 pulse / sheen / hover-lift 자동 OFF
 
 ## 기술 메모
 
-- Half-Off Imperial Gradient = `linear-gradient(100deg, hsl(38 92% 55%) 0% 50%, hsl(330 85% 60%) 50% 100%)` + `box-shadow: 0 12px 32px -10px hsl(38 92% 55% / 0.55), 0 0 0 1px hsl(330 85% 60% / 0.35) inset`.
-- Pulse halo = 1.4s ease-in-out infinite, opacity 0.0↔0.55, `will-change: opacity, transform`.
-- CSS Containment: 카드 컨테이너에 `contain: layout paint` 적용 (Auth 입력 카드 / Dashboard hero / Phon hero).
-- 모든 인터랙티브 표면에 `press` 클래스 + `will-change-transform` 유지.
-- `prefers-reduced-motion`: pulse / halo 자동 OFF.
+- Prefetch 패턴:
+  ```ts
+  const onPrefetch = (g: GameCard) => () => { g.prefetch?.().catch(() => {}); };
+  <Link onMouseEnter={onPrefetch(g)} onFocus={onPrefetch(g)} ...>
+  ```
+- `imperial-card-hover` glow:
+  `box-shadow: 0 18px 44px -16px hsl(38 92% 55% / 0.55), 0 0 0 1px hsl(330 85% 60% / 0.35) inset`.
+- Pulse dot: 6px, `background: radial-gradient(circle, hsl(0 84% 60%), hsl(38 92% 55%))`, `animation: imperial-pulse 1.4s ease-in-out infinite`.
 
-Slice 3, Slice 4 는 별도 턴에서 진행. 이번 슬라이스에서 위 7항목 외 코드는 절대 수정하지 않음.
+## 검증 절차
+
+1. `git diff --name-only` — 변경 파일이 위 항목 범위 내인지
+2. money-flow grep freeze 0줄
+3. `node scripts/check-operator-isolation.mjs`
+4. `npm run size:check`
+5. 프리뷰 `/games`, `/casino` 카드 hover/Pulse/prefetch 확인 (모바일 viewport 포함)
+6. `mem://features/phase-e-slice-3-game-lobby` 신규 등재 + `mem://index.md` 갱신
