@@ -1,134 +1,65 @@
-# Phase 4 — Mobile OS Exclusive Hyper-Optimization
+# Sprint 3 — Mobile Native Feel (v20.4)
 
-목표: Phonara.world를 모바일 네이티브앱 체감(LCP ≤ 1.5s / INP ≤ 100ms / CLS ≤ 0.02, 60fps 무한 유지)으로 끌어올린다. Money-flow 8경로, Operator Isolation, imperial_* 함수, 8개 freeze 경로는 **0바이트** 변경.
+목표: Stake.com 수준의 모바일 네이티브 감각을 웹에서 재현. 60fps transform-only, 회귀 0, 머니플로 0바이트.
 
----
+## Scope (신규 파일 위주, 기존 페이지는 최소 마운트만)
 
-## 불변 가드 (모든 단계 공통)
-- Money-flow 8경로 `git diff = 0` — `scripts/check-money-flow-freeze.mjs` PR마다 실행
-- Operator chunk Layer 1 0바이트 — `scripts/check-operator-isolation.mjs`
-- imperial_* RPC 본문 unchanged — DB migration 금지
-- 모든 신규 컴포넌트 `imperial_` prefix, Atomic/Idempotent/Observable/Rollbackable
-- Realtime은 `@pkg/realtime` 파티션 래퍼만 사용
-- 토스트 `@/lib/notify`만, sonner 직접 호출 금지
+### 1. Native Gesture Primitives (신규 패키지 `@pkg/native`)
+- `src/packages/native/usePullToRefresh.ts` — `touchstart/move/end` 기반, `transform: translate3d` only, 임계값 도달 시 `navigator.vibrate(10)` + 콜백, `overscroll-behavior: contain` 자동 적용
+- `src/packages/native/useSwipeGesture.ts` — 좌/우/상/하 스와이프 감지, threshold/velocity 옵션, passive listener
+- `src/packages/native/useHaptic.ts` — light(10) / medium(20) / heavy(35) / success([10,40,10]) / warning / error / impact 7종. iOS Safari는 `navigator.vibrate` 미지원이므로 silent no-op (graceful)
+- `src/packages/native/useDynamicIsland.ts` — 상단 pill 상태 머신(idle/loading/success/error), `safe-area-inset-top` 존중
 
----
+### 2. Dynamic Island UI (신규 컴포넌트)
+- `src/packages/native/components/DynamicIslandPill.tsx` — 화면 상단 중앙 캡슐, framer-motion `layout` 애니메이션, glass blur 배경, 60fps transform-only
+- `src/packages/native/components/PullToRefreshIndicator.tsx` — 회전 스피너 + 진행도, transform/opacity only
 
-## Sprint 0 — Diagnosis & Baseline (1 PR, 읽기 전용)
+### 3. Glassmorphism Tokens (CSS만, 신규 토큰)
+- `src/index.css` 에 `.glass-card-imperial` / `.glass-card-imperial-strong` 유틸 추가 (backdrop-blur + 반투명 + warm-gold ring). 기존 토큰 무수정.
 
-산출물: `reports/mobile-baseline-2026-05-20.md`
+### 4. Worker 연결 (Sprint 2 워커 → 시각 효과만)
+- `src/packages/native/components/NearMissOverlay.tsx` — `getNearMissIntensity()` 호출 → transform: scale + opacity only, Worker 실패 시 main thread fallback 자동
+- `src/packages/native/components/MultiplierCountUp.tsx` — `getMultiplierFrames()` Float32Array transferable, requestAnimationFrame 으로 transform: scale 만 적용
 
-1. `lighthouserc.json` 모바일 프리셋(Moto G4 + 4G throttle)으로 6개 핵심 라우트 측정 — `/`, `/home`, `/duel`, `/dashboard`, `/wallet`, `/casino/aztec-sun-1200`
-2. `browser--performance_profile` + `start_profiling` 으로 INP 병목 함수 Top 10
-3. 번들 분석: `bundle-budget.latest.json` 대비 라우트별 transferred KB 표
-4. Stake.com / Rollbit 모바일 5개 화면 (홈 / 게임 로비 / 슬롯 / 베팅 / 지갑) 캡처 비교
+### 5. 최소 마운트 (회귀 위험 최소)
+- `src/App.tsx` — `<DynamicIslandPill />` 루트 1줄 마운트 (idle 상태 default, store 미사용 시 invisible)
+- `src/pages/Dashboard.tsx` — 최상단 wrapper 에 `usePullToRefresh` 1줄 (refetch 트리거만)
+- 기타 페이지는 이번 스프린트에서 건드리지 않음
 
-Gate: 베이스라인 표 + Top 10 병목 + Stake 비교 표 머지 후 다음 진입.
+## 불변 가드 (git diff = 0 보장)
 
----
+- Money-flow 8경로 전체: `_apply_house_edge_split`, `imperial_place_phon_bet`, `_settle`, `imperial_swap_*`, `request_withdrawal`, `credit_crypto_deposit`, `subscribe_vip_pass_phon`, `award_crown`
+- Operator 청크: `src/pages/admin/**`, `src/components/admin/**`, `src/packages/operator/**`
+- `imperial_*` RPC / Edge function 본문
+- `supabase/migrations/**` 변경 없음 (DB 마이그레이션 0건)
 
-## Sprint 1 — Mobile Shell & Web Vitals 코어 (PR 단위 4개)
+## 성능 규칙
 
-1. **PR-Mob1 PWA 매니페스트 강화** (제한적)
-   - `public/manifest.webmanifest` `display_override: ["window-controls-overlay","standalone"]`, `categories`, `screenshots[]` (mobile narrow 1, wide 1)
-   - iOS splash `<link rel="apple-touch-startup-image">` 4 size
-   - Service Worker 변경 **없음** (현행 `registerSW.ts` 가드 유지)
+- 모든 애니메이션: `transform` + `opacity` ONLY. `width/height/top/left/margin` 금지
+- `will-change: transform` 은 hover/active 시작 시점에만, 종료 시 해제
+- Pointer events: `passive: true` (스크롤 jank 0)
+- `prefers-reduced-motion` 존중 → 모든 모션 즉시 종료 (50ms)
+- low-end (`navigator.deviceMemory < 2` || `hardwareConcurrency < 2`) → Worker overlay 비활성, primitives 만 동작
 
-2. **PR-Mob2 LCP 자산 프리로드 + 폰트 swap**
-   - `index.html` 모바일 hero 이미지 `<link rel="preload" as="image" fetchpriority="high" media="(max-width: 768px)">`
-   - 모든 `@font-face` `font-display: swap` 강제 감사
+## Verification Gate
 
-3. **PR-Mob3 CLS 제거**
-   - `<img>` width/height 누락 자동 스캔 스크립트 `scripts/check-img-dimensions.mjs` 추가 + CI
-   - Topbar / BottomNav 고정 높이 토큰화 (`--topbar-h`, `--bottom-nav-h`) — 이미 일부 존재, 누락 페이지 보강
+- [ ] `git diff` money-flow 8경로 / operator / imperial_* → 0 bytes
+- [ ] `supabase/migrations/` 변경 0건
+- [ ] 신규 파일만 추가 (`src/packages/native/**` + App.tsx 1줄 + Dashboard.tsx 1줄)
+- [ ] Bundle: index 청크 < 180KB gz 유지 (framer-motion 추가 import 0, 기존 import만 활용)
+- [ ] Worker disabled / 저사양 모드 / reduced-motion 3 케이스 수동 검증
+- [ ] Chrome DevTools Performance: Dashboard PTR 60fps, Near-Miss overlay 60fps
 
-4. **PR-Mob4 INP — useTransition 도입**
-   - 무거운 클릭 핸들러(베팅 슬립 다이얼 변경, 카지노 spin 트리거 UI 업데이트만) `startTransition` 감싸기 — **RPC 호출/머니플로 코드 본문 무변경**, UI state 갱신만
+## Before/After 보고 항목
 
-Gate: Lighthouse Mobile 4지표 ≥ 90, INP 측정값 ≤ 150ms.
+- FPS: Dashboard idle scroll / PTR 동작 / Near-Miss overlay (Worker on/off)
+- INP: Dashboard 첫 인터랙션
+- Bundle size delta (index / operator)
+- 신규 파일 수 + LOC
 
----
+## Out of Scope (다음 스프린트)
 
-## Sprint 2 — Cosmetic Compute Offload (Web Worker, 머니플로 무변경)
-
-대상: **시각/사운드 전용** 계산만 (Near-Miss 시각 effect, particle, multiplier 카운트업 보간, AI Fortune 텍스트). **베팅 결과/배당/seed/RNG 결과는 서버 RPC 단일 소스 — Worker로 옮기지 않는다.**
-
-1. `src/packages/workers/imperial_cosmetic_worker.ts` (Dedicated Worker)
-2. Comlink는 UI 트리거용만, particle 좌표는 `Float32Array` Transferable
-3. SAB는 **도입하지 않음** — COOP/COEP credentialless 가 Supabase OAuth 팝업과 충돌 가능, 도입 시 별도 ADR 필요 (Sprint 후속 검토)
-4. Fallback: Worker 미지원/저사양은 메인 스레드 동기 계산 — Graceful degrade
-
-Gate: spin 1회당 main thread long task ≤ 50ms (현재 측정 후 목표 재조정).
-
----
-
-## Sprint 3 — Mobile Native Feel (UI only)
-
-대상 화면: `/home`, `/duel`, `/wallet`, `/dashboard`, 카지노 슬롯 12종 헤더
-
-1. **Pull-to-Refresh** — `@pkg/ui/mobile/imperial_PullToRefresh.tsx` (touch + framer-motion, 60fps transform-only)
-2. **Swipe Gesture** — Duel Lobby Gate 카드 좌우 스와이프로 룸 전환
-3. **Haptic** — `navigator.vibrate` 안전 가드 + 사용자 토글 (`localStorage phonara:haptic:v1`)
-4. **Skeleton 통일** — 기존 `@/components/ui/loading-state` 강제 사용 감사 (이미 메모 등록됨)
-5. **Glass + Dynamic Island top capsule** — `imperial_DynamicCapsule.tsx` PowerHeader 모바일 변형
-6. 기존 `MobileOrderSheet`, `BottomSheet`, `FloatingFab` 재사용 — 신규 중복 컴포넌트 만들지 않음
-
-Gate: 실측 60fps 유지(Performance panel scrolling FPS meter), 터치 응답 ≤ 100ms.
-
----
-
-## Sprint 4 — Image / Bundle 다이어트
-
-1. `vite-imagetools` 도입, hero/카지노 썸네일 AVIF + WebP + srcset 자동 생성
-2. 모든 `<img>` → `loading="lazy" decoding="async"` 일괄 (top-fold LCP 1장 제외)
-3. Lucide 아이콘 사용처 감사 — barrel import 금지, 개별 import 강제 (eslint rule)
-4. `size-limit` 예산 재조정: index 165KB, slots 110KB (현재 180/120)
-5. Edge cache `_headers` 재확인 — 이미 PR-M에서 immutable 적용
-
-Gate: `bundle-budget` 신규 예산 PASS, 라우트별 Transferred -30% 이상.
-
----
-
-## Sprint 5 — Verification & Rollback
-
-1. Lighthouse Mobile CI (lighthouserc) 점수 ≥ 95 for `/home`, ≥ 92 for `/duel`·`/dashboard`
-2. BrowserStack 5종 (저사양: Galaxy A14, iPhone SE 2nd / 중급: A54, iPhone 12 / 고급: S24) 60fps + INP 100ms 수동 확인 — 결과 `reports/mobile-device-matrix-YYYY-MM-DD.md`
-3. Stake.com vs Phonara 6항목 비교표 (LCP/INP/CLS/터치반응/스크롤FPS/체감점수) — 산출물 머지
-4. Rollback: 각 PR은 단일 revert 안전, Worker 도입 PR은 feature flag `imperial_cosmetic_worker_enabled` (kill switch row) 로 OFF 가능
-5. 최종 보고서: `reports/phase4-mobile-hyperion-final.md`
-
----
-
-## 의도적으로 **하지 않는** 것 (리스크 차단)
-
-- SharedArrayBuffer + COOP/COEP credentialless — Supabase OAuth 팝업·iframe preview 깨질 위험. 별도 ADR 후 결정.
-- imperial_* / treasury / settle / withdrawal 함수 본문 수정
-- 새 Service Worker 캐시 전략 — 현 가드(`registerSW.ts`)가 preview/iframe 완벽 차단 중, 건드리지 않음
-- Realtime broadcast 정책 변경 — Phase 5 후속
-- Edge Function 신규 추가 — 본 작업 범위 외
-- Framer Motion 제거/교체 — `motion` 청크 이미 분리, 전면 교체 ROI 낮음
-
----
-
-## 기술 부록
-
-- 신규 디렉터리: `src/packages/ui/mobile/`, `src/packages/workers/`
-- 신규 CI: `.github/workflows/mobile-vitals.yml` (Lighthouse Mobile gate)
-- 신규 스크립트: `scripts/check-img-dimensions.mjs`
-- 신규 kill switch: `imperial_cosmetic_worker_enabled` (`platform_kill_switches` row insert만, 정책 RLS 기존 그대로)
-- 메모 갱신: `mem://features/phase-4-mobile-hyperion` (Sprint 완료 시)
-
----
-
-## 추정 일정
-
-| Sprint | 작업량 | 위험도 |
-| --- | --- | --- |
-| 0 Diagnosis | 0.5d | none (read-only) |
-| 1 Vitals | 1.5d | low |
-| 2 Worker | 2d | medium (fallback 필수) |
-| 3 Native Feel | 2d | low |
-| 4 Bundle | 1.5d | low-medium |
-| 5 Verify | 1d | none |
-
-총 ~8.5일. 각 Sprint 머지 후 24h 모니터링.
+- Imperial Duel Lobby 풀 리디자인 (Sprint 4)
+- Real haptic API (Capacitor 네이티브 브릿지)
+- SharedArrayBuffer / COOP/COEP
+- PWA splash 이미지 4종
