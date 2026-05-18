@@ -80,6 +80,7 @@ const MarketingTools      = lazy(() => import("@/components/admin/growth/Marketi
 const SimRealConversion   = lazy(() => import("@/components/admin/growth/SimRealConversion"));
 const SelfHeal            = lazy(() => import("./ops/SelfHeal"));
 const RegionHealth        = lazy(() => import("./ops/RegionHealth"));
+const AdminDuel           = lazy(() => import("./Duel"));
 
 function Section({
   title,
@@ -196,6 +197,7 @@ export default function AdminRoutes() {
         <Route path="ops/cron"          element={<CronCombined />} />
         <Route path="ops/report"        element={<Suspense fallback={<LoadingList rows={4} />}><OpsReport /></Suspense>} />
         <Route path="ops/thresholds"    element={<Section title="Mission Control 임계값"><ThresholdsAdmin /></Section>} />
+        <Route path="duel"              element={<Suspense fallback={<LoadingList rows={4} />}><AdminDuel /></Suspense>} />
 
         {/* GROWTH */}
         <Route path="growth/marketing"  element={<Section><MarketingTools /></Section>} />
