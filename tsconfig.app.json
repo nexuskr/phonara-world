@@ -62,5 +62,6 @@
       "@pkg/duel/*": ["./src/packages/duel/*"]
     }
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": ["e2e/**", "**/node_modules", "supabase/functions/**"]
 }

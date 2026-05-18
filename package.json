@@ -17,7 +17,10 @@
     "size:check": "node scripts/bundle-budget.mjs",
     "size:baseline": "cp reports/bundle-budget.latest.json reports/bundle-budget.prev.json",
     "sim:all": "bun run scripts/slot-sim-regression.ts 100000",
-    "sim:quick": "bun run scripts/slot-sim-regression.ts 10000"
+    "sim:quick": "bun run scripts/slot-sim-regression.ts 10000",
+    "e2e": "playwright test --config=e2e/playwright.config.ts",
+    "e2e:critical": "playwright test --config=e2e/playwright.config.ts --grep @critical",
+    "e2e:report": "playwright show-report"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
