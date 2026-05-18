@@ -12,6 +12,7 @@ const Onboarding60s = lazy(() => import("@pkg/earn/components/Onboarding60s"));
 const LivePayoutCounter = lazy(() => import("@/components/fomo/LivePayoutCounter"));
 const LiveTradingCounter = lazy(() => import("@/components/fomo/LiveTradingCounter"));
 const FoundingContendersBadge = lazy(() => import("@/components/fomo/FoundingContendersBadge"));
+const ImperialAscensionLoader = lazy(() => import("@/packages/duel/components/loader/ImperialAscensionLoader"));
 
 /**
  * /home — Sprint 0 슬림 홈.
