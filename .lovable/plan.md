@@ -31,10 +31,11 @@ e2e/
     gestures.ts                 # pinch / double-tap / swipe / pull-to-refresh
     visual.ts                   # 스크린샷 diff threshold
   tests/
+    00-tier0-first-30s.spec.ts          # @critical — 첫 30초 4대 인터랙션
     01-onboarding-death-path.spec.ts
     02-duel-lobby-journey.spec.ts
     03-mobile-os-native-feel.spec.ts
-    04-worker-cosmetic-integrity.spec.ts
+    04-worker-cosmetic-integrity.spec.ts # NearMiss / MultiplierCountUp Worker ON/OFF 매트릭스
     05-betting-safety-net.spec.ts
     06-edge-cases-dust.spec.ts          # 회전/오프라인/저전력/입력 IME/탭 백그라운드
     07-a11y-smoke.spec.ts               # axe critical only
