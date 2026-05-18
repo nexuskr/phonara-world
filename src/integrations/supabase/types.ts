@@ -3870,6 +3870,30 @@ export type Database = {
         }
         Relationships: []
       }
+      imperial_auto_heal_log: {
+        Row: {
+          id: number
+          kind: string
+          payload: Json
+          severity: string
+          ts: string
+        }
+        Insert: {
+          id?: number
+          kind: string
+          payload?: Json
+          severity?: string
+          ts?: string
+        }
+        Update: {
+          id?: number
+          kind?: string
+          payload?: Json
+          severity?: string
+          ts?: string
+        }
+        Relationships: []
+      }
       imperial_duel_alert_thresholds: {
         Row: {
           error_rate_bps: number
@@ -4385,6 +4409,39 @@ export type Database = {
         }
         Relationships: []
       }
+      imperial_observability_events: {
+        Row: {
+          dedupe_key: string | null
+          id: number
+          kind: string
+          payload: Json
+          severity: string
+          trace_id: string | null
+          ts: string
+          user_id: string | null
+        }
+        Insert: {
+          dedupe_key?: string | null
+          id?: number
+          kind: string
+          payload?: Json
+          severity?: string
+          trace_id?: string | null
+          ts?: string
+          user_id?: string | null
+        }
+        Update: {
+          dedupe_key?: string | null
+          id?: number
+          kind?: string
+          payload?: Json
+          severity?: string
+          trace_id?: string | null
+          ts?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       imperial_rollback_snapshots: {
         Row: {
           created_at: string
@@ -4430,6 +4487,39 @@ export type Database = {
           consented_at?: string
           user_id?: string
           version?: string
+        }
+        Relationships: []
+      }
+      imperial_rollout_phases: {
+        Row: {
+          ended_at: string | null
+          id: number
+          metrics_snapshot: Json
+          notes: string | null
+          phase: number
+          started_at: string
+          started_by: string | null
+          status: string
+        }
+        Insert: {
+          ended_at?: string | null
+          id?: number
+          metrics_snapshot?: Json
+          notes?: string | null
+          phase: number
+          started_at?: string
+          started_by?: string | null
+          status?: string
+        }
+        Update: {
+          ended_at?: string | null
+          id?: number
+          metrics_snapshot?: Json
+          notes?: string | null
+          phase?: number
+          started_at?: string
+          started_by?: string | null
+          status?: string
         }
         Relationships: []
       }
@@ -12610,6 +12700,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      imperial_auto_heal_tick: { Args: never; Returns: Json }
       imperial_can_participate: { Args: { _user: string }; Returns: Json }
       imperial_cancel_duel: { Args: { p_room_id: string }; Returns: Json }
       imperial_compute_display_signals: {
@@ -12621,6 +12712,16 @@ export type Database = {
         }
         Returns: Json
       }
+      imperial_get_auto_heal_log: {
+        Args: { _hours?: number }
+        Returns: {
+          id: number
+          kind: string
+          payload: Json
+          severity: string
+          ts: string
+        }[]
+      }
       imperial_get_burn_rate: {
         Args: {
           _meta?: Json
@@ -12630,7 +12731,37 @@ export type Database = {
         Returns: number
       }
       imperial_get_duel_state: { Args: { p_room_id: string }; Returns: Json }
+      imperial_get_observability_stream: {
+        Args: { _hours?: number; _severity?: string }
+        Returns: {
+          dedupe_key: string
+          id: number
+          kind: string
+          payload: Json
+          severity: string
+          ts: string
+        }[]
+      }
+      imperial_get_rollout_state: {
+        Args: never
+        Returns: {
+          notes: string
+          phase: number
+          started_at: string
+          started_by: string
+          status: string
+        }[]
+      }
       imperial_is_betting_allowed: { Args: never; Returns: boolean }
+      imperial_log_observability: {
+        Args: {
+          _dedupe_key?: string
+          _kind: string
+          _payload?: Json
+          _severity?: string
+        }
+        Returns: number
+      }
       imperial_nft_tier_for: { Args: { _lifetime: number }; Returns: number }
       imperial_place_phon_bet: {
         Args: {
@@ -12642,6 +12773,10 @@ export type Database = {
         Returns: Json
       }
       imperial_record_consent: { Args: never; Returns: undefined }
+      imperial_rollout_activate: {
+        Args: { _metrics?: Json; _notes?: string; _phase: number }
+        Returns: number
+      }
       imperial_settle_duel: {
         Args: { p_room_id: string; p_server_seed: string }
         Returns: Json
