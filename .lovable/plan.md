@@ -1,94 +1,82 @@
-# Phase 4 — Phase 1 Observer Mode Hyperion Ignition
+# Phase 1 Hyperion Ignition — Final Completion & Live Activation
 
-Production-grade activation of the existing Phase 1 Observer onboarding stack, with hardened safety gates, a cinematic first-touch, and god-tier real-time monitoring. **Money-flow 8 paths remain git diff = 0**. All new code stays under `imperial_` prefix and operator namespace.
+Phase 1 Hyperion의 모든 기반(Caps, Fraud Signals, Hardened RPC, Apocalypse Protocol, Live Monitor)이 적재 완료된 상태에서, 이번 라운드는 **실제 점화(Activate Tier 1 Observer)** 와 마무리 검증만 수행한다.
 
-## Scope at a glance
+## Mission
 
-```text
-[ Pre-Activation Gates ] -> [ Core Activation ] -> [ Cinematic Onboarding ] -> [ Live Monitor + Apocalypse ]
-        35 checks               RPC + cap + RL          Welcome / Daily / Invite       3s KPI + auto-rollback
-```
+신규 유저가 0원으로 들어와 Welcome → Signup Bonus → Daily Login → First Duel Invite 전 과정을 cinematic하게 경험하도록 Observer Mode를 **공식 점화**하고, Command Center에서 14 KPI + Apocalypse Protocol이 실시간 작동함을 확인한다.
 
-## 1. Pre-Activation Divine Safety Protocol
+## Invariants
 
-New file: `scripts/phase4/phase1-hyperion-activation-check.ts`
+- Money-flow 8경로 (`imperial_place_phon_bet` / `_settle` / `_apply_house_edge_split` / `request_withdrawal` / `credit_crypto_deposit` / `apply_token_burn` / `subscribe_vip_pass_phon` / `claim_loss_protection`) **git diff = 0**. Pre/Post SHA-512 비교 보고.
+- Operator Isolation 유지: 신규 코드는 `src/components/admin/**` 또는 `src/pages/admin/**` 만 수정.
+- 모든 신규 객체 `imperial_` prefix. RPC는 SECURITY DEFINER + `search_path=public` + AAL2(파괴적 작업).
+- Atomic / Idempotent / Observable / Auditable / Rollbackable / 60fps.
 
-- 35-gate verifier extending existing `phase1-go-live-check.ts`.
-- Confirms: money-flow 8 paths SHA-512 unchanged vs baseline, Circuit Breaker v2 healthy, Auto-Heal cron alive, Observability ingestion < 5s lag, kill switches OFF, RLS lint clean, onboarding RPCs present, rollout phase row exists, Phase1LiveMonitor mounted, AAL2 guard on Command Center.
-- Exit non-zero blocks activation.
+## Scope (this round)
 
-Money-flow inventory (frozen, no edits):
-`useDeposit.ts`, `useDepositRealtime.ts`, `useDepositCountdown.ts`, `bybit-feed.ts`, `useCrashRound.ts`, `MegaOrderPanel.tsx`, `use-kill-switches.ts`, `use-auto-bet.ts` — verified by `scripts/check-money-flow-freeze.mjs`.
+### 1. Pre-Flight Safety Verification
 
-## 2. Core Hyperion Activation (DB only — no money-flow touch)
+- `bun run scripts/phase4/phase1-hyperion-activation-check.ts` 실행 — 35 게이트 + 8-path SHA-512.
+- 보조: `bun run scripts/phase4/phase1-go-live-check.ts` 18-item 게이트 PASS 확인.
+- DB 메타 점검 (read-only):
+  - `imperial_onboarding_caps` / `imperial_onboarding_fraud_signals` / `imperial_audit_trail` / `imperial_rollout_phases` / `imperial_observability_events` 의 RLS 활성 + `created_at`/`updated_at` 존재 검사.
+  - 누락 시 **별도 보완 마이그레이션 1건** (ADD COLUMN IF NOT EXISTS + trigger). 머니플로 무관.
 
-Single migration `..._phase1_hyperion_ignition.sql`:
+### 2. Tier 1 Activation (AAL2)
 
-- `imperial_onboarding_caps` (singleton): `daily_phon_cap`, `current_day_utc`, `granted_today_phon`, `auto_pause` — default 50,000 PHON/day cap.
-- `imperial_onboarding_fraud_signals` (user_id, device_fp, ip_hash, ua_hash, risk_score, created_at) — append-only, admin RLS only.
-- `imperial_claim_signup_bonus(_device_fp, _ip_hash, _ua_hash)` hardened:
-  - Atomic: lock caps row `FOR UPDATE`, check `granted_today + 15000 <= cap`, else return `{status:'cap_reached'}`.
-  - Idempotent on `(user_id, source='signup')` partial unique index (already exists).
-  - Fraud: reject if any of `(device_fp | ip_hash | ua_hash)` already bound to another claimed user_id; insert into `imperial_onboarding_fraud_signals` either way.
-  - Logs to `imperial_observability_events` (`kind='onboarding.signup'`) + `imperial_audit_trail` (new minimal append-only table).
-- `imperial_claim_daily_login_bonus()` variable reward 450..550 PHON (server-side `gen_random_bytes`, near-miss curve); cap-aware.
-- `imperial_get_phase1_kpis()` SECURITY DEFINER, admin-only: returns **14 KPIs** — signups 24h, daily 24h, total PHON granted 24h, active 5m/1h/24h, invite clicks, first-duel conversion, fraud_rejects_24h, cap_utilization_pct, retention_d1, anomaly_score, **invite_to_first_duel_rate**, **warm_king_engagement_score** (welcome-dialog-completion × first-duel-click × daily-return blended 0..1).
-- `imperial_phase1_emergency_pause(_reason)` AAL2: flips `auto_pause=true` + sets kill switch `imperial_onboarding=ON`. Preemptive Warm King Mercy: anomaly_score ≥ 0.08% surfaces yellow warning on monitor (no auto-action); ≥ 0.1% × 3 ticks arms auto-rollback.
+활성화는 **운영자가 Command Center UI 버튼에서 직접 트리거**한다 (감사 추적 + AAL2 강제). 본 작업에서는 안내 + 보조 헬퍼만 제공.
 
-Rate limit (3 tiers) via existing `enforce_rate_limit`:
-- `onboarding_claim_signup` 2/min, `onboarding_claim_daily` 5/min, `onboarding_state_read` 30/min — applied in RPC bodies, not client.
+- `<ImperialActivationPanel />` 추가 (`src/components/admin/ImperialActivationPanel.tsx`, AAL2 게이트):
+  - 현재 `imperial_rollout_phases` 행 상태 표시 (phase / tier / cap / activated_at).
+  - "Activate Phase 1 (Tier 1, Observer)" 버튼 → `imperial_rollout_activate(1, auth.uid())` 호출 → `imperial_log_observability('phase1_activated', …)`.
+  - 활성화 후 60s 안에 `imperial_get_phase1_kpis()` 첫 스냅샷 자동 fetch + 표시.
+- `CommandCenter.tsx` 상단 탭에 신규 패널 마운트.
 
-## 3. Cinematic Onboarding (frontend polish only, no logic rewrite)
+### 3. Onboarding Flow Final Check (frontend only, no behavior change)
 
-Existing components already mounted (`ImperialWelcomeDialog`, `DailyLoginRewardToast`, `InviteRailMini`). Hyperion polish:
+- `ImperialWelcomeDialog` / `DailyLoginRewardToast` / `InviteRailMini` / `FirstDuelInvite` / `ImperialVoidPreview` 마운트 경로(`App.tsx` + `Dashboard.tsx`) 재확인 — 변경 없음 시 그대로 둠.
+- `useImperialOnboarding` 가 device fp + ip/ua hash 를 전송하는지 코드 리뷰 (수정 없으면 noop).
+- 회귀 방지용 짧은 README: `docs/phase4/phase1-onboarding-flow.md` (텍스트만, 코드 영향 0).
 
-- `ImperialWelcomeDialog.tsx`: add framer-motion staged entrance (gold halo pulse, crown shimmer), `prefers-reduced-motion` fallback, low-end device degrade via `useDeviceProfile()` (static gradient).
-- `useImperialOnboarding.ts`: pass device fingerprint (`src/lib/deviceFingerprint.ts` already exists) + cached IP/UA hashes to `claimSignup`.
-- New `src/components/onboarding/FirstDuelInvite.tsx`: appears after step 3 success, deep-links `/duel?from=onboarding`.
-- New `src/components/onboarding/ImperialVoidPreview.tsx`: lightweight CSS-only spatial preview rail (no three.js on Layer 1).
-- All toasts via `notify.imperial` (Warm King tone).
+### 4. Live Monitoring Sign-Off
 
-## 4. Real-time God-Tier Monitoring + Apocalypse Protocol
+- `<Phase1LiveMonitor />` 3s 폴링 + 14 KPI 카드 + sparkline 정상 렌더 확인 (스크린샷 QA 기록).
+- `<ApocalypseProtocolPanel />` 의 임계값 표시 (yellow ≥0.08%, auto-rollback ≥0.1% × 3 tick) 가 실제 RPC 응답과 일치하는지 시각 검증.
+- `imperial_observability_events` 에 `phase1_activated` / `phase1_kpi_snapshot` 이벤트가 들어오는지 read-only 쿼리로 확인.
 
-`Phase1LiveMonitor.tsx` upgraded in place (operator-only chunk):
+### 5. Documentation & Memory
 
-- Polls `imperial_get_phase1_kpis()` every 3s. Realtime subscribe on `imperial_onboarding_grants` for live count flashes.
-- **14 KPI** cards + inline-SVG sparkline (no new deps).
-- Cap utilization bar; >80% warn, >100% red.
-- New `<ApocalypseProtocolPanel/>`: fraud_rejects_24h, anomaly_score, preemptive yellow at ≥0.08%; one-click `imperial_phase1_emergency_pause` (AAL2 confirm).
-- Auto-rollback: anomaly_score > 0.1% for 3 consecutive ticks → arms one-click "Auto-Rollback" that calls `imperial_phase1_emergency_pause` + `imperial_rollout_activate(0)`. Full revert path completes in **≤10 minutes** (see Rollback plan).
+- `mem://features/phase-4-p1-hyperion` 에 "LIVE (Tier 1 Activated YYYY-MM-DD)" 라인 + 14 KPI 베이스라인 추가.
+- `mem://index.md` Core 마지막 줄에 "Phase 1 Observer LIVE: imperial_rollout_phases.phase=1 (Tier 1, cap=50k PHON/d), Apocalypse Protocol armed." 한 줄 갱신 (기존 Phase 4 Limited Rollout 줄 바로 아래).
 
-## 5. Activation order (runbook)
+## Rollback (≤10 min)
 
-1. Run `phase1-hyperion-activation-check.ts` → all 35 PASS.
-2. Apply migration (caps + fraud + RPC hardening + KPI + pause).
-3. Admin opens `/admin/imperial/command-center` (AAL2) → "Activate Phase 1".
-4. Watch monitor for 10m / 30m / 1h / 6h / 24h checkpoints.
+1. Command Center → Apocalypse Panel → "Emergency Pause" (`imperial_phase1_emergency_pause`, AAL2).
+2. `imperial_rollout_activate(0, auth.uid())` 로 Observer Off.
+3. 신규 보너스 발급은 즉시 차단되나, 이미 지급된 PHON 은 회수하지 않음 (감사 보존). 필요 시 admin이 `imperial_audit_trail` 기반 수동 회수.
 
-## Rollback plan (≤10 min)
+## Out of Scope
 
-- One-click `imperial_phase1_emergency_pause` → blocks new claims, leaves existing grants intact.
-- `imperial_rollout_activate(0)` returns rollout to Observer-off.
-- Migration is additive only (no drops, no money-flow tables touched) → `git revert` of frontend + leaving DB objects in place is safe; or admin SQL `UPDATE imperial_onboarding_caps SET auto_pause=true`.
+- Money-flow 코드 / 베팅 / 출금 / Burn / Treasury split — **0 byte 변경**.
+- Tier 2/3 활성화, Founding Seat Phase 2 오픈 — 다음 라운드.
+- 신규 RPC/테이블 — 1번의 보완 마이그레이션이 필요한 경우(컬럼 누락)에만 한정.
 
-## Technical guardrails
+## Deliverables
 
-- No edits to: `useDeposit*`, `bybit-feed`, `useCrashRound`, `MegaOrderPanel`, `use-kill-switches`, `use-auto-bet`, any `imperial_place_phon_bet*` / `_settle*` / `_apply_house_edge_split` / withdrawal / burn / flywheel RPCs.
-- Operator isolation: monitor + apocalypse panel live under `src/components/admin/**` and `src/pages/admin/imperial/**` (already operator manualChunk).
-- All new RPCs `SECURITY DEFINER`, `search_path=public`, AAL2 where destructive.
-- All new tables RLS-enabled, admin-only SELECT, no anon access.
+- 1× admin component: `ImperialActivationPanel.tsx` (+ CommandCenter 탭 마운트).
+- 0~1× 보완 마이그레이션 (감사/타임스탬프 컬럼 보강, 필요 시).
+- 1× docs/phase4/phase1-onboarding-flow.md.
+- mem 2건 갱신 (`index.md` Core, `features/phase-4-p1-hyperion`).
+- QA Report: SHA-512 pre/post diff, 35-gate + 18-gate 결과, 14 KPI 첫 스냅샷, Apocalypse 임계값 표시 검증.
 
-## Deliverables checklist
+## Phase 2 Readiness Gates (deferred)
 
-- [ ] `scripts/phase4/phase1-hyperion-activation-check.ts`
-- [ ] Migration: caps + fraud table + audit trail + 4 RPCs + KPI RPC + pause RPC
-- [ ] `useImperialOnboarding.ts` (fingerprint args)
-- [ ] `ImperialWelcomeDialog.tsx` (cinematic polish)
-- [ ] `FirstDuelInvite.tsx`, `ImperialVoidPreview.tsx`
-- [ ] `Phase1LiveMonitor.tsx` (3s, 12 KPI, sparklines)
-- [ ] `ApocalypseProtocolPanel.tsx` (AAL2 pause + auto-rollback)
-- [ ] mem update: `mem://features/phase-4-p1-hyperion`
+24h 후 다음 조건 충족 시 Tier 2 + Founding Seat 오픈 후보:
 
-## Next (Phase 2 readiness)
-
-Once 24h KPIs are green (cap utilization <70%, fraud_rejects <0.5%, d1 retention >25%): open Tier 1 + first Founding Seat batch. No code shipped this round for Phase 2 — only readiness gates documented.
+- `cap_utilization_24h < 70%`
+- `fraud_reject_rate < 0.5%`
+- `d1_retention > 25%`
+- `warm_king_engagement_score > 0.35`
+- `anomaly_score` 24h 평균 `< 0.05%`, max `< 0.1%`
+- `apocalypse_triggered_count = 0`
