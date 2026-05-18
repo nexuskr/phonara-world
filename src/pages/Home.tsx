@@ -1,5 +1,5 @@
-import { Link } from "react-router-dom";
-import { lazy, Suspense } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { lazy, Suspense, useState, useCallback } from "react";
 import SlimShell from "@/components/layout/SlimShell";
 import WorldHero from "@/components/nav/WorldHero";
 import { useRequireAuth } from "@/hooks/use-require-auth";
