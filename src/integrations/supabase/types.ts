@@ -3870,6 +3870,33 @@ export type Database = {
         }
         Relationships: []
       }
+      imperial_audit_trail: {
+        Row: {
+          actor_id: string | null
+          created_at: string
+          id: string
+          kind: string
+          payload: Json
+          user_id: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          kind: string
+          payload?: Json
+          user_id?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          payload?: Json
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       imperial_auto_heal_log: {
         Row: {
           id: number
@@ -4439,6 +4466,69 @@ export type Database = {
           trace_id?: string | null
           ts?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      imperial_onboarding_caps: {
+        Row: {
+          auto_pause: boolean
+          current_day_utc: string
+          daily_phon_cap: number
+          granted_today_phon: number
+          id: number
+          updated_at: string
+        }
+        Insert: {
+          auto_pause?: boolean
+          current_day_utc?: string
+          daily_phon_cap?: number
+          granted_today_phon?: number
+          id?: number
+          updated_at?: string
+        }
+        Update: {
+          auto_pause?: boolean
+          current_day_utc?: string
+          daily_phon_cap?: number
+          granted_today_phon?: number
+          id?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      imperial_onboarding_fraud_signals: {
+        Row: {
+          created_at: string
+          device_fp: string | null
+          id: string
+          ip_hash: string | null
+          reason: string | null
+          rejected: boolean
+          risk_score: number
+          ua_hash: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_fp?: string | null
+          id?: string
+          ip_hash?: string | null
+          reason?: string | null
+          rejected?: boolean
+          risk_score?: number
+          ua_hash?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          device_fp?: string | null
+          id?: string
+          ip_hash?: string | null
+          reason?: string | null
+          rejected?: boolean
+          risk_score?: number
+          ua_hash?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -12734,7 +12824,12 @@ export type Database = {
       imperial_can_participate: { Args: { _user: string }; Returns: Json }
       imperial_cancel_duel: { Args: { p_room_id: string }; Returns: Json }
       imperial_claim_daily_login_bonus: { Args: never; Returns: Json }
-      imperial_claim_signup_bonus: { Args: never; Returns: Json }
+      imperial_claim_signup_bonus:
+        | { Args: never; Returns: Json }
+        | {
+            Args: { _device_fp: string; _ip_hash: string; _ua_hash: string }
+            Returns: Json
+          }
       imperial_compute_display_signals: {
         Args: {
           p_actual_roll: number
@@ -12775,6 +12870,7 @@ export type Database = {
         }[]
       }
       imperial_get_onboarding_state: { Args: never; Returns: Json }
+      imperial_get_phase1_kpis: { Args: never; Returns: Json }
       imperial_get_rollout_state: {
         Args: never
         Returns: {
@@ -12796,6 +12892,10 @@ export type Database = {
         Returns: number
       }
       imperial_nft_tier_for: { Args: { _lifetime: number }; Returns: number }
+      imperial_phase1_emergency_pause: {
+        Args: { _reason?: string }
+        Returns: Json
+      }
       imperial_place_phon_bet: {
         Args: {
           p_amount: number
