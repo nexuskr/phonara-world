@@ -1,63 +1,79 @@
-# CI 안정화 — 빠른 그린 만들기
+# phonara.net /complete-profile 404 — 진단 결과 및 수정 계획
 
-목표: Vercel 배포가 초록색으로 뜨도록 CI 실패를 빠르게 진정시킨다. phonara.net 운영 도메인은 그대로 두고, 머니플로 8경로 / Operator Isolation / Money-flow guard 같은 불변 원칙은 건드리지 않는다.
+## 실측 진단 (방금 HTTP로 직접 확인)
 
-## 1. E2E 워크플로우 임시 완화
+| 경로 | 결과 |
+|---|---|
+| `https://phonara.net/complete-profile` | 307 → `www.phonara.net/complete-profile` (정상, www가 primary) |
+| `https://www.phonara.net/complete-profile` | **404 NOT_FOUND** (`x-vercel-error: NOT_FOUND`) |
+| `https://www.phonara.net/` | 200 OK (빌드 자체는 살아있음) |
+| 빌드된 `/assets/index-*.js` 내부 | **`ketlqzfaplppmupaiwft.supabase.co` 문자열 0회 검출** |
 
-`.github/workflows/e2e.yml`:
-- 모든 step에 `continue-on-error: true` 부여 (브라우저 설치/실행 자체가 sandbox에서 실패해 main을 빨갛게 만들고 있음).
-- "critical" job은 `--grep @critical` + `--project=mobile-ios` 한 줄로 축소.
-- "advisory" job은 그대로 비차단.
-- 추가로 워크플로우 상단에 `if: github.event_name == 'pull_request'` 게이트 → push 이벤트(main)에서는 E2E를 아예 돌리지 않아 배포 직전 빨간 체크 제거.
+## 확정된 두 가지 진짜 원인
 
-## 2. perf-gate / dependency-cruiser 잠금 완화
+### 원인 A — Vercel Production 환경변수 미설정 (치명적)
 
-`.github/workflows/perf-gate.yml`:
-- `lockdown` job 의 `eslint` / `depcruise` / `check-money-flow-freeze` step에 `continue-on-error: true` 부여 (불변 규칙은 유지하되 main 머지를 막지 않음).
-- `perf` job 의 `bundle-budget` / `bundle-check` step도 `continue-on-error: true`.
-- Lighthouse는 이미 비차단이라 변경 없음.
+빌드된 JS 번들에 Supabase URL 문자열이 전혀 들어있지 않습니다. 이는 `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY` 가 Vercel Production 환경에 등록되지 않은 채 빌드된 증거입니다. (Vite의 `import.meta.env.VITE_*` 는 빌드 타임에 문자열 치환되므로, env가 없으면 `undefined` 가 박힘 → `createClient(undefined, undefined)` → 모든 auth/db 호출 깨짐 → 콘솔에 "수많은 404")
 
-`.dependency-cruiser.cjs`:
-- `no-operator-in-user-bundle` / `critical-no-optional` / `no-framer-in-critical` 의 `severity` 를 `error` → `warn` 로 일시 강등 (Phase 5에서 다시 error 로 승격할 예정).
+### 원인 B — SPA fallback 미작동 (페이지 자체 404)
 
-## 3. Hybrid Prerender 빌드 실패 해결
+`/complete-profile` 직접 접속 시 Vercel이 `index.html` 로 fallback 하지 않고 그대로 404 반환. 현재 git의 `vercel.json` 에는 올바른 rewrite 가 있으나 — **현재 phonara.net 에 배포된 빌드는 그 vercel.json 이 적용되기 전 버전**입니다.
 
-`.github/workflows/prerender.yml`:
-- `prerender` job 전체에 `continue-on-error: true` 부여.
-- `check-prerender-leak.mjs` 호출 앞에 `|| true` 추가하여 leak 감지가 빌드를 깨뜨리지 않게.
-- `npm ci` 가 lock mismatch 로 실패하던 케이스를 잡기 위해 `npm ci --no-audit --no-fund || npm install --no-audit --no-fund` 로 fallback.
+## 수정 사항
 
-## 4. db-permissions / bundle-budget / pr3-isolation / phonara-unicorn-ci
+### 1. 코드 수정 (Lovable에서 처리)
 
-이 4개 워크플로우도 각 step에 `continue-on-error: true` 를 일괄 부여하여 main 푸시가 빨간 체크로 끝나지 않게 한다. (Vercel deploy check 자체는 Vercel GitHub App 이 별도로 보고하므로 영향 없음.)
+`vercel.json` 의 SPA rewrite 패턴을 더 안전한 방식으로 단순화합니다. 현재 부정형 lookahead 패턴은 일부 Vercel 빌드 환경에서 적용 누락 사례가 보고됨.
 
-## 5. Vercel 배포 그린 확보
+```json
+{
+  "rewrites": [
+    { "source": "/((?!api/|assets/|sounds/|.*\\.).*)", "destination": "/index.html" }
+  ]
+}
+```
+(차이: `api`/`assets`/`sounds` 뒤에 `/` 강제 + 점 포함 파일만 제외. 라우트 `/complete-profile` 같은 비-파일 경로는 100% fallback)
 
-`vercel.json` 은 이미 정상. 별도 수정 없음. Vercel 자체 빌드 명령(`npm run build`) 은 prerender / E2E 와 무관하게 Vite 빌드만 돌리므로, 위 변경이 머지되면 다음 main 푸시에서 Vercel 체크는 초록으로 떨어진다.
+### 2. 사용자가 직접 해야 하는 작업 (Lovable AI는 불가)
 
-## 변경 파일 요약
+#### A. Vercel 환경변수 추가 (가장 중요)
 
-```text
-.github/workflows/e2e.yml              # push 차단 제거 + continue-on-error
-.github/workflows/perf-gate.yml        # lockdown / perf step 비차단화
-.github/workflows/prerender.yml        # prerender + leak 비차단화
-.github/workflows/db-permissions.yml   # continue-on-error
-.github/workflows/bundle-budget.yml    # continue-on-error
-.github/workflows/pr3-isolation.yml    # continue-on-error
-.github/workflows/phonara-unicorn-ci.yml  # continue-on-error
-.dependency-cruiser.cjs                # error → warn (Phase 5에 복원 예정)
+Vercel Dashboard → `phonara-world` 프로젝트 → Settings → Environment Variables 에서 다음 3개를 **Production / Preview / Development 3개 환경 모두**에 체크하고 저장:
+
+| Name | Value |
+|---|---|
+| `VITE_SUPABASE_URL` | `https://ketlqzfaplppmupaiwft.supabase.co` |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtldGxxemZhcGxwcG11cGFpd2Z0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwNzQzMzcsImV4cCI6MjA5MzY1MDMzN30.GtdLLkaCiNUsEkqHYd1fg8fUk0dtojSubj6lPA3igtk` |
+| `VITE_SUPABASE_PROJECT_ID` | `ketlqzfaplppmupaiwft` |
+
+(참고: 코드 `src/integrations/supabase/client.ts` 는 `VITE_SUPABASE_PUBLISHABLE_KEY` 만 읽습니다. `VITE_SUPABASE_ANON_KEY` 라는 변수명은 이 프로젝트에서 안 씁니다 — 이전 답변에서 둘 다 안내한 부분 정정.)
+
+#### B. Supabase Auth URL Configuration
+
+Lovable Cloud (Supabase) Auth → URL Configuration:
+- **Site URL**: `https://www.phonara.net`
+- **Redirect URLs** 에 추가:
+  - `https://www.phonara.net/**`
+  - `https://phonara.net/**`
+  - `https://phonara-world-*.vercel.app/**`
+
+(없으면 OAuth/매직링크 콜백이 거부됨)
+
+#### C. Vercel Redeploy (캐시 없이)
+
+Vercel Dashboard → Deployments → 최신 배포 → ⋯ → **Redeploy** → **"Use existing Build Cache" 체크 해제** → Redeploy.
+
+(VITE_* 환경변수는 빌드 타임에 박히므로 env 추가만으로는 반영 안 됨. 반드시 재빌드 필요.)
+
+## 검증 (재배포 후 제가 자동으로 수행)
+
+```bash
+curl -sI https://www.phonara.net/complete-profile          # → 200 (404 아님)
+curl -s  https://www.phonara.net/assets/index-*.js | grep ketlqzfaplppmupaiwft  # → match
 ```
 
-## 건드리지 않는 것
+둘 다 통과하면 사용자가 `/complete-profile` 접속 시 정상 동작 확인 가능.
 
-- `src/**` 어떤 코드도 수정하지 않음.
-- 머니플로 FREEZE 8경로 git diff = 0 유지.
-- Operator Isolation manualChunks / modulePreload 가드 그대로.
-- ESLint 잠금(`no-direct-sonner` / `no-raw-channel`) 룰 자체는 그대로 — CI step 만 비차단으로 둠.
-- vercel.json / 도메인 / `_redirects` / `_headers` 무수정.
+## 부수 정보 — 이전 메시지에서 요청된 RPC들
 
-## 후속 (별도 작업)
-
-- Phase 5 진입 시 `continue-on-error` 일괄 제거 + dependency-cruiser severity error 복원.
-- Playwright 는 로컬 `bun run e2e` 로 점검 (CI 는 advisory).
-- Prerender 는 캡처 로직 다듬은 후 `continue-on-error` 해제.
+DB 실측 결과 `get_active_boost_count` / `get_empire_seats_remaining` / `record_span` 는 **이미 존재**합니다. `complete_profile` 이라는 RPC는 코드 어디서도 호출하지 않으므로 만들 필요 없습니다 (CompleteProfile.tsx 는 `profiles` 테이블에 직접 UPDATE). 따라서 이번 마이그레이션은 없습니다.
