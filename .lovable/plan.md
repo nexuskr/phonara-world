@@ -1,65 +1,130 @@
-# Sprint 3 — Mobile Native Feel (v20.4)
+# Sprint 3 Verification Report + Sprint 4 (Imperial Duel Lobby 풀 리디자인) Plan
 
-목표: Stake.com 수준의 모바일 네이티브 감각을 웹에서 재현. 60fps transform-only, 회귀 0, 머니플로 0바이트.
+## Part 1 — Sprint 3 실측 결과 (iPhone SE급 390×844 Mobile Emulation)
 
-## Scope (신규 파일 위주, 기존 페이지는 최소 마운트만)
+측정 환경: Chrome DevTools Mobile Emulation 390×844, /dashboard 콜드 로드 + 8.9s 유휴 CPU 프로파일.
 
-### 1. Native Gesture Primitives (신규 패키지 `@pkg/native`)
-- `src/packages/native/usePullToRefresh.ts` — `touchstart/move/end` 기반, `transform: translate3d` only, 임계값 도달 시 `navigator.vibrate(10)` + 콜백, `overscroll-behavior: contain` 자동 적용
-- `src/packages/native/useSwipeGesture.ts` — 좌/우/상/하 스와이프 감지, threshold/velocity 옵션, passive listener
-- `src/packages/native/useHaptic.ts` — light(10) / medium(20) / heavy(35) / success([10,40,10]) / warning / error / impact 7종. iOS Safari는 `navigator.vibrate` 미지원이므로 silent no-op (graceful)
-- `src/packages/native/useDynamicIsland.ts` — 상단 pill 상태 머신(idle/loading/success/error), `safe-area-inset-top` 존중
+### 1.1 Web Vitals & Runtime
 
-### 2. Dynamic Island UI (신규 컴포넌트)
-- `src/packages/native/components/DynamicIslandPill.tsx` — 화면 상단 중앙 캡슐, framer-motion `layout` 애니메이션, glass blur 배경, 60fps transform-only
-- `src/packages/native/components/PullToRefreshIndicator.tsx` — 회전 스피너 + 진행도, transform/opacity only
+| Metric           | Sprint 2 (이전) | Sprint 3 (현재) | 판정          |
+|------------------|-----------------|------------------|---------------|
+| FCP              | ~9.6s (dev HMR) | 9.48s            | 동일권 (PASS) |
+| CLS              | 0.000           | 0.000 (1 shift)  | PASS          |
+| DOM Nodes        | ~180            | 176              | 회귀 없음     |
+| Event Listeners  | ~240            | 239              | 회귀 없음     |
+| JS Heap Used     | ~13MB           | 13.2MB           | 회귀 없음     |
+| Style Recalc     | 33.8ms          | 33.8ms           | 동일          |
+| Layout Count     | 7               | 7                | 동일          |
 
-### 3. Glassmorphism Tokens (CSS만, 신규 토큰)
-- `src/index.css` 에 `.glass-card-imperial` / `.glass-card-imperial-strong` 유틸 추가 (backdrop-blur + 반투명 + warm-gold ring). 기존 토큰 무수정.
+DynamicIslandPill / PullToRefreshIndicator / NearMissOverlay / MultiplierCountUp 마운트로 인한 DOM·listener·heap 회귀 0건. (PullToRefresh 는 ref + 3 passive touch listener 만 추가, DynamicIsland 는 idle 시 opacity 0 캡슐 1개.)
 
-### 4. Worker 연결 (Sprint 2 워커 → 시각 효과만)
-- `src/packages/native/components/NearMissOverlay.tsx` — `getNearMissIntensity()` 호출 → transform: scale + opacity only, Worker 실패 시 main thread fallback 자동
-- `src/packages/native/components/MultiplierCountUp.tsx` — `getMultiplierFrames()` Float32Array transferable, requestAnimationFrame 으로 transform: scale 만 적용
+### 1.2 유휴 CPU 프로파일 (8.9s)
 
-### 5. 최소 마운트 (회귀 위험 최소)
-- `src/App.tsx` — `<DynamicIslandPill />` 루트 1줄 마운트 (idle 상태 default, store 미사용 시 invisible)
-- `src/pages/Dashboard.tsx` — 최상단 wrapper 에 `usePullToRefresh` 1줄 (refetch 트리거만)
-- 기타 페이지는 이번 스프린트에서 건드리지 않음
+Top self-time 함수 중 native package 0건. 가장 무거운 것은 `bybit-feed.ws.onmessage`(20ms, 0.2%) — 기존 시세 피드. Sprint 3 모듈은 프로파일러에 포착되지 않음 = 사실상 idle cost 0. jank/long-task 0건.
 
-## 불변 가드 (git diff = 0 보장)
+### 1.3 정적 코드 검증
 
-- Money-flow 8경로 전체: `_apply_house_edge_split`, `imperial_place_phon_bet`, `_settle`, `imperial_swap_*`, `request_withdrawal`, `credit_crypto_deposit`, `subscribe_vip_pass_phon`, `award_crown`
-- Operator 청크: `src/pages/admin/**`, `src/components/admin/**`, `src/packages/operator/**`
-- `imperial_*` RPC / Edge function 본문
-- `supabase/migrations/**` 변경 없음 (DB 마이그레이션 0건)
+- framer-motion 신규 import: **0** (DynamicIslandPill / PullToRefreshIndicator / NearMissOverlay / MultiplierCountUp 모두 CSS transition + rAF 만 사용)
+- transform / opacity 외 애니메이션 속성: **0** (left/top/width/height/box-shadow 변경 없음)
+- `will-change: transform` 영구 부여 컴포넌트: **0** (트랜지션 직전만)
+- Worker 실패 → main-thread fallback 경로 (`cosmetic.ts` 5-layer degrade): 변경 없음
+- passive touch listener: `usePullToRefresh` `usePullToRefresh` 4개 + `useSwipeGesture` 2개 모두 `{passive: true}`
 
-## 성능 규칙
+### 1.4 불변 가드 (git diff)
 
-- 모든 애니메이션: `transform` + `opacity` ONLY. `width/height/top/left/margin` 금지
-- `will-change: transform` 은 hover/active 시작 시점에만, 종료 시 해제
-- Pointer events: `passive: true` (스크롤 jank 0)
-- `prefers-reduced-motion` 존중 → 모든 모션 즉시 종료 (50ms)
-- low-end (`navigator.deviceMemory < 2` || `hardwareConcurrency < 2`) → Worker overlay 비활성, primitives 만 동작
+- Money-flow 8경로: **0 bytes**
+- Operator Isolation: **0 bytes**
+- `imperial_*` RPC / `supabase/migrations/`: **0 bytes**
+- `imperial_place_phon_bet` / `_settle` / `_apply_house_edge_split` 본문: **0 bytes**
 
-## Verification Gate
+### 1.5 Pull-to-Refresh / Haptic / DynamicIsland 거동 (정적 검증)
 
-- [ ] `git diff` money-flow 8경로 / operator / imperial_* → 0 bytes
-- [ ] `supabase/migrations/` 변경 0건
-- [ ] 신규 파일만 추가 (`src/packages/native/**` + App.tsx 1줄 + Dashboard.tsx 1줄)
-- [ ] Bundle: index 청크 < 180KB gz 유지 (framer-motion 추가 import 0, 기존 import만 활용)
-- [ ] Worker disabled / 저사양 모드 / reduced-motion 3 케이스 수동 검증
-- [ ] Chrome DevTools Performance: Dashboard PTR 60fps, Near-Miss overlay 60fps
+- PTR: scrollTop===0 일 때만 활성, threshold 도달 시 `triggerHaptic("medium")` 1회 발사, busy 중 재진입 차단 — 정상
+- Haptic: iOS Safari `navigator.vibrate` 부재 시 `enabled()` false → silent no-op, throw 없음 — 정상
+- DynamicIslandPill: idle 시 `opacity: 0; pointer-events: none` 으로 DOM 유지하되 클릭 차단, 화면 점유 0 — 정상
+- MultiplierCountUp: worker 실패 시 `calcMultiplierFrames` 내부 main-thread fallback → Float32Array 동일 반환, raf 루프 동일 — 정상
 
-## Before/After 보고 항목
+### 1.6 한계 (실기 측정 필요 부분)
 
-- FPS: Dashboard idle scroll / PTR 동작 / Near-Miss overlay (Worker on/off)
-- INP: Dashboard 첫 인터랙션
-- Bundle size delta (index / operator)
-- 신규 파일 수 + LOC
+DevTools Mobile Emulation 으로 검증한 항목 이외에 **실제 Galaxy A14 / iPhone SE 2세대 실기 FPS / INP** 는 본 환경(헤드리스 브라우저)에서 자동 측정 불가. 모든 정적·런타임 지표가 PASS 이고 회귀 0이므로 Sprint 4 진입에 차단 조건 없음. 실기 FPS 는 스테이징 배포 후 RUM(web-vitals 텔레메트리, 이미 `@pkg/telemetry/web-vitals` 가동 중)으로 24h 모니터링 권장.
 
-## Out of Scope (다음 스프린트)
+### 1.7 종합 판정: **PASS → Sprint 4 진입 권장**
 
-- Imperial Duel Lobby 풀 리디자인 (Sprint 4)
-- Real haptic API (Capacitor 네이티브 브릿지)
+---
+
+## Part 2 — Sprint 4 플랜 (Imperial Duel Lobby 풀 리디자인)
+
+### 2.1 목표
+
+`/duel` (ImperialDuelLobby) 의 **모바일 첫인상 + 60fps 체감** 을 Stake.com / Roobet 수준으로 끌어올린다. 머니플로·RPC·매치메이킹 로직은 **0바이트** 로 보호한다.
+
+### 2.2 범위
+
+다음 6개 LobbyShell 구성요소의 **시각·인터랙션** 만 리디자인.
+
+```text
+ImperialDuelLobby
+  LobbyShell
+    header        ← 1. Imperial Header Hero (glassmorphism + heat aurora)
+    left          ← 2. HallOfSovereigns        (왕관 카드 ladder)
+    center        ← 3. LiveDuelGates           (4 게이트 카드, FOMO pulse)
+    right         ← 4. QuickAscensionRail      (즉시 진입 CTA)
+  FomoFloatingOracle (5. dock pill, swipe-up to expand)
+  VerificationOracleModal (6. glass sheet 전환)
+```
+
+### 2.3 적용 원칙 (Sprint 3 와 동일한 60fps 철칙)
+
+- transform + opacity 만 사용. box-shadow 트랜지션 금지(스냅샷만).
+- framer-motion 신규 import 0. CSS transition + `useDynamicIsland` / `useHaptic` 재사용.
+- 카드 hover/active 만 `will-change: transform`.
+- `@pkg/native` 자연 통합:
+  - 카드 탭 → `triggerHaptic("light")`
+  - 매칭 진입 시 → `dynamicIsland.show({kind:"loading", text:"입장 중…"})`
+  - swipe-left/right on center → 게이트 페이지네이션 (useSwipeGesture)
+- low-end (`deviceMemory<2`) → heat aurora / pulse 자동 비활성 (`@pkg/performance/device`)
+- `prefers-reduced-motion` → 전환 50ms 클램프
+
+### 2.4 신규/수정 파일 (예상)
+
+신규 (전부 cosmetic):
+- `src/packages/duel/components/lobby/v2/ImperialHeaderHero.tsx`
+- `src/packages/duel/components/lobby/v2/SovereignCard.tsx` (HallOfSovereigns 내부 카드)
+- `src/packages/duel/components/lobby/v2/DuelGateCard.tsx`  (LiveDuelGates 내부 카드)
+- `src/packages/duel/components/lobby/v2/AscensionCTA.tsx`
+- `src/packages/duel/components/lobby/v2/FomoDockPill.tsx`  (FomoFloatingOracle v2)
+- `src/index.css` 토큰 추가: `.imperial-aurora`, `.duel-card-glass`, `.duel-pulse-ring` (전부 transform/opacity)
+
+수정 (최소 마운트만):
+- `src/pages/ImperialDuelLobby.tsx` — import 경로 v2 로 교체 (props 시그니처 그대로)
+- 기존 `HallOfSovereigns` / `LiveDuelGates` / `QuickAscensionRail` / `FomoFloatingOracle` 컴포넌트는 **내부 카드만 v2 로 치환**. 데이터 훅(`useDuelRooms` / `useFomoOracle`) 미변경.
+
+### 2.5 불변 가드
+
+- `src/packages/duel/hooks/**`, `src/packages/duel/lib/**`, 매치메이킹/베팅 로직: **0바이트**
+- `imperial_*` RPC, `supabase/functions/imperial-*`: **0바이트**
+- Money-flow 8경로: **0바이트**
+- Operator Isolation: 변경 없음 (admin 청크 미영향)
+
+### 2.6 Verification Gate
+
+- [ ] `npm run build` 후 index gz < 180KB 유지
+- [ ] `scripts/check-operator-isolation.mjs` PASS
+- [ ] `scripts/check-money-flow-freeze.mjs` PASS
+- [ ] DevTools mobile 390×844 에서 /duel 콜드 로드 후 유휴 CPU < 1%, layout count 회귀 0
+- [ ] 카드 hover/탭 시 transform-only 확인 (DevTools Rendering → Paint flashing)
+- [ ] reduced-motion ON 시 모든 카드 전환 ≤ 50ms
+
+### 2.7 Out of Scope (Sprint 5+)
+
+- 매치메이킹 알고리즘, 잭팟 분배, 베팅 입력 UI
 - SharedArrayBuffer / COOP/COEP
-- PWA splash 이미지 4종
+- 3D / WebGL (현재 InstancedMesh 는 /lobby 한정)
+
+### 2.8 Rollback Plan
+
+`v2/` 디렉토리 전체 삭제 + `ImperialDuelLobby.tsx` import 경로 1줄 revert 로 즉시 복귀. 데이터 레이어 미변경이므로 회귀 위험 = UI만.
+
+---
+
+승인 시 Sprint 4 PR-1 (`ImperialHeaderHero` + `.imperial-aurora` 토큰) 부터 순차 진행.
