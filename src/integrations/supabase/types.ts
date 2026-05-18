@@ -4202,6 +4202,8 @@ export type Database = {
           id: number
           meta: Json
           reason: string
+          rolled_back_at: string | null
+          rolled_back_by: string | null
           trigger_tier: string | null
           trigger_vol_score: number | null
           ts: string
@@ -4213,6 +4215,8 @@ export type Database = {
           id?: number
           meta?: Json
           reason: string
+          rolled_back_at?: string | null
+          rolled_back_by?: string | null
           trigger_tier?: string | null
           trigger_vol_score?: number | null
           ts?: string
@@ -4224,6 +4228,8 @@ export type Database = {
           id?: number
           meta?: Json
           reason?: string
+          rolled_back_at?: string | null
+          rolled_back_by?: string | null
           trigger_tier?: string | null
           trigger_vol_score?: number | null
           ts?: string
@@ -4295,6 +4301,156 @@ export type Database = {
           reward_phon?: number
           stage_no?: number
           title?: string
+        }
+        Relationships: []
+      }
+      imperial_kill_switch_audit: {
+        Row: {
+          actor: string | null
+          created_at: string
+          enabled: boolean
+          id: number
+          key: string
+          reason: string | null
+        }
+        Insert: {
+          actor?: string | null
+          created_at?: string
+          enabled: boolean
+          id?: number
+          key: string
+          reason?: string | null
+        }
+        Update: {
+          actor?: string | null
+          created_at?: string
+          enabled?: boolean
+          id?: number
+          key?: string
+          reason?: string | null
+        }
+        Relationships: []
+      }
+      imperial_kill_switches: {
+        Row: {
+          enabled: boolean
+          key: string
+          reason: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          enabled?: boolean
+          key: string
+          reason?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          enabled?: boolean
+          key?: string
+          reason?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      imperial_nft_audit: {
+        Row: {
+          created_at: string
+          from_tier: number
+          id: number
+          lifetime_burn: number
+          reason: string | null
+          to_tier: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          from_tier: number
+          id?: number
+          lifetime_burn: number
+          reason?: string | null
+          to_tier: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          from_tier?: number
+          id?: number
+          lifetime_burn?: number
+          reason?: string | null
+          to_tier?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      imperial_rollback_snapshots: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          event_id: string
+          id: number
+          post: Json | null
+          pre: Json
+          reason: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          event_id: string
+          id?: number
+          post?: Json | null
+          pre: Json
+          reason?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          event_id?: string
+          id?: number
+          post?: Json | null
+          pre?: Json
+          reason?: string | null
+        }
+        Relationships: []
+      }
+      imperial_rollout_consents: {
+        Row: {
+          consented_at: string
+          user_id: string
+          version: string
+        }
+        Insert: {
+          consented_at?: string
+          user_id: string
+          version?: string
+        }
+        Update: {
+          consented_at?: string
+          user_id?: string
+          version?: string
+        }
+        Relationships: []
+      }
+      imperial_rollout_tiers: {
+        Row: {
+          tier: number
+          updated_at: string
+          updated_by: string | null
+          user_id: string
+        }
+        Insert: {
+          tier?: number
+          updated_at?: string
+          updated_by?: string | null
+          user_id: string
+        }
+        Update: {
+          tier?: number
+          updated_at?: string
+          updated_by?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -4406,6 +4562,45 @@ export type Database = {
         }
         Relationships: []
       }
+      imperial_token_burns: {
+        Row: {
+          base_amount: number
+          burn_amount: number
+          burn_rate: number
+          created_at: string
+          id: number
+          meta: Json
+          ref_id: string | null
+          ref_type: string | null
+          source: Database["public"]["Enums"]["imperial_burn_source"]
+          user_id: string | null
+        }
+        Insert: {
+          base_amount: number
+          burn_amount: number
+          burn_rate: number
+          created_at?: string
+          id?: number
+          meta?: Json
+          ref_id?: string | null
+          ref_type?: string | null
+          source: Database["public"]["Enums"]["imperial_burn_source"]
+          user_id?: string | null
+        }
+        Update: {
+          base_amount?: number
+          burn_amount?: number
+          burn_rate?: number
+          created_at?: string
+          id?: number
+          meta?: Json
+          ref_id?: string | null
+          ref_type?: string | null
+          source?: Database["public"]["Enums"]["imperial_burn_source"]
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       imperial_treasury_ledger: {
         Row: {
           balance_after: number | null
@@ -4436,6 +4631,30 @@ export type Database = {
           ref_id?: string | null
           source?: string
           ts?: string
+        }
+        Relationships: []
+      }
+      imperial_user_nfts: {
+        Row: {
+          last_upgraded_at: string | null
+          lifetime_burn: number
+          tier: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          last_upgraded_at?: string | null
+          lifetime_burn?: number
+          tier?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          last_upgraded_at?: string | null
+          lifetime_burn?: number
+          tier?: number
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -10108,6 +10327,7 @@ export type Database = {
         Returns: undefined
       }
       _mask_nick: { Args: { _n: string }; Returns: string }
+      _maybe_upgrade_nft: { Args: { _user: string }; Returns: undefined }
       _period_key: { Args: { _period: string }; Returns: string }
       _recompute_emission_scale: { Args: never; Returns: number }
       _recompute_volatility_tier: { Args: never; Returns: string }
@@ -10347,6 +10567,7 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      admin_get_burn_distribution: { Args: { _hours?: number }; Returns: Json }
       admin_get_demo_bias_perf: { Args: never; Returns: Json }
       admin_get_duel_health_24h: { Args: never; Returns: Json }
       admin_get_duel_metrics_24h: { Args: never; Returns: Json }
@@ -10903,6 +11124,10 @@ export type Database = {
         Args: { _key: string; _value: Json }
         Returns: Json
       }
+      admin_set_imperial_kill_switch: {
+        Args: { _enabled: boolean; _key: string; _reason?: string }
+        Returns: undefined
+      }
       admin_set_kill_switch: {
         Args: { _enabled: boolean; _key: string; _reason?: string }
         Returns: {
@@ -10918,6 +11143,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      admin_set_rollout_tier: {
+        Args: { _tier: number; _user: string }
+        Returns: undefined
       }
       admin_set_source_weight: {
         Args: { _max_lag_ms?: number; _source: string; _weight: number }
@@ -11076,6 +11305,18 @@ export type Database = {
         Returns: Json
       }
       apply_referral_code: { Args: { _code: string }; Returns: Json }
+      apply_token_burn: {
+        Args: {
+          _base: number
+          _meta?: Json
+          _ref_id: string
+          _ref_type: string
+          _source: Database["public"]["Enums"]["imperial_burn_source"]
+          _tier?: string
+          _user: string
+        }
+        Returns: number
+      }
       approve_admin_recovery: { Args: { _request_id: string }; Returns: Json }
       arena_join_duel: { Args: { p_round_id: string }; Returns: Json }
       arena_open_round: {
@@ -11405,6 +11646,8 @@ export type Database = {
         }
         Returns: Json
       }
+      emergency_freeze_all: { Args: { _reason: string }; Returns: undefined }
+      emergency_unfreeze_all: { Args: { _reason: string }; Returns: undefined }
       enforce_rate_limit: {
         Args: { _max_per_min: number; _scope: string }
         Returns: undefined
@@ -11612,6 +11855,15 @@ export type Database = {
       get_bot_mix_metrics: { Args: never; Returns: Json }
       get_bot_online_count: { Args: never; Returns: number }
       get_bot_total_users: { Args: never; Returns: number }
+      get_burn_leaderboard: {
+        Args: { _limit?: number }
+        Returns: {
+          lifetime_burn: number
+          rank: number
+          tier: number
+          user_id: string
+        }[]
+      }
       get_cockpit_snapshot: { Args: never; Returns: Json }
       get_competitor_compare: {
         Args: never
@@ -12358,6 +12610,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      imperial_can_participate: { Args: { _user: string }; Returns: Json }
       imperial_cancel_duel: { Args: { p_room_id: string }; Returns: Json }
       imperial_compute_display_signals: {
         Args: {
@@ -12368,7 +12621,17 @@ export type Database = {
         }
         Returns: Json
       }
+      imperial_get_burn_rate: {
+        Args: {
+          _meta?: Json
+          _source: Database["public"]["Enums"]["imperial_burn_source"]
+          _tier?: string
+        }
+        Returns: number
+      }
       imperial_get_duel_state: { Args: { p_room_id: string }; Returns: Json }
+      imperial_is_betting_allowed: { Args: never; Returns: boolean }
+      imperial_nft_tier_for: { Args: { _lifetime: number }; Returns: number }
       imperial_place_phon_bet: {
         Args: {
           p_amount: number
@@ -12378,6 +12641,7 @@ export type Database = {
         }
         Returns: Json
       }
+      imperial_record_consent: { Args: never; Returns: undefined }
       imperial_settle_duel: {
         Args: { p_room_id: string; p_server_seed: string }
         Returns: Json
@@ -12963,6 +13227,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      rollback_injection_event: {
+        Args: { _event_id: string; _reason: string }
+        Returns: Json
+      }
       roulette_daily_limit: {
         Args: { _tier: Database["public"]["Enums"]["user_tier"] }
         Returns: number
@@ -13389,6 +13657,7 @@ export type Database = {
         | "title"
       deposit_method: "bank" | "coin" | "voucher"
       deposit_status: "pending" | "approved" | "rejected" | "cancelled"
+      imperial_burn_source: "house_edge" | "volatility" | "near_miss" | "manual"
       live_idem_status: "reserved" | "completed" | "failed"
       package_status:
         | "pending"
@@ -13571,6 +13840,7 @@ export const Constants = {
       ],
       deposit_method: ["bank", "coin", "voucher"],
       deposit_status: ["pending", "approved", "rejected", "cancelled"],
+      imperial_burn_source: ["house_edge", "volatility", "near_miss", "manual"],
       live_idem_status: ["reserved", "completed", "failed"],
       package_status: [
         "pending",
