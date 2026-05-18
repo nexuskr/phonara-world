@@ -46,7 +46,7 @@ export default function PhonaraNav() {
       navigate("/phon");
     },
     onLong: () => {
-      haptics.success?.();
+      haptics.win();
       notify.success("⚔️ 황제의 대관전", { duration: 800 });
       navigate("/duel");
     },
