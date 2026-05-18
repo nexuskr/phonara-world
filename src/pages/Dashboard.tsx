@@ -5,6 +5,7 @@ import { Crown, Sparkles, Zap, TrendingUp, ChevronRight } from "lucide-react";
 import ImperialLiveActivity from "@/components/live/ImperialLiveActivity";
 import ImperialPresenceBar from "@/components/live/ImperialPresenceBar";
 import ImperialTradeSection from "@/components/dashboard/ImperialTradeSection";
+import InviteRailMini from "@/components/onboarding/InviteRailMini";
 
 /**
  * Dashboard — v19 Round 3 Imperial Empire World #1.
