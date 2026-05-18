@@ -216,6 +216,7 @@ export default function AdminDuel() {
               </button>
             </div>
           </div>
+          <DuelHealthDashboard />
         </>
       )}
     </div>
