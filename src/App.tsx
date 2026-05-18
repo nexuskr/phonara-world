@@ -23,6 +23,7 @@ import { AdultGate } from "./components/AdultGate";
 import MaintenanceGate from "./components/MaintenanceGate";
 import { DegradeModeBinder } from "./components/system/DegradeModeBinder";
 import { DegradeModeBanner } from "./components/system/DegradeModeBanner";
+import { DynamicIslandPill } from "@/packages/native/components/DynamicIslandPill";
 import { registerSW } from "./lib/pwa/registerSW";
 
 installGlobalErrorLogging();
@@ -223,6 +224,7 @@ const App = () => (
         <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <DegradeModeBanner />
           <DegradeModeBinder />
+          <DynamicIslandPill />
           <SessionWatcher />
           <ReviewerMaskRoot />
           <ReviewerBadge />

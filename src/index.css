@@ -715,3 +715,34 @@ html.win-shake-active body {
 @media (prefers-reduced-motion: reduce) {
   .imperial-jackpot-breathe { animation: none; }
 }
+
+/* Phase 4 Sprint 3 — Glassmorphism Imperial tokens (transform/opacity only animations elsewhere) */
+@layer utilities {
+  .glass-card-imperial {
+    background: linear-gradient(135deg, hsl(var(--card) / 0.55), hsl(var(--card) / 0.35));
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    border: 1px solid hsl(45 90% 60% / 0.18);
+    box-shadow:
+      0 1px 0 hsl(45 90% 70% / 0.15) inset,
+      0 10px 30px -12px hsl(0 0% 0% / 0.45);
+  }
+  .glass-card-imperial-strong {
+    background: linear-gradient(135deg, hsl(var(--card) / 0.78), hsl(var(--card) / 0.55));
+    backdrop-filter: blur(22px) saturate(160%);
+    -webkit-backdrop-filter: blur(22px) saturate(160%);
+    border: 1px solid hsl(45 90% 60% / 0.28);
+    box-shadow:
+      0 1px 0 hsl(45 90% 70% / 0.22) inset,
+      0 18px 40px -14px hsl(0 0% 0% / 0.55);
+  }
+  /* low-end / reduced-motion fallback — blur 비활성 (GPU 절약) */
+  @media (prefers-reduced-transparency: reduce), (prefers-reduced-motion: reduce) {
+    .glass-card-imperial,
+    .glass-card-imperial-strong {
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      background: hsl(var(--card));
+    }
+  }
+}
