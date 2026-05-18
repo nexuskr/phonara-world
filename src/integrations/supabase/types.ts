@@ -4612,6 +4612,8 @@ export type Database = {
       }
       imperial_rollout_phases: {
         Row: {
+          activated_at: string | null
+          cap: number | null
           ended_at: string | null
           id: number
           metrics_snapshot: Json
@@ -4620,8 +4622,11 @@ export type Database = {
           started_at: string
           started_by: string | null
           status: string
+          tier: number | null
         }
         Insert: {
+          activated_at?: string | null
+          cap?: number | null
           ended_at?: string | null
           id?: number
           metrics_snapshot?: Json
@@ -4630,8 +4635,11 @@ export type Database = {
           started_at?: string
           started_by?: string | null
           status?: string
+          tier?: number | null
         }
         Update: {
+          activated_at?: string | null
+          cap?: number | null
           ended_at?: string | null
           id?: number
           metrics_snapshot?: Json
@@ -4640,6 +4648,7 @@ export type Database = {
           started_at?: string
           started_by?: string | null
           status?: string
+          tier?: number | null
         }
         Relationships: []
       }
@@ -12882,15 +12891,17 @@ export type Database = {
         }[]
       }
       imperial_is_betting_allowed: { Args: never; Returns: boolean }
-      imperial_log_observability: {
-        Args: {
-          _dedupe_key?: string
-          _kind: string
-          _payload?: Json
-          _severity?: string
-        }
-        Returns: number
-      }
+      imperial_log_observability:
+        | { Args: { _event: string; _payload?: Json }; Returns: undefined }
+        | {
+            Args: {
+              _dedupe_key?: string
+              _kind: string
+              _payload?: Json
+              _severity?: string
+            }
+            Returns: number
+          }
       imperial_nft_tier_for: { Args: { _lifetime: number }; Returns: number }
       imperial_phase1_emergency_pause: {
         Args: { _reason?: string }
@@ -12906,10 +12917,15 @@ export type Database = {
         Returns: Json
       }
       imperial_record_consent: { Args: never; Returns: undefined }
-      imperial_rollout_activate: {
-        Args: { _metrics?: Json; _notes?: string; _phase: number }
-        Returns: number
-      }
+      imperial_rollout_activate:
+        | {
+            Args: { _activated_by: string; _notes?: string; _phase: number }
+            Returns: number
+          }
+        | {
+            Args: { _metrics?: Json; _notes?: string; _phase: number }
+            Returns: number
+          }
       imperial_settle_duel: {
         Args: { p_room_id: string; p_server_seed: string }
         Returns: Json
