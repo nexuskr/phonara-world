@@ -1,5 +1,6 @@
 /**
  * LiveDuelGates — Center wing: 4 cinematic Duel cards.
+ * Sprint 4 PR-2: duel-card-glass + duel-pulse-ring + haptic + DynamicIsland.
  */
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -7,10 +8,13 @@ import { Swords, Flame, ChevronRight } from "lucide-react";
 import type { DuelRoom } from "@pkg/duel";
 import { HeatLevelBadge } from "./HeatLevelBadge";
 import { SpectatorCount } from "./SpectatorCount";
+import { triggerHaptic } from "@/packages/native";
+import { dynamicIsland } from "@/packages/native/useDynamicIsland";
 
 const OBJECT_GLYPH: Record<string, string> = { wheel: "◎", card: "♛", dice: "⚀" };
 
 function DuelCard({ room, idx }: { room: DuelRoom; idx: number }) {
+  const isHot = room.heat >= 3;
   return (
     <motion.div
       initial={{ opacity: 0, y: 14 }}
@@ -22,9 +26,18 @@ function DuelCard({ room, idx }: { room: DuelRoom; idx: number }) {
     >
       <Link
         to={`/duel/arena/${room.id}`}
-        className="imperial-card imperial-card-hover imperial-corner-shine relative block overflow-hidden rounded-3xl border border-amber-400/25 bg-gradient-to-br from-[#160a05] via-[#0A0503] to-[#1a0a14] p-4 active:scale-[0.985] transition-transform"
+        onClick={() => {
+          triggerHaptic("light");
+          dynamicIsland.show({ kind: "loading", text: `${room.title} 입장 중…`, ttl: 1800 });
+        }}
+        className={[
+          "duel-card-glass relative block overflow-hidden rounded-3xl p-4",
+          "active:scale-[0.985] transition-transform",
+          isHot ? "duel-pulse-ring" : "",
+        ].join(" ")}
+        style={{ transition: "transform 140ms cubic-bezier(.2,.8,.2,1)" }}
       >
-        {/* 3-layer glow */}
+        {/* 3-layer corner glow (snapshot, no animation) */}
         <span aria-hidden className="pointer-events-none absolute -inset-px rounded-3xl"
               style={{ boxShadow: "inset 0 0 0 1px hsl(38 92% 60% / 0.18), 0 0 22px hsl(38 92% 56% / 0.10), 0 0 44px hsl(330 90% 60% / 0.06)" }} />
         <div className="flex items-center justify-between gap-2">
