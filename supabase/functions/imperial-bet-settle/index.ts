@@ -65,8 +65,9 @@ Deno.serve(async (req) => {
   const latency_ms = Date.now() - t0;
 
   if (error) {
+    console.error("[imperial-bet-settle] settle_failed", { trace_id, raw: error.message });
     await tlog(trace_id, FN, "error", "settle_failed", { latency_ms, raw: error.message });
-    return json(409, { error_code: "rpc_error", error: error.message }, trace_id);
+    return json(409, { error_code: "rpc_error", error: "bet_settlement_failed" }, trace_id);
   }
 
   await tlog(trace_id, FN, "info", "settle_ok", { room_id: parsed.data.room_id, latency_ms });

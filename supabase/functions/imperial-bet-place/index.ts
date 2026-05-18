@@ -85,8 +85,9 @@ Deno.serve(async (req) => {
   if (error) {
     const code = (error.message || "").trim().split(/[:\s]/)[0];
     const ko = ERR_KO[code] || "베팅 처리 중 오류가 발생했습니다.";
+    console.error("[imperial-bet-place] bet_failed", { trace_id, code, raw: error.message });
     await tlog(trace_id, FN, code === "room_frozen" ? "warn" : "error", "bet_failed", { code, latency_ms, raw: error.message });
-    return json(409, { error_code: code || "rpc_error", error: ko, raw: error.message }, trace_id);
+    return json(409, { error_code: code || "rpc_error", error: ko }, trace_id);
   }
 
   await tlog(trace_id, FN, "info", "bet_placed", { room_id, side, amount_phon, latency_ms });
