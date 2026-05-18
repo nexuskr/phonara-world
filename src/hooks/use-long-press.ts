@@ -65,9 +65,16 @@ export function useLongPress<T extends HTMLElement = HTMLElement>(opts: {
   }, [clear]);
 
   const onContextMenu = useCallback((e: React.MouseEvent<T>) => {
-    // block mobile long-press context menu
+    // block mobile long-press context menu and trigger long-press action instead
     e.preventDefault();
-  }, []);
+    e.stopPropagation();
+    // treat context-menu as a long-press
+    if (!firedRef.current) {
+      firedRef.current = true;
+      setPressing(false);
+      onLong?.();
+    }
+  }, [onLong]);
 
   return {
     pressing,

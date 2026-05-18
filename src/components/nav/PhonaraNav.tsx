@@ -87,6 +87,7 @@ export default function PhonaraNav() {
                       glow-imperial-xl pulse-halo
                       active:scale-95 transition-transform duration-150
                       touch-none select-none will-change-transform
+                      -webkit-touch-callout-none
                     "
                   >
                     <Crown className="w-6 h-6" strokeWidth={2.5} />
