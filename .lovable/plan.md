@@ -1,440 +1,471 @@
-# Phonara.world — Ultimate E2E Testing Framework (Phase 1: Architecture Proposal)
+# PHONARA Ω∞ — SOVEREIGN VERIFICATION OS
 
-> 목표: Stake / Rollbit / Bybit / Binance 를 압도하는 **단일 통합 E2E + Chaos + Network + HAR + Contract + Security + Resilience** 프레임워크.
-> 핵심 원칙: **Money-flow 8경로 0-byte FREEZE**, **Operator Isolation**, **Client→DB 직접 조작 불가 증명**, **불변 가드 0 bytes**.
+> Not a QA suite. A **self-governing verification operating system** that continuously proves integrity, survivability, replayability, safety, isolation, and financial consistency of the entire Phonara runtime — and refuses to let the platform ship when it cannot.
 
----
-
-## 0. 사전 합의가 필요한 의사결정 (Phase 2 진입 전 확인)
-
-1. 실행 환경 — **Lovable preview 도메인** 만 대상으로 할지, `phonara.world` (production) 도 야간 cron 으로 돌릴지?
-2. 테스트 계정 정책 — `e2e_seed_user_create()` 류 RPC 를 신규로 만들 수 있나? (현재 DB에는 없음 — money-flow 0-byte FREEZE 와 분리된 별도 스키마 `e2e.*` 로 격리 권장)
-3. CI 실행 — GitHub Actions runner 만 쓸지, self-hosted runner (Asia region) 도 둘지? (Chaos 계열은 latency 민감)
-4. Secret Rotation 의 "Primary" 가 GitHub repository secrets 인지, GitHub Environment secrets 인지, 아니면 Lovable Cloud 의 secrets 인지? (Fallback 계층의 출발점이 달라짐)
-
-위 4개는 Phase 2 작성 직전에 ask_questions 로 다시 확인합니다.
+> All 19 sections of the Imperial Directive are encoded into 8 buildable **subsystems** below. Each subsystem has: laws it enforces, artifacts it produces, and a verifiable acceptance gate.
 
 ---
 
-## 1. Architecture Proposal (한 장 요약)
+## 0. Boundaries (Section 1, 2, 14 — IMMUTABLE)
+
+| Law | Mechanism in this build |
+|---|---|
+| Money-flow 8-path FROZEN | `scripts/check-money-flow-freeze.mjs` already present → wired as a **mandatory pre-suite gate**. Any suite that detects a 1-byte diff against the 8 paths → CRITICAL, run aborts before fixtures load. |
+| No client money write | Suite `05-rls-direct` brute-attempts INSERT/UPDATE/DELETE on all money tables with anon + authenticated clients. Expected: 100% denial. Any success → CRITICAL. |
+| Operator never in user bundle | `check-operator-isolation.mjs` + new `op-fortress.scan.ts` extends to: HAR, preload chain, service worker, IndexedDB, localStorage, sourcemaps, websocket frames, hydration payload. |
+| Production untouchable | Hard env split. `BLAST_RADIUS=preview` is the **only** value that unlocks chaos / mutation suites. Production targets get `read-only-observatory` profile (assertions only, zero writes). |
+| AI assumptions distrusted | All AI-generated artifacts pass through **Hallucination Containment Gate** (§4) before being written. |
+
+These boundaries are wired as **pre-flight verifications**. If any fails, the kernel exits with code 78 (neutral) on schedule runs and code 1 on `main`.
+
+---
+
+## 1. Subsystem map
 
 ```text
-┌─────────────────────────────────────────────────────────────────────────┐
-│                  Phonara E2E Imperial Test Framework                    │
-│                                                                         │
-│  ┌──────────────┐   ┌──────────────┐   ┌──────────────┐   ┌──────────┐  │
-│  │  Playwright  │   │  fast-check  │   │   Newman /   │   │  Chaos   │  │
-│  │  (browser)   │   │ (property)   │   │   Postman    │   │ Injector │  │
-│  └──────┬───────┘   └──────┬───────┘   └──────┬───────┘   └────┬─────┘  │
-│         │                  │                  │                │        │
-│         └──────────┬───────┴────────┬─────────┴────────┬───────┘        │
-│                    │                │                  │                │
-│              ┌─────▼─────┐    ┌─────▼─────┐      ┌─────▼─────┐          │
-│              │  HAR /    │    │  Zod      │      │ Telemetry │          │
-│              │  Network  │    │ Contract  │      │ Assertion │          │
-│              │ Intercept │    │ Validator │      │ (client_  │          │
-│              └─────┬─────┘    └─────┬─────┘      │ metrics)  │          │
-│                    │                │             └─────┬─────┘          │
-│                    └────────┬───────┴───────────────────┘                │
-│                             │                                           │
-│                   ┌─────────▼──────────┐                                │
-│                   │ SecretRotationMgr  │  ← 5-layer fallback            │
-│                   │ + AuditTrail       │                                │
-│                   └─────────┬──────────┘                                │
-│                             │                                           │
-│         ┌───────────────────┼───────────────────────┐                   │
-│         │                   │                       │                   │
-│   ┌─────▼─────┐       ┌─────▼─────┐           ┌─────▼─────┐             │
-│   │ Preview   │       │ Supabase  │           │ Edge Fns  │             │
-│   │ (browser) │       │ (RLS only)│           │ (verify_  │             │
-│   │           │       │ — anon ky │           │  jwt)     │             │
-│   └───────────┘       └───────────┘           └───────────┘             │
-└─────────────────────────────────────────────────────────────────────────┘
+                       ┌────────────────────────────────────────┐
+                       │  PHONARA VERIFICATION OS (kernel)      │
+                       │  governance-kernel/                    │
+                       └──┬─────────────────────────────────────┘
+                          │
+   ┌──────────────────────┼──────────────────────────────────────┐
+   │                      │                                      │
+┌──▼──────────┐    ┌──────▼──────┐    ┌────────────┐    ┌────────▼──────┐
+│ S1 Topology │    │ S2 Halluc.  │    │ S3 Replay  │    │ S4 Temporal   │
+│ Discovery   │    │ Containment │    │ Capsule    │    │ Consistency   │
+│ (frontend/  │    │ (verify     │    │ (HAR + ws  │    │ (causality    │
+│  db/edge/   │    │  before     │    │  + DOM +   │    │  graph,       │
+│  realtime/  │    │  generate)  │    │  storage + │    │  monotonic    │
+│  oracle)    │    │             │    │  oracle)   │    │  seq, races)  │
+└──┬──────────┘    └─────────────┘    └────────────┘    └───────────────┘
+   │
+┌──▼──────────┐    ┌─────────────┐    ┌────────────┐    ┌───────────────┐
+│ S5 Financial│    │ S6 Realtime │    │ S7 Oracle  │    │ S8 Telemetry  │
+│ Invariant   │    │ Warfare     │    │ Dominance  │    │ Truth Engine  │
+│ (ledger     │    │ (storms,    │    │ (stale,    │    │ (client → edge│
+│  conserv.)  │    │  shards)    │    │  divergent)│    │  → dashboard) │
+└─────────────┘    └─────────────┘    └────────────┘    └───────────────┘
+                          │
+                          │      cross-cuts:
+                          │      - Operator Fortress (§11)
+                          │      - Exploit Hunter (§12)
+                          │      - Execution Economics (§13)
+                          │      - Failure Intelligence (§15)
+                          │      - Governance Score (§16)
+                          │      - Self-Evolving (§17)
+                          │      - Dual-AI cross-audit (§18)
 ```
 
-### 1.1 폴더 구조 (Phase 2 확정안)
+Repo layout:
 
 ```text
-e2e/
-├── playwright.config.ts          # 5 projects: chromium-desktop, mobile-ios, mobile-android, low-end, chaos
-├── global-setup.ts               # SecretRotationManager 부팅 + auth state 캐싱
-├── fixtures/
-│   ├── auth.fixture.ts           # storageState 재사용 (admin / user / fresh / aal2)
-│   ├── network.fixture.ts        # request interception + HAR recorder
-│   ├── chaos.fixture.ts          # latency / offline / 5xx injector
-│   └── telemetry.fixture.ts      # client_metrics & error_log assertion helper
-├── factories/                    # fast-check arbitraries
-│   ├── money.ts                  # PHON/KRW/USDT amount generators
-│   ├── duel.ts                   # imperial_duel bet generator
-│   └── user.ts
-├── contracts/                    # Zod schemas mirroring 64 edge functions + RPCs
-│   ├── imperial-metrics-batch.ts
-│   ├── imperial-lobby-analytics.ts
-│   ├── imperial-place-phon-bet.ts
-│   └── ... (auto-generated baseline + manual)
-├── har/
-│   ├── recorder.ts               # context.routeFromHAR + tracing
-│   ├── parser.ts                 # HAR JSON → typed entries
-│   └── validator.ts              # parsed entries × Zod contracts
-├── postman/
-│   ├── generator.ts              # Playwright trace → Postman v2.1 collection
-│   ├── environments/             # dev.json / preview.json / prod.json (templated)
-│   └── newman-runner.ts          # newman.run wrapper + secret injection
-├── secrets/
-│   ├── SecretRotationManager.ts  # ★ Phase 1 핵심 — 아래 §3 참조
-│   ├── policy.ts                 # FallbackPolicy 정의
-│   ├── audit.ts                  # append-only audit log writer
-│   └── pool/                     # Layer-2 격리 secret pool (encrypted at rest, git-ignored)
-├── suites/
-│   ├── 01-smoke/                 # health, auth, home render
-│   ├── 02-money-flow/            # 8경로 — 절대 mutate 금지, observe-only 모드
-│   ├── 03-imperial-duel/         # Phase 4 P1 Observer Mode 검증
-│   ├── 04-operator-isolation/    # /admin chunk leak 0 증명
-│   ├── 05-rls-direct/            # anon client → 220+ 테이블 INSERT/UPDATE 거부 증명
-│   ├── 06-chaos/                 # network / oracle / kill-switch chaos
-│   ├── 07-har-contract/          # HAR replay + Zod validation
-│   ├── 08-postman-contract/      # Newman CLI 통합
-│   ├── 09-telemetry/             # web-vitals, FPS, sampling 검증
-│   └── 10-security/              # CSP, headers, secret leak scan, dependency drift
-├── reporters/
-│   ├── imperial-html.ts          # custom report (sprint-style)
-│   └── slack-alert.ts            # fallback 발생 시 즉시 알림
-└── scripts/
-    ├── rotate-secrets.ts         # cron / manual
-    ├── refresh-har-baseline.ts
-    └── verify-money-flow-diff.ts # git diff 0-byte gate
+governance-kernel/
+├── kernel.config.ts              # blast-radius, profile, risk weights
+├── boot/
+│   ├── preflight.ts              # money-freeze, operator-isolation, env split
+│   └── secret-rotation.ts        # 5-layer fallback (carried from prior plan)
+├── topology/                     # S1
+│   ├── discover.frontend.ts      # route graph, lazy chunks, preload chain
+│   ├── discover.db.ts            # pg_proc, pg_policies, pg_trigger via service role (preview only)
+│   ├── discover.edge.ts          # 64 edge fns + verify_jwt + cron metadata
+│   ├── discover.realtime.ts      # @pkg/realtime partitions × regions
+│   ├── discover.oracle.ts        # oracle_source_weights + health
+│   └── topology.snapshot.json    # source of truth, diff-gated
+├── containment/                  # S2
+│   ├── hallucination.gate.ts     # verify(selector|rpc|route|ws|har) before use
+│   └── quarantine.jsonl          # rejected assumptions, append-only
+├── replay/                       # S3
+│   ├── capsule.recorder.ts       # HAR + ws frames + DOM snap + storage + seeds
+│   ├── capsule.player.ts         # `bun replay <id>` entry
+│   └── capsules/<id>/            # one folder per critical failure
+├── temporal/                     # S4
+│   ├── causality.graph.ts        # build DAG from trace ids + ws seq
+│   └── invariants.temporal.ts    # settle_ts >= bet_ts, monotonic, no dup
+├── financial/                    # S5
+│   ├── invariants.derive.ts      # auto-derive from migrations + RPCs
+│   └── conservation.check.ts     # before+Δ == after, per user, per asset
+├── realtime/                     # S6
+│   └── warfare.ts                # reconnect storm, packet loss, dup, partition
+├── oracle/                       # S7
+│   └── dominance.ts              # stale, replayed, negative, shadow drift
+├── telemetry/                    # S8
+│   └── truth.crosscheck.ts       # client_metrics ↔ admin_get_lobby_analytics
+├── fortress/                     # §11
+│   └── operator.fortress.ts      # 8-surface scan
+├── exploits/                     # §12
+│   ├── replay.attacker.ts
+│   ├── idem.collision.ts
+│   ├── ws.resend.storm.ts
+│   └── cache.poison.ts
+├── economics/                    # §13
+│   └── risk.score.ts             # RISK_SCORE = financial × exploit × … × blast
+├── intelligence/                 # §15
+│   ├── classify.ts               # severity, blast, exploitability
+│   ├── bisect.ts                 # `git bisect run` wrapper
+│   └── remediation.proposer.ts   # writes proposal/<id>.md (no auto-apply)
+├── governance/                   # §16
+│   ├── score.compute.ts          # 12-axis weighted score
+│   └── score.history.jsonl       # trend, deploy gate
+├── evolution/                    # §17
+│   └── rediscover.on.change.ts   # topology diff → regenerate downstream
+├── dual-ai/                      # §18
+│   ├── generator.ts              # produces artifact
+│   ├── verifier.ts               # tries to break it
+│   ├── auditor.ts                # validates both
+│   └── decision.log.jsonl        # 3-of-3 quorum required
+├── secrets/                      # (prior plan carried forward)
+│   └── SecretRotationManager.ts
+└── reports/
+    ├── governance-score.html
+    ├── replay-index.html
+    └── kernel-summary.json
 ```
-
-### 1.2 Playwright projects (Phase 2 detail)
-
-| Project | Browser | Viewport | DPR | Throttle | Use |
-|---|---|---|---|---|---|
-| `desktop-chromium` | chromium | 1440×900 | 1 | none | suites 01,04,05,07,08,10 |
-| `mobile-ios` | webkit | 390×844 | 3 | 4G | suites 01,03,09 |
-| `mobile-android` | chromium | 412×915 | 2.625 | 3G | suites 01,03,09 |
-| `low-end` | chromium | 360×640 | 2 | slow-3G + CPU×6 | suites 03,06,09 |
-| `chaos` | chromium | 1440×900 | 1 | scripted | suite 06 only |
 
 ---
 
-## 2. Secret Rotation Automation 전략
+## 2. S1 — Autonomous Topology Discovery (§3, §17)
 
-### 2.1 회전 대상 (Tier 분류)
+Discovery runs at kernel boot AND on every migration / route / edge fn / config change. Produces `topology.snapshot.json` — **diff-gated**: an unexpected diff against the previous snapshot triggers `evolution/rediscover.on.change.ts`, which regenerates contracts, replay graphs, invariants, risk scores, and chaos matrices.
 
-| Tier | Secret | 회전 주기 | Primary | Fallback Layer 적용 |
+Sources:
+
+| Layer | Tool | Read-only? |
+|---|---|---|
+| Frontend routes / lazy / preload | vite build manifest + dependency-cruiser | yes |
+| DB schema / RLS / triggers / RPCs | `pg_proc`, `pg_policies`, `pg_trigger` via service role on **preview only** | yes |
+| Edge fns + verify_jwt + cron | `supabase/config.toml` + `supabase/functions/*` AST | yes |
+| Realtime topology | `@pkg/realtime` + `realtime_region_heartbeats` | yes |
+| Oracle | `oracle_source_weights` + `oracle_source_health` | yes |
+
+Snapshot is signed (sha256). Topology drift on prod = **CRITICAL**, on preview = trigger regeneration.
+
+---
+
+## 3. S2 — AI Hallucination Containment (§4)
+
+Every artifact generated by Generator-AI (selector, RPC name, route, ws channel, HAR entry, Zod schema) **must** pass `verify(kind, value)` before being committed.
+
+```ts
+// containment/hallucination.gate.ts (signature only)
+export type Kind = "selector" | "rpc" | "route" | "ws" | "har" | "edge" | "table";
+export interface Verdict { ok: boolean; evidence?: string; reason?: string; }
+export async function verify(kind: Kind, value: string): Promise<Verdict>;
+```
+
+Verifiers:
+- `selector` → live page query in Playwright `expect.poll` (must resolve ≥1 element, stable across 3 reloads).
+- `rpc` → must exist in `topology.snapshot.json.rpcs[]` with matching arity.
+- `route` → must exist in frontend route graph AND respond 2xx/3xx (not 404).
+- `ws` → must be one of `@pkg/realtime` partitions × regions.
+- `har` → must appear in recorded HAR baseline.
+- `edge` / `table` → must exist in topology snapshot.
+
+Failure → append to `quarantine.jsonl` with `hallucination_detected`, block generation, surface in Governance Score as **trust penalty**.
+
+---
+
+## 4. S3 — Deterministic Replay Capsule (§5)
+
+Every CRITICAL failure produces a **capsule**:
+
+```text
+capsules/<uuid>/
+├── manifest.json        # versions, env, profile, region, chaos_seed
+├── har/network.har
+├── ws/frames.jsonl
+├── dom/<step-n>.html
+├── storage/{local,session,indexedDB}.json
+├── cookies.json
+├── trace/playwright.zip
+├── rpc-ordering.jsonl
+├── oracle-snapshots.json
+├── telemetry-state.json
+├── invariant-state.json
+└── retry-chains.jsonl
+```
+
+CLI: `bun replay <capsule-id>` re-mounts fixtures with frozen clock, replays HAR via `context.routeFromHAR`, injects identical chaos seed, asserts identical outcome. Divergence = CRITICAL.
+
+Determinism guards:
+- frozen `Date.now()` via Playwright `addInitScript`
+- seeded `Math.random` (mulberry32)
+- pinned oracle snapshot served from HAR
+- chaos injector reads from `manifest.json.chaos_seed`
+
+---
+
+## 5. S4 — Temporal Consistency (§6)
+
+Build causality DAG per scenario from: `x-trace-id` headers, ws sequence ids, RPC call timestamps, edge function logs.
+
+Mandatory invariants:
+- `settle_ts >= bet_ts` for every duel / slot / crash bet.
+- `sequence_id` strictly monotonic per channel × region.
+- `duplicate_settlement_count == 0`.
+- `cross_shard_divergence <= 50ms` p99 between ap/us/eu heartbeats.
+- No RPC executes while a higher-priority money RPC for the same user is in-flight (overlap detector).
+
+Violation = CRITICAL, capsule emitted.
+
+---
+
+## 6. S5 — Financial Invariant Engine (§7)
+
+**Auto-derived** from `topology.snapshot.json.tables` + trigger graph (the kernel reads migrations + RPC bodies to compute the conservation equation per asset).
+
+Per user, per asset (PHON / KRW / USDT):
+
+```text
+before_balance
++ Σ deposits
++ Σ payouts
++ Σ staking_rewards
++ Σ swap_in
+− Σ withdrawals
+− Σ burns
+− Σ bets
+− Σ swap_out
+== after_balance
+```
+
+Detectors:
+- phantom payout (payout without matching bet/round)
+- duplicate settlement (same `ref_id` settled twice)
+- replayed withdrawal (same idem key, 2 successes)
+- orphan ledger (treasury entry with no source)
+- race credit (two concurrent credits to same balance row)
+- idempotency bypass (`apply_token_burn(source, ref_id, ref_type)` unique violation simulated)
+
+Runs in **observe-only** mode in production (read-only). Runs in **active** mode in preview (kernel uses dedicated `e2e_*` test users only, never touches real money rows).
+
+Violation = **PLATFORM BLOCKER** → governance score drops below deploy threshold automatically.
+
+---
+
+## 7. S6 — Realtime Warfare (§8)
+
+Chaos primitives wrap `@pkg/realtime` (FREEZE 8-path raw channels excluded):
+
+| Primitive | How |
+|---|---|
+| reconnect storm | force socket close × N, jittered backoff |
+| packet loss | Playwright route abort 20% on `wss://*` |
+| stale subscription | subscribe → freeze ack → assert client detects |
+| duplicate broadcast | inject 2× identical frame, assert client dedupes |
+| sequence corruption | rewrite `seq_id` ordering in frame |
+| network partition | block per-region wss endpoint, assert failover |
+| delayed broadcast | 3s artificial delay, assert UI shows degraded state |
+
+All chaos is seeded (`chaos_seed` in manifest) → fully deterministic replay.
+
+---
+
+## 8. S7 — Oracle Dominance (§9)
+
+Scenarios injected into the oracle pipeline (preview only):
+
+- stale feed → freeze source for 60s → assert `oracle_source_health.degraded=true` within 5min.
+- replayed candle → repost old `updated_at` → assert quarantine.
+- delayed exchange data → 30s lag → assert weight penalty applies.
+- negative / zero price → assert outlier filter rejects.
+- shadow/live divergence → assert `oracle_shadow_drift` row inserted.
+- consensus corruption → 1 source disagrees by 100bps → assert clamp activates.
+- timestamp skew → wall clock vs source ts > 10s → assert source weight degrades.
+
+Invariant: `abs(shadow_price - live_price) <= threshold_bps`. Violation = CRITICAL.
+
+---
+
+## 9. S8 — Telemetry Truth (§10)
+
+End-to-end cross-check loop:
+1. Browser emits N synthetic `client_metrics` events with known fingerprints.
+2. `imperial-metrics-batch` edge function logs (count, dedup, rate-limit).
+3. `client_metrics` table row count diff.
+4. `admin_get_lobby_analytics(window_hours)` aggregation.
+5. `/admin/ops/sprint-4` dashboard render.
+
+Assertion: same fingerprints visible at every stage (modulo expected dedup). Drift = silent telemetry loss.
+
+Detectors:
+- silent drop (emitted > ingested)
+- stale cache (5s cache serving > 5s old data)
+- fabricated dashboard (dashboard row with no upstream evidence)
+- low-end suppression failure (reduced-motion device still emits)
+
+---
+
+## 10. Operator Fortress (§11)
+
+Extends `check-operator-isolation.mjs` to scan **8 surfaces** per build + per E2E run:
+
+1. JS chunks (`index-*.js`) — FORBIDDEN_MARKERS already wired.
+2. Source maps — same markers.
+3. Preload links in entry HTML.
+4. Hydration payload (`window.__phonara_*`).
+5. Service worker (`sw.js`, `sw-push.js`) — no admin imports.
+6. IndexedDB after login — no admin keys.
+7. localStorage after login — no admin keys, no service-role JWT.
+8. HAR exports — no admin route, no `Authorization: ... service_role`.
+9. WS frame payloads — no `admin:*` channel for non-admin users.
+
+Any hit = IMMEDIATE FAILURE, capsule emitted, governance score floor.
+
+---
+
+## 11. Exploit Hunter (§12)
+
+Adversarial suites run continuously, **on preview only**:
+
+- duplicate POST replay (same body + idem key, expect 1 success)
+- stale session replay (expired JWT)
+- ws resend storm (1000 frames/s, expect throttle, no double settle)
+- cache poisoning (HTML `must-revalidate` honored — already in `_headers`)
+- delayed ACK amplification (slow client, expect server-side timeout)
+- idem_key collision (`apply_token_burn` unique check)
+- sequence corruption (out-of-order ws frames)
+- mutation amplification (1 user request → assert ≤1 money mutation)
+
+---
+
+## 12. Execution Economics (§13)
+
+`economics/risk.score.ts`:
+
+```text
+RISK_SCORE(target) =
+    financial_impact     // $/event from invariant graph
+  × exploitability       // historic CVE-like score per RPC
+  × replay_surface       // # of state mutations in flow
+  × realtime_sensitivity // 1 if subscribes to wallet/game, else 0.2
+  × operator_privilege   // 1 if admin/AAL2, else 0.3
+  × mutation_surface     // # of tables touched
+  × blast_radius         // users impacted / total active
+  × volatility           // recent failure rate (EMA-7)
+```
+
+Scheduler picks targets to **maximise risk reduction per compute dollar**. Reports per-run `dollars_saved_per_minute` to governance score.
+
+---
+
+## 13. Failure Intelligence (§15)
+
+On any CRITICAL, autonomously emit `intelligence/incident-<id>.md`:
+
+- severity (auto-classified)
+- estimated blast radius (users × $ exposure)
+- exploitability (1-5)
+- first-bad-commit (`git bisect run governance-kernel/bisect-target.sh`)
+- likely root cause (cluster failure log against past incidents via embeddings)
+- replay confidence (deterministic? flaky? requires-network?)
+- remediation **proposal** (writes to `proposals/<id>.md`, **never auto-applies**)
+- rollback suggestion (commit SHA + migration down if available)
+
+Section 2 forbids auto-apply for any RLS, RPC, schema, treasury, or settlement change — these proposals always require human approval.
+
+---
+
+## 14. Governance Score (§16)
+
+12-axis weighted score, 0-100:
+
+| Axis | Weight |
+|---|---|
+| invariant integrity | 15 |
+| replay confidence | 12 |
+| realtime consistency | 10 |
+| oracle correctness | 10 |
+| operator isolation | 12 |
+| telemetry trust | 8 |
+| chaos survivability | 8 |
+| exploit resistance | 10 |
+| flaky rate (inverse) | 5 |
+| runtime drift | 4 |
+| mutation safety | 3 |
+| replay determinism | 3 |
+
+Thresholds:
+- ≥ 92 → deploy unlocked
+- 80-91 → preview only, no rollout phase advance
+- < 80 → **GO-LIVE BLOCKED**, only hotfix lanes proceed
+
+Score is computed every run, stored in `governance/score.history.jsonl`, rendered in HTML report, surfaced to `/admin/ops` (new tile reads the JSON via existing edge function).
+
+---
+
+## 15. Self-Evolving Governance (§17)
+
+Trigger sources monitored:
+- new migration in `supabase/migrations/`
+- route added/removed (`src/pages/**`, `_AdminRoutes.tsx`)
+- new edge function in `supabase/functions/`
+- `supabase/config.toml` change
+- websocket topology change (`@pkg/realtime`)
+- oracle source weight change
+
+On any trigger:
+1. `topology/discover.*` re-runs.
+2. Diff against `topology.snapshot.json`.
+3. For each diff, regenerate downstream artifacts (contracts, replay graphs, invariants, risk scores, chaos matrices) — through the Hallucination Containment Gate.
+4. Auditor-AI signs off.
+5. New snapshot committed, governance score recomputed.
+
+No human intervention. But: any change to RLS, SECURITY DEFINER RPC, money schema, treasury logic, settlement logic is **flagged-not-applied** (per §2).
+
+---
+
+## 16. Dual-AI Verification (§18)
+
+Three AI roles + two non-AI engines. Quorum 3-of-3 (Generator, Verifier, Auditor) required before any artifact merges to `topology.snapshot.json` or `contracts/`.
+
+```text
+Generator-AI  →  creates artifact
+Verifier-AI   →  attempts to break (mutation testing, adversarial inputs)
+Auditor-AI    →  reviews both (style, security, scope creep)
+Replay Engine →  proves determinism
+Governance    →  decides survivability via score
+```
+
+All decisions append to `dual-ai/decision.log.jsonl`. A single AI can never push.
+
+---
+
+## 17. Secret Rotation (carried from prior plan)
+
+5-layer fallback (Primary → Cached → Pool → Read-only → Emergency Static → Ultimate Fail), `SecretRotationManager` class, audit trail, alert tiers, suite gating. See preserved file `governance-kernel/secrets/SecretRotationManager.ts` — full code retained from previous plan iteration; not duplicated here for brevity.
+
+---
+
+## 18. Execution profiles
+
+| Profile | Where it runs | Mutations allowed | Chaos | Suites |
 |---|---|---|---|---|
-| T0 (CRITICAL) | `SUPABASE_SERVICE_ROLE_KEY` | 분기 + 즉시(누출) | Lovable Cloud UI | Layer 1~5 전부 |
-| T0 | `Admin JWT (AAL2 session)` | 24h | Edge fn 발급 | Layer 1~3 |
-| T1 | `VITE_SUPABASE_PUBLISHABLE_KEY` | 연 1회 | Lovable Cloud UI | Layer 1~2 |
-| T1 | `BOT_CRON_SECRET` | 분기 | GH Secret | Layer 1~3 |
-| T2 | `E2E_USER_PASSWORD` | 주 1회 | GH Secret | Layer 1~4 |
-| T2 | `LOVABLE_API_KEY` | on-demand | `ai_gateway--rotate_lovable_api_key` 전용 | Layer 1~2 |
-| T3 | OAuth/JWT secret | 수동 | Cloud UI | Layer 1 only |
+| `read-only-observatory` | production `phonara.world` | NO | NO | S1 discovery, S5 invariant (read), S8 telemetry crosscheck, fortress scan |
+| `preview-active` | `id-preview--*.lovable.app` | only on `e2e_*` test users | YES, seeded | all 8 + exploits |
+| `local-replay` | developer machine | capsule-driven only | replay-only | replayer + bisect |
 
-### 2.2 Primary 자동 회전 흐름
-
-```text
-cron(@weekly) ─▶ rotate-secrets.ts
-                    │
-                    ├─▶ Lovable Cloud API (rotate)
-                    ├─▶ Update GitHub repo/env secrets via gh api
-                    ├─▶ Write fingerprint(last6) to service_key_rotations table
-                    ├─▶ Smoke test: call admin_run_rls_smoke() with new key
-                    └─▶ on FAIL → trigger FallbackPolicy.escalate()
-```
+Production never gets chaos. Preview never touches non-`e2e_*` accounts. The kernel enforces this via `kernel.config.ts` → `BLAST_RADIUS` check at preflight.
 
 ---
 
-## 3. Secret Rotation Fallback Strategies (Multi-layer)
+## 19. Build sequence (phased, each phase ships green)
 
-### 3.1 5-Layer 정책
+| Phase | Ships | Acceptance gate |
+|---|---|---|
+| **P0 Preflight** | `boot/preflight.ts`, env split, freeze + isolation wiring | preflight fails the run on any law breach |
+| **P1 Topology** | S1 discovery + snapshot + diff gate | snapshot stable across 3 consecutive runs |
+| **P2 Containment** | S2 hallucination gate | 100% of generated selectors/RPCs verified |
+| **P3 Replay** | S3 capsule recorder + player | 1 seeded failure replays bit-identical |
+| **P4 Financial + Temporal** | S5 + S4 | conservation holds across 10k synthetic events |
+| **P5 Realtime + Oracle + Telemetry** | S6 + S7 + S8 | 7 chaos primitives + 7 oracle scenarios + telemetry loop pass |
+| **P6 Fortress + Exploits** | §11 + §12 | 8-surface scan + 8 exploits all caught/denied |
+| **P7 Economics + Intelligence + Score + Evolution + Dual-AI** | §13 + §15 + §16 + §17 + §18 | governance score ≥ 92, decision log healthy |
 
-```text
-┌──────────────────────────────────────────────────────────────┐
-│ Layer 0: PRIMARY                                             │
-│   - Fresh rotated secret (just minted)                       │
-│   - smoke test PASS 시에만 promote                            │
-├──────────────────────────────────────────────────────────────┤
-│ Layer 1: CACHED PREVIOUS (1-shot)                            │
-│   - 직전 valid secret (in-memory + ~/.phonara/cache, 600 TTL)│
-│   - 1회만 사용 → 사용 즉시 invalidate                         │
-│   - Money-flow suite: 사용 허용 (read-only RPC만)             │
-├──────────────────────────────────────────────────────────────┤
-│ Layer 2: SAFE DEFAULT POOL                                   │
-│   - secrets/pool/ — rotation 전용 격리 계정 (3개 rolling)     │
-│   - 별도 Supabase project? → 권장: 동일 project + scope 제한  │
-│   - Admin RPC 호출 금지, anon 권한만                          │
-├──────────────────────────────────────────────────────────────┤
-│ Layer 3: READ-ONLY MODE                                      │
-│   - process.env.E2E_READONLY=1                               │
-│   - SUITE_ALLOWLIST=[01-smoke, 07-har-contract(replay only)] │
-│   - Money-flow / Admin / RLS-mutate suite → auto-skip        │
-├──────────────────────────────────────────────────────────────┤
-│ Layer 4: EMERGENCY STATIC                                    │
-│   - 마지막으로 알려진 valid secret (encrypted, manual only)   │
-│   - 사용 즉시 PagerDuty + Slack red alert                    │
-│   - 최대 30분 후 강제 만료                                    │
-├──────────────────────────────────────────────────────────────┤
-│ Layer 5: ULTIMATE FAIL                                       │
-│   - Skip all + CI exit 78 (neutral) + Detailed alert         │
-│   - admin_audit_log INSERT (kind='e2e_secret_ultimate_fail') │
-└──────────────────────────────────────────────────────────────┘
-```
-
-### 3.2 SecretRotationManager (전체 코드 — TypeScript)
-
-```typescript
-// e2e/secrets/SecretRotationManager.ts
-import { z } from "zod";
-import { writeAudit } from "./audit";
-import { FallbackPolicy, policyFor } from "./policy";
-
-export type Tier = "T0" | "T1" | "T2" | "T3";
-export type Layer = 0 | 1 | 2 | 3 | 4 | 5;
-
-export interface SecretRecord {
-  name: string;
-  tier: Tier;
-  value: string;
-  fingerprint: string;
-  mintedAt: number;
-  source: "primary" | "cache" | "pool" | "static";
-  layer: Layer;
-}
-
-export interface SmokeResult { ok: boolean; reason?: string; }
-
-const SmokeSchema = z.object({ ok: z.boolean(), reason: z.string().optional() });
-
-export class SecretRotationManager {
-  private cache = new Map<string, SecretRecord>();      // Layer 1
-  private prevValid = new Map<string, SecretRecord>();  // 직전 성공
-  private metrics = { fallbackByLayer: [0, 0, 0, 0, 0, 0] };
-
-  constructor(
-    private readonly fetchPrimary: (name: string) => Promise<string>,
-    private readonly smoke: (rec: SecretRecord) => Promise<SmokeResult>,
-    private readonly pool: (name: string) => Promise<string | null>,
-    private readonly emergency: (name: string) => Promise<string | null>,
-    private readonly alert: (msg: string, level: "warn" | "red") => Promise<void>,
-  ) {}
-
-  /** 호출자(테스트 fixture)는 이 함수만 사용 */
-  async resolve(name: string, tier: Tier): Promise<SecretRecord> {
-    const policy = policyFor(tier);
-    let lastErr: string | undefined;
-
-    for (const layer of policy.layers) {
-      try {
-        const rec = await this.tryLayer(name, tier, layer);
-        if (!rec) continue;
-        const s = SmokeSchema.parse(await this.smoke(rec));
-        if (!s.ok) { lastErr = `smoke_fail:${s.reason}`; continue; }
-
-        if (layer > 0) {
-          this.metrics.fallbackByLayer[layer]++;
-          await writeAudit({
-            kind: "fallback_used", name, tier, layer,
-            fingerprint: rec.fingerprint, ts: Date.now(),
-          });
-          await this.alert(
-            `Secret ${name} resolved via Layer ${layer} fallback`,
-            layer >= 4 ? "red" : "warn",
-          );
-        }
-        if (layer <= 1) this.prevValid.set(name, rec);
-        return rec;
-      } catch (e: any) {
-        lastErr = String(e?.message ?? e);
-      }
-    }
-
-    // Layer 5
-    this.metrics.fallbackByLayer[5]++;
-    await writeAudit({ kind: "ultimate_fail", name, tier, lastErr, ts: Date.now() });
-    await this.alert(`SECRET ULTIMATE FAIL: ${name} (${lastErr})`, "red");
-    throw new Error(`secret_ultimate_fail:${name}`);
-  }
-
-  private async tryLayer(name: string, tier: Tier, layer: Layer): Promise<SecretRecord | null> {
-    switch (layer) {
-      case 0: {
-        const v = await this.fetchPrimary(name);
-        return this.mk(name, tier, v, "primary", 0);
-      }
-      case 1: {
-        const cached = this.cache.get(name) ?? this.prevValid.get(name);
-        if (!cached) return null;
-        this.cache.delete(name);              // 1-shot
-        return { ...cached, layer: 1, source: "cache" };
-      }
-      case 2: {
-        const v = await this.pool(name);
-        return v ? this.mk(name, tier, v, "pool", 2) : null;
-      }
-      case 3: {
-        process.env.E2E_READONLY = "1";
-        process.env.E2E_SUITE_ALLOWLIST = "01-smoke,07-har-contract:replay";
-        const v = this.prevValid.get(name)?.value ?? "";
-        if (!v) return null;
-        return this.mk(name, tier, v, "cache", 3);
-      }
-      case 4: {
-        const v = await this.emergency(name);
-        if (!v) return null;
-        setTimeout(() => this.invalidate(name), 30 * 60_000);
-        return this.mk(name, tier, v, "static", 4);
-      }
-      case 5: return null;
-    }
-  }
-
-  private mk(name: string, tier: Tier, value: string, source: SecretRecord["source"], layer: Layer): SecretRecord {
-    return {
-      name, tier, value, source, layer,
-      fingerprint: value.slice(-6),
-      mintedAt: Date.now(),
-    };
-  }
-
-  invalidate(name: string) { this.cache.delete(name); this.prevValid.delete(name); }
-  snapshotMetrics() { return { ...this.metrics }; }
-}
-```
-
-### 3.3 FallbackPolicy 설정 예시
-
-```typescript
-// e2e/secrets/policy.ts
-import type { Tier, Layer } from "./SecretRotationManager";
-
-export interface FallbackPolicy {
-  layers: Layer[];                // 시도할 순서
-  maxFallbackPerRun: number;
-  forbidSuitesOnFallback?: string[]; // suite glob
-}
-
-const T0: FallbackPolicy = {
-  layers: [0, 1, 2, 3, 4, 5],
-  maxFallbackPerRun: 1,
-  forbidSuitesOnFallback: ["02-money-flow/*-mutate", "04-operator-isolation/admin-write"],
-};
-const T1: FallbackPolicy = { layers: [0, 1, 2, 5], maxFallbackPerRun: 2 };
-const T2: FallbackPolicy = { layers: [0, 1, 2, 3, 5], maxFallbackPerRun: 3 };
-const T3: FallbackPolicy = { layers: [0, 5], maxFallbackPerRun: 0 };
-
-export function policyFor(tier: Tier): FallbackPolicy {
-  return ({ T0, T1, T2, T3 } as const)[tier];
-}
-```
-
-### 3.4 GitHub Actions 예시 (Fallback-aware)
-
-```yaml
-# .github/workflows/e2e-imperial.yml
-name: E2E Imperial
-on: { schedule: [{ cron: "17 */6 * * *" }], workflow_dispatch: }
-jobs:
-  e2e:
-    runs-on: ubuntu-latest
-    env:
-      E2E_BASE_URL: https://id-preview--c7a12cd6-13f6-4ce6-bf31-cc578b215a4b.lovable.app
-      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-      VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
-      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-      E2E_POOL_USER_A: ${{ secrets.E2E_POOL_USER_A }}
-      E2E_POOL_USER_B: ${{ secrets.E2E_POOL_USER_B }}
-      E2E_EMERGENCY_STATIC: ${{ secrets.E2E_EMERGENCY_STATIC }}
-      SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-      - run: bun install --frozen-lockfile
-      - run: bunx playwright install --with-deps chromium webkit
-      - name: Rotate (best-effort)
-        id: rotate
-        continue-on-error: true
-        run: bun run e2e/scripts/rotate-secrets.ts
-      - name: Run E2E (with fallback)
-        id: run
-        run: bunx playwright test
-      - name: Newman contracts
-        if: always()
-        run: bun run e2e/postman/newman-runner.ts
-      - name: Publish report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with: { name: imperial-report, path: e2e/reports/ }
-      - name: Detect fallback usage
-        if: always()
-        run: |
-          node -e "
-            const m=require('./e2e/reports/metrics.json');
-            const fb=m.fallbackByLayer.slice(2).reduce((a,b)=>a+b,0);
-            if(fb>0){console.log('::warning::fallback used '+fb+' times'); process.exit(0)}
-          "
-      - name: Neutral exit on ULTIMATE_FAIL
-        if: failure() && contains(steps.run.outputs.reason, 'secret_ultimate_fail')
-        run: exit 78
-```
-
-### 3.5 Alert & Logging 전략
-
-- **Logging**: `e2e/reports/rotation-failed-<ts>.log` (JSONL, append-only). 매 fallback 1줄 = `{ts,name,tier,layer,fingerprint,reason}`.
-- **Audit (DB)**: 새 테이블 `e2e_secret_audit` (admin-only RLS, 신규 migration) — append-only, fingerprint(last 6) + tier + layer + suite.
-- **Realtime alert**:
-  - Layer 2~3 → Slack `#imperial-e2e` (warn 톤)
-  - Layer 4~5 → Slack red + PagerDuty + `anomaly_events`(rule=`e2e_secret_fallback`)
-- **Visibility (Report)**: HTML 리포트 헤더에 Layer 별 카운트 배지 + Sparkline (최근 30 run).
-
-### 3.6 Fallback Mode 의 Test Execution Control
-
-```typescript
-// e2e/fixtures/auth.fixture.ts (발췌)
-test.beforeAll(async () => {
-  if (process.env.E2E_READONLY === "1") {
-    const allow = (process.env.E2E_SUITE_ALLOWLIST ?? "").split(",");
-    const cur = test.info().titlePath[0];
-    if (!allow.some(g => cur.startsWith(g.split(":")[0]))) {
-      test.skip(true, `read-only fallback active → ${cur} disabled`);
-    }
-  }
-});
-```
-
-- Money-flow suite 는 `tag:@mutates-money` 가 붙고, **Layer ≥ 2** 부터 자동 skip.
-- Admin / AAL2 suite 는 `tag:@admin` — **Layer ≥ 1** 부터 skip (Layer 1 cache 도 admin 권한엔 부족).
-- Chaos suite 는 Fallback Mode 와 직교 — chaos 시나리오가 secret 회전 실패를 일부러 유발할 수 있으므로 `chaosOrchestrator.expectFallback(layer)` API 로 합법화.
-
-### 3.7 강조 영역 별 처리
-
-1. **High-privilege secret (Service Role / Admin JWT)**: Layer 1 cache 도 service_role 은 **fingerprint 검증 + 만료 30초** 강제. Admin JWT 는 cache 금지, 항상 Layer 0 또는 Layer 5.
-2. **Money Flow 중 회전 실패**: 진행 중인 테스트가 있으면 `manager.invalidate()` 호출 전 현재 spec 완주 → 다음 spec 부터 read-only. 절대 mid-flight 키 교체 금지.
-3. **Chaos 환경**: `chaos.fixture` 가 secret 실패를 의도적으로 주입하면 `manager.expectFallback(layer)` 를 미리 호출 — 그 layer 까지의 alert 는 warn 으로 down-grade.
-4. **CI/CD 안정성**: ULTIMATE_FAIL 은 `exit 78` (neutral) 로 다른 워크플로 영향 차단. 단 main branch 는 exit 1.
-5. **즉각 Visibility**: HTML 리포트 + Slack thread + GitHub job summary 3채널 동시 송출.
+Each phase produces a separate PR with: passing kernel-summary.json + governance score + replay sample.
 
 ---
 
-## 4. Phase 2~7 요약 (이번 plan 승인 후 순차 진행)
+## 20. What this is NOT
 
-- **Phase 2**: 폴더 골격 + `playwright.config.ts` (5 projects) + `postman/environments/*.json` 템플릿 + `newman-runner.ts` 부트스트랩.
-- **Phase 3**: Factories(fast-check) + HAR recorder/parser/validator + Zod contracts (imperial-metrics-batch / imperial-lobby-analytics 먼저, 나머지 RPC 는 `rpc.surface.*.json` 베이스라인에서 자동 생성) + Postman generator + SecretRotationManager 실배선.
-- **Phase 4**: Core suites 01·02·03·04·05.
-- **Phase 5**: Chaos / Network / HAR / Postman-Newman 전용 suite (06·07·08).
-- **Phase 6**: Financial integrity (money-flow diff gate) + Security (CSP/headers/leak scan) + Telemetry (client_metrics × admin_get_lobby_analytics 교차검증).
-- **Phase 7**: Newman CLI + Secret rotation cron + Multi-layer fallback wiring + GitHub Actions matrix + custom HTML reporter + 유지보수 가이드.
-
-## 5. 불변 가드 (모든 Phase 공통)
-
-- `scripts/check-money-flow-freeze.mjs` 가 PR CI 에서 8경로 git diff = 0 검증 — E2E PR 도 예외 없음.
-- `scripts/check-operator-isolation.mjs` 가 `index-*.js` 에 operator marker 0 검증.
-- `dependency-cruiser` 규칙에 `e2e/**` → `src/**` import 금지 (단방향).
-- 신규 DB 객체는 **`e2e_*` prefix 의 admin-only RLS 테이블** 만 허용. `public.*` money 테이블 신규 컬럼/트리거 0.
-
----
-
-## 6. 산출물 (Phase 1 종료 시점)
-
-- 본 문서 (`.lovable/plan.md`) — Architecture / Rotation / Fallback / Manager 전체 코드 / Policy / GH workflow / Alert / Execution control 포함.
-- 다음 turn 에서 Phase 2 부터는 실제 파일 생성 시작.
+It is not Playwright. It is not CI. It is not a test suite.
+It is an **autonomous exchange-grade governance organism** that runs continuously, generates its own targets, breaks its own outputs, replays its own failures, scores its own readiness, refuses its own deployment when score drops — and never, ever, mutates production money paths.
