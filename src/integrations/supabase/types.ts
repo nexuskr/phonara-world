@@ -4442,6 +4442,36 @@ export type Database = {
         }
         Relationships: []
       }
+      imperial_onboarding_grants: {
+        Row: {
+          amount_phon: number
+          granted_at: string
+          granted_date: string
+          id: string
+          meta: Json
+          source: string
+          user_id: string
+        }
+        Insert: {
+          amount_phon: number
+          granted_at?: string
+          granted_date?: string
+          id?: string
+          meta?: Json
+          source: string
+          user_id: string
+        }
+        Update: {
+          amount_phon?: number
+          granted_at?: string
+          granted_date?: string
+          id?: string
+          meta?: Json
+          source?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       imperial_rollback_snapshots: {
         Row: {
           created_at: string
@@ -12703,6 +12733,8 @@ export type Database = {
       imperial_auto_heal_tick: { Args: never; Returns: Json }
       imperial_can_participate: { Args: { _user: string }; Returns: Json }
       imperial_cancel_duel: { Args: { p_room_id: string }; Returns: Json }
+      imperial_claim_daily_login_bonus: { Args: never; Returns: Json }
+      imperial_claim_signup_bonus: { Args: never; Returns: Json }
       imperial_compute_display_signals: {
         Args: {
           p_actual_roll: number
@@ -12742,6 +12774,7 @@ export type Database = {
           ts: string
         }[]
       }
+      imperial_get_onboarding_state: { Args: never; Returns: Json }
       imperial_get_rollout_state: {
         Args: never
         Returns: {
