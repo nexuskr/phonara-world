@@ -56,6 +56,13 @@ const CARDS = [
 
 export default function Home() {
   const user = useRequireAuth();
+  const navigate = useNavigate();
+  const [ascending, setAscending] = useState(false);
+  const enterDuel = useCallback(() => setAscending(true), []);
+  const onAscensionDone = useCallback(() => {
+    setAscending(false);
+    navigate("/duel");
+  }, [navigate]);
   if (!user) return null;
 
   return (
