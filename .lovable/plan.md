@@ -31,9 +31,9 @@ Single migration `..._phase1_hyperion_ignition.sql`:
   - Idempotent on `(user_id, source='signup')` partial unique index (already exists).
   - Fraud: reject if any of `(device_fp | ip_hash | ua_hash)` already bound to another claimed user_id; insert into `imperial_onboarding_fraud_signals` either way.
   - Logs to `imperial_observability_events` (`kind='onboarding.signup'`) + `imperial_audit_trail` (new minimal append-only table).
-- `imperial_claim_daily_login_bonus()` adds tiny variable-reward jitter (480..520 PHON, server-side `gen_random_bytes`) for near-miss feel; cap-aware.
-- `imperial_get_phase1_kpis()` SECURITY DEFINER, admin-only: returns 12 KPIs (signups 24h, daily 24h, total PHON granted 24h, active 5m/1h/24h, invite clicks, first-duel conversion, fraud_rejects_24h, cap_utilization_pct, retention_d1, anomaly_score).
-- `imperial_phase1_emergency_pause(_reason)` AAL2: flips `auto_pause=true` on caps row + sets kill switch `imperial_onboarding=ON` (new key, separate from money-flow kill switches).
+- `imperial_claim_daily_login_bonus()` variable reward 450..550 PHON (server-side `gen_random_bytes`, near-miss curve); cap-aware.
+- `imperial_get_phase1_kpis()` SECURITY DEFINER, admin-only: returns **14 KPIs** — signups 24h, daily 24h, total PHON granted 24h, active 5m/1h/24h, invite clicks, first-duel conversion, fraud_rejects_24h, cap_utilization_pct, retention_d1, anomaly_score, **invite_to_first_duel_rate**, **warm_king_engagement_score** (welcome-dialog-completion × first-duel-click × daily-return blended 0..1).
+- `imperial_phase1_emergency_pause(_reason)` AAL2: flips `auto_pause=true` + sets kill switch `imperial_onboarding=ON`. Preemptive Warm King Mercy: anomaly_score ≥ 0.08% surfaces yellow warning on monitor (no auto-action); ≥ 0.1% × 3 ticks arms auto-rollback.
 
 Rate limit (3 tiers) via existing `enforce_rate_limit`:
 - `onboarding_claim_signup` 2/min, `onboarding_claim_daily` 5/min, `onboarding_state_read` 30/min — applied in RPC bodies, not client.
