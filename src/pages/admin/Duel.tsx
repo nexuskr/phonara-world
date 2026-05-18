@@ -9,6 +9,7 @@ import { notify, describeError } from "@/lib/notify";
 import { LoadingList } from "@/components/ui/loading-state";
 import { EmptyState } from "@/components/ui/empty-state";
 import DuelHealthDashboard from "@/components/admin/DuelHealthDashboard";
+import FlywheelAdmin from "@/components/admin/FlywheelAdmin";
 
 type Metrics = {
   window: string;
@@ -217,6 +218,7 @@ export default function AdminDuel() {
             </div>
           </div>
           <DuelHealthDashboard />
+          <FlywheelAdmin />
         </>
       )}
     </div>

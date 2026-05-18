@@ -5,6 +5,10 @@
  */
 import { useMemo, useState } from "react";
 import { useRealBetting } from "@/hooks/useRealBetting";
+import { useFlywheelSnapshot } from "@/hooks/use-flywheel-snapshot";
+import VolatilityGauge from "@/components/duel/VolatilityGauge";
+import SlippagePreview from "@/components/duel/SlippagePreview";
+import TreasurySupportBadge from "@/components/duel/TreasurySupportBadge";
 
 const CHIPS = [100, 500, 1_000, 5_000];
 
@@ -26,6 +30,7 @@ export function RealBetSlip({ roomId, defaultSide = "left", leftPot, rightPot, d
   const [side, setSide] = useState<"left" | "right">(defaultSide);
   const [amount, setAmount] = useState<number>(100);
   const { placeBet, pending } = useRealBetting();
+  const { snapshot } = useFlywheelSnapshot();
 
   const potentialWin = useMemo(() => {
     const total = leftPot + rightPot + amount;
@@ -49,6 +54,10 @@ export function RealBetSlip({ roomId, defaultSide = "left", leftPot, rightPot, d
 
   return (
     <div className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur-xl p-4 shadow-[0_8px_32px_hsl(240_50%_1%/0.55)] space-y-4">
+      {/* IMPERIAL-SINGULARITY v3.5: Flywheel display layer (presentational only) */}
+      <VolatilityGauge tier={snapshot.tier} />
+      <TreasurySupportBadge tier={snapshot.tier} />
+      <SlippagePreview bet={amount} pool={Math.max(1, leftPot + rightPot)} />
       <div className="grid grid-cols-2 gap-2">
         {(["left", "right"] as const).map((s) => (
           <button

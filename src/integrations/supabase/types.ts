@@ -4081,6 +4081,78 @@ export type Database = {
         }
         Relationships: []
       }
+      imperial_emission_state: {
+        Row: {
+          circulating_phon: number
+          id: number
+          scale_factor: number
+          target_phon: number
+          updated_at: string
+        }
+        Insert: {
+          circulating_phon?: number
+          id?: number
+          scale_factor?: number
+          target_phon?: number
+          updated_at?: string
+        }
+        Update: {
+          circulating_phon?: number
+          id?: number
+          scale_factor?: number
+          target_phon?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      imperial_flywheel_params: {
+        Row: {
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
+      imperial_flywheel_params_audit: {
+        Row: {
+          id: number
+          key: string
+          new_value: Json
+          old_value: Json | null
+          ts: string
+          updated_by: string | null
+        }
+        Insert: {
+          id?: number
+          key: string
+          new_value: Json
+          old_value?: Json | null
+          ts?: string
+          updated_by?: string | null
+        }
+        Update: {
+          id?: number
+          key?: string
+          new_value?: Json
+          old_value?: Json | null
+          ts?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       imperial_house_ledger: {
         Row: {
           amount_phon: number
@@ -4121,6 +4193,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      imperial_injection_events: {
+        Row: {
+          amount_in: number
+          amount_out: number
+          excess_return: number
+          id: number
+          meta: Json
+          reason: string
+          trigger_tier: string | null
+          trigger_vol_score: number | null
+          ts: string
+        }
+        Insert: {
+          amount_in: number
+          amount_out?: number
+          excess_return?: number
+          id?: number
+          meta?: Json
+          reason: string
+          trigger_tier?: string | null
+          trigger_vol_score?: number | null
+          ts?: string
+        }
+        Update: {
+          amount_in?: number
+          amount_out?: number
+          excess_return?: number
+          id?: number
+          meta?: Json
+          reason?: string
+          trigger_tier?: string | null
+          trigger_vol_score?: number | null
+          ts?: string
+        }
+        Relationships: []
       }
       imperial_journey_claims: {
         Row: {
@@ -4295,6 +4403,60 @@ export type Database = {
           payload?: Json
           pin_until?: string | null
           subline?: string | null
+        }
+        Relationships: []
+      }
+      imperial_treasury_ledger: {
+        Row: {
+          balance_after: number | null
+          id: number
+          kind: string
+          meta: Json
+          phon_delta: number
+          ref_id: string | null
+          source: string
+          ts: string
+        }
+        Insert: {
+          balance_after?: number | null
+          id?: number
+          kind: string
+          meta?: Json
+          phon_delta: number
+          ref_id?: string | null
+          source: string
+          ts?: string
+        }
+        Update: {
+          balance_after?: number | null
+          id?: number
+          kind?: string
+          meta?: Json
+          phon_delta?: number
+          ref_id?: string | null
+          source?: string
+          ts?: string
+        }
+        Relationships: []
+      }
+      imperial_volatility_window: {
+        Row: {
+          bucket_start: string
+          sample_n: number
+          tier: string
+          vol_score: number
+        }
+        Insert: {
+          bucket_start: string
+          sample_n?: number
+          tier: string
+          vol_score?: number
+        }
+        Update: {
+          bucket_start?: string
+          sample_n?: number
+          tier?: string
+          vol_score?: number
         }
         Relationships: []
       }
@@ -9896,6 +10058,10 @@ export type Database = {
         Args: { _id: string; _meta?: Json; _new_progress: number; _uid: string }
         Returns: undefined
       }
+      _apply_house_edge_split: {
+        Args: { _ref_id: string; _total_phon: number }
+        Returns: Json
+      }
       _check_daily_operator_pnl: { Args: never; Returns: Json }
       _crash_compute_multiplier: { Args: { _seed: string }; Returns: number }
       _crash_vip_limits: {
@@ -9916,6 +10082,15 @@ export type Database = {
       }
       _cron_security_self_audit: { Args: never; Returns: undefined }
       _cron_settle_package_daily: { Args: never; Returns: Json }
+      _do_inject_liquidity: {
+        Args: {
+          _amount: number
+          _reason: string
+          _tier: string
+          _vol_score: number
+        }
+        Returns: number
+      }
       _edge_internal_auth_header: { Args: never; Returns: Json }
       _evaluate_deposit_rules_internal: {
         Args: { _deposit_id: string }
@@ -9934,6 +10109,8 @@ export type Database = {
       }
       _mask_nick: { Args: { _n: string }; Returns: string }
       _period_key: { Args: { _period: string }; Returns: string }
+      _recompute_emission_scale: { Args: never; Returns: number }
+      _recompute_volatility_tier: { Args: never; Returns: string }
       _slot_compute_spin:
         | {
             Args: {
@@ -10135,6 +10312,10 @@ export type Database = {
             }
             Returns: Json
           }
+      admin_force_injection: {
+        Args: { _amount: number; _reason: string }
+        Returns: number
+      }
       admin_freeze_user: {
         Args: { _hours?: number; _reason?: string; _user_id: string }
         Returns: string
@@ -10181,6 +10362,7 @@ export type Database = {
           severity: string
         }[]
       }
+      admin_get_flywheel_health: { Args: { _hours?: number }; Returns: Json }
       admin_get_hot_users_1h: {
         Args: never
         Returns: {
@@ -10715,6 +10897,10 @@ export type Database = {
       }
       admin_set_duel_emergency_freeze: {
         Args: { _on: boolean; _room_id: string }
+        Returns: Json
+      }
+      admin_set_flywheel_param: {
+        Args: { _key: string; _value: Json }
         Returns: Json
       }
       admin_set_kill_switch: {
@@ -11479,6 +11665,7 @@ export type Database = {
           level: string
         }[]
       }
+      get_flywheel_snapshot: { Args: never; Returns: Json }
       get_founding_season_grid: {
         Args: { _season_id?: string }
         Returns: {
@@ -12463,6 +12650,7 @@ export type Database = {
         Returns: undefined
       }
       mask_nickname: { Args: { _nick: string }; Returns: string }
+      maybe_inject_liquidity: { Args: never; Returns: Json }
       monitor_lpi_stuck_reserved: { Args: never; Returns: number }
       move_to_dlq: {
         Args: {
