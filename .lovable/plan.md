@@ -1,71 +1,94 @@
-# Phase 1 Observer Mode Ignition
+# Phase 4 — Phase 1 Observer Mode Hyperion Ignition
 
-Activate Limited Rollout Phase 1 (Tier 0, Observer Mode) with onboarding free-play money, live Command Center monitoring, and a final go-live verification gate. Money-flow 8 paths remain frozen (git diff = 0). All new objects use `imperial_` prefix.
+Production-grade activation of the existing Phase 1 Observer onboarding stack, with hardened safety gates, a cinematic first-touch, and god-tier real-time monitoring. **Money-flow 8 paths remain git diff = 0**. All new code stays under `imperial_` prefix and operator namespace.
 
-## 1. Phase 1 Activation (DB)
+## Scope at a glance
 
-New migration `phase4_observer_ignition.sql`:
+```text
+[ Pre-Activation Gates ] -> [ Core Activation ] -> [ Cinematic Onboarding ] -> [ Live Monitor + Apocalypse ]
+        35 checks               RPC + cap + RL          Welcome / Daily / Invite       3s KPI + auto-rollback
+```
 
-- `imperial_onboarding_grants` table (user_id PK, granted_at, amount_phon, source enum: `signup|daily_login|invite`) — RLS self-select, admin-all.
-- RPC `imperial_claim_signup_bonus()` — atomic, idempotent (one row per user, `source='signup'`), credits **15,000 PHON** via existing wallet ledger helper (read-only call into current credit primitive — no edit to money-flow files).
-- RPC `imperial_claim_daily_login_bonus()` — idempotent per UTC day (`source='daily_login'`), +500 PHON. Uses unique `(user_id, source, date_trunc('day', granted_at))` partial index.
-- RPC `imperial_get_onboarding_state()` — returns `{ signup_claimed, daily_claimed_today, next_reset_at, streak }`.
-- Trigger on `auth.users` insert → enqueue signup grant row (claim still requires explicit RPC for auditability).
-- Execute `select imperial_rollout_activate(1, auth.uid())` as an admin-run insert (AAL2) — surfaced as a one-click button in Command Center, not auto-fired in migration.
+## 1. Pre-Activation Divine Safety Protocol
 
-All RPCs: SECURITY DEFINER, `search_path=public`, registered in `function_permissions_baseline`. Logged via `imperial_log_observability(kind='onboarding', ...)`.
+New file: `scripts/phase4/phase1-hyperion-activation-check.ts`
 
-## 2. Onboarding Flow (UI)
+- 35-gate verifier extending existing `phase1-go-live-check.ts`.
+- Confirms: money-flow 8 paths SHA-512 unchanged vs baseline, Circuit Breaker v2 healthy, Auto-Heal cron alive, Observability ingestion < 5s lag, kill switches OFF, RLS lint clean, onboarding RPCs present, rollout phase row exists, Phase1LiveMonitor mounted, AAL2 guard on Command Center.
+- Exit non-zero blocks activation.
 
-New files:
+Money-flow inventory (frozen, no edits):
+`useDeposit.ts`, `useDepositRealtime.ts`, `useDepositCountdown.ts`, `bybit-feed.ts`, `useCrashRound.ts`, `MegaOrderPanel.tsx`, `use-kill-switches.ts`, `use-auto-bet.ts` — verified by `scripts/check-money-flow-freeze.mjs`.
 
-- `src/components/onboarding/ImperialWelcomeDialog.tsx` — 3-step (Welcome → Claim 10k PHON → "Place your first Duel"), Warm King gradient, framer-motion 60fps, single CTA → `/arena`. Triggered once via `localStorage phonara:imperial_welcome:v1` + server `signup_claimed=false`.
-- `src/components/onboarding/DailyLoginRewardToast.tsx` — first auth event of day calls `imperial_claim_daily_login_bonus`, fires confetti + notify.success.
-- `src/components/onboarding/InviteRailMini.tsx` — reuses existing referral code from `beta_invites`/profile, "Share to earn" card on Dashboard.
-- Mount `<ImperialWelcomeDialog />` + `<DailyLoginRewardToast />` in `src/App.tsx` (App-root, under AuthBridge).
-- Hook `src/hooks/useImperialOnboarding.ts` — wraps the 3 RPCs + Realtime invalidate.
+## 2. Core Hyperion Activation (DB only — no money-flow touch)
 
-Tutorial routes user to `/arena` with `?focus=duel` → existing `phonara:imperial-focus` event highlights bet slip. No money-flow file edits.
+Single migration `..._phase1_hyperion_ignition.sql`:
 
-## 3. Realtime Phase 1 Monitoring
+- `imperial_onboarding_caps` (singleton): `daily_phon_cap`, `current_day_utc`, `granted_today_phon`, `auto_pause` — default 50,000 PHON/day cap.
+- `imperial_onboarding_fraud_signals` (user_id, device_fp, ip_hash, ua_hash, risk_score, created_at) — append-only, admin RLS only.
+- `imperial_claim_signup_bonus(_device_fp, _ip_hash, _ua_hash)` hardened:
+  - Atomic: lock caps row `FOR UPDATE`, check `granted_today + 15000 <= cap`, else return `{status:'cap_reached'}`.
+  - Idempotent on `(user_id, source='signup')` partial unique index (already exists).
+  - Fraud: reject if any of `(device_fp | ip_hash | ua_hash)` already bound to another claimed user_id; insert into `imperial_onboarding_fraud_signals` either way.
+  - Logs to `imperial_observability_events` (`kind='onboarding.signup'`) + `imperial_audit_trail` (new minimal append-only table).
+- `imperial_claim_daily_login_bonus()` adds tiny variable-reward jitter (480..520 PHON, server-side `gen_random_bytes`) for near-miss feel; cap-aware.
+- `imperial_get_phase1_kpis()` SECURITY DEFINER, admin-only: returns 12 KPIs (signups 24h, daily 24h, total PHON granted 24h, active 5m/1h/24h, invite clicks, first-duel conversion, fraud_rejects_24h, cap_utilization_pct, retention_d1, anomaly_score).
+- `imperial_phase1_emergency_pause(_reason)` AAL2: flips `auto_pause=true` on caps row + sets kill switch `imperial_onboarding=ON` (new key, separate from money-flow kill switches).
 
-Extend Command Center (`src/pages/admin/imperial/CommandCenter.tsx`) with a new top section:
+Rate limit (3 tiers) via existing `enforce_rate_limit`:
+- `onboarding_claim_signup` 2/min, `onboarding_claim_daily` 5/min, `onboarding_state_read` 30/min — applied in RPC bodies, not client.
 
-- `<Phase1LiveMonitor />` (new file in `src/components/admin/`) — calls `imperial_get_rollout_state()` every 10s + subscribes to `imperial_observability_events` via `useRealtimeChannel` admin partition.
-- KPIs: active Tier-0 users (5m / 1h), signup grants claimed, daily-login claims, first-duel conversion, Observer-mode bet count vs settled=0 invariant, Circuit Breaker state, Auto-Heal last tick, Kill switch matrix.
-- "Activate Phase 1" button → calls `imperial_rollout_activate(1)` (AAL2-gated), writes audit row, shows confirm modal with the 18-item checklist summary.
+## 3. Cinematic Onboarding (frontend polish only, no logic rewrite)
 
-## 4. Go-Live Verification
+Existing components already mounted (`ImperialWelcomeDialog`, `DailyLoginRewardToast`, `InviteRailMini`). Hyperion polish:
 
-New script `scripts/phase4/phase1-go-live-check.ts`:
+- `ImperialWelcomeDialog.tsx`: add framer-motion staged entrance (gold halo pulse, crown shimmer), `prefers-reduced-motion` fallback, low-end device degrade via `useDeviceProfile()` (static gradient).
+- `useImperialOnboarding.ts`: pass device fingerprint (`src/lib/deviceFingerprint.ts` already exists) + cached IP/UA hashes to `claimSignup`.
+- New `src/components/onboarding/FirstDuelInvite.tsx`: appears after step 3 success, deep-links `/duel?from=onboarding`.
+- New `src/components/onboarding/ImperialVoidPreview.tsx`: lightweight CSS-only spatial preview rail (no three.js on Layer 1).
+- All toasts via `notify.imperial` (Warm King tone).
 
-- Re-runs 18-item GO/NO-GO from `docs/duel/phase4-go-nogo-checklist.md` programmatically (money-flow freeze hash, operator isolation marker scan, kernel summary, oracle swap readiness ≥3/5, auto-heal last tick <10m, circuit CLOSED, kill switches OFF baseline, observability events flowing).
-- Output `reports/phase1.go-live.<date>.json` + console PASS/FAIL table.
+## 4. Real-time God-Tier Monitoring + Apocalypse Protocol
 
-Final report: Command Center screenshot description, all gates re-verified, Phase 2 (24h → Tier 1, cap 50k) prep checklist.
+`Phase1LiveMonitor.tsx` upgraded in place (operator-only chunk):
 
-## Technical notes
+- Polls `imperial_get_phase1_kpis()` every 3s (was 10s). Realtime subscribe on `imperial_onboarding_grants` for live count flashes.
+- 12 KPI cards + sparkline (inline SVG, no new deps).
+- Cap utilization bar; if >80% warn, >100% red.
+- New `<ApocalypseProtocolPanel/>`: shows fraud_rejects_24h, anomaly_score; one-click `imperial_phase1_emergency_pause` (AAL2 confirm).
+- Auto-rollback hook: when `anomaly_score > 0.1%` for 3 consecutive ticks, surfaces a one-click "Auto-Rollback" that calls `imperial_phase1_emergency_pause` + `imperial_rollout_activate(0)`.
 
-- Money-flow 8 paths untouched: `imperial_place_phon_bet`, `imperial_settle_*`, `_apply_house_edge_split`, `credit_crypto_deposit`, `request_withdrawal`, `apply_token_burn`, `_grant_phon_for_deposit`, `_grant_nft_for_deposit` — verified via diff hash in go-live script.
-- Observer Mode enforcement already lives in `imperial_can_participate` (Tier 0 gate); no money-flow change needed — Phase 1 only flips rollout phase + opens onboarding faucet.
-- All new tables/RPCs `imperial_` prefixed. Atomic (single-tx), Idempotent (unique constraints), Observable (`imperial_log_observability`), Auditable (`imperial_rollout_phases`), Rollbackable (`imperial_rollout_activate(0)`).
-- Operator Isolation preserved: Phase1LiveMonitor lives under `src/components/admin/` → operator chunk.
+## 5. Activation order (runbook)
 
-## Files
+1. Run `phase1-hyperion-activation-check.ts` → all 35 PASS.
+2. Apply migration (caps + fraud + RPC hardening + KPI + pause).
+3. Admin opens `/admin/imperial/command-center` (AAL2) → "Activate Phase 1".
+4. Watch monitor for 10m / 30m / 1h / 6h / 24h checkpoints.
 
-New:
-- `supabase/migrations/<ts>_phase4_observer_ignition.sql`
-- `src/components/onboarding/ImperialWelcomeDialog.tsx`
-- `src/components/onboarding/DailyLoginRewardToast.tsx`
-- `src/components/onboarding/InviteRailMini.tsx`
-- `src/hooks/useImperialOnboarding.ts`
-- `src/components/admin/Phase1LiveMonitor.tsx`
-- `scripts/phase4/phase1-go-live-check.ts`
+## Rollback plan (≤15 min)
 
-Edited:
-- `src/App.tsx` (mount onboarding components)
-- `src/pages/admin/imperial/CommandCenter.tsx` (mount Phase1LiveMonitor + Activate button)
-- `src/pages/Dashboard.tsx` (mount `<InviteRailMini />`)
-- `mem://features/phase-4-limited-rollout` + `mem://index.md` (Phase 1 ignition note)
+- One-click `imperial_phase1_emergency_pause` → blocks new claims, leaves existing grants intact.
+- `imperial_rollout_activate(0)` returns rollout to Observer-off.
+- Migration is additive only (no drops, no money-flow tables touched) → `git revert` of frontend + leaving DB objects in place is safe; or admin SQL `UPDATE imperial_onboarding_caps SET auto_pause=true`.
 
-Money-flow files: **0 edits**.
+## Technical guardrails
+
+- No edits to: `useDeposit*`, `bybit-feed`, `useCrashRound`, `MegaOrderPanel`, `use-kill-switches`, `use-auto-bet`, any `imperial_place_phon_bet*` / `_settle*` / `_apply_house_edge_split` / withdrawal / burn / flywheel RPCs.
+- Operator isolation: monitor + apocalypse panel live under `src/components/admin/**` and `src/pages/admin/imperial/**` (already operator manualChunk).
+- All new RPCs `SECURITY DEFINER`, `search_path=public`, AAL2 where destructive.
+- All new tables RLS-enabled, admin-only SELECT, no anon access.
+
+## Deliverables checklist
+
+- [ ] `scripts/phase4/phase1-hyperion-activation-check.ts`
+- [ ] Migration: caps + fraud table + audit trail + 4 RPCs + KPI RPC + pause RPC
+- [ ] `useImperialOnboarding.ts` (fingerprint args)
+- [ ] `ImperialWelcomeDialog.tsx` (cinematic polish)
+- [ ] `FirstDuelInvite.tsx`, `ImperialVoidPreview.tsx`
+- [ ] `Phase1LiveMonitor.tsx` (3s, 12 KPI, sparklines)
+- [ ] `ApocalypseProtocolPanel.tsx` (AAL2 pause + auto-rollback)
+- [ ] mem update: `mem://features/phase-4-p1-hyperion`
+
+## Next (Phase 2 readiness)
+
+Once 24h KPIs are green (cap utilization <70%, fraud_rejects <0.5%, d1 retention >25%): open Tier 1 + first Founding Seat batch. No code shipped this round for Phase 2 — only readiness gates documented.
