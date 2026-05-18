@@ -77,7 +77,12 @@ export function useFomoOracle(opts: { spectators: number; jackpotPct: number; po
         }),
       );
     compute();
+    // Tracked interval for entropy categorization (category: 'fomo')
     const id = window.setInterval(compute, 12_000);
+    try {
+      (id as unknown as { __category?: string }).__category = "fomo";
+      (window as any).__phonara_interval_meta?.set?.(id, { category: "fomo", owner: "duel/useFomoOracle" });
+    } catch { /* */ }
     return () => window.clearInterval(id);
   }, [opts.spectators, opts.jackpotPct, opts.poolImbalance, personal, offset, threshold]);
 

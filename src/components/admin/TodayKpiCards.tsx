@@ -26,10 +26,10 @@ export default function TodayKpiCards() {
     const iso = today.toISOString();
     const [dep, wd, pk, pdep, pwd] = await Promise.all([
       supabase.from("deposit_requests").select("amount", { head: false }).eq("status", "approved").gte("approved_at", iso),
-      supabase.from("withdraw_requests" as any).select("amount", { head: false }).eq("status", "completed").gte("completed_at" as any, iso) as any,
+      supabase.from("withdrawal_requests").select("amount", { head: false }).eq("status", "completed").gte("completed_at", iso),
       supabase.from("package_purchases").select("amount", { head: false }).eq("status", "approved").gte("approved_at", iso),
       supabase.from("deposit_requests").select("id", { head: true, count: "exact" }).eq("status", "pending"),
-      supabase.from("withdraw_requests" as any).select("id", { head: true, count: "exact" }).eq("status", "pending") as any,
+      supabase.from("withdrawal_requests").select("id", { head: true, count: "exact" }).eq("status", "pending"),
     ]);
     const sum = (rows: any) => Array.isArray(rows?.data) ? rows.data.reduce((a: number, r: any) => a + Number(r.amount || 0), 0) : 0;
     const deposits = sum(dep);
