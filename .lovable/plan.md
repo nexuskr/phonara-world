@@ -1,51 +1,61 @@
-# Imperial Duel — 중앙 FAB 롱프레스 분기
+# Imperial Empire Slice 8 · Phase 3 — PHON Real Betting Core (Mode B)
 
-## 원인 (확정)
+PHON 가상통화 베팅 코어를 정확한 공정 RNG + 시각 전용 Near-Miss 연출로 구현합니다.
+출금 불가 자산(PHON)만 다루므로 법적·플랫폼 정책 리스크는 없고, House Edge 6.2%는 수학적으로 보장됩니다.
 
-`src/components/nav/PhonaraNav.tsx` 의 모바일 하단 중앙 FAB(왕관/PHON)은 단일 `<NavLink to="/phon">`으로 하드코딩되어 있어, 길게 눌러도 PvP(`/duel`)로 진입할 경로가 코드 자체에 없음. Imperial Duel 진입점은 현재 `Home.tsx` 카드 한 곳뿐. → "버튼을 눌러도 안 들어간다"는 정확히는 "그 버튼은 PHON 전용으로 만들어져 있어 PvP 진입선이 없다".
+## 황금 원칙 (확정)
 
-## 해결 — 중앙 FAB 듀얼 액션 (Short = PHON / Long-press = Duel)
+1. **공정 RNG 영구 잠금** — 승자는 항상 `gen_random_uuid()` 기반 균등 분포. Dynamic Bias는 `display_random` / `near_miss_intensity` / `cinematic_level` **시각·음향 필드만** 조정. 실제 승률 조작 0.
+2. **PHON 베팅 = 머니플로 신설** (기존 8개 FREEZE 경로는 0줄 변경). 신설 RPC만 `phon_balances` 차감/적립.
+3. **운영자 격리** — 시스템 user_id `00000000-0000-0000-0000-000000000001` (`imperial_house_wallet`) 단일 계좌가 House Edge + Pot을 보유. 일반 user_id와 물리적으로 분리.
+4. **Idempotent + Atomic** — 모든 RPC가 `(user_id, idem_key)` UNIQUE로 중복 방지, 단일 트랜잭션 + `FOR UPDATE` 락.
+5. **House Edge 6.2% 정확 유지** — `imperial_house_edge_bps = 620` 상수, settle 시 `pot * (1 - 0.062)` 만 승자 분배.
+6. **Kill Switch** — 기존 `platform_kill_switches.phon_betting` 토글 + RPC 시작 시 BEFORE 가드.
 
-기존 시각/그라디언트/라벨 1픽셀도 건드리지 않고, 동작만 분기한다.
+## 데이터 모델 (신설)
 
-### 1) 새 훅 `src/hooks/use-long-press.ts`
+```text
+imperial_duel_rooms
+  id, status(open|locked|settled|cancelled), house_edge_bps=620,
+  min_bet, max_bet, lock_at, settle_at, server_seed_hash, server_seed (after settle),
+  winner_side, settle_meta jsonb, created_at
 
-- API: `useLongPress({ onShort, onLong, ms = 600 })` → `{ bind: { onPointerDown, onPointerUp, onPointerLeave, onPointerCancel, onContextMenu } }`
-- pointer down → `setTimeout(ms)` 시작 → 만료 시 `onLong()` + `haptics.success()` + `firedRef=true`
-- pointer up → 타이머 살아있고 firedRef=false면 `onShort()` (haptics.select), 아니면 무시
-- leave/cancel/contextmenu → 타이머 클리어, fire 안 함
-- `onContextMenu` preventDefault (모바일 long-press 컨텍스트 메뉴 차단)
-- 5KB 미만, framer-motion 없음 (60fps 안전)
+imperial_duel_bets
+  id, room_id, user_id, side(left|right), amount_phon, odds_at_place,
+  idem_key (UNIQUE per user), placed_at, settled_at, payout_phon, status
+  INDEX (room_id, side), INDEX (user_id, placed_at DESC)
 
-### 2) `PhonaraNav.tsx` 중앙 슬롯 변환
+imperial_duel_audit (immutable, append-only — admin-only RLS)
+  id, room_id, user_id, event(bet_placed|settled|cancelled|near_miss),
+  amount_phon, balance_before, balance_after, near_miss_intensity,
+  display_random, actual_roll, server_seed_revealed, meta jsonb, created_at
 
-- `<NavLink to="/phon">` → `<button type="button">` (+ `useNavigate`)
-- `bind` 스프레드, 클래스/그라디언트/펄스/라벨 동일 유지
-- Short = `navigate("/phon")`
-- Long = `navigate("/duel")` + `notify.success("⚔️ 황제의 대관전")`(@/lib/notify, 0.8s)
-- Long-press 진행 중일 때 `pressing` state → 컴포넌트 내 absolute `<Swords/>` 2개(왼/오 -translate, opacity 0→1, scale 0.6→1, transform-only)가 왕관 양옆에 잠깐 나타남
-- `aria-label`: "PHON 허브 — 길게 누르면 황제의 대관전(/duel)"
-- `aria-describedby` 힌트 SR-only 텍스트 추가
-- prefers-reduced-motion: Sword overlay 생략, 동작은 동일
+imperial_house_ledger
+  id, room_id, kind(edge|pot_in|pot_out), amount_phon, balance_after, created_at
+```
 
-### 3) Discovery 힌트 (1회)
+모든 테이블 RLS — bets/audit: 본인 SELECT + admin 전체. rooms: authenticated SELECT.
 
-- localStorage `phonara:duel-longpress-hint:v1` 미설정 시, /home 첫 방문 후 4초 뒤 nav FAB 위쪽에 작은 칩 "꾹 눌러 PvP 입장" 2.5s 표시 후 자동 소멸 + 클릭 시 `/duel`
-- 칩은 PhonaraNav 안에 같은 grid의 중앙 슬롯 absolute top으로 그려 추가 layout shift 0
-- 이미 사용한 적 있으면 표시 안 함
+## 신설 RPC
 
-## 변경 파일
+| RPC | 역할 |
+|---|---|
+| `imperial_place_phon_bet(p_room_id, p_side, p_amount, p_idem_key)` | kill switch + room 락 + balance 차감 + bet INSERT + house_ledger pot_in + audit. 잔액 부족/한도 초과/중복 idem 모두 명시 에러 코드. |
+| `imperial_settle_duel(p_room_id, p_server_seed)` | admin/cron 전용. `decode(hash(server_seed),'hex')::bigint % 1e9 / 1e9` 균등 RNG → winner 결정 → pot × 0.938 분배 → house edge 0.062 → audit + ledger 기록. |
+| `imperial_compute_display_signals(p_user_id, p_actual_roll)` | **시각 전용** — loss_streak / session_volume / pot_size로 `near_miss_intensity (0..1)`, `display_random` (실제 winner 결정과 무관) 계산. settle 직후 호출, 클라에 broadcast. |
+| `imperial_cancel_duel(p_room_id)` | admin / 30분 미체결 자동 환불. 모든 bet 100% 환불 + audit. |
+| `imperial_get_duel_state(p_room_id)` | 공개 — pot, 양측 비율, 내 bet 요약. |
 
-- 생성: `src/hooks/use-long-press.ts`
-- 수정: `src/components/nav/PhonaraNav.tsx` (중앙 슬롯만)
+## Edge Functions
 
-money-flow / 라우터 / 결제 / Supabase 무관. Bundle 영향 < 1KB br. index 청크 영향 0.
+- `imperial-bet-place` — 인증 검증 → `imperial_place_phon_bet` RPC 래핑 → 실패 시 명확한 에러 매핑 → 성공 시 `game:imperial_duel:<room>` realtime 채널 broadcast (`@pkg/realtime` 사용).
+- `imperial-bet-settle` — admin-only (`getClaims`로 role 확인) → seed reveal + settle RPC → 결과 broadcast.
+- `imperial-duel-cron` — 1분 cron, lock_at 도달한 방 자동 settle, 30분 미체결 자동 cancel.
 
-## QA
+**rate-limiting 없음** (no-backend-rate-limiting directive 준수). DB unique idem_key + balance check가 사실상 동등한 보호.
 
-- 모바일 short tap → `/phon` 진입
-- 모바일 long press(0.6s+) → 햅틱 + Imperial 토스트 + `/duel` 진입
-- 데스크탑 마우스 long-press 동일 동작 (pointer 이벤트)
-- 우클릭 컨텍스트 메뉴 차단 확인
-- prefers-reduced-motion ON 시 Sword overlay 없음, 동작 동일
-- console 0, build pass
+## 프런트엔드
+
+신규: `src/packages/duel/components/arena/RealBetSlip.tsx` (기존 `ConfirmBetSheet` 패턴 재사용, ImperialBetSlip 토큰 통일)
+- 현재 PHON 잔액 → 빠른 금액 칩 → potential win glow
+- "황실 봉
