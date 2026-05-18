@@ -746,3 +746,61 @@ html.win-shake-active body {
     }
   }
 }
+
+/* Phase 4 Sprint 4 PR-1 — Imperial Aurora + Duel Card Glass + Pulse Ring
+ * transform + opacity only. low-end / reduced-motion 시 자동 OFF.
+ */
+@layer utilities {
+  .imperial-aurora {
+    background:
+      radial-gradient(40% 60% at 20% 30%, hsl(38 92% 56% / 0.22), transparent 70%),
+      radial-gradient(35% 55% at 80% 70%, hsl(330 90% 60% / 0.18), transparent 70%),
+      radial-gradient(50% 40% at 50% 0%, hsl(45 95% 65% / 0.12), transparent 75%);
+    opacity: 0.85;
+    transform: translate3d(0, 0, 0);
+    animation: imperial-aurora-sweep 14s ease-in-out infinite alternate;
+    will-change: transform, opacity;
+  }
+  @keyframes imperial-aurora-sweep {
+    0%   { transform: translate3d(-3%, -2%, 0) scale(1);     opacity: 0.75; }
+    50%  { transform: translate3d( 2%,  3%, 0) scale(1.04);  opacity: 0.95; }
+    100% { transform: translate3d(-1%,  1%, 0) scale(1.02);  opacity: 0.8;  }
+  }
+
+  .duel-card-glass {
+    background: linear-gradient(135deg, hsl(20 35% 8% / 0.78), hsl(330 40% 8% / 0.6));
+    backdrop-filter: blur(16px) saturate(150%);
+    -webkit-backdrop-filter: blur(16px) saturate(150%);
+    border: 1px solid hsl(45 90% 60% / 0.25);
+    box-shadow:
+      0 1px 0 hsl(45 90% 70% / 0.18) inset,
+      0 14px 36px -14px hsl(0 0% 0% / 0.55);
+  }
+
+  .duel-pulse-ring {
+    position: relative;
+  }
+  .duel-pulse-ring::after {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    border: 1px solid hsl(45 90% 60% / 0.45);
+    pointer-events: none;
+    transform: scale(1);
+    opacity: 0.6;
+    animation: duel-pulse-ring 2.2s ease-out infinite;
+    will-change: transform, opacity;
+  }
+  @keyframes duel-pulse-ring {
+    0%   { transform: scale(0.98); opacity: 0.55; }
+    70%  { transform: scale(1.04); opacity: 0;    }
+    100% { transform: scale(1.04); opacity: 0;    }
+  }
+
+  @media (prefers-reduced-motion: reduce), (prefers-reduced-transparency: reduce) {
+    .imperial-aurora { animation: none; opacity: 0.4; }
+    .duel-card-glass { backdrop-filter: none; -webkit-backdrop-filter: none; background: hsl(20 35% 8%); }
+    .duel-pulse-ring::after { animation: none; opacity: 0; }
+  }
+}
