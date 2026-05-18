@@ -18,9 +18,11 @@ export type RealBetSlipProps = {
   leftPot: number;
   rightPot: number;
   disabled?: boolean;
+  /** IMPERIAL-SINGULARITY: when true, slip is locked due to admin emergency_freeze_flag */
+  frozen?: boolean;
 };
 
-export function RealBetSlip({ roomId, defaultSide = "left", leftPot, rightPot, disabled }: RealBetSlipProps) {
+export function RealBetSlip({ roomId, defaultSide = "left", leftPot, rightPot, disabled, frozen }: RealBetSlipProps) {
   const [side, setSide] = useState<"left" | "right">(defaultSide);
   const [amount, setAmount] = useState<number>(100);
   const { placeBet, pending } = useRealBetting();
@@ -29,10 +31,21 @@ export function RealBetSlip({ roomId, defaultSide = "left", leftPot, rightPot, d
     const total = leftPot + rightPot + amount;
     const winningPot = (side === "left" ? leftPot : rightPot) + amount;
     if (winningPot <= 0) return 0;
-    // House edge 6.2% (mirror of server constant)
     const payoutPool = total * (1 - 0.062);
     return Math.floor((payoutPool * amount) / winningPot);
   }, [side, amount, leftPot, rightPot]);
+
+  if (frozen) {
+    return (
+      <div className="rounded-2xl border border-amber-500/40 bg-gradient-to-br from-amber-900/30 to-amber-950/40 backdrop-blur-xl p-5 text-center space-y-2">
+        <div className="text-3xl">👑</div>
+        <div className="text-sm font-display font-bold text-amber-100">결투방 비상 동결 중</div>
+        <div className="text-xs text-amber-200/70">
+          황실 운영진이 결투의 공정성을 점검 중입니다. 잠시 후 다시 출진해 주십시오.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur-xl p-4 shadow-[0_8px_32px_hsl(240_50%_1%/0.55)] space-y-4">
