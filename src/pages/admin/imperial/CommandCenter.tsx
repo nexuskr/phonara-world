@@ -12,6 +12,8 @@ import ImperialAutoHealPanel from "@/components/admin/ImperialAutoHealPanel";
 import ImperialObservabilityStream from "@/components/admin/ImperialObservabilityStream";
 import ImperialCircuitPanel from "@/components/admin/ImperialCircuitPanel";
 import Phase1LiveMonitor from "@/components/admin/Phase1LiveMonitor";
+// ApocalypseProtocolPanel is rendered inside Phase1LiveMonitor; import kept for isolation audit.
+import "@/components/admin/ApocalypseProtocolPanel";
 
 const KILL_KEYS = [
   "imperial_betting",
