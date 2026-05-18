@@ -1,82 +1,103 @@
-# Phase 1 Hyperion Ignition — Final Completion & Live Activation
+# Phase 4 — All Lights To Green Recovery Plan
 
-Phase 1 Hyperion의 모든 기반(Caps, Fraud Signals, Hardened RPC, Apocalypse Protocol, Live Monitor)이 적재 완료된 상태에서, 이번 라운드는 **실제 점화(Activate Tier 1 Observer)** 와 마무리 검증만 수행한다.
+해부 보고서의 🔴 5건과 🟡 위험을 모두 해소해 Phase 1 Observer Mode가 실제로 점화 가능한 상태로 만든다. Money-flow 8경로와 Operator Isolation은 0바이트 무변경을 유지한다.
 
-## Mission
+---
 
-신규 유저가 0원으로 들어와 Welcome → Signup Bonus → Daily Login → First Duel Invite 전 과정을 cinematic하게 경험하도록 Observer Mode를 **공식 점화**하고, Command Center에서 14 KPI + Apocalypse Protocol이 실시간 작동함을 확인한다.
+## Phase 0 — Pre-Operation Safety (read-only)
 
-## Invariants
+- Money-flow 8경로 파일 SHA-512 스냅샷 캡처(작업 전/후 비교).
+- Operator Isolation 5중 가드(`manualChunks` / `modulePreload` 필터 / `check-operator-isolation.mjs` / dependency-cruiser / `DegradeModeBinder`) 현행 유지 확인.
+- `imperial_*` 32개 테이블의 현재 컬럼/RLS 스냅샷을 read_query로 확보.
+- 10분 rollback SOP 재확인: `imperial_phase1_emergency_pause()` + `imperial_rollout_activate(0, ...)`.
 
-- Money-flow 8경로 (`imperial_place_phon_bet` / `_settle` / `_apply_house_edge_split` / `request_withdrawal` / `credit_crypto_deposit` / `apply_token_burn` / `subscribe_vip_pass_phon` / `claim_loss_protection`) **git diff = 0**. Pre/Post SHA-512 비교 보고.
-- Operator Isolation 유지: 신규 코드는 `src/components/admin/**` 또는 `src/pages/admin/**` 만 수정.
-- 모든 신규 객체 `imperial_` prefix. RPC는 SECURITY DEFINER + `search_path=public` + AAL2(파괴적 작업).
-- Atomic / Idempotent / Observable / Auditable / Rollbackable / 60fps.
+## Phase 1 — DB 스키마 표준화 (migration #1)
 
-## Scope (this round)
+신규 컬럼은 모두 nullable + default 로 추가해 기존 데이터 보존.
 
-### 1. Pre-Flight Safety Verification
+- `imperial_observability_events`
+  - `ADD COLUMN created_at timestamptz DEFAULT now()` (없으면), `UPDATE` 로 `ts` 값 백필.
+  - `ADD COLUMN event text` 가 없으면 generated/alias 컬럼으로 `kind` 미러.
+- `imperial_rollout_phases`
+  - `ADD COLUMN tier int DEFAULT 0`
+  - `ADD COLUMN cap bigint DEFAULT 0`
+  - `ADD COLUMN activated_at timestamptz`
+- `imperial_onboarding_grants`
+  - `ADD COLUMN created_at timestamptz DEFAULT now()` + 백필 from `granted_at`.
+- 32개 `imperial_*` 테이블 중 `created_at`/`updated_at` 누락분만 보강(존재 확인 후 ADD IF NOT EXISTS).
 
-- `bun run scripts/phase4/phase1-hyperion-activation-check.ts` 실행 — 35 게이트 + 8-path SHA-512.
-- 보조: `bun run scripts/phase4/phase1-go-live-check.ts` 18-item 게이트 PASS 확인.
-- DB 메타 점검 (read-only):
-  - `imperial_onboarding_caps` / `imperial_onboarding_fraud_signals` / `imperial_audit_trail` / `imperial_rollout_phases` / `imperial_observability_events` 의 RLS 활성 + `created_at`/`updated_at` 존재 검사.
-  - 누락 시 **별도 보완 마이그레이션 1건** (ADD COLUMN IF NOT EXISTS + trigger). 머니플로 무관.
+## Phase 2 — 누락 RPC 4종 생성 (migration #2)
 
-### 2. Tier 1 Activation (AAL2)
+모두 `SECURITY DEFINER`, `SET search_path = public`, AAL2 또는 admin 가드.
 
-활성화는 **운영자가 Command Center UI 버튼에서 직접 트리거**한다 (감사 추적 + AAL2 강제). 본 작업에서는 안내 + 보조 헬퍼만 제공.
+1. `imperial_rollout_activate(_phase int, _activated_by uuid, _notes text default null)`
+   - admin + AAL2 체크, `imperial_rollout_phases` upsert(tier/cap 매핑 0/1/2/3 → 0/50k/250k/unlimited), `activated_at = now()`.
+   - `imperial_observability_events` 에 `kind='rollout_activated'` 기록. Atomic.
+2. `imperial_log_observability(_event text, _payload jsonb default '{}')`
+   - `auth.uid()` 또는 NULL 허용, append-only INSERT.
+3. `imperial_claim_daily_login_bonus()`
+   - 일자별 `imperial_onboarding_grants` unique(user_id, kind='daily_login', date) 가드.
+   - 450~550 PHON variable reward (`floor(450 + random()*101)`), near-miss 메타.
+   - PHON 지급은 기존 `_grant_phon_internal` 류 헬퍼만 호출 — money-flow 함수 본문 무수정.
+4. `imperial_get_onboarding_state()` STABLE
+   - 오늘 클레임 여부 / streak / 다음 보상 / cap 잔량 반환.
 
-- `<ImperialActivationPanel />` 추가 (`src/components/admin/ImperialActivationPanel.tsx`, AAL2 게이트):
-  - 현재 `imperial_rollout_phases` 행 상태 표시 (phase / tier / cap / activated_at).
-  - "Activate Phase 1 (Tier 1, Observer)" 버튼 → `imperial_rollout_activate(1, auth.uid())` 호출 → `imperial_log_observability('phase1_activated', …)`.
-  - 활성화 후 60s 안에 `imperial_get_phase1_kpis()` 첫 스냅샷 자동 fetch + 표시.
-- `CommandCenter.tsx` 상단 탭에 신규 패널 마운트.
+## Phase 3 — Kill Switch 정리 (insert 도구)
 
-### 3. Onboarding Flow Final Check (frontend only, no behavior change)
+- `platform_kill_switches` 에서 `phon_betting`, `phon_staking`, `phon_swap` 행을 `enabled=false` 로 UPDATE.
+- 중복 키(`phon_betting` vs `phon_betting_enabled`) 가 존재하면 `_enabled` 접미사 행을 비활성화로 정리(삭제 아님, 감사 추적 보존).
+- 변경마다 `admin_audit_log` 에 사유 기록.
 
-- `ImperialWelcomeDialog` / `DailyLoginRewardToast` / `InviteRailMini` / `FirstDuelInvite` / `ImperialVoidPreview` 마운트 경로(`App.tsx` + `Dashboard.tsx`) 재확인 — 변경 없음 시 그대로 둠.
-- `useImperialOnboarding` 가 device fp + ip/ua hash 를 전송하는지 코드 리뷰 (수정 없으면 noop).
-- 회귀 방지용 짧은 README: `docs/phase4/phase1-onboarding-flow.md` (텍스트만, 코드 영향 0).
+## Phase 4 — Frontend 오타/누수 수정
 
-### 4. Live Monitoring Sign-Off
+- `src/components/admin/TodayKpiCards.tsx`: `withdraw_requests` → `withdrawal_requests`.
+- `src/packages/duel/hooks/useFomoOracle.ts`:
+  - `setInterval` 을 `@pkg/performance` 의 `useTrackedInterval` 로 교체(카테고리 `'fomo'`).
+  - 동일 훅 다중 마운트 방지를 위해 모듈 스코프 `refCount` + 단일 interval 공유.
+- Money-flow 파일은 일절 수정하지 않음.
 
-- `<Phase1LiveMonitor />` 3s 폴링 + 14 KPI 카드 + sparkline 정상 렌더 확인 (스크린샷 QA 기록).
-- `<ApocalypseProtocolPanel />` 의 임계값 표시 (yellow ≥0.08%, auto-rollback ≥0.1% × 3 tick) 가 실제 RPC 응답과 일치하는지 시각 검증.
-- `imperial_observability_events` 에 `phase1_activated` / `phase1_kpi_snapshot` 이벤트가 들어오는지 read-only 쿼리로 확인.
+## Phase 5 — RLS / 노란불 해소
 
-### 5. Documentation & Memory
+- `profiles_sensitive_guard` 트리거 회귀 원인을 read_query 로 식별 후 트리거 정의만 보강(컬럼 셋 동기화). profiles 본문/RLS 정책은 무변경.
+- supabase linter 재실행 후 신규 경고만 핀포인트 수정. 기존 accepted-risk 항목은 그대로 유지하고 사유를 보안 메모에 갱신.
 
-- `mem://features/phase-4-p1-hyperion` 에 "LIVE (Tier 1 Activated YYYY-MM-DD)" 라인 + 14 KPI 베이스라인 추가.
-- `mem://index.md` Core 마지막 줄에 "Phase 1 Observer LIVE: imperial_rollout_phases.phase=1 (Tier 1, cap=50k PHON/d), Apocalypse Protocol armed." 한 줄 갱신 (기존 Phase 4 Limited Rollout 줄 바로 아래).
+## Phase 6 — Verification Gates (50+)
 
-## Rollback (≤10 min)
+스크립트 `scripts/phase4/all-green-verification.ts` 가 다음을 자동 점검 후 콘솔 + `/admin/ops/imperial-command` 에 결과 출력:
 
-1. Command Center → Apocalypse Panel → "Emergency Pause" (`imperial_phase1_emergency_pause`, AAL2).
-2. `imperial_rollout_activate(0, auth.uid())` 로 Observer Off.
-3. 신규 보너스 발급은 즉시 차단되나, 이미 지급된 PHON 은 회수하지 않음 (감사 보존). 필요 시 admin이 `imperial_audit_trail` 기반 수동 회수.
+- Money-flow 8경로 SHA-512 = baseline (8 게이트)
+- Operator Isolation: `check-operator-isolation.mjs` exit 0 (1)
+- imperial_* 32 테이블 created_at/updated_at 존재 (32)
+- 신규 RPC 4종 존재 + 권한 정상 (4)
+- Kill switch 3종 OFF (3)
+- `imperial_get_phase1_kpis()` 반환 14 키 모두 NOT NULL (14)
+- `ImperialActivationPanel` 렌더 시 에러 0 (1)
+- console error count = 0 동안 60s (1)
 
-## Out of Scope
+## Phase 7 — Documentation & Memory
 
-- Money-flow 코드 / 베팅 / 출금 / Burn / Treasury split — **0 byte 변경**.
-- Tier 2/3 활성화, Founding Seat Phase 2 오픈 — 다음 라운드.
-- 신규 RPC/테이블 — 1번의 보완 마이그레이션이 필요한 경우(컬럼 누락)에만 한정.
+- `mem://features/phase-4-p1-hyperion` 에 "ALL-GREEN 달성" 섹션 + 변경 목록 추가.
+- `mem://index.md` Core 의 Phase 1 LIVE 라인에 "schema synced / kill switches off" 추가.
+- `docs/phase4/all-green-runbook.md` 신규: rollback 8분 SOP + 점검 명령어.
 
-## Deliverables
+---
 
-- 1× admin component: `ImperialActivationPanel.tsx` (+ CommandCenter 탭 마운트).
-- 0~1× 보완 마이그레이션 (감사/타임스탬프 컬럼 보강, 필요 시).
-- 1× docs/phase4/phase1-onboarding-flow.md.
-- mem 2건 갱신 (`index.md` Core, `features/phase-4-p1-hyperion`).
-- QA Report: SHA-512 pre/post diff, 35-gate + 18-gate 결과, 14 KPI 첫 스냅샷, Apocalypse 임계값 표시 검증.
+## Out of Scope (절대 변경 금지)
 
-## Phase 2 Readiness Gates (deferred)
+- `src/packages/wallet/**`, `src/packages/duel/**` 의 betting/settle/burn/treasury 함수 본문
+- DB 함수: `imperial_place_phon_bet`, `imperial_settle_*`, `_apply_house_edge_split`, `apply_token_burn`, `request_withdrawal`, `credit_crypto_deposit`, `subscribe_vip_pass_phon`, `claim_daily_attendance_v2`
+- Operator chunk 경계, vite manualChunks, dependency-cruiser 룰
 
-24h 후 다음 조건 충족 시 Tier 2 + Founding Seat 오픈 후보:
+## Rollback (≤ 8분)
 
-- `cap_utilization_24h < 70%`
-- `fraud_reject_rate < 0.5%`
-- `d1_retention > 25%`
-- `warm_king_engagement_score > 0.35`
-- `anomaly_score` 24h 평균 `< 0.05%`, max `< 0.1%`
-- `apocalypse_triggered_count = 0`
+1. `imperial_rollout_activate(0, auth.uid(), 'rollback')`
+2. `imperial_phase1_emergency_pause()`
+3. Phase 1 migration 의 ADD COLUMN 은 nullable+default 라 즉시 무해 → 필요 시 `DROP COLUMN IF EXISTS` 핫픽스 migration 준비.
+4. Kill switch 행 `enabled=true` 로 즉시 복원.
+
+## Technical Notes
+
+- 모든 신규 함수는 `SECURITY DEFINER` + 명시적 `SET search_path = public` + AAL2/admin 가드.
+- `created_at` 추가 컬럼은 모두 `DEFAULT now()` 로 코드 동기화 부담 최소화.
+- variable reward 분포는 균등(450..550); near-miss 표시는 payload 메타 `near_miss=true`(보상 ≥545) 용으로만 사용, 실수익 동일.
+- ESLint `no-direct-sonner` / `no-raw-channel` 룰 유지 — 신규 코드는 `@/lib/notify`, `@pkg/realtime` 만 사용.
