@@ -231,6 +231,11 @@ const App = () => (
             <Suspense fallback={null}><EntropyChip /></Suspense>
           )}
           {/* v19 Phase 0-R: BigWinShareHost / AchievementUnlockListener / LobbyFab / ImperialDeepLinkListener 마운트 해제 */}
+          {/* Phase 4 P1 Observer Mode — welcome + daily login (lazy, suspended) */}
+          <Suspense fallback={null}>
+            <ImperialWelcomeDialog />
+            <DailyLoginRewardToast />
+          </Suspense>
           <Suspense fallback={<RouteFallback />}>
             <MaintenanceGate>
             <Routes>
