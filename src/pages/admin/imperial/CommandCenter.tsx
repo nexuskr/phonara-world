@@ -11,6 +11,7 @@ import ImperialRolloutPhasePanel from "@/components/admin/ImperialRolloutPhasePa
 import ImperialAutoHealPanel from "@/components/admin/ImperialAutoHealPanel";
 import ImperialObservabilityStream from "@/components/admin/ImperialObservabilityStream";
 import ImperialCircuitPanel from "@/components/admin/ImperialCircuitPanel";
+import Phase1LiveMonitor from "@/components/admin/Phase1LiveMonitor";
 
 const KILL_KEYS = [
   "imperial_betting",
