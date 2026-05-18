@@ -1,79 +1,93 @@
-# phonara.net /complete-profile 404 — 진단 결과 및 수정 계획
+# phonara-world-main /complete-profile 백엔드 복구 계획
 
-## 실측 진단 (방금 HTTP로 직접 확인)
+## 현재 확인된 사실
 
-| 경로 | 결과 |
-|---|---|
-| `https://phonara.net/complete-profile` | 307 → `www.phonara.net/complete-profile` (정상, www가 primary) |
-| `https://www.phonara.net/complete-profile` | **404 NOT_FOUND** (`x-vercel-error: NOT_FOUND`) |
-| `https://www.phonara.net/` | 200 OK (빌드 자체는 살아있음) |
-| 빌드된 `/assets/index-*.js` 내부 | **`ketlqzfaplppmupaiwft.supabase.co` 문자열 0회 검출** |
+### 프론트엔드 기준
+- `/complete-profile` 라우트는 이미 등록되어 있습니다.
+- `src/pages/CompleteProfile.tsx` 는 `complete_profile` RPC를 호출하지 않고, `profiles` 테이블을 직접 `UPDATE` 합니다.
+- 이 흐름과 함께 실제로 연동되는 백엔드 호출은 다음입니다.
+  - `register_device` — 로그인 직후 `useAuthBridge` / `src/lib/deviceFingerprint.ts`
+  - `assign_persona` — 로그인 직후 `useAuthBridge`
+  - `record_span` — `src/lib/spans.ts`
+  - `get_empire_seats_remaining` — `src/pages/Empire.tsx`
+  - `get_active_boost_count` — 현재 코드 탐색 범위에서는 직접 사용 흔적 미약하나, 백엔드 surface에는 포함됨
 
-## 확정된 두 가지 진짜 원인
+### 현재 연결된 백엔드 기준
+- 지금 이 프로젝트가 바라보는 백엔드에는 아래 함수가 이미 존재합니다.
+  - `get_active_boost_count`
+  - `get_empire_seats_remaining`
+  - `register_device`
+  - `assign_persona`
+  - `record_span`
+- `profiles` 테이블에는 이미 아래 RLS 정책이 있습니다.
+  - 본인 `SELECT`
+  - 본인 `INSERT`
+  - 본인 `UPDATE`
+- `auth.users` → `public.handle_new_user()` 트리거도 이미 연결되어 있습니다.
+- 즉, **현재 repo가 연결된 관리형 백엔드에는 요청하신 핵심 요소가 대부분 이미 존재**합니다.
 
-### 원인 A — Vercel Production 환경변수 미설정 (치명적)
+### 진짜 위험 지점
+- 이 repo는 아직 `supabase/config.toml` 기준 `ketlqzfaplppmupaiwft` 에 연결되어 있습니다.
+- 문서상 독립 백엔드 `phonara-world-main` 은 별도 ref(`wyhhdyrvqtoejvusnhva`) 입니다.
+- 따라서 지금 바로 마이그레이션을 실행하면 **독립 백엔드가 아니라 현재 관리형 백엔드에 적용될 위험**이 큽니다.
 
-빌드된 JS 번들에 Supabase URL 문자열이 전혀 들어있지 않습니다. 이는 `VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY` 가 Vercel Production 환경에 등록되지 않은 채 빌드된 증거입니다. (Vite의 `import.meta.env.VITE_*` 는 빌드 타임에 문자열 치환되므로, env가 없으면 `undefined` 가 박힘 → `createClient(undefined, undefined)` → 모든 auth/db 호출 깨짐 → 콘솔에 "수많은 404")
+## 목표
 
-### 원인 B — SPA fallback 미작동 (페이지 자체 404)
+독립 백엔드 `phonara-world-main` 에서 `/complete-profile` 흐름이 막히지 않도록, 필요한 함수 / 권한 / RLS / signup trigger 상태를 **독립 백엔드 기준으로 정렬**하고 검증합니다.
 
-`/complete-profile` 직접 접속 시 Vercel이 `index.html` 로 fallback 하지 않고 그대로 404 반환. 현재 git의 `vercel.json` 에는 올바른 rewrite 가 있으나 — **현재 phonara.net 에 배포된 빌드는 그 vercel.json 이 적용되기 전 버전**입니다.
+## 실행 계획
 
-## 수정 사항
+### 1. 대상 백엔드 정렬
+- 독립 백엔드 ref를 기준으로 작업 대상을 명확히 전환합니다.
+- 잘못된 프로젝트에 마이그레이션이 들어가지 않도록 현재 링크 상태를 먼저 정리합니다.
 
-### 1. 코드 수정 (Lovable에서 처리)
+### 2. 복구용 마이그레이션 1회 작성
+독립 백엔드에 대해 아래를 모두 idempotent 하게 보장하는 수복 마이그레이션을 작성합니다.
 
-`vercel.json` 의 SPA rewrite 패턴을 더 안전한 방식으로 단순화합니다. 현재 부정형 lookahead 패턴은 일부 Vercel 빌드 환경에서 적용 누락 사례가 보고됨.
+- `register_device` 존재 및 `authenticated` 실행 권한
+- `assign_persona` 존재 및 `authenticated` 실행 권한
+- `record_span` 존재 및 `authenticated` 실행 권한
+- `get_active_boost_count` 존재 및 필요한 실행 권한
+- `get_empire_seats_remaining` 존재 및 필요한 실행 권한
+- `profiles` RLS 활성화
+- `profile_self_select / insert / update` 정책 재보장
+- `handle_new_user` 함수 재정의
+- `on_auth_user_created` 트리거 재생성
 
-```json
-{
-  "rewrites": [
-    { "source": "/((?!api/|assets/|sounds/|.*\\.).*)", "destination": "/index.html" }
-  ]
-}
-```
-(차이: `api`/`assets`/`sounds` 뒤에 `/` 강제 + 점 포함 파일만 제외. 라우트 `/complete-profile` 같은 비-파일 경로는 100% fallback)
+`complete_profile` RPC는 현재 프론트 코드에서 사용하지 않으므로, 이 계획에서는 **불필요한 신규 RPC를 만들지 않고 실제 호출 surface만 복구**합니다.
 
-### 2. 사용자가 직접 해야 하는 작업 (Lovable AI는 불가)
+### 3. 권한 표면 점검
+- 함수 EXECUTE 권한이 `PUBLIC` 또는 잘못된 role로 새지 않았는지 함께 점검합니다.
+- 가능하면 기존 permission baseline 흐름과 충돌하지 않도록 유지합니다.
 
-#### A. Vercel 환경변수 추가 (가장 중요)
+### 4. 독립 백엔드 검증
+복구 후 아래를 독립 백엔드에서 확인합니다.
 
-Vercel Dashboard → `phonara-world` 프로젝트 → Settings → Environment Variables 에서 다음 3개를 **Production / Preview / Development 3개 환경 모두**에 체크하고 저장:
+- 함수 존재 여부
+- 함수 실행 권한
+- `profiles` 정책 존재 여부
+- `handle_new_user` 트리거 존재 여부
+- 신규 가입 시 `profiles / wallet_balances / user_roles` 자동 생성 여부
 
-| Name | Value |
-|---|---|
-| `VITE_SUPABASE_URL` | `https://ketlqzfaplppmupaiwft.supabase.co` |
-| `VITE_SUPABASE_PUBLISHABLE_KEY` | `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtldGxxemZhcGxwcG11cGFpd2Z0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwNzQzMzcsImV4cCI6MjA5MzY1MDMzN30.GtdLLkaCiNUsEkqHYd1fg8fUk0dtojSubj6lPA3igtk` |
-| `VITE_SUPABASE_PROJECT_ID` | `ketlqzfaplppmupaiwft` |
+### 5. 프론트 연결 확인
+- 독립 백엔드 URL / publishable key가 Production 빌드에 실제로 들어가는지 재확인합니다.
+- `/complete-profile` 가 SPA 라우팅과 백엔드 인증 흐름 둘 다 통과하는지 점검합니다.
 
-(참고: 코드 `src/integrations/supabase/client.ts` 는 `VITE_SUPABASE_PUBLISHABLE_KEY` 만 읽습니다. `VITE_SUPABASE_ANON_KEY` 라는 변수명은 이 프로젝트에서 안 씁니다 — 이전 답변에서 둘 다 안내한 부분 정정.)
+## 사용자 영향
 
-#### B. Supabase Auth URL Configuration
+- 신규 가입자 프로필 자동 생성 실패
+- `/complete-profile` 저장 실패
+- 로그인 직후 디바이스 등록 / persona 부여 / span 기록 오류
 
-Lovable Cloud (Supabase) Auth → URL Configuration:
-- **Site URL**: `https://www.phonara.net`
-- **Redirect URLs** 에 추가:
-  - `https://www.phonara.net/**`
-  - `https://phonara.net/**`
-  - `https://phonara-world-*.vercel.app/**`
+이 세 갈래를 한 번에 막는 계획입니다.
 
-(없으면 OAuth/매직링크 콜백이 거부됨)
+## 완료 기준
 
-#### C. Vercel Redeploy (캐시 없이)
+- 독립 백엔드에서 필요한 함수 5종이 모두 존재하고 권한이 맞음
+- `profiles` RLS가 본인 insert/update를 허용함
+- `handle_new_user` 트리거가 정상 연결됨
+- Production 환경에서 `/complete-profile` 진입 후 저장이 막히지 않음
 
-Vercel Dashboard → Deployments → 최신 배포 → ⋯ → **Redeploy** → **"Use existing Build Cache" 체크 해제** → Redeploy.
+## 참고
 
-(VITE_* 환경변수는 빌드 타임에 박히므로 env 추가만으로는 반영 안 됨. 반드시 재빌드 필요.)
-
-## 검증 (재배포 후 제가 자동으로 수행)
-
-```bash
-curl -sI https://www.phonara.net/complete-profile          # → 200 (404 아님)
-curl -s  https://www.phonara.net/assets/index-*.js | grep ketlqzfaplppmupaiwft  # → match
-```
-
-둘 다 통과하면 사용자가 `/complete-profile` 접속 시 정상 동작 확인 가능.
-
-## 부수 정보 — 이전 메시지에서 요청된 RPC들
-
-DB 실측 결과 `get_active_boost_count` / `get_empire_seats_remaining` / `record_span` 는 **이미 존재**합니다. `complete_profile` 이라는 RPC는 코드 어디서도 호출하지 않으므로 만들 필요 없습니다 (CompleteProfile.tsx 는 `profiles` 테이블에 직접 UPDATE). 따라서 이번 마이그레이션은 없습니다.
+- 별도 ref로 독립된 backend가 맞다면, 이번 작업의 핵심은 **새 기능 추가가 아니라 독립 백엔드와 현재 repo 스키마의 drift 복구**입니다.
