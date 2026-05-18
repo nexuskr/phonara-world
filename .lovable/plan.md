@@ -1,160 +1,142 @@
-# Phonara Ω∞ — Sovereign Verification Organism
+# Phonara — Playwright E2E Sovereign Defense Protocol
 
-Ascension of the governance kernel from "test framework" into a **constitutional runtime** that discovers, models, attacks, replays, audits, and quarantines itself — without ever touching the immutable money-flow, operator isolation, or settlement RPC bodies.
+1인 운영자가 매일 5분 안에 "오늘 모바일에서 죽은 곳이 있는가?"를 확인하고, Stake/Rollbit/Bybit 유저가 넘어올 때 모바일 첫 30초에서 이탈하지 않도록 보장하는 실전 E2E. 거창한 거버넌스 조직체 없음. 머니플로/imperial_* RPC/Operator Isolation은 0바이트 미터치 — 전부 mock.
 
-## Immutable laws (0-byte freeze)
-
-- 8 money-flow paths
-- `imperial_*` RPC bodies
-- Operator isolation chunks
-- RLS / SECURITY DEFINER allowlist
-- Realtime partition wrappers
-
-Every artifact below lives under `governance-kernel/`. Nothing in `src/`, `supabase/migrations/`, or `supabase/functions/` is mutated by this plan.
-
-## Phase order (no skipping, no parallel constitutional mutation)
+## 디렉터리
 
 ```text
-P0 Topology Constitution
-   └─ P1 Financial Ledger Physics
-        └─ P2 Realtime Adversarial Sim
-             └─ P3 Court-Admissible Replay
-                  └─ P4 Zero-Trust Operator Fortress
-                       └─ P5 Sovereign Governance Score
-                            └─ P6 Adversarial Dual-AI
-                                 └─ P7 Self-Governing Loop
+e2e/
+  playwright.config.ts          # 5 프로젝트 (Desktop, iPhone13, Pixel7, LowEnd, ReducedMotion)
+  fixtures/
+    auth.fixture.ts             # 로그인 세션 storageState 캐시
+    mock-supabase.ts            # supabase.from/rpc/channel route intercept
+    haptic-spy.ts               # navigator.vibrate 호출 캡처
+    network.ts                  # offline / slow-3g / saveData 헬퍼
+    a11y.ts                     # axe-core 주입
+  utils/
+    selectors.ts                # data-testid 단일 진실 (코드 변경 없이 fallback aria/role)
+    gestures.ts                 # pinch / double-tap / swipe / pull-to-refresh
+    visual.ts                   # 스크린샷 diff threshold
+  tests/
+    01-onboarding-death-path.spec.ts
+    02-duel-lobby-journey.spec.ts
+    03-mobile-os-native-feel.spec.ts
+    04-worker-cosmetic-integrity.spec.ts
+    05-betting-safety-net.spec.ts
+    06-edge-cases-dust.spec.ts          # 회전/오프라인/저전력/입력 IME/탭 백그라운드
+    07-a11y-smoke.spec.ts               # axe critical only
+  reporters/
+    ko-reporter.ts              # 한국어 에러 + 스크린샷 경로 + 5분 요약
+    slack-notify.ts             # 실패 시 SLACK_WEBHOOK 으로 요약
+  .github/workflows/e2e.yml     # PR마다 자동
 ```
 
-Each phase ends with a signed snapshot + governance score delta. The next phase cannot start until the previous phase's score ≥ 92 on its own axis.
+## Playwright 프로젝트 매트릭스
 
----
+| 프로젝트 | 디바이스 | 목적 |
+|---|---|---|
+| `mobile-ios` | iPhone 13 (390×844, DPR 3, touch) | 주력 — Stake/Rollbit 유저 |
+| `mobile-android` | Pixel 7 (412×915) | Android 분기 검증 |
+| `mobile-lowend` | 360×640, CPU throttle 4×, slow-3g | 인도네시아/베트남 저사양 |
+| `mobile-reduced-motion` | iPhone 13 + `prefers-reduced-motion: reduce` + `saveData` | 접근성/배터리 절약 |
+| `desktop` | 1280×720 | 회귀만 |
 
-## P0 — Topology as constitutional state
+`use: { trace: 'retain-on-failure', video: 'retain-on-failure', screenshot: 'only-on-failure' }`.
 
-Reality is **discovered**, never asserted by humans.
+## Critical Path 우선순위 (이탈 확률 높은 순)
 
-```
-governance-kernel/topology/
-  discover.migrations.ts      # parse supabase/migrations/*.sql → tables, FKs, triggers
-  discover.rpcs.ts            # pg_proc introspection via read_query
-  discover.edges.ts           # supabase/functions/* manifest + verify_jwt + secrets
-  discover.routes.ts          # vite route + lazy chunk map
-  discover.realtime.ts        # @pkg/realtime partition + region shards
-  discover.oracle.ts          # oracle_source_weights + health
-  signed.snapshot.ts          # SHA-256 over canonical JSON, ed25519 signature
-  topology.diff.engine.ts     # prev vs next → additions/removals/mutations
-  topology.constitution.json  # immutable laws + invariant generators
-```
+### 01 Onboarding Death Path (가장 비싸게 잃는 유저)
+- `/auth` 진입 → 이메일/구글 가입 → `/welcome` → 15,000 PHON 클레임 다이얼로그 → `/dashboard` → 첫 Daily Bonus
+- 단계마다: 로딩 스피너 ≤2.5s, CTA 터치 타깃 ≥44×44, 에러 토스트 한국어, 새로고침 후에도 동일 단계 복귀
+- 회원가입 mock: `**/auth/v1/signup` intercept → 합성 세션 주입
+- 클레임 mock: `**/rest/v1/rpc/imperial_claim_signup_bonus` → `{status:"ok", amount_phon:15000, new_balance:15000}`
+- 실패 시나리오: 클레임 RPC 500 / 네트워크 끊김 / 중복 클릭 / 가입 직후 새로고침
 
-Deploy gate: `constitution(prev) → constitution(next)` must not violate immutable laws. Diff engine outputs `governance-kernel/reports/topology-diff-<ts>.json`.
+### 02 Imperial Duel Lobby Full Journey (Sprint 4 핵심)
+- `/duel` 진입 → `HallOfSovereigns` Top 1 카드 탭 → `LiveDuelGates` 카드 탭 → swipe-up 으로 `FomoFloatingOracle` 확장 → `VerificationOracleModal` 열림 → 닫기 swipe-down
+- `NearMissOverlay` 진입 시 opacity transition, `MultiplierCountUp` scale 1→1.15→1 검증 (transform 인라인 스타일 읽어서 단언)
+- mock: `useDuelRooms` 의 `imperial_get_duel_rooms` RPC → 4개 방 + spectators 노이즈
 
-## P1 — Ledger physics (state-transition correctness)
+### 03 Mobile OS Native Feel Extreme
+- **Pinch zoom**: `viewport meta`가 줌 허용인지 확인, 두 손가락 핀치 → layout shift 없음, double-tap zoom → 텍스트 재배열 없음
+- **Pull-to-Refresh**: `usePullToRefresh` 영역에서 touchstart at top → 80px drag → release → `onRefresh` 콜백 호출 (mock spy)
+- **Swipe Gesture**: 좌/우/상/하 4방향, BottomSheet dismiss
+- **Dynamic Island**: `dynamicIsland.show(...)` 페이지 액션 트리거 후 pill DOM `opacity:1` + `translate3d(0,0,0) scale(1)` 검증, ttl 후 invisible
+- **Haptic**: `navigator.vibrate` spy → success/medium/error 각 1회 이상 호출
+- **Orientation**: `page.setViewportSize` portrait↔landscape, 레이아웃 깨짐/오버플로 0
+- **Safe area**: `env(safe-area-inset-top)` 적용 확인 (DynamicIslandPill top 계산)
+- **Reduced motion**: PTR 비활성, framer-motion 트랜지션 즉시 완료
 
-```
-governance-kernel/financial/
-  transition.physics.ts          # legal predecessor/successor state derivation
-  impossible-state.detector.ts   # negative temporal balance, phantom mint, orphan delta
-  double-spend.simulator.ts      # idempotency key collision fuzz
-  concurrent-ledger-fuzzer.ts    # 1M synthetic mutations, deterministic seed
-  conservation.prover.ts         # Σ(assets+liabilities+treasury) invariant
-```
+### 04 Worker + Cosmetic Visual Integrity
+- `calcNearMiss` worker on → score ≥ 0.5 시 overlay 표시, off (worker reject) → main-thread fallback 동일 결과
+- `calcMultiplierFrames` Float32Array transferable 경로 + fallback 둘 다 최종 값 동일
+- 60fps 검증: `requestAnimationFrame` 카운트 / 시간 비율 ≥ 50fps on mid-tier emulation
 
-Targets: 1M concurrent synthetic mutations, deterministic replay, zero conservation violation. Runs against an **ephemeral shadow schema** — never the live `imperial_*` or `wallet_*` tables.
+### 05 Basic Betting Safety Net (mock)
+- Crash 베팅: `/games/crash` → 베팅 슬립 입력 → 베팅 RPC mock 200 → UI 잔액 차감 반영 → cashout 버튼 활성
+- Duel 베팅: 동결 상태 mock → `RealBetSlip.frozen` 배너 표시, 베팅 버튼 disabled
+- Kill switch ON mock → 베팅 버튼 disabled + 사유 노출
+- **절대 실제 RPC 호출 금지** — 모두 `page.route('**/rpc/imperial_*', ...)` 로 차단
 
-## P2 — Realtime adversarial distributed-system warfare
+### 06 Edge Cases Dust (먼지 한 톨)
+- 탭 백그라운드 → 30s 후 복귀 → realtime 재연결, 잔액 stale 없음
+- 오프라인 → 베팅 시도 → 명확한 한국어 에러 토스트
+- 키보드 IME (한글 조합) → 금액 입력 필드 깨짐 없음
+- 시스템 폰트 크기 200% → 레이아웃 오버플로 없음
+- 빠른 더블탭 → 버튼 중복 제출 없음 (idempotency 가드)
+- 뒤로가기/앞으로가기 → 모달 상태 정상
 
-```
-governance-kernel/realtime/
-  shard-desync.injector.ts    # AP 9s delay, EU dup frames, US partial corruption
-  split-brain.simulator.ts
-  quorum-collapse.ts
-  reconnect-herd.ts           # 50k synthetic clients
-  ws-memory-pressure.ts
-  clock-skew.injector.ts
-```
+### 07 A11y Smoke
+- axe-core `critical` 룰만 — 핵심 6 페이지 (`/`, `/auth`, `/dashboard`, `/duel`, `/wallet`, `/games`)
+- 위반 0 강제, `serious` 는 경고만
 
-Success: no balance divergence, no duplicate settlement, no phantom payout, no UI state hallucination. Executed against a sandboxed realtime broker mirror — production realtime untouched.
+## 기술 규약
 
-## P3 — Court-admissible replay capsules
+- **Selector 정책**: `data-testid` 추가 금지. `role` + `name` (accessible name) 우선, fallback `:has-text()`. 코드 0 변경.
+- **Mock 전략**: `page.route` 로 Supabase REST/RPC/Realtime WebSocket 차단. 머니플로 RPC는 호출되면 즉시 테스트 fail (`expect(routedMoneyFlow).toBe(false)`).
+- **Auth fixture**: 1회 가입 후 `storageState.json` 캐시, 모든 spec에서 재사용.
+- **Reporter**:
+  - `ko-reporter.ts` — 실패 시 `❌ [02-duel-lobby] Top 1 카드 탭 실패 — selector 'role=button[name=/Top 1/]' not found / screenshot: results/.../trace.zip`
+  - `slack-notify.ts` — `SLACK_WEBHOOK_E2E` 환경변수 있을 때만, 실패 N건 요약 + Playwright HTML 리포트 링크
+- **HTML report**: `playwright-report/` GitHub Actions artifact 30일 보관.
 
-```
-governance-kernel/replay/
-  capsule.signature.ts      # ed25519 over capsule manifest
-  deterministic.hash.ts     # canonical JSON + stable key order
-  replay.proof.ts           # divergence → identifies nondeterministic source
-```
+## CI
 
-Capsule contains: topology hash, migration hash, oracle hash, edge fn hash, ws frame checksum, storage checksum, runtime seed. Replay confidence becomes a governance multiplier in P5.
+`.github/workflows/e2e.yml`:
+- PR + main push 트리거
+- `bun install` → `bunx playwright install --with-deps chromium webkit`
+- `bunx playwright test --project=mobile-ios --project=mobile-android` (필수)
+- `mobile-lowend` / `mobile-reduced-motion` / `desktop` 는 `continue-on-error: true` (경고만)
+- 실패 시 artifact 업로드 + Slack 알림
+- 5분 안에 끝나도록 `--workers=4` + shard 2개
 
-## P4 — Zero-trust operator fortress
+## 불변 가드
 
-```
-governance-kernel/fortress/
-  privilege-escalation.scanner.ts
-  jwt-scope-diff.ts
-  admin-surface-shadow.ts
-  secret-leak.forensics.ts
-```
+- `scripts/check-money-flow-freeze.mjs` — E2E 디렉터리 추가가 머니플로 8경로 git diff = 0 유지하는지 검증 (기존 스크립트 그대로)
+- E2E 코드가 `src/` 또는 `supabase/` 를 import 하지 않음을 `.dependency-cruiser.cjs` 룰로 강제
+- `imperial_place_phon_bet` / `_settle_*` / `request_withdrawal` / `credit_crypto_deposit` 등은 **real 호출 자체 차단**
 
-Scans: source maps, hydration payloads, HAR, IndexedDB, service workers, preload graphs, ws payloads, memory snapshots, console, env exposure. Extends existing `scripts/check-operator-isolation.mjs`; no production admin code changes.
+## 실행 명령
 
-## P5 — Sovereign governance score (deploy gate, not report)
-
-```
-governance-kernel/governance/
-  score.compute.ts              # 12-axis weighted aggregate 0..100
-  constitutional.thresholds.ts  # 92 / 80 cutoffs
-  deploy.lock.ts                # writes .governance-lock if score < threshold
-  drift.penalty.ts
-```
-
-Behaviour:
-- `< 92` → rollout frozen, migrations blocked at CI, alerts escalated, replay sampling intensified
-- `< 80` → only rollback/hotfix lanes permitted
-- No human override. Lock removed only by a passing recompute.
-
-CI integration: new `.github/workflows/governance-gate.yml` blocks merge when lock present.
-
-## P6 — Adversarial dual-AI (generator / hostile verifier / auditor)
-
-```
-governance-kernel/dual-ai/
-  adversary.engine.ts
-  mutation.breaker.ts
-  exploit.inventor.ts
-  constitutional.crossexaminer.ts
+```bash
+bunx playwright install --with-deps
+bunx playwright test                    # 전체
+bunx playwright test 02-duel             # 특정
+bunx playwright test --project=mobile-ios --headed --debug
+bunx playwright show-report
 ```
 
-Verifier is hostile: invents exploit chains, mutates ws ordering, RPC timings, oracle inputs, replay seeds, admin boundaries, topology assumptions. Auditor rejects unverifiable assumptions, hidden side effects, mutation amplification, non-deterministic repairs. No single AI may generate + approve + replay + merge the same artifact chain.
+## 산출물 (이번 phase)
 
-## P7 — Self-governing loop
+1. `e2e/playwright.config.ts` + 5 프로젝트
+2. 7개 spec 파일 (01~07)
+3. fixtures/utils/reporters
+4. `.github/workflows/e2e.yml`
+5. `e2e/README.md` — 매일 5분 점검 루틴 (1인 운영자용)
 
-```
-governance-kernel/loop/
-  scheduler.ts        # discover → model → attack → replay → audit → score → quarantine
-  quarantine.bus.ts   # auto-isolates regressing surfaces
-  evolution.gate.ts   # blocks unsafe evolution (constitution diff + score drop)
-```
+## 다음 단계 (선택)
 
-Continuous 24/7 loop. Output: `governance-kernel/reports/state-<ts>.json` + dashboard at `/admin/ops/governance` (AAL2, read-only, no money-flow touch).
-
----
-
-## What this plan explicitly does NOT touch
-
-- `imperial_place_phon_bet`, `_settle_*`, `_apply_house_edge_split` bodies
-- `request_withdrawal`, `credit_crypto_deposit`, `subscribe_vip_pass_phon`
-- `award_crown`, `recompute_empire_level`
-- 8 money-flow paths (verified by `scripts/check-money-flow-freeze.mjs`)
-- Operator chunk boundaries (verified by `scripts/check-operator-isolation.mjs`)
-- Existing RLS policies, SECURITY DEFINER allowlist, realtime partitions
-
-## Execution cadence
-
-One phase per directive cycle. Each phase ends with:
-1. Signed topology snapshot
-2. Governance score axis update
-3. Reports written to `governance-kernel/reports/`
-4. Explicit "ready for next phase" confirmation
-
-No production chaos. No auto-merge for treasury / RLS / settlement. Begin **P0 only** on approval.
+- Phase 2: visual regression (Percy/Argos) 도입
+- Phase 3: BrowserStack 실디바이스 매트릭스
+- Phase 4: 실 트래픽 replay (HAR → Playwright)
+- 위 3개는 본 plan에 포함하지 않음 — 1인 운영 부담 회피.
