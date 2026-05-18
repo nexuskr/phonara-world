@@ -35,6 +35,7 @@ export default function SecureWallet() {
   const userId = session?.user?.id;
   const { wallet, pulse, reload } = useWallet(userId);
   const [profile, setProfile] = useState<any>(null);
+  const [hasPin, setHasPin] = useState<boolean>(false);
   const [tab, setTab] = useState<ActionTab>("play");
   const [txs, setTxs] = useState<any[]>([]);
   const [wds, setWds] = useState<any[]>([]);
@@ -56,6 +57,9 @@ export default function SecureWallet() {
     fetchProfile(userId).then(setProfile);
     fetchTransactions(userId).then(setTxs);
     fetchWithdrawals(userId).then(setWds);
+    import("@/integrations/supabase/client").then(({ supabase }) =>
+      supabase.rpc("has_withdraw_pin" as any).then(({ data }) => setHasPin(Boolean(data)))
+    );
   }, [userId, pulse]);
 
   const tier: Tier = (profile?.tier ?? "normal") as Tier;
@@ -290,7 +294,7 @@ export default function SecureWallet() {
                 <ShieldCheck className="w-4 h-4 text-secondary" />
                 <span className="text-xs font-display font-bold break-keep">{t("pinTitle")}</span>
               </div>
-              <PinPad value={pin} onChange={setPin} label={profile?.withdraw_pin_hash ? "" : t("pinFirst")} />
+              <PinPad value={pin} onChange={setPin} label={hasPin ? "" : t("pinFirst")} />
             </div>
 
             <WithdrawIntentInterceptor amount={Number(amount) || 0}>
