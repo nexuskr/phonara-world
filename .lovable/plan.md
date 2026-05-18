@@ -1,75 +1,137 @@
-# Top-Tier Security Hardening Plan
+# Phase 5 — SECURITY DEFINER Permission Hardening
 
-목표: 보안 스캔의 모든 Medium/Low 항목을 해소하고, money-flow 8경로 / Operator Isolation / `imperial_*` 함수는 **0바이트** 유지한 상태로 Top-Tier 거래소 수준 보안 자세를 확립한다.
+Phase 5 잠금 작업. Money-flow 8경로 / Operator Isolation / `imperial_*` 함수 본문 **0바이트 변경**을 유지하면서, 클라이언트(`authenticated`/`anon`)가 직접 호출할 수 없어야 할 내부 헬퍼/트리거 함수에서 PostgREST 호출 경로를 제거한다.
 
-## 불변 제약 (반드시 준수)
+3개 마이그레이션을 **순서대로** 분리한다. 각각 독립 PR 형태로 승인·롤백할 수 있다.
 
-- Money-flow 8경로: `imperial_place_phon_bet`, `imperial_settle_*`, `_apply_house_edge_split`, `credit_crypto_deposit`, `request_withdrawal`, `grant_phon_for_deposit`, `grant_nft_for_deposit`, `award_crown` → git diff = 0.
-- Operator Isolation: `manualChunks` operator 청크, `check-operator-isolation.mjs`, `dependency-cruiser` 규칙 변경 금지.
-- `imperial_*` SECURITY DEFINER 함수 본문 변경 금지.
-- 기존 RLS 정책 약화 금지 (강화만 허용).
+---
 
-## Phase 0 — Pre-flight Snapshot
+## Migration A — Baseline 확장 (read-only effect)
 
-- `scripts/check-operator-isolation.mjs`, money-flow guard 스크립트 dry-run.
-- 현재 `pg_publication_tables`, `verify_jwt` 매트릭스, 외부 노출 edge function 목록 스냅샷 → `reports/security-baseline-2026-05-18.json`.
+**목적:** `function_permissions_baseline`을 현실에 맞게 동기화하여, Migration C(strict drift) 가 거짓 양성으로 PR을 막지 않도록 한다.
 
-## Phase 1 — Edge Function Hardening (M1 + M2)
+**범위:** drift 리포트에서 분류된 242개 함수를 baseline에 등록.
+- 181 user-callable (money-flow 8경로 포함: `credit_crypto_deposit`, `imperial_place_phon_bet`, `imperial_settle_duel`, `apply_token_burn`, `claim_first_deposit_godmode` 등)
+- 61 admin (`has_role()` 내부 가드 보유)
 
-대상: 외부 노출되고 user input을 받는 함수만 선별 (money-flow / cron 함수는 제외).
+**SQL 형태:**
+```sql
+INSERT INTO function_permissions_baseline (function_name, expected_grantees, notes, inserted_at)
+VALUES
+  ('credit_crypto_deposit', ARRAY['authenticated'], 'money-flow path 1', now()),
+  -- ... 241 more rows
+ON CONFLICT (function_name) DO NOTHING;
+```
 
-1순위 (zod 입력 검증 + Origin 화이트리스트):
-- `sim-api`, `og-card-renderer`, `attribute-click`, `send-push`, `send-email`, `auth-email-hook`, `receipt-ocr`, `webhook-dispatcher` (외부 trigger 한정).
+**Security Impact:**
+- 권한 변경: **0**
+- 함수 본문 변경: **0**
+- 효과: drift 탐지 정확도만 상승. 런타임 동작 무변경.
 
-조치:
-- `supabase/functions/_shared/validate.ts` 신설: `parseBody(schema, req)` 헬퍼 + 400 표준 응답.
-- `supabase/functions/_shared/cors.ts` 신설: `buildCors(origin)` — `https://phonara.world`, `https://www.phonara.world`, `https://*.lovable.app` 만 허용, 외 origin은 `null` 반환 (preflight 403).
-- 각 함수 상단에서 zod schema 정의 + `parseBody` 호출. 실패 시 `{ error: "invalid_input", fields }` 반환 (DB raw 노출 금지).
-- `verify_jwt`를 켤 수 있는 함수(`receipt-ocr` 등)는 `getClaims` 가드 추가. webhook류는 HMAC 또는 `X-Internal-Secret` + `timingSafeEqual` 비교.
-- 요청 로깅: `console.info({ fn, origin, ip: req.headers.get("x-forwarded-for"), trace_id })` 1줄만 (개인정보 X).
-- Rate limit: 인프라 미비로 backend rate limit은 추가하지 않음 (no-backend-rate-limiting directive). 대신 zod로 payload size·loop count 상한만 강제.
+**Rollback Plan:**
+```sql
+DELETE FROM function_permissions_baseline
+ WHERE inserted_at >= '<deploy-timestamp>';
+```
+소요 시간: <5s. 데이터 손실 없음.
 
-## Phase 2 — Realtime Surface Reduction (M3)
+**Verification Gate:**
+- 🟢 `SELECT count(*) FROM function_permissions_baseline` = 기존 + 242
+- 🟢 `check_permission_drift()` 결과에서 위 242개가 사라짐
+- 🟢 머니플로 8경로 함수 oid SHA-512 동일
 
-- `notifications`, `support_messages`, `support_threads` 를 `supabase_realtime` publication에서 **제외**하고, 서버 측에서 `realtime.send(topic := 'user:'||user_id, ...)` 로 owner-scoped broadcast 트리거 작성.
-- 클라이언트는 `useRealtimeChannel('user:'+uid, ...)` 구독으로 변경 (래퍼만 손대고 money-flow 8경로 미터치).
-- 마이그레이션: `ALTER PUBLICATION supabase_realtime DROP TABLE ...` + 3개 트리거 신설(`AFTER INSERT/UPDATE ... EXECUTE FUNCTION broadcast_to_owner()`).
-- 검증: 일반 사용자 토큰으로 다른 user_id 채널 구독 시 0 row 수신.
+---
 
-## Phase 3 — CORS Whitelist (L1)
+## Migration B — 28개 internal helper REVOKE
 
-- Phase 1의 `_shared/cors.ts` 를 **모든 45개 edge function**에 일괄 적용 (money-flow path 함수도 헤더만 교체, 본문 로직 변경 0).
-- `Access-Control-Allow-Origin: *` 제거. 화이트리스트 미일치 시 `Vary: Origin` + 403.
-- `credentials: true` 는 필요한 함수(인증 cookie 사용)에만 명시.
+**목적:** 클라이언트가 PostgREST `rpc()` 로 직접 호출하면 안 되는 내부 헬퍼 28개에서 `EXECUTE` 권한을 제거.
 
-## Phase 4 — HIBP 활성화 (L2)
+**대상 (28):**
+```
+_achv_increment, _achv_on_attendance, _achv_on_crown,
+_achv_on_empire_level, _achv_on_position_close, _achv_on_stake_insert,
+_achv_on_stake_yield, _achv_record, _apply_house_edge_split,
+_crash_compute_multiplier, _crash_vip_limits, _do_inject_liquidity,
+_maybe_upgrade_nft, _recompute_emission_scale, _recompute_volatility_tier,
++ 12 trigger helpers (trg_* / *_trigger)
++ 1 monitor_* cron helper
+```
 
-- `supabase--configure_auth` 로 `password_hibp_enabled: true` (다른 옵션 동일 유지).
-- 기존 사용자에는 영향 없음, 신규 가입/비밀번호 변경 시 차단.
+**SQL 형태:**
+```sql
+REVOKE EXECUTE ON FUNCTION public._apply_house_edge_split(numeric, uuid)
+  FROM authenticated, anon;
+-- × 28
+```
 
-## Phase 5 — SECURITY DEFINER 표면 축소 (L3)
+**핵심 안전성 분석:**
+- 이 함수들은 모두 `SECURITY DEFINER` → owner 권한으로 실행됨
+- 상위 RPC(`imperial_settle_duel` 등)가 내부에서 호출할 때는 **caller grant 와 무관** (owner-rights)
+- 즉, money-flow 8경로 본문은 그대로, 내부 호출도 그대로, 외부 PostgREST 호출만 차단됨
 
-- 즉시 함수 삭제/이동은 위험 → 다음 2단계만 수행:
-  1. `function_permissions_baseline` 에서 user-callable allowlist 49개 외 함수의 `EXECUTE` GRANT 를 `authenticated`/`anon` 에서 회수 (`REVOKE EXECUTE ... FROM authenticated, anon`). `service_role` 만 유지.
-  2. `check_permission_drift()` 가 신규 함수에 대해 baseline 미등록 시 fail 하도록 강화 + CI `.github/workflows/db-permissions.yml` 에 PR comment.
-- `imperial_*` 함수는 baseline에 이미 등록 → 변경 0.
+**Pre-deploy 강제 체크:**
+1. `rg "rpc\('_(achv|apply|crash|do_inject|maybe_upgrade|recompute)" src/` → 결과 0이어야 함
+2. `rg "rpc\('(trg_|monitor_)" src/` → 결과 0이어야 함
+3. 스테이징에서 1건 settle 실행 → 성공 확인
 
-## Phase 6 — Verification Gates
+**Security Impact:**
+- Before: 28개 financially-sensitive helper가 모든 인증 클라이언트에 노출
+- After: `service_role` + SECURITY DEFINER 호출 경로만 사용 가능
+- 클라이언트 도달 가능 표면 **10.5% 감축**
+- 가장 중요한 차단: `_apply_house_edge_split`, `_do_inject_liquidity` (treasury split 우회 시도 봉쇄)
 
-- `npm run build` (Operator Isolation 가드 자동 실행).
-- money-flow diff check: `git diff --stat -- supabase/migrations/*imperial_place_phon_bet* ...` = 0.
-- 보안 스캔 재실행 → Medium/Low = 0 확인.
-- 60초 preview 모니터링: console error = 0, ImperialActivationPanel 정상.
+**Rollback Plan:**
+`scripts/phase5-rollback.sql` 자동 생성 (28 GRANT lines):
+```sql
+GRANT EXECUTE ON FUNCTION public._apply_house_edge_split(numeric, uuid)
+  TO authenticated, anon;
+-- × 28
+```
+소요 시간: <30s. 무중단.
 
-## 기술 메모 (개발자 전용)
+**Verification Gate:**
+- 🟢 28개 함수 모두 `has_function_privilege('authenticated', oid, 'EXECUTE')` = false
+- 🟢 머니플로 8경로 함수 oid SHA-512 동일
+- 🟢 30분 모니터링: `imperial_settle_duel` 에러율 ≤ baseline
+- 🟢 Production smoke: 1건 duel settle 정상 완료
 
-- 마이그레이션 파일 1개로 통합: publication 변경 + REVOKE EXECUTE + 3개 broadcast 트리거 + `check_permission_drift` 강화.
-- Edge function 변경은 함수당 ≤20 LOC. 비즈니스 로직 미변경.
-- `auth-email-hook` 은 Supabase Auth webhook 이므로 `verify_jwt=false` 유지 + HMAC 검증 추가.
-- `sim-api` 는 API key 기반 → 기존 `api_keys` 테이블 조회 유지, zod schema 만 추가.
+---
 
-## Roadmap (이번 작업 범위 밖)
+## Migration C — `check_permission_drift()` strict mode
 
-- WAF / 인프라 rate limit (Cloudflare 도입 시).
-- 4-eyes 출금 승인 워크플로우.
-- SOC2 audit trail 외부 export.
+**목적:** A+B 안정 머지 후, drift 탐지를 **warn → fail** 로 승격하여 향후 PR 에서 미등록 SECURITY DEFINER 함수 추가를 CI 단계에서 차단.
+
+**범위:**
+- `check_permission_drift()` 함수 본문 수정: drift 발견 시 `RAISE EXCEPTION` 대신 status='fail' 반환 (CI가 fail 처리)
+- `.github/workflows/db-permissions.yml` 이미 호출 중 → 변경 불필요
+
+**Security Impact:**
+- 새 SECURITY DEFINER 함수 추가 시 baseline 등록 강제
+- 권한 누수 회귀 방지
+
+**Rollback Plan:**
+```sql
+-- 이전 버전 본문으로 복구 (마이그레이션에 ROLLBACK 블록 동봉)
+```
+
+**Verification Gate:**
+- 🟢 의도적으로 unregistered 함수 1개 만든 PR 이 CI 에서 red 처리됨
+- 🟢 현재 main 의 모든 PR 은 green 유지
+
+---
+
+## 불변 원칙 준수 체크리스트 (전체 Phase 5)
+
+- [x] Money-flow 8경로 함수 **본문** git diff = 0
+- [x] `imperial_*` 함수 **본문** git diff = 0
+- [x] Operator Isolation 5-layer 영향 없음 (DB-layer 작업)
+- [x] Edge function 코드 변경 없음
+- [x] 프론트엔드 변경 없음 (모든 user-callable RPC 는 baseline 등록만 됨)
+
+## 진행 순서
+
+1. **이 PR (Migration A)**: baseline 242 INSERT — 승인 즉시 안전
+2. **다음 PR (Migration B)**: 28 REVOKE — A 머지 + 24h 모니터링 후
+3. **마지막 PR (Migration C)**: strict drift — B 머지 + 48h 모니터링 후
+
+Phase 2 (Realtime owner-scoped) 와 Phase 1 잔여 15개 Edge Function 하드닝은 Phase 5 C 까지 안정 완료된 뒤 별도 plan 으로 재진입.
