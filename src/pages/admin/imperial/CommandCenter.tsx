@@ -108,6 +108,8 @@ export default function ImperialCommandCenter() {
         </div>
       </header>
 
+      <ImperialActivationPanel />
+
       <Phase1LiveMonitor />
 
       <ImperialRolloutPhasePanel />
