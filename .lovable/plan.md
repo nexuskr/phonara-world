@@ -7,7 +7,7 @@ Activate Limited Rollout Phase 1 (Tier 0, Observer Mode) with onboarding free-pl
 New migration `phase4_observer_ignition.sql`:
 
 - `imperial_onboarding_grants` table (user_id PK, granted_at, amount_phon, source enum: `signup|daily_login|invite`) — RLS self-select, admin-all.
-- RPC `imperial_claim_signup_bonus()` — atomic, idempotent (one row per user, `source='signup'`), credits **10,000 PHON** via existing wallet ledger helper (read-only call into current credit primitive — no edit to money-flow files).
+- RPC `imperial_claim_signup_bonus()` — atomic, idempotent (one row per user, `source='signup'`), credits **15,000 PHON** via existing wallet ledger helper (read-only call into current credit primitive — no edit to money-flow files).
 - RPC `imperial_claim_daily_login_bonus()` — idempotent per UTC day (`source='daily_login'`), +500 PHON. Uses unique `(user_id, source, date_trunc('day', granted_at))` partial index.
 - RPC `imperial_get_onboarding_state()` — returns `{ signup_claimed, daily_claimed_today, next_reset_at, streak }`.
 - Trigger on `auth.users` insert → enqueue signup grant row (claim still requires explicit RPC for auditability).
