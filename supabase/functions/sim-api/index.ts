@@ -11,10 +11,10 @@ const SYMBOL = z.string().regex(/^[A-Za-z0-9]{2,16}$/);
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-function json(body: unknown, status = 200, extra: Record<string, string> = {}) {
+function json(cors: Record<string, string>, body: unknown, status = 200, extra: Record<string, string> = {}) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { ...corsHeaders, "Content-Type": "application/json", ...extra },
+    headers: { ...cors, "Content-Type": "application/json", ...extra },
   });
 }
 
