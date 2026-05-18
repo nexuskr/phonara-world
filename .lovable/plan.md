@@ -58,4 +58,63 @@ imperial_house_ledger
 
 신규: `src/packages/duel/components/arena/RealBetSlip.tsx` (기존 `ConfirmBetSheet` 패턴 재사용, ImperialBetSlip 토큰 통일)
 - 현재 PHON 잔액 → 빠른 금액 칩 → potential win glow
-- "황실 봉
+- "황실 봉인" CTA → `imperial-bet-place` 호출 → 성공 시 햅틱 + Warm King 토스트
+- 실패(insufficient/kill_switch/idem_replay) 시 명확한 한국어 메시지
+
+신규: `Imperial Cinematic Sequence` — settle broadcast 수신 시 3단계:
+1. `near_miss_intensity ≥ 0.7` → 슬로우다운 + 펄스 글로우 + "거의 다 왔다…" 카피
+2. `≥ 0.85` → 화면 진동 + 카운트다운 + 황금 입자
+3. 결과 공개 + 승/패 분기 (`prefers-reduced-motion` 시 opacity fade만)
+
+훅: `useImperialDuelRoom(roomId)` — 기존 `useGameChannel` 래퍼만 사용, raw `supabase.channel` 금지.
+
+관리자 패널: `/admin/duel` (AAL2 보호)
+- Real Betting Global Switch (`platform_kill_switches.phon_betting`)
+- 실시간 House Edge / Pot Imbalance / Bet Volume / Error Rate
+- "Perceived Win Rate vs Actual" 비교 차트 (audit 테이블 기반)
+- Near-Miss intensity 히스토그램
+
+## 테스트 전략 (이번 PR 범위)
+
+`src/test/imperial-duel.test.ts`:
+- Idempotency: 동일 idem_key 두 번 호출 → 1건만 처리
+- Race condition: `Promise.all` 동시 베팅 100건 → 잔액 음수 발생 0
+- House Edge 수렴: 10,000 roll 시뮬레이션 → 실측 6.2% ±0.5% 이내
+- Cancel: 미체결 환불 시 balance 정확 복구
+- Display vs Actual: `imperial_compute_display_signals` 결과가 winner 결정에 영향 0임을 단정
+
+`scripts/duel-stress.ts` (별도, **이번 PR에서 실행 X**): 10k concurrent + Monte Carlo 50k 자리만 준비.
+
+## 비범위 (다음 슬라이스)
+
+- Token Supply/Burn 메커니즘, Dynamic Emission Control, Buyback&Burn — Phase 3.5
+- Spectator Real Bet, Bet Booster, VIP Level upgrade by PHON — Phase 4
+- Full 10k/50k 부하 + Chaos + 24h stability — Phase 3.5
+
+## 변경 파일 요약
+
+신설:
+- `supabase/migrations/<ts>_imperial_duel_core.sql` (4 테이블 + 5 RPC + RLS + kill switch row)
+- `supabase/functions/imperial-bet-place/index.ts`
+- `supabase/functions/imperial-bet-settle/index.ts`
+- `supabase/functions/imperial-duel-cron/index.ts`
+- `src/packages/duel/hooks/useImperialDuelRoom.ts`
+- `src/packages/duel/hooks/useRealBetting.ts`
+- `src/packages/duel/components/arena/RealBetSlip.tsx`
+- `src/packages/duel/components/arena/CinematicSequence.tsx`
+- `src/pages/admin/duel/RealBettingPanel.tsx`
+- `src/test/imperial-duel.test.ts`
+- `scripts/duel-stress.ts` (placeholder)
+
+수정 (최소):
+- `src/packages/duel/index.ts` (export 추가)
+- `src/pages/admin/_nav.ts` (관리자 탭 추가, AAL2)
+
+money-flow FREEZE 8경로 0줄 변경.
+
+## 완료 조건
+
+- 마이그레이션 성공 + RLS linter 0건 신규 경고
+- `imperial-duel.test.ts` 5개 케이스 PASS, House Edge 6.2% ±0.5% 검증
+- Build PASS (operator/index 청크 예산 유지)
+- 관리자 패널에서 kill switch ON/OFF로 베팅 차단 검증
