@@ -1,67 +1,135 @@
-# PHON Real Betting Core — Phase 3 Final Slice (Singularity Edition)
+# Phase 3.5 — Deflationary Flywheel Singularity
 
-2차 슬라이스(Edge + Frontend + Admin + Tests)가 안착된 상태에서, Phase 3의 마지막 슬라이스를 마무리한다. 목표는 내부 한정 활성화 가능한 상태 + 24h 실시간 관측성 + 영구 문서화. **머니플로 8경로는 git diff = 0**.
+PHON 경제의 심장(Burn / Treasury / Liquidity / Volatility)을 단일 원자 루프로 점화한다.
+Money-flow 8경로는 git diff = 0, Kill Switch 기본 OFF, Operator Isolation 유지.
 
-## 1. DB — Production Hardening (단일 마이그레이션)
+## 1. DB — Flywheel Core
 
-`supabase/migrations/<ts>_imperial_duel_phase3_final.sql`
-- `imperial_duel_rooms` 에 `emergency_freeze_flag boolean default false not null` 추가
-- `imperial_duel_telemetry` 테이블 신규 (id, trace_id, function, severity, event, payload jsonb, created_at) — admin-only RLS, INSERT는 SECURITY DEFINER RPC `log_duel_telemetry(_trace, _fn, _sev, _evt, _payload)` 로만
-- `imperial_duel_alert_thresholds` (singleton row): house_edge_drift_bps int default 10, error_rate_bps int default 5
-- RPC `admin_set_duel_emergency_freeze(_room_id uuid, _on bool)` — AAL2 + admin only, freeze ON 시 신규 bet 거부 (place RPC가 flag 체크)
-- RPC `admin_get_duel_health_24h()` — bet volume, house edge drift, near-miss bucket dist, error rate, p95 settle latency 반환
-- 기존 `place_phon_bet` / `settle_phon_duel` 에 `emergency_freeze_flag` 가드 1줄 추가 (raise `room_frozen`). 머니플로 흐름 자체는 손대지 않음 — 진입 가드만.
+신규 테이블 (모두 admin-only RLS + 본인 SELECT 없음):
 
-## 2. Edge — Observability
+- `imperial_treasury_ledger(id, ts, source, kind, phon_delta, balance_after, ref_id, meta jsonb)`
+  - kind ∈ `burn | treasury | reward | liquidity | injection_out | injection_in`
+- `imperial_emission_state(id=1 singleton, circulating_phon, target_phon, scale_factor, updated_at)`
+- `imperial_volatility_window(bucket_start, vol_score numeric, tier text, sample_n int)`
+  - tier ∈ `calm | warm | hot | surge | extreme`
+- `imperial_injection_events(id, ts, trigger_vol_score, amount_in, amount_out, excess_return, reason)`
+- `imperial_flywheel_params(key text pk, value jsonb, updated_by, updated_at)` — 튜닝 파라미터 핫리로드
 
-3개 함수(`imperial-bet-place`, `imperial-bet-settle`, `imperial-duel-cron`)에 공통 헬퍼 적용:
-- `trace_id = crypto.randomUUID()` 진입 시 발급, 응답 헤더 `x-trace-id` 로 반환
-- 시작/성공/실패 3 지점에서 `log_duel_telemetry` RPC 호출 (severity: info|warn|error, payload에 latency_ms/error_code)
-- 구조화 로그 `console.log(JSON.stringify({ trace_id, fn, sev, evt, ... }))`
-- 신규 `supabase/functions/_shared/duel-telemetry.ts` 공용 모듈
+신규 RPC (모두 SECURITY DEFINER, search_path 잠금):
 
-## 3. Frontend — 내부 한정 활성화 + 안전망
+- internal: `_apply_house_edge_split(_total_phon, _ref_id)` — 45/35/15/5 분기 + ledger insert (atomic)
+- internal: `_recompute_emission_scale()` — circulating/target 비율로 scale_factor 갱신
+- internal: `_recompute_volatility_tier()` — 최근 30분 베팅 분산 → tier
+- public read: `get_flywheel_snapshot()` — 사용자 표시용 안전 지표
+- admin: `admin_get_flywheel_health(_hours int)`
+- admin: `admin_set_flywheel_param(_key, _value)`
+- admin: `admin_force_injection(_amount, _reason)` (AAL2)
 
-- `src/components/duel/RealBetSlip.tsx` : room.emergency_freeze_flag true 면 슬립 비활성 + Warm King 톤 안내 (`@/components/ui/empty-state`)
-- `src/hooks/useImperialDuelRoom.ts` : freeze flag realtime 반영 (이미 useGameChannel 사용중)
-- `src/components/duel/CinematicSequence.tsx` : freeze 중에는 climax 단계 진입 차단 (안전 가드)
-- 비-admin 사용자에게는 kill switch ON + beta_invites('duel_internal') 보유자만 진입 허용. `<RealBetSlip>` 진입점에서 `useDuelAccess()` 훅으로 게이트 (entitlement만 보고 머니플로는 무변경)
+`platform_kill_switches`에 신규 키: `flywheel_burn`, `flywheel_injection`, `flywheel_emission_scale` (기본 OFF = 비활성).
 
-## 4. Admin — 24h Mission Control
+## 2. 기존 RPC 통합 (머니플로 무수정 원칙)
 
-`src/pages/admin/Duel.tsx` 확장 (신규 파일 없음):
-- `<DuelHealthDashboard />` 카드 6종: Bet Volume(24h), House Edge Drift(bps, 임계 시 적색), Near-Miss bucket 분포, Error Rate, p95 Settle Latency, Active Rooms
-- `<EmergencyFreezePanel />` : 방별 freeze 토글 (AAL2)
-- `<AlertThresholdEditor />` : drift_bps / error_rate_bps 수정
-- 모두 15s 자동 갱신, admin_get_duel_health_24h RPC 사용
-- AAL2Gate 내부 (`operations` 그룹 유지)
+`imperial_place_phon_bet` / `imperial_settle_phon_bet` 자체 SQL은 변경 금지.
+대신 settle 직후 호출되는 기존 audit 트리거(이미 존재) 안에서 `_apply_house_edge_split` 만 추가 호출.
+트리거 본문만 확장되며 money-flow 8경로 파일은 손대지 않는다.
 
-## 5. Tests — Chaos & E2E
+Slippage는 RPC가 아니라 클라이언트 미러(`src/lib/flywheel.ts`)에서 계산 →
+서버는 settle 시 실측 slippage를 ledger meta에 저장(검증용).
 
-- `supabase/functions/imperial-bet-place/index.test.ts` : freeze=true → 4xx + `room_frozen` 응답, trace_id 헤더 존재
-- `supabase/functions/imperial-bet-settle/index.test.ts` : telemetry RPC 호출 1회 보장 (mock)
-- `supabase/functions/imperial-duel-cron/index.test.ts` : 부분 실패 시 telemetry severity=error
-- `src/__tests__/duel/houseEdge.simulation.test.ts` (vitest) : 5000-spin 시뮬레이션으로 House Edge 6.2% ±0.2% 검증 (순수 함수, DB 없이)
-- `src/__tests__/duel/cinematic.test.tsx` : near_miss_intensity 0/0.5/1.0 분기 렌더 확인
+공식 (바이블):
 
-실DB 50회 풀플로우는 admin 도구로 검증 (자동화는 시뮬레이션으로 대체) — 결과는 telemetry 테이블에 기록되어 Health Dashboard에서 조회 가능.
+```text
+slippage = min(0.42, (bet / liquidity_pool)^1.75 * 1.85)
+emission_scale = clamp(0.4, target/circulating, 1.6)
+volatility_mult = {calm:1.00, warm:1.08, hot:1.18, surge:1.30, extreme:1.45}
+injection_trigger = vol_tier in (surge, extreme) AND treasury > min_reserve
+excess_return = max(0, post_injection_pool - pre_injection_pool*1.02)
+```
 
-## 6. Documentation
+## 3. Cron
 
-- `docs/duel/phase3-technical-bible.md` 신규: Fairness Proof(commit-reveal), Money-flow 8경로 다이어그램(읽기전용 참조), Kill Switch / Emergency Freeze Policy, Rollback Plan, Telemetry 스키마
-- `mem://features/imperial-duel-phase3-final` 메모 + index.md Core 1줄 갱신
-- 신규 컴포넌트 상단에 `// IMPERIAL-SINGULARITY:` 주석
+- `*/1 * * * *` `_recompute_volatility_tier()`
+- `*/5 * * * *` `_recompute_emission_scale()`
+- `*/2 * * * *` `maybe_inject_liquidity()` (kill switch 체크 → trigger 시 `admin_force_injection` 내부판)
 
-## 완료 조건
+## 4. Edge / Frontend
 
-- 마이그레이션 1개 + 신규 RPC 3개 통과, 머니플로 git diff = 0
-- Deno tests + vitest 전부 green, House Edge 시뮬 6.2% ±0.2%
-- /admin/duel Health Dashboard 15s 갱신, Emergency Freeze 토글 동작
-- Kill switch 기본 OFF, 내부 베타 코드 보유자만 슬립 접근
-- 기술 바이블 문서 + 메모리 갱신 완료
+Edge: 변경 없음. Telemetry helper(`_shared/duel-telemetry.ts`)에 `flywheel` 카테고리 이벤트 4종 추가.
 
-## 기술 메모
+Frontend (신규/수정):
 
-- 머니플로 보호: place/settle RPC 본체의 잔액 이동 블록은 손대지 않고 최상단 가드(`if emergency_freeze_flag then raise`)만 추가 → freeze-check CI 통과
-- Telemetry는 별도 테이블/RPC로 격리 — 기존 anomaly_events / spans / error_logs 와 충돌하지 않음 (Duel 도메인 전용 뷰)
-- Realtime은 기존 `useGameChannel` 파티션 사용, 신규 채널 추가 없음
+- `src/lib/flywheel.ts` — 공식 미러 + 색상 시스템
+- `src/hooks/use-flywheel-snapshot.ts` — `get_flywheel_snapshot` 30s SWR
+- `src/components/duel/VolatilityGauge.tsx` — 5단계 게이지 (calm→extreme)
+- `src/components/duel/SlippagePreview.tsx` — 베팅 입력 옆 예상 슬리피지 색상 표시
+- `src/components/duel/TreasurySupportBadge.tsx` — Warm King 5메시지 회전
+- `src/components/duel/RealBetSlip.tsx` — Slippage/Volatility 위젯 마운트 (UI only, 로직 불변)
+
+Warm King 메시지 5종 (i18n key `flywheel.warmking.*`):
+황실 지원 / 시장 가열 / 제국 안정 / 폭풍 경보 / 보상 강화.
+
+## 5. Admin Mission Control
+
+`src/pages/admin/Duel.tsx`에 신규 탭 "Flywheel" 추가, 컴포넌트:
+
+- `<FlywheelHealthDashboard />` — Burn 24h, Treasury balance, Net deflation rate, Emission scale
+- `<VolatilityHeatmap />` — 30분 버킷 × 24h
+- `<SlippageEfficiencyPanel />` — 예측 vs 실측 분포
+- `<InjectionHistoryTable />` — 최근 50건 + Force Injection 버튼 (AAL2)
+- `<EmissionTrendChart />` — circulating/target 추이
+- `<FlywheelParamEditor />` — 핫리로드 (AAL2)
+- `<FlywheelKillSwitchPanel />` — 3개 신규 스위치
+
+모두 `admin_get_flywheel_health` 15s 자동 갱신.
+
+## 6. Tests
+
+- `src/__tests__/flywheel/split.test.ts` — 45/35/15/5 합 = 100% (round-safe)
+- `src/__tests__/flywheel/slippage.test.ts` — 경계값 + cap 42%
+- `src/__tests__/flywheel/emission.clamp.test.ts` — 0.4..1.6
+- `src/__tests__/flywheel/montecarlo.test.ts` — 5000-spin house edge 6.2% ±0.15%
+- `supabase/functions/imperial-bet-settle/flywheel.test.ts` — telemetry 카테고리 발생 확인
+
+## 7. Rollout
+
+- 신규 kill switch 3개 모두 OFF 배포 → 내부 alpha만 ON
+- 72h hyper-monitoring: telemetry KPI 6종 + manual audit
+- 합격 기준: edge 6.2% ±0.15%, slippage 분포 정상, critical error 0
+
+## 8. Docs / Memory
+
+- `docs/duel/phase3.5-flywheel-bible.md` — 공식, ASCII 플로우, 튜닝, 롤백
+- 신규 코드 헤더에 `// IMPERIAL-SINGULARITY v3.5:`
+- `mem://imperial-vision/phon-deflationary-flywheel` + index Core 1줄 추가
+
+## 9. Guard Rails (불변)
+
+- money-flow 8경로 파일 git diff = 0 (check-money-flow-freeze.mjs PASS)
+- 신규 realtime 채널 0 (기존 `useGameChannel`만 재사용)
+- operator isolation: 모든 admin 컴포넌트는 `src/components/admin/` 아래 → operator 청크로 격리
+- Kill Switch 기본 OFF, Emergency Freeze는 Phase 3에서 만든 `emergency_freeze_flag` 재사용
+
+## 10. 기술 세부 (요약)
+
+```text
+                +-------------------+
+   bet settle ->|  audit trigger    |
+                |  (기존 파일)       |
+                +---------+---------+
+                          | call
+                          v
+                +-------------------+
+                | _apply_house_edge |--45%--> BURN ledger
+                |   _split()        |--35%--> TREASURY ledger
+                |                   |--15%--> REWARD ledger
+                |                   |-- 5%--> LIQUIDITY ledger
+                +---------+---------+
+                          |
+        cron 2m           v
+   maybe_inject_liquidity()  reads volatility_tier
+                          |
+                          v
+                injection_events + ledger(injection_in/out)
+```
+
+소요: DB ~250줄, Edge 변경 없음, Frontend ~700줄, Admin ~600줄, Tests ~400줄, Docs ~300줄.
