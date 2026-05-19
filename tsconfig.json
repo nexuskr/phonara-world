@@ -39,7 +39,9 @@
       "@pkg/risk": ["./src/packages/risk"],
       "@pkg/risk/*": ["./src/packages/risk/*"],
       "@pkg/duel": ["./src/packages/duel"],
-      "@pkg/duel/*": ["./src/packages/duel/*"]
+      "@pkg/duel/*": ["./src/packages/duel/*"],
+      "@pkg/games": ["./src/packages/games"],
+      "@pkg/games/*": ["./src/packages/games/*"]
     },
     "noImplicitAny": false,
     "noUnusedParameters": false,
