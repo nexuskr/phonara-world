@@ -699,6 +699,24 @@ export type Database = {
         }
         Relationships: []
       }
+      apex_daily_cap: {
+        Row: {
+          count: number
+          user_id: string
+          ymd: string
+        }
+        Insert: {
+          count?: number
+          user_id: string
+          ymd: string
+        }
+        Update: {
+          count?: number
+          user_id?: string
+          ymd?: string
+        }
+        Relationships: []
+      }
       apex_game_rolls: {
         Row: {
           bet_phon: number
@@ -707,6 +725,7 @@ export type Database = {
           created_at: string
           game_code: string
           id: string
+          idempotency_key: string | null
           multiplier: number
           nonce: number | null
           payout_phon: number
@@ -722,6 +741,7 @@ export type Database = {
           created_at?: string
           game_code: string
           id?: string
+          idempotency_key?: string | null
           multiplier?: number
           nonce?: number | null
           payout_phon?: number
@@ -737,12 +757,37 @@ export type Database = {
           created_at?: string
           game_code?: string
           id?: string
+          idempotency_key?: string | null
           multiplier?: number
           nonce?: number | null
           payout_phon?: number
           payout_usdt?: number
           result_json?: Json
           server_seed_hash?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      apex_kakao_shares: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          ref_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind: string
+          ref_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          ref_id?: string | null
           user_id?: string
         }
         Relationships: []
@@ -762,6 +807,30 @@ export type Database = {
           balance?: number
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      apex_vault_claims: {
+        Row: {
+          id: string
+          opened_at: string
+          reward_phon: number
+          user_id: string
+          ymd: string
+        }
+        Insert: {
+          id?: string
+          opened_at?: string
+          reward_phon?: number
+          user_id: string
+          ymd: string
+        }
+        Update: {
+          id?: string
+          opened_at?: string
+          reward_phon?: number
+          user_id?: string
+          ymd?: string
         }
         Relationships: []
       }
@@ -11882,6 +11951,22 @@ export type Database = {
         Args: { _amount: number; _user_id: string }
         Returns: Json
       }
+      apex_claim_daily_vault: { Args: never; Returns: Json }
+      apex_get_live_bigwins: {
+        Args: { _limit?: number }
+        Returns: {
+          created_at: string
+          game_code: string
+          multiplier: number
+          nick: string
+          payout_phon_eq: number
+        }[]
+      }
+      apex_get_my_summary: { Args: never; Returns: Json }
+      apex_log_kakao_share: {
+        Args: { _kind: string; _ref_id?: string }
+        Returns: Json
+      }
       apex_play_mock_game: {
         Args: {
           _bet_phon?: number
@@ -11889,6 +11974,10 @@ export type Database = {
           _game_code: string
           _params?: Json
         }
+        Returns: Json
+      }
+      apex_verify_roll: {
+        Args: { _client_seed: string; _roll_id: string }
         Returns: Json
       }
       apply_booster_multipliers: {

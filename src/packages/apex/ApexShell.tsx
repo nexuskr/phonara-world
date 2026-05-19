@@ -2,6 +2,7 @@ import { NavLink, Outlet } from "react-router-dom";
 import { useState } from "react";
 import { ApexThemeProvider } from "./ApexThemeProvider";
 import { ApexBackdrop } from "./components/ApexBackdrop";
+import { ApexHealthFab } from "./components/ApexHealthFab";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import {
   Home, Gamepad2, Gift, Vault, Trophy, Users, MoreHorizontal,
@@ -21,6 +22,7 @@ const MORE = [
   { to: "/apex/reels",      label: "Win Reels",   icon: Play },
   { to: "/apex/lootbox",    label: "NFT Lootbox", icon: Package },
   { to: "/apex/my",         label: "My Apex",     icon: User },
+  { to: "/apex/health",     label: "Health Dock", icon: MoreHorizontal },
 ];
 
 export default function ApexShell() {
@@ -101,6 +103,8 @@ export default function ApexShell() {
             ))}
           </ul>
         </BottomSheet>
+
+        <ApexHealthFab />
       </div>
     </ApexThemeProvider>
   );

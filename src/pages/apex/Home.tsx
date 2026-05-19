@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Flame, Gift, Vault, Play, Trophy, TrendingUp, Users, Sparkles, Package } from "lucide-react";
+import { ApexBigWinTicker } from "@/packages/apex/components/ApexBigWinTicker";
 
 function nextKstMidnight(): number {
   const now = new Date();
@@ -24,6 +25,7 @@ export default function ApexHome() {
 
   return (
     <div className="space-y-6">
+      <ApexBigWinTicker className="-mx-4 sm:mx-0 sm:rounded-2xl" />
       {/* Hero */}
       <section className="relative apex-glass rounded-3xl p-8 md:p-12 text-center overflow-hidden apex-glow-neon">
         <div className="absolute -top-12 -left-12 w-48 h-48 rounded-full bg-primary/20 blur-3xl apex-float" />
