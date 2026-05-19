@@ -32,8 +32,16 @@ export default function CompleteProfile() {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      const { data: profile } = await supabase.from("profiles").select("profile_completed,real_name,phone,birth_date").eq("id", user.id).maybeSingle();
-      if (profile?.profile_completed) { nav("/dashboard", { replace: true }); return; }
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("profile_completed,is_adult,real_name,phone,birth_date")
+        .eq("id", user.id)
+        .maybeSingle();
+      // 완전한 완료 상태(둘 다 true)일 때만 dashboard로 이동. 한쪽이라도 비면 머문다.
+      if (profile?.profile_completed && profile?.is_adult) {
+        nav("/dashboard", { replace: true });
+        return;
+      }
       if (profile) setForm(f => ({ ...f, realName: profile.real_name || "", phone: profile.phone || "", birth: profile.birth_date || "" }));
     })();
   }, [hasSession, isReady, nav]);
@@ -53,15 +61,40 @@ export default function CompleteProfile() {
       // 매직링크 사용자는 supabase provider가 "email"로 표시되지만 비밀번호 회원가입과
       // 구분이 필요하므로 별도 라벨("magic")을 저장한다.
       const provider = rawProvider === "email" ? "magic" : (rawProvider || "social");
-      const { error } = await supabase.from("profiles").update({
-        real_name: form.realName, phone: form.phone, birth_date: form.birth,
-        terms_agreed_at: new Date().toISOString(), age_confirmed: true,
+
+      // upsert로 행 부재 케이스(트리거 미동작 / 백필 미실행)에도 안전.
+      // is_adult는 BEFORE INSERT/UPDATE 트리거가 birth_date로부터 계산.
+      const { error } = await supabase.from("profiles").upsert({
+        id: user.id,
+        real_name: form.realName,
+        phone: form.phone,
+        birth_date: form.birth,
+        terms_agreed_at: new Date().toISOString(),
+        age_confirmed: true,
         profile_completed: true,
         auth_provider: provider,
-      }).eq("id", user.id);
+      } as any, { onConflict: "id" });
       if (error) throw error;
+
+      // 게이트 통과 검증: 저장 직후 재조회해서 useAdultGate 판정 조건과 동일하게 확인.
+      // 통과하지 못하면 머물면서 사용자에게 안내(루프 차단).
+      const { data: verify } = await supabase
+        .from("profiles")
+        .select("profile_completed,is_adult")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (!verify?.profile_completed || !verify?.is_adult) {
+        toast({
+          title: "프로필 저장이 완전히 반영되지 않았습니다",
+          description: "잠시 후 다시 시도해주세요. 문제가 계속되면 새로고침 또는 재로그인해주세요.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       toast({ title: t("doneTitle"), description: t("doneDesc") });
-      nav("/dashboard");
+      nav("/dashboard", { replace: true });
     } catch (e: any) {
       // Map server-side validate_profile_input trigger errors to friendly text
       const msg = String(e?.message ?? "");
