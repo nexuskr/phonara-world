@@ -110,21 +110,27 @@ export default function CompleteProfile() {
       } as any, { onConflict: "id" });
       if (error) throw error;
 
-      // 게이트 통과 검증: 저장 직후 재조회해서 useAdultGate 판정 조건과 동일하게 확인.
-      // 통과하지 못하면 머물면서 사용자에게 안내(루프 차단).
-      const { data: verify } = await supabase
-        .from("profiles")
-        .select("profile_completed,is_adult")
-        .eq("id", user.id)
-        .maybeSingle();
-
-      if (!verify?.profile_completed || !verify?.is_adult) {
-        toast({
-          title: "프로필 저장이 완전히 반영되지 않았습니다",
-          description: "잠시 후 다시 시도해주세요. 문제가 계속되면 새로고침 또는 재로그인해주세요.",
-          variant: "destructive",
-        });
-        return;
+      // 게이트 통과 검증은 best-effort. upsert 가 성공(error=null)했고 클라 측 age≥19
+      // 검증이 이미 통과한 상태이므로, verify SELECT 가 400(컬럼 부재 등)이거나
+      // 예외를 던지면 토스트 없이 그대로 /dashboard 로 이동한다.
+      // 단, SELECT 가 200 으로 돌아왔는데 둘 중 하나가 false 라면 진짜 트리거 미작동
+      // 케이스이므로 기존처럼 토스트로 잡아준다.
+      try {
+        const { data: verify, error: verifyErr } = await supabase
+          .from("profiles")
+          .select("profile_completed,is_adult")
+          .eq("id", user.id)
+          .maybeSingle();
+        if (!verifyErr && verify && (verify.profile_completed === false || verify.is_adult === false)) {
+          toast({
+            title: "프로필 저장이 완전히 반영되지 않았습니다",
+            description: "잠시 후 다시 시도해주세요. 문제가 계속되면 새로고침 또는 재로그인해주세요.",
+            variant: "destructive",
+          });
+          return;
+        }
+      } catch {
+        // verify SELECT 실패는 무시 — upsert 성공 + 클라 age 검증으로 충분.
       }
 
       toast({ title: t("doneTitle"), description: t("doneDesc") });
