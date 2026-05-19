@@ -2351,6 +2351,63 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_vault_claims: {
+        Row: {
+          claim_date: string
+          claimed_at: string
+          id: string
+          rarity: string
+          reward_phon: number
+          streak_at_claim: number
+          user_id: string
+          was_pity: boolean
+        }
+        Insert: {
+          claim_date?: string
+          claimed_at?: string
+          id?: string
+          rarity: string
+          reward_phon: number
+          streak_at_claim?: number
+          user_id: string
+          was_pity?: boolean
+        }
+        Update: {
+          claim_date?: string
+          claimed_at?: string
+          id?: string
+          rarity?: string
+          reward_phon?: number
+          streak_at_claim?: number
+          user_id?: string
+          was_pity?: boolean
+        }
+        Relationships: []
+      }
+      daily_vault_state: {
+        Row: {
+          last_claim_date: string | null
+          pity_counter: number
+          streak: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          last_claim_date?: string | null
+          pity_counter?: number
+          streak?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          last_claim_date?: string | null
+          pity_counter?: number
+          streak?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       daily_whale_leaderboard: {
         Row: {
           date: string
@@ -3283,6 +3340,69 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      free_mission_claims: {
+        Row: {
+          claim_date: string
+          created_at: string
+          id: string
+          mission_code: string
+          reward_phon: number
+          user_id: string
+        }
+        Insert: {
+          claim_date?: string
+          created_at?: string
+          id?: string
+          mission_code: string
+          reward_phon?: number
+          user_id: string
+        }
+        Update: {
+          claim_date?: string
+          created_at?: string
+          id?: string
+          mission_code?: string
+          reward_phon?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      free_missions: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          daily_cap: number
+          description_ko: string | null
+          id: string
+          reward_phon: number
+          sort_order: number
+          title_ko: string
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          daily_cap?: number
+          description_ko?: string | null
+          id?: string
+          reward_phon?: number
+          sort_order?: number
+          title_ko: string
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          daily_cap?: number
+          description_ko?: string | null
+          id?: string
+          reward_phon?: number
+          sort_order?: number
+          title_ko?: string
+        }
+        Relationships: []
       }
       function_permissions_baseline: {
         Row: {
@@ -5749,6 +5869,33 @@ export type Database = {
           reward_xp?: number
           title?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      mock_lootbox_opens: {
+        Row: {
+          id: string
+          opened_at: string
+          result_json: Json
+          reward_phon: number
+          tier: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          opened_at?: string
+          result_json: Json
+          reward_phon?: number
+          tier: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          opened_at?: string
+          result_json?: Json
+          reward_phon?: number
+          tier?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -8292,6 +8439,42 @@ export type Database = {
           status?: string
           trace_id?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      sports_mock_events: {
+        Row: {
+          active: boolean
+          away: string
+          created_at: string
+          home: string
+          id: string
+          league: string | null
+          odds_json: Json
+          sport: string
+          starts_at: string
+        }
+        Insert: {
+          active?: boolean
+          away: string
+          created_at?: string
+          home: string
+          id?: string
+          league?: string | null
+          odds_json: Json
+          sport: string
+          starts_at: string
+        }
+        Update: {
+          active?: boolean
+          away?: string
+          created_at?: string
+          home?: string
+          id?: string
+          league?: string | null
+          odds_json?: Json
+          sport?: string
+          starts_at?: string
         }
         Relationships: []
       }
@@ -11746,6 +11929,7 @@ export type Database = {
         }[]
       }
       claim_daily_quick_reward: { Args: { _kind: string }; Returns: Json }
+      claim_daily_vault: { Args: never; Returns: Json }
       claim_demo_refill: { Args: never; Returns: Json }
       claim_first_deposit_godmode: {
         Args: { _deposit_krw: number }
@@ -11770,6 +11954,7 @@ export type Database = {
       }
       claim_founding_season_seat: { Args: never; Returns: Json }
       claim_founding_seat: { Args: { _purchase_id: string }; Returns: Json }
+      claim_free_mission: { Args: { _code: string }; Returns: Json }
       claim_handbook_bonus: { Args: never; Returns: Json }
       claim_idle_growth: { Args: never; Returns: Json }
       claim_journey_stage: { Args: { _stage_no: number }; Returns: Json }
@@ -13372,6 +13557,7 @@ export type Database = {
           xp_reward: number
         }[]
       }
+      open_mock_lootbox: { Args: { _tier: string }; Returns: Json }
       open_position_phon: {
         Args: {
           p_amount_phon: number
