@@ -53,6 +53,9 @@ function ImperialCanvasImpl({ multiplier, phase }: Props) {
     phaseRef.current = phase;
   }, [phase]);
 
+  const { paused } = useViewportPause<HTMLDivElement>();
+  const visible = !paused;
+
   const visible = useViewportPause(wrapRef);
 
   useEffect(() => {
