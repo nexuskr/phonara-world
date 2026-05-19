@@ -246,11 +246,13 @@ function ImperialCanvasImpl({ multiplier, phase }: Props) {
 
   return (
     <div
-      ref={wrapRef}
+      ref={(el) => {
+        wrapRef.current = el;
+        pauseRef.current = el;
+      }}
       className="relative w-full aspect-[16/9] rounded-2xl overflow-hidden border border-[hsl(var(--gold))]/30 bg-[hsl(260,50%,6%)]"
     >
       <canvas ref={canvasRef} className="absolute inset-0" />
-      {/* corner shine */}
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,hsla(45,90%,60%,0.12),transparent_60%)]" />
     </div>
   );
