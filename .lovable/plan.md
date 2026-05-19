@@ -1,142 +1,123 @@
-# Phonara God-Tier Game Design System + AETHER 7-Game Import
+# Phase 2 — Provably Fair v2
 
-원본: `AETHER: Golden Glow` (https://aetherbet.lovable.app)
-대상: Phonara (Imperial Empire)
-미션: AAA 네이티브 카지노급 비주얼 — Stake/Rollbit/BC.Game/Pragmatic/Evolution 합친 것보다 위.
+Shared fairness substrate for all 7 AETHER games. Zero money-flow touch. Pure verification layer that game engines (Phase 3+) will plug into.
 
----
+## Scope
 
-## Part 0 — 절대 규약 (전 게임 공통)
+- New `imperial_pf_server_seeds` table (commit/reveal log, append-only).
+- 3 SQL RPCs: `imperial_pf_commit`, `imperial_pf_reveal`, `imperial_pf_verify`.
+- Client core hook + crypto helpers (`@pkg/games/core/pf`).
+- Wire existing `ProvablyFairBadge` + new `FairnessVerifier` modal.
+- Per-game `engine/pf.ts` adapter stubs (no game logic yet).
 
-| 규약 | 강제 방식 |
-|---|---|
-| Imperial 토큰만 사용 (`imperial-card`, `gradient-gold`, `text-gradient-gold`, `pulse-halo`, `glow-gold`, `imperial-glow`) | ESLint `no-restricted-syntax` 룰 추가 — raw hex/`bg-yellow-*`/`text-white` 차단 |
-| 머니플로 격리 | 베팅·정산은 **RPC 전용** + `_apply_house_edge_split(45/35/15/5)` 재사용 + `imperial_kill_switches` BEFORE INSERT 트리거 |
-| 패키지 경계 | 신규 코드 = `@pkg/games/*` 전용. `@pkg/games/core/ui/` 에 공용 럭셔리 프리미티브 |
-| Realtime | `useGameChannel(...)` 만 (raw `supabase.channel` 금지) |
-| 사운드/햅틱 | `useSlotSound`, `useImperialThunderWithReverb`, `@/lib/haptics` 재사용 |
-| Toast | `@/lib/notify` 만 (sonner 직접 금지) |
-| 60fps 보장 | `prefersReducedMotion` + `low:/mid:/high:` Tailwind variants + `IntersectionObserver` pause + object pooling (CrashCanvas 패턴) |
-| 청크 격리 | 각 게임 ≤ 60KB gz, `manualChunks: games-<game>` |
-| Provably Fair | 서버 `pf_commit/pf_reveal/pf_verify` RPC + 클라 검증 모달 |
+Money-flow files (`imperial_place_phon_bet`, `imperial_settle_*`, `_apply_house_edge_split`, treasury ledger, withdrawal, swap, staking) — **not touched**. Git diff target = 0 on the 8 protected paths.
 
----
+## Database
 
-## Part 1 — `@pkg/games/core/ui/` God-Tier Primitive Library
-
-신규 게임 7종이 전부 공유할 **럭셔리 컴포넌트 12종**. 한 번 만들고 영원히 재사용.
+Migration: `supabase/migrations/20260520_aether_phase2_pf_v2.sql`
 
 ```text
+imperial_pf_server_seeds
+  id              bigserial PK
+  game            text  NOT NULL              -- 'crash'|'mines'|'plinko'|'dice'|'limbo'|'keno'|'wheel'
+  round_id        bigint NOT NULL
+  server_seed     text  NOT NULL              -- 64-hex, hidden until reveal
+  server_seed_hash text NOT NULL              -- sha256(server_seed)
+  nonce_start     bigint NOT NULL DEFAULT 0
+  committed_at    timestamptz NOT NULL DEFAULT now()
+  revealed_at     timestamptz
+  UNIQUE (game, round_id)
+  INDEX (game, committed_at DESC)
+```
+
+RLS:
+- SELECT: authenticated — only `server_seed_hash`, `revealed_at`, `nonce_start`, `committed_at` via view `imperial_pf_public`. Raw `server_seed` only via RPC after reveal.
+- INSERT/UPDATE: blocked to clients. Only SECURITY DEFINER RPCs.
+
+RPCs (all `SECURITY DEFINER`, `search_path = public`, `auth.uid()` gated):
+
+1. `imperial_pf_commit(p_game text, p_round_id bigint) → text`
+   - Generates `server_seed = encode(gen_random_bytes(32), 'hex')`.
+   - Hash = `encode(digest(server_seed, 'sha256'), 'hex')`.
+   - Inserts row, returns `server_seed_hash`. Idempotent on `(game, round_id)` — returns existing hash if already committed.
+
+2. `imperial_pf_reveal(p_round_id bigint, p_game text) → text`
+   - Sets `revealed_at = now()` if null. Returns `server_seed`. Safe to call multiple times.
+
+3. `imperial_pf_verify(p_seed text, p_hash text, p_nonce bigint) → boolean`
+   - Pure: `digest(p_seed,'sha256') = p_hash`. Returns boolean. No table touch.
+
+Permission baseline: add these 3 to `function_permissions_baseline` (user-callable, gated by `auth.uid() IS NOT NULL`). `check_permission_drift()` must stay at 0.
+
+## Client
+
+```text
+src/packages/games/core/pf/
+  index.ts                 -- re-exports
+  crypto.ts                -- sha256Hex, hmacSha256Hex (Web Crypto)
+  rng.ts                   -- bytesToFloats, floatToInt (HMAC-SHA256 stream, Stake-compatible)
+  useProvablyFair.ts       -- hook: commit(game, roundId), reveal(roundId), verify(seed,hash,nonce)
+                              subscribes via useGameChannel(`pf:${game}:${roundId}`) for reveal broadcasts
+
 src/packages/games/core/ui/
-├── ImperialStage.tsx          ← 게임 화면 컨테이너 (god rays + vignette + parallax bg layer)
-├── GoldChip.tsx                ← 3D 금속 칩 (베벨/하이라이트/스택 물리)
-├── ChipStack.tsx               ← 칩 쌓기 spring physics (framer-motion)
-├── BetSlipLux.tsx              ← 통합 베팅 슬립 (frozen/kill-switch/leverage 가드)
-├── MultiplierGlow.tsx          ← 멀티플라이어 숫자 + burning gold + 색상 전이
-├── WinExplosion.tsx            ← 다층 파티클 + screen shake + golden rain + sound sync
-├── LossPulse.tsx               ← 엘레강트 다크 레드 펄스 (싸구려 플래시 X)
-├── CardFlipLux.tsx             ← 카드 플립 + 금박 텍스처 (블잭/바카라 공용)
-├── FeltSurface.tsx             ← 테이블 펠트 (포커 그린 → 다크 골드 차분 톤)
-├── HistoryStripLux.tsx         ← 결과 히스토리 카드 (gradient border + hover lift)
-├── GoldSpinner.tsx             ← 로딩 (shimmer + ring)
-├── FairnessVerifier.tsx        ← PF 시드 검증 모달
-└── hooks/
-    ├── useStageParticles.ts    ← 캔버스 파티클 풀 (pool size = device tier)
-    ├── useScreenShake.ts       ← 강도/지속시간 입력 → CSS transform
-    └── useGameSounds.ts        ← chip/win/loss/reveal/tick 라우팅
+  FairnessVerifier.tsx     -- modal: paste seed+hash+nonce, live verify, copy buttons
+                              uses Dialog + imperial-card + gradient-gold
+  ProvablyFairBadge.tsx    -- (already exists from Phase 1) — extend onClick to open FairnessVerifier
 ```
 
-**핵심 기술**:
-- `ImperialStage`: WebGL 없이 CSS conic-gradient + radial god rays + 3-layer parallax (background → midground → foreground), `will-change: transform` GPU 합성만.
-- `GoldChip`: SVG + CSS `box-shadow` 다중 레이어로 금속 베벨, `transform: rotateY` hover로 1g 칩처럼 회전.
-- `WinExplosion`: 캔버스 파티클 풀 (low=20 / mid=60 / high=140), 5-색 골드 그라디언트, `requestAnimationFrame` 1패스.
-- 모든 컴포넌트 = device tier 자동 적응 (`low:hidden mid:opacity-80 high:visible`).
+Hook contract:
+```ts
+const { commit, reveal, verify, state } = useProvablyFair(game, roundId);
+// state: { hash?: string, seed?: string, revealedAt?: string, verified?: boolean }
+```
 
----
+All calls go through `supabase.rpc('imperial_pf_commit'|'imperial_pf_reveal'|'imperial_pf_verify', ...)`. No direct table access.
 
-## Part 2 — 가져올 자산 vs 만들 자산
+## Per-game engine stubs
 
-| 게임 | AETHER 원본 재사용 | Phonara 재작성 | 신규 RPC |
-|---|---|---|---|
-| Crash | `CrashCanvas` 코어 알고리즘, `lib/crash/engine` | UI 토큰화, 베팅 슬립 → `BetSlipLux`, 사운드 → `useGameSounds` | `crash_place_bet`, `crash_settle` |
-| Plinko | `PlinkoCanvas` 물리, `lib/originals/plinko` | 보드 텍스처 = 다크 골드 우드 + 핀 골드 리플렉션 | `plinko_place_bet`, `plinko_drop` |
-| Roulette | `tables/RouletteWheel` 회전 로직 | 휠 = 3D-like CSS perspective + motion blur, 공 sparkle 트레일 | `roulette_place_bet`, `roulette_spin` |
-| Blackjack | `lib/tables/deck` 셔플 | `CardFlipLux` 금박 플립, `FeltSurface` 테이블 | `bj_place_bet`, `bj_action(hit/stand/double)`, `bj_settle` |
-| Baccarat | `lib/tables/{deck,baccaratRoads}` | 로드맵(빅로드/빅아이) Imperial 톤 재작성 | `bac_place_bet`, `bac_settle` |
-| Powerball | `powerball/PowerballStage` | 볼 추첨 = 메탈 글로브 + 드라마틱 조명, 당첨 = 크라운 컨페티 | `pb_place_ticket`, `pb_draw` (cron) |
-| Live Wheel | `liveshow/{Dealer,WheelCanvas,BonusGames}` | 휠 = 대형 스케일 + 보너스 라운드 컷씬, 딜러 = SVG 아바타 (이미지 X) | `wheel_place_bet`, `wheel_spin` |
-
----
-
-## Part 3 — Phase 순서 (머지 단위)
-
-각 Phase 끝 = 머지 가능 + house-edge 시뮬 PASS + money-flow git diff=0 + size-limit PASS.
+For each of `crash, mines, plinko, dice, limbo, keno, wheel`:
 
 ```text
-Phase 0  스캐폴드 + Kill switch 7종 + function_permissions    0.5d
-Phase 1  @pkg/games/core/ui/ 12개 프리미티브 (이것이 80%)     2d
-Phase 2  Provably Fair v2 (pf_commit/reveal/verify)            1d
-Phase 3  Crash                                                  1.5d
-Phase 4  Plinko                                                 1d
-Phase 5  Roulette                                               1.5d
-Phase 6  Blackjack                                              1.5d
-Phase 7  Baccarat                                               1d
-Phase 8  Powerball                                              1d
-Phase 9  Live Wheel                                             1.5d
-Phase 10 통합 허브 /games + /admin/originals (AAL2)             0.5d
+src/packages/games/<game>/engine/pf.ts
+  export const PF_GAME = '<game>';
+  export async function preparePfRound(roundId): Promise<{hash}>
+  export async function revealPfRound(roundId): Promise<{seed}>
+  // pure outcome derivation hook — wired in Phase 3+
 ```
 
-총 ≈ 13일. **Phase 1 (프리미티브)이 전체 비주얼 품질을 결정** — 여기서 압도해두면 게임 7종은 조립 작업이 됨.
+No game runtime yet — these are typed shells for Phase 3 to import.
 
----
+## UI integration
 
-## Part 4 — 네이밍 규칙 (Top 0.000…% 기준)
+- `ProvablyFairBadge` rendered inside `GameHUD` slot for each game (Phase 3+ wiring). Style: `imperial-card` + `bg-gradient-gold` + `imperial-pulse-dot` when hash is committed but not revealed.
+- Click → `<FairnessVerifier open seed? hash? nonce?>` modal.
+- Modal honours `prefers-reduced-motion` (no shimmer, no pulse).
 
-| 항목 | 규칙 | 예 |
-|---|---|---|
-| 페이지 | `src/pages/games/<Pascal>.tsx` | `Crash.tsx`, `Roulette.tsx` |
-| 게임 패키지 | `@pkg/games/<kebab>/` | `@pkg/games/crash/` |
-| 공용 프리미티브 | `@pkg/games/core/ui/<Pascal>.tsx` | `GoldChip.tsx` |
-| 훅 | `use<Pascal>` (camel, `use-` 파일명) | `use-crash-round.ts` |
-| RPC | `<game>_<action>` snake_case | `crash_place_bet` |
-| Kill switch key | 게임 단일 단어 | `crash`, `plinko`, `wheel` |
-| 마이그레이션 | `YYYYMMDD_aether_<game>_v1.sql` | `20260520_aether_crash_v1.sql` |
-| 테이블 | `<game>_rounds`, `<game>_bets` | `crash_rounds` |
-| 청크 | `games-<game>` | `games-crash` |
-| 메모 | `mem://features/aether-<game>-import` | — |
+## Merge gates
 
----
+1. `git diff` on money-flow whitelist (8 paths) = 0 — verified by existing `scripts/check-money-flow-freeze.*`.
+2. `check_permission_drift()` = 0 after baseline insert.
+3. `bun run size-limit` PASS (PF code lives in lazy game chunks).
+4. ESLint PASS (no raw `supabase.channel`, no direct sonner).
+5. House-edge simulation untouched (PF is verification only) — re-run existing 5000-spin script as sanity, must stay 6.0–6.4%.
 
-## Part 5 — 머지 게이트 (모든 PR 강제)
+## Out of scope (Phase 3+)
 
-- [ ] money-flow-freeze 8경로 git diff = 0
-- [ ] `check_permission_drift()` 0건
-- [ ] size-limit PASS (≤60KB gz/게임)
-- [ ] ESLint PASS (sonner/raw channel/raw color 0)
-- [ ] house edge 시뮬 1000-spin (±0.5%)
-- [ ] kill switch ON → 베팅 RPC 즉시 실패 e2e
-- [ ] Lighthouse Perf ≥ 92 (mobile 미드티어)
-- [ ] `prefersReducedMotion` 시 모든 파티클/쉐이크 OFF
+- Actual game RNG consumption from server seed + client seed + nonce.
+- Round lifecycle integration into bet placement.
+- Client seed rotation UI.
 
----
+## File list
 
-## Part 6 — 즉시 생성될 첫 파일 (Phase 0 미리보기)
+New:
+- `supabase/migrations/20260520_aether_phase2_pf_v2.sql`
+- `src/packages/games/core/pf/index.ts`
+- `src/packages/games/core/pf/crypto.ts`
+- `src/packages/games/core/pf/rng.ts`
+- `src/packages/games/core/pf/useProvablyFair.ts`
+- `src/packages/games/core/ui/FairnessVerifier.tsx`
+- `src/packages/games/{crash,mines,plinko,dice,limbo,keno,wheel}/engine/pf.ts` (7 files)
 
-```text
-src/packages/games/core/ui/{ImperialStage,GoldChip,...12개}.tsx
-src/packages/games/core/ui/hooks/{useStageParticles,useScreenShake,useGameSounds}.ts
-src/packages/games/{crash,plinko,roulette,blackjack,baccarat,powerball,wheel}/index.ts
-supabase/migrations/20260520_aether_phase0_killswitches.sql   (7 row INSERT)
-supabase/migrations/20260520_aether_phase2_pf_v2.sql
-vite.config.ts (manualChunks: games-* 7종 추가)
-size-limit.config.json (+7 entries)
-.dependency-cruiser.cjs (games 레이어 추가)
-eslint.config.js (no-raw-color 룰 추가)
-mem://features/aether-godtier-design-system
-```
-
----
-
-## Part 7 — 비기술 팀장 1문단 요약
-
-다른 프로젝트에 만들어둔 7개 게임(크래시·플링코·룰렛·블랙잭·바카라·파워볼·라이브휠)을 Phonara 황실 톤으로 다시 만들어 들여옵니다. 핵심은 게임마다 처음부터 디자인하지 않고, **모든 게임이 공유할 럭셔리 부품 12종**을 먼저 한 번 제대로 만든 뒤(Phase 1, 2일) 게임을 조립하는 방식. 이렇게 하면 7개 화면 전부 톤이 100% 일치하고, 신규 8번째 게임도 1일이면 추가 가능. 매 PR마다 자동 검사 8종을 통과해야 머지되며, 총 13일에 걸쳐 1게임씩 점진 배포합니다.
+Edited:
+- `src/packages/games/core/ui/ProvablyFairBadge.tsx` — open FairnessVerifier on click
+- `src/packages/games/core/index.ts` — re-export pf module
