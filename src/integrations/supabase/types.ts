@@ -4613,6 +4613,39 @@ export type Database = {
         }
         Relationships: []
       }
+      imperial_pf_server_seeds: {
+        Row: {
+          committed_at: string
+          game: string
+          id: number
+          nonce_start: number
+          revealed_at: string | null
+          round_id: number
+          server_seed: string
+          server_seed_hash: string
+        }
+        Insert: {
+          committed_at?: string
+          game: string
+          id?: number
+          nonce_start?: number
+          revealed_at?: string | null
+          round_id: number
+          server_seed: string
+          server_seed_hash: string
+        }
+        Update: {
+          committed_at?: string
+          game?: string
+          id?: number
+          nonce_start?: number
+          revealed_at?: string | null
+          round_id?: number
+          server_seed?: string
+          server_seed_hash?: string
+        }
+        Relationships: []
+      }
       imperial_rollback_snapshots: {
         Row: {
           created_at: string
@@ -10475,6 +10508,36 @@ export type Database = {
         }
         Relationships: []
       }
+      imperial_pf_public: {
+        Row: {
+          committed_at: string | null
+          game: string | null
+          id: number | null
+          nonce_start: number | null
+          revealed_at: string | null
+          round_id: number | null
+          server_seed_hash: string | null
+        }
+        Insert: {
+          committed_at?: string | null
+          game?: string | null
+          id?: number | null
+          nonce_start?: number | null
+          revealed_at?: string | null
+          round_id?: number | null
+          server_seed_hash?: string | null
+        }
+        Update: {
+          committed_at?: string | null
+          game?: string | null
+          id?: number | null
+          nonce_start?: number | null
+          revealed_at?: string | null
+          round_id?: number | null
+          server_seed_hash?: string | null
+        }
+        Relationships: []
+      }
       insurance_fund_24h: {
         Row: {
           contributed_24h: number | null
@@ -12960,6 +13023,18 @@ export type Database = {
             Returns: number
           }
       imperial_nft_tier_for: { Args: { _lifetime: number }; Returns: number }
+      imperial_pf_commit: {
+        Args: { p_game: string; p_round_id: number }
+        Returns: string
+      }
+      imperial_pf_reveal: {
+        Args: { p_game: string; p_round_id: number }
+        Returns: string
+      }
+      imperial_pf_verify: {
+        Args: { p_hash: string; p_nonce: number; p_seed: string }
+        Returns: boolean
+      }
       imperial_phase1_emergency_pause: {
         Args: { _reason?: string }
         Returns: Json
