@@ -16,12 +16,12 @@ export default function DiceGame() {
   const winChance = side === "under" ? target : 100 - target;
   const multiplier = useMemo(() => +(99 / winChance).toFixed(4), [winChance]);
 
-  async function roll() {
+  async function handleRoll() {
     const res = await play("dice", { phon: bet }, { target, side });
     if (res?.ok && Number(res.payout_phon) > bet) setBurst((b) => b + 1);
   }
 
-  const roll = last?.result?.roll;
+  const rollValue = last?.result?.roll;
 
   return (
     <div className="space-y-5">
