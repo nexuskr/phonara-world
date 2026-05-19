@@ -1,55 +1,62 @@
-# Phase 5 STUB v2 — `user_id does not exist` 정정
+# Phase 5 STUB v3 계획 — 같은 `user_id` 오류 반복 차단
 
-## 원인
-독립 백엔드(`wyhhdyrvqtoejvusnhva`)에 이미 같은 이름의 stub/구버전 테이블이 존재. `CREATE TABLE IF NOT EXISTS`는 **건너뛰기만** 하므로 컬럼이 부족한 상태로 남고, 뒤에 오는 `CREATE POLICY ... USING (auth.uid() = user_id)` 와 view/function이 `user_id` 컬럼을 찾지 못해 `42703` 발생.
+## 현재 확인된 사실
+- 저장된 파일 `scripts/independence/phase5-stub-v1.sql` 은 이미 **v1.1 self-healing 구조**입니다.
+- 그런데 사용자가 올린 SQL Editor 화면에는 **예전 본문**이 남아 있습니다.
+  - 화면상 `has_role()` 가 `user_roles` 보정보다 먼저 나옴
+  - `user_roles` 블록도 현재 파일과 다름
+- 즉, 지금은 **최신 파일 문제가 아니라 SQL Editor 탭에 남아 있는 구버전 쿼리를 반복 실행 중일 가능성**이 가장 큽니다.
 
-지금 에러 라인은 SQL Editor 화면(L284 근방, COMMIT 직전)에 도달하기 전, 정책/뷰 생성 중 어느 한 곳. v1은 한 트랜잭션이라 전체 롤백되어 stub 0개 적용 상태.
+## 목표
+1. 같은 오류가 다시 나지 않도록 stub SQL을 한 단계 더 방어적으로 강화
+2. 초보자도 헷갈리지 않게 “반드시 최신 본문만 실행” 절차를 runbook에 명시
+3. 그 뒤 FULL CLONE 파이프라인으로 진행
 
-## 해결 방식 — STUB v1.1 (idempotent + self-healing)
-`scripts/independence/phase5-stub-v1.sql` 를 **자가치유형**으로 재작성:
+## 구현 계획
 
-각 stub 테이블 블록을 이 패턴으로 통일
+### 1) `scripts/independence/phase5-stub-v1.sql` 를 v1.2로 강화
+다음 보강만 적용합니다.
 
-```text
-CREATE TABLE IF NOT EXISTS public.<t> (...);
--- ⬇ 핵심: 기존에 있더라도 빠진 컬럼 채워넣기
-ALTER TABLE public.<t>
-  ADD COLUMN IF NOT EXISTS user_id   uuid,
-  ADD COLUMN IF NOT EXISTS <other>   <type> DEFAULT ...;
-ALTER TABLE public.<t> ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS ... ;
-CREATE POLICY ... USING (auth.uid() = user_id);
-```
+- 파일 상단 버전을 `v1.2` 로 올려 **구버전/신버전 식별 가능**하게 함
+- `has_role`, `heck_achievements`, `get_slot_leaderboard`, `get_whale_strikes_24h` 등 함수 앞에
+  - `DROP FUNCTION IF EXISTS ...` 를 추가해 오래된 시그니처/바디 간섭 제거
+- `my_active_freeze` 는 현재처럼 `DROP VIEW IF EXISTS` 유지
+- 정책 생성 전 `DO $$ ... $$` 가 `information_schema.columns` 를 확인해서
+  - 해당 테이블에 `user_id` 가 실제 존재할 때만 정책 생성
+  - 없으면 명시적 `RAISE NOTICE` 로 어떤 블록이 건너뛰어졌는지 출력
+- 맨 위에 **preflight 진단 SELECT** 를 넣어 실행 직후 현재 독립 백엔드 테이블 상태를 먼저 보여주게 함
+  - `user_roles`, `wallet_balances`, `account_freezes`, `withdrawal_requests` 등 핵심 테이블의 `user_id` 존재 여부 출력
+- 맨 아래 self-validation SELECT 는 유지
 
-대상 테이블 (전부 동일 패턴 적용):
-- `user_roles` — user_id, role, created_at
-- `profiles` — id, nickname, birth_date, is_adult, profile_completed, tier, updated_at
-- `wallet_balances` — user_id + 잔액 컬럼들
-- `account_freezes` — user_id, reason, until_at
-- `user_achievements`, `user_achievement_progress` — user_id, code, value
-- `guild_members` — user_id, guild_id
-- `withdrawal_requests`, `deposit_requests`, `transactions` — user_id, amount, status …
-- `slot_spins` — user_id, game, bet, win
-- `empire_founding_seats` — user_id, seat_no, claimed_at
+### 2) `docs/independence/WINDOWS_RUNBOOK_KO.md` 에 재실행 절차 보강
+초보자 실수를 막기 위해 아래를 추가합니다.
 
-추가 안전장치
-- `my_active_freeze` 뷰는 `CREATE OR REPLACE VIEW` 전에 `DROP VIEW IF EXISTS` (컬럼 시그니처 변경 가능성 대비)
-- `has_role(uuid, app_role)` 함수는 `user_roles.user_id` ALTER 이후로 순서 이동
-- 전체를 단일 `BEGIN ... COMMIT` 유지 (atomic, 실패 시 깨끗하게 롤백)
-- 끝에 자가 검증 `SELECT` 1개: 모든 대상 테이블에 `user_id`(또는 `id`) 컬럼 존재 확인
+- SQL Editor에서는 **기존 탭 재사용 금지**
+- 반드시 새 탭을 열고, 저장소의 최신 파일 내용을 **전부 다시 복사**
+- 실행 전 아래 3가지를 눈으로 확인:
+  1. 첫 줄에 `Phase 5 STUB v1.2`
+  2. `has_role()` 가 `user_roles` 블록 **아래**에 있음
+  3. 파일 끝에 self-validation SELECT 가 있음
+- 실패 시 체크 순서:
+  1. 실행한 탭이 최신 본문인지
+  2. 독립 백엔드 ref 가 `wyhhdyrvqtoejvusnhva` 인지
+  3. managed backend (`ketlqzfaplppmupaiwft`) 가 아닌지
 
-## 적용 절차
-1. 본 plan 승인
-2. 빌드 모드에서 `scripts/independence/phase5-stub-v1.sql` 재작성 (덮어쓰기, 파일명 유지하여 RUNBOOK 변경 불필요)
-3. Studio SQL Editor에서 다시 실행 → `Success. No rows returned`
-4. 그 다음 FULL CLONE 파이프라인 진행 (RUNBOOK 단계 1~4)
+### 3) 적용 후 사용자 실행 순서
+1. 저장소의 `scripts/independence/phase5-stub-v1.sql` 최신본 열기
+2. SQL Editor 새 탭 열기
+3. 최신본 전체 붙여넣기
+4. preflight 결과 확인
+5. 실행
+6. self-validation 에 missing row 가 0개인지 확인
+7. 그 다음 RUNBOOK 01 → 02 → 03 → 04 진행
 
-## 안전 원칙 (변경 없음)
-- 관리형(`ketlqzfaplppmupaiwft`) READ-ONLY
-- 모든 작업 idempotent — 몇 번 돌려도 안전
-- stub은 임시 노이즈 차단용, 진짜 운영 스키마는 `db push`가 ALTER로 덮어씀
+## 기대 결과
+- 구버전 탭 재실행으로 인한 반복 오류 차단
+- 실제 컬럼 유무가 먼저 출력되어 어디서 깨지는지 즉시 식별 가능
+- stub 적용 후 콘솔 404/400 노이즈를 먼저 줄이고 FULL CLONE으로 이동 가능
 
-## 비범위
-- 관리형 DB 수정 없음
-- 새 마이그레이션 파일 추가 없음 (`supabase/migrations/` 안 건드림)
-- 코드 변경 없음 (프론트엔드)
+## 안전 원칙
+- 관리형 `ketlqzfaplppmupaiwft` 는 계속 READ-ONLY
+- 변경 대상은 문서 1개 + stub SQL 1개만
+- FULL CLONE 파이프라인 파일(`01~04`) 자체는 이번 단계에서 건드리지 않음
