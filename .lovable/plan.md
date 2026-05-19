@@ -1,123 +1,124 @@
-# Phase 2 — Provably Fair v2
+# Phase 3 — Imperial Gold Crash 게임
 
-Shared fairness substrate for all 7 AETHER games. Zero money-flow touch. Pure verification layer that game engines (Phase 3+) will plug into.
+Provably Fair v2 기반 위에 AETHER Crash 게임을 Phonara에 이식합니다. 시각·성능·중독성 3축 모두 Stake/Rollbit 초월을 목표로 합니다. 머니플로 8경로는 절대 건드리지 않고, 기존 BetSlip/PHON 베팅 경로를 그대로 재사용합니다.
 
-## Scope
+## 스코프
 
-- New `imperial_pf_server_seeds` table (commit/reveal log, append-only).
-- 3 SQL RPCs: `imperial_pf_commit`, `imperial_pf_reveal`, `imperial_pf_verify`.
-- Client core hook + crypto helpers (`@pkg/games/core/pf`).
-- Wire existing `ProvablyFairBadge` + new `FairnessVerifier` modal.
-- Per-game `engine/pf.ts` adapter stubs (no game logic yet).
+- 신규 게임 패키지: `src/packages/games/crash/**` (engine / hooks / store / ui / types)
+- PF v2 완전 연동 (commit → byteStream → reveal → verify)
+- Realtime: `useGameChannel('crash')` (Phase 1 4-파티션 래퍼 사용)
+- 베팅: 기존 BetSlipBridge 재사용 (place_phon_bet RPC는 머니플로 8경로 — 본문 무변경)
+- 라우팅: `/games/crash` 추가 (lazy chunk, Layer 1 번들 영향 최소화)
 
-Money-flow files (`imperial_place_phon_bet`, `imperial_settle_*`, `_apply_house_edge_split`, treasury ledger, withdrawal, swap, staking) — **not touched**. Git diff target = 0 on the 8 protected paths.
-
-## Database
-
-Migration: `supabase/migrations/20260520_aether_phase2_pf_v2.sql`
+## 파일 구조
 
 ```text
-imperial_pf_server_seeds
-  id              bigserial PK
-  game            text  NOT NULL              -- 'crash'|'mines'|'plinko'|'dice'|'limbo'|'keno'|'wheel'
-  round_id        bigint NOT NULL
-  server_seed     text  NOT NULL              -- 64-hex, hidden until reveal
-  server_seed_hash text NOT NULL              -- sha256(server_seed)
-  nonce_start     bigint NOT NULL DEFAULT 0
-  committed_at    timestamptz NOT NULL DEFAULT now()
-  revealed_at     timestamptz
-  UNIQUE (game, round_id)
-  INDEX (game, committed_at DESC)
+src/packages/games/crash/
+├── index.ts
+├── types.ts                  # CrashRound, CrashPhase, BetTicket (Zod)
+├── engine/
+│   ├── index.ts
+│   ├── crashEngine.ts        # 60fps tick, growth curve, crash detection
+│   └── pf.ts                 # rng → crash multiplier (Stake 공식 호환)
+├── store/
+│   └── useCrashStore.ts      # Zustand: phase, multiplier, bets, history
+├── hooks/
+│   ├── useCrashRound.ts      # round lifecycle + PF commit/reveal
+│   ├── useCrashChannel.ts    # useGameChannel('crash') 래퍼
+│   └── useCrashAutoCashout.ts
+└── ui/
+    ├── CrashGame.tsx         # 메인 페이지 (route entry)
+    ├── CrashChart.tsx        # Canvas curve + SVG overlay, gold gradient
+    ├── CrashRocket.tsx       # 황금 왕좌 아이콘 (transform-only, GPU)
+    ├── CrashCrackOverlay.tsx # crash 시 화면 균열 + particle
+    ├── BetPanel.tsx          # multi-bet (2 슬롯)
+    ├── AutoCashout.tsx       # preset 1.5/2/5/10× + manual
+    ├── History.tsx           # 최근 50, ProvablyFairBadge
+    └── Leaderboard.tsx       # live players (realtime)
 ```
 
-RLS:
-- SELECT: authenticated — only `server_seed_hash`, `revealed_at`, `nonce_start`, `committed_at` via view `imperial_pf_public`. Raw `server_seed` only via RPC after reveal.
-- INSERT/UPDATE: blocked to clients. Only SECURITY DEFINER RPCs.
+라우터 추가: `src/App.tsx` lazy import `/games/crash`.
 
-RPCs (all `SECURITY DEFINER`, `search_path = public`, `auth.uid()` gated):
+## PF v2 연동
 
-1. `imperial_pf_commit(p_game text, p_round_id bigint) → text`
-   - Generates `server_seed = encode(gen_random_bytes(32), 'hex')`.
-   - Hash = `encode(digest(server_seed, 'sha256'), 'hex')`.
-   - Inserts row, returns `server_seed_hash`. Idempotent on `(game, round_id)` — returns existing hash if already committed.
+- `imperial_pf_commit('crash', roundId)` → server_seed_hash 표시
+- multiplier 공식 (Stake 호환, house edge 1%):
+  ```
+  h = hmacSha256(serverSeed, `${clientSeed}:${nonce}`)
+  e = 2^52
+  n = parseInt(h.slice(0,13), 16)
+  crash = floor((100*e - n) / (e - n)) / 100   // 99/100 확률로 ≥1.00, 1/100은 1.00
+  ```
+- crash 직후 `imperial_pf_reveal` → realtime broadcast → 클라이언트 `useProvablyFair.verify`
+- `<ProvablyFairBadge />` 라운드별 표시, 클릭 시 `<FairnessVerifier />` 모달
 
-2. `imperial_pf_reveal(p_round_id bigint, p_game text) → text`
-   - Sets `revealed_at = now()` if null. Returns `server_seed`. Safe to call multiple times.
+## 엔진 / 성능
 
-3. `imperial_pf_verify(p_seed text, p_hash text, p_nonce bigint) → boolean`
-   - Pure: `digest(p_seed,'sha256') = p_hash`. Returns boolean. No table touch.
+- 단일 `requestAnimationFrame` 루프, 5ms 미만/tick
+- 곡선: Canvas 2D 경로 + 오프스크린 그라디언트 캐시, 매 프레임 transform만 갱신
+- 모바일: `touch-action: manipulation`, passive listeners, devicePixelRatio cap 2
+- 백그라운드/비가시: `useViewportPause` (Phase 1)로 자동 정지
+- 번들: crash 청크 < 60KB gzip, framer-motion은 이미 공용 청크 사용
 
-Permission baseline: add these 3 to `function_permissions_baseline` (user-callable, gated by `auth.uid() IS NOT NULL`). `check_permission_drift()` must stay at 0.
+## 상태 (Zustand)
 
-## Client
-
-```text
-src/packages/games/core/pf/
-  index.ts                 -- re-exports
-  crypto.ts                -- sha256Hex, hmacSha256Hex (Web Crypto)
-  rng.ts                   -- bytesToFloats, floatToInt (HMAC-SHA256 stream, Stake-compatible)
-  useProvablyFair.ts       -- hook: commit(game, roundId), reveal(roundId), verify(seed,hash,nonce)
-                              subscribes via useGameChannel(`pf:${game}:${roundId}`) for reveal broadcasts
-
-src/packages/games/core/ui/
-  FairnessVerifier.tsx     -- modal: paste seed+hash+nonce, live verify, copy buttons
-                              uses Dialog + imperial-card + gradient-gold
-  ProvablyFairBadge.tsx    -- (already exists from Phase 1) — extend onClick to open FairnessVerifier
-```
-
-Hook contract:
 ```ts
-const { commit, reveal, verify, state } = useProvablyFair(game, roundId);
-// state: { hash?: string, seed?: string, revealedAt?: string, verified?: boolean }
+phase: 'idle' | 'betting' | 'running' | 'crashed' | 'revealing'
+roundId, multiplier, startedAt, crashAt
+bets: { slot1, slot2 }      // amount, autoCashout, status
+history: CrashRound[]       // 최근 50
+players: LivePlayer[]       // realtime
+pf: { hash, seed?, nonce, verified }
 ```
 
-All calls go through `supabase.rpc('imperial_pf_commit'|'imperial_pf_reveal'|'imperial_pf_verify', ...)`. No direct table access.
+## Realtime 이벤트 (`useGameChannel('crash')`)
 
-## Per-game engine stubs
+- `round:start` { roundId, hash, startsAt }
+- `bet:placed` { userId, amount, slot }
+- `cashout` { userId, multiplier, payout }
+- `round:crash` { roundId, multiplier, seed, nonce }
 
-For each of `crash, mines, plinko, dice, limbo, keno, wheel`:
+## 베팅 (머니플로 무변경)
 
-```text
-src/packages/games/<game>/engine/pf.ts
-  export const PF_GAME = '<game>';
-  export async function preparePfRound(roundId): Promise<{hash}>
-  export async function revealPfRound(roundId): Promise<{seed}>
-  // pure outcome derivation hook — wired in Phase 3+
-```
+- BetPanel → 기존 BetSlipBridge → 기존 `place_phon_bet` 호출만 사용
+- cashout은 기존 settle 경로 호출, 신규 머니 RPC 추가 없음
+- PHON 토큰 베팅 + USDT 베팅 8경로 git diff = 0
 
-No game runtime yet — these are typed shells for Phase 3 to import.
+## 시각 (Imperial Gold)
 
-## UI integration
+- 배경: `#050505` + radial gold haze (CSS conic-gradient, GPU)
+- 곡선: 그라디언트 `#E8B923 → #F5D47A`, 끝점 펄스 글로우
+- 황금 왕좌(rocket 대체): SVG, 곡선 끝 따라 transform
+- Crash 시: 화면 0.4s 균열 SVG mask + gold particle burst (Canvas)
+- 카피: KR 우선, `g('crash.*')` glossary 키 4개 추가
 
-- `ProvablyFairBadge` rendered inside `GameHUD` slot for each game (Phase 3+ wiring). Style: `imperial-card` + `bg-gradient-gold` + `imperial-pulse-dot` when hash is committed but not revealed.
-- Click → `<FairnessVerifier open seed? hash? nonce?>` modal.
-- Modal honours `prefers-reduced-motion` (no shimmer, no pulse).
+## 접근성 & 모바일
 
-## Merge gates
+- 키보드: Space=cashout, B=bet, A=auto toggle
+- 탭 타깃 48px, 큰 cashout 버튼 모바일 sticky bottom
+- prefers-reduced-motion: particle/glow off, 곡선만 유지
+- 햅틱: `HapticPulse` (Phase 1)
 
-1. `git diff` on money-flow whitelist (8 paths) = 0 — verified by existing `scripts/check-money-flow-freeze.*`.
-2. `check_permission_drift()` = 0 after baseline insert.
-3. `bun run size-limit` PASS (PF code lives in lazy game chunks).
-4. ESLint PASS (no raw `supabase.channel`, no direct sonner).
-5. House-edge simulation untouched (PF is verification only) — re-run existing 5000-spin script as sanity, must stay 6.0–6.4%.
+## 머지 게이트
 
-## Out of scope (Phase 3+)
+- 머니플로 8경로 git diff = 0 (수동 검증)
+- ESLint: `@/hooks/use-realtime-channel` 직접 import 금지 (Phase 1) — wrapper만
+- size-limit: crash chunk < 60KB gzip, index 영향 0
+- `check_permission_drift()` 0건 (이번 단계 신규 RPC 없음 — PF RPC는 Phase 2 그대로 재사용)
+- 60fps 데스크탑/모바일 Chrome 수동 확인 (Performance Profile)
 
-- Actual game RNG consumption from server seed + client seed + nonce.
-- Round lifecycle integration into bet placement.
-- Client seed rotation UI.
+## 작업 순서
 
-## File list
+1. types + Zod + store
+2. engine/pf.ts + crashEngine.ts (단위 PF 시뮬 1만 회 house edge ≈ 1% 확인)
+3. CrashChart + CrashRocket + CrashCrackOverlay
+4. BetPanel + AutoCashout + History + Leaderboard
+5. useCrashRound + useCrashChannel + Realtime 연동
+6. /games/crash 라우트 lazy 등록
+7. Polish: particle, glow, sound placeholder, a11y, mobile pass
+8. 최종 파일 목록 + 머지 게이트 결과 리포트
 
-New:
-- `supabase/migrations/20260520_aether_phase2_pf_v2.sql`
-- `src/packages/games/core/pf/index.ts`
-- `src/packages/games/core/pf/crypto.ts`
-- `src/packages/games/core/pf/rng.ts`
-- `src/packages/games/core/pf/useProvablyFair.ts`
-- `src/packages/games/core/ui/FairnessVerifier.tsx`
-- `src/packages/games/{crash,mines,plinko,dice,limbo,keno,wheel}/engine/pf.ts` (7 files)
+## 비범위
 
-Edited:
-- `src/packages/games/core/ui/ProvablyFairBadge.tsx` — open FairnessVerifier on click
-- `src/packages/games/core/index.ts` — re-export pf module
+- 신규 머니 RPC, 신규 테이블, 베팅 한도 변경, 운영자 화면, 멀티게임 통합 — 모두 다음 단계
+- WebGL/Three.js 도입 — 60fps Canvas로 충분, 번들 보호 위해 보류
