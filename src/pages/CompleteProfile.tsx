@@ -62,10 +62,26 @@ export default function CompleteProfile() {
       // 구분이 필요하므로 별도 라벨("magic")을 저장한다.
       const provider = rawProvider === "email" ? "magic" : (rawProvider || "social");
 
+      // nickname 안전 생성 (NOT NULL 제약 + 트리거 미동작 케이스 대비)
+      const { data: existing } = await supabase
+        .from("profiles")
+        .select("nickname")
+        .eq("id", user.id)
+        .maybeSingle();
+      const meta = (user.user_metadata ?? {}) as Record<string, any>;
+      const emailLocal = (user.email ?? "").split("@")[0] || "";
+      const nickname =
+        (existing as any)?.nickname?.trim() ||
+        meta.nickname || meta.name || meta.full_name ||
+        form.realName?.trim() ||
+        emailLocal ||
+        `user_${user.id.slice(0, 8)}`;
+
       // upsert로 행 부재 케이스(트리거 미동작 / 백필 미실행)에도 안전.
       // is_adult는 BEFORE INSERT/UPDATE 트리거가 birth_date로부터 계산.
       const { error } = await supabase.from("profiles").upsert({
         id: user.id,
+        nickname,
         real_name: form.realName,
         phone: form.phone,
         birth_date: form.birth,
