@@ -60,13 +60,28 @@ supabase --version
 FULL CLONE 전에 사용자에게 보이는 콘솔 노이즈부터 차단.
 
 1. 브라우저로 https://supabase.com/dashboard/project/wyhhdyrvqtoejvusnhva/sql/new 접속 (로그인 필요)
-2. 레포의 `scripts/independence/phase5-stub-v1.sql` 파일 열기
-3. **전체 복사** (Ctrl+A → Ctrl+C)
-4. SQL Editor에 붙여넣기 (Ctrl+V)
-5. 우측 하단 **Run** (또는 Ctrl+Enter)
-6. 결과: `Success. No rows returned` → OK
+   - 좌상단 프로젝트 셀렉터가 **wyhhdyrvqtoejvusnhva** 인지 반드시 확인.
+   - 관리형(`ketlqzfaplppmupaiwft`)이 선택돼 있으면 **즉시 닫기.**
+2. **새 SQL 탭 열기** — 기존 탭에 옛날 본문이 남아 있을 수 있어 반드시 `+` 로 새 탭.
+3. 레포의 `scripts/independence/phase5-stub-v1.sql` 파일 열기
+4. **전체 복사** (Ctrl+A → Ctrl+C) — 부분 복사 금지.
+5. SQL Editor에 붙여넣기 (Ctrl+V)
+6. 붙여넣은 내용 1번째 줄에 `Phase 5 STUB v1.2` 가 있는지 눈으로 확인. 없으면 구버전이므로 다시 복사.
+7. 우측 하단 **Run** (또는 Ctrl+Enter)
+8. 결과 확인:
+   - 상단 preflight SELECT: 각 테이블의 `table_exists` / `has_user_id` 현재 상태 표시 (참고용)
+   - 본문 실행: `Success. No rows returned`
+   - 하단 self-validation SELECT: **0행이어야 정상**. 행이 나오면 `MISSING user_id COLUMN` 으로 어느 테이블이 빠졌는지 보여줌.
 
-> 이 stub은 진짜 스키마와 충돌하지 않게 최소 컬럼만 가진다. 단계 4의 `db push`가 ALTER로 흡수.
+> 이 stub은 진짜 스키마와 충돌하지 않게 최소 컬럼만 가진다. 단계 3-3의 `db push`가 ALTER로 흡수.
+
+### STEP 0 트러블슈팅
+| 증상 | 원인 | 해결 |
+|---|---|---|
+| `column "user_id" does not exist` | 구버전 탭 본문 재실행 | 탭 전부 닫고 **새 탭** 열어 최신 v1.2 본문 다시 붙여넣기 |
+| `permission denied for schema auth` | 잘못된 프로젝트 선택 | 좌상단이 `wyhhdyrvqtoejvusnhva` 인지 확인 |
+| `MISSING user_id COLUMN` 행 출력 | 일부 테이블에 컬럼 보정이 안 됨 | 출력된 테이블명 캡처해 공유. v1.3에 추가 필요 |
+| `function ... does not exist` | 이전 시그니처와 충돌 | v1.2는 DROP FUNCTION 포함됨. 그래도 나면 캡처 공유 |
 
 ---
 
