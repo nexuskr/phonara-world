@@ -1,17 +1,13 @@
 -- =====================================================================
--- Phase 5 STUB v1 — 콘솔 404/400 노이즈 차단용 최소 객체
+-- Phase 5 STUB v1.1 (self-healing) — 콘솔 404/400 노이즈 차단용 최소 객체
 -- 대상: 독립 백엔드 wyhhdyrvqtoejvusnhva ONLY
--- 관리형 ketlqzfaplppmupaiwft 에는 절대 실행하지 말 것 (READ-ONLY)
+-- 관리형 ketlqzfaplppmupaiwft 에는 절대 실행 금지 (READ-ONLY)
 --
--- 적용 방법:
---   1) https://supabase.com/dashboard/project/wyhhdyrvqtoejvusnhva/sql/new
---   2) 본 파일 전체 복사 → 붙여넣기 → Run
---   3) 에러 없이 "Success. No rows returned" 나오면 OK
---
--- 특징:
---   - 전부 IF NOT EXISTS / OR REPLACE (idempotent)
---   - 진짜 FULL CLONE(supabase db push) 시 ALTER 로 흡수되어 충돌 없음
---   - 최소 컬럼 + 최소 RLS 만 부여 (운영 의도 아님, 노이즈 차단 목적)
+-- v1 → v1.1 변경점:
+--   - 기존에 같은 이름 테이블이 부분적으로 존재하는 경우(컬럼 누락)에도 안전하게 작동
+--   - 모든 테이블 블록에 ALTER TABLE ... ADD COLUMN IF NOT EXISTS 추가
+--   - my_active_freeze 뷰는 시그니처 변경 대비 DROP → CREATE
+--   - has_role()는 user_roles 컬럼 보정 이후로 정의 순서 이동
 -- =====================================================================
 
 BEGIN;
@@ -21,35 +17,39 @@ DO $$ BEGIN
   CREATE TYPE public.app_role AS ENUM ('admin','moderator','user');
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
--- ---------- helpers ----------
+-- ---------- user_roles (먼저 정의 + 컬럼 보정) ----------
+CREATE TABLE IF NOT EXISTS public.user_roles (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid()
+);
+ALTER TABLE public.user_roles
+  ADD COLUMN IF NOT EXISTS user_id    uuid,
+  ADD COLUMN IF NOT EXISTS role       public.app_role,
+  ADD COLUMN IF NOT EXISTS created_at timestamptz NOT NULL DEFAULT now();
+DO $$ BEGIN
+  ALTER TABLE public.user_roles ADD CONSTRAINT user_roles_user_role_uniq UNIQUE (user_id, role);
+EXCEPTION WHEN duplicate_object THEN NULL; WHEN duplicate_table THEN NULL; END $$;
+ALTER TABLE public.user_roles ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "ur_self_read" ON public.user_roles;
+CREATE POLICY "ur_self_read" ON public.user_roles FOR SELECT USING (auth.uid() = user_id);
+
+-- ---------- helpers (user_roles 보정 후) ----------
 CREATE OR REPLACE FUNCTION public.has_role(_user_id uuid, _role public.app_role)
 RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
   SELECT EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = _user_id AND role = _role)
 $$;
 
--- ---------- user_roles ----------
-CREATE TABLE IF NOT EXISTS public.user_roles (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL,
-  role public.app_role NOT NULL DEFAULT 'user',
-  created_at timestamptz NOT NULL DEFAULT now(),
-  UNIQUE (user_id, role)
-);
-ALTER TABLE public.user_roles ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "ur_self_read" ON public.user_roles;
-CREATE POLICY "ur_self_read" ON public.user_roles FOR SELECT USING (auth.uid() = user_id);
-
 -- ---------- profiles ----------
 CREATE TABLE IF NOT EXISTS public.profiles (
-  id uuid PRIMARY KEY,
-  nickname text NOT NULL DEFAULT '',
-  birth_date date,
-  is_adult boolean NOT NULL DEFAULT true,
-  profile_completed boolean NOT NULL DEFAULT false,
-  tier text NOT NULL DEFAULT 'normal',
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
+  id uuid PRIMARY KEY
 );
+ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS nickname          text    NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS birth_date        date,
+  ADD COLUMN IF NOT EXISTS is_adult          boolean NOT NULL DEFAULT true,
+  ADD COLUMN IF NOT EXISTS profile_completed boolean NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS tier              text    NOT NULL DEFAULT 'normal',
+  ADD COLUMN IF NOT EXISTS created_at        timestamptz NOT NULL DEFAULT now(),
+  ADD COLUMN IF NOT EXISTS updated_at        timestamptz NOT NULL DEFAULT now();
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "p_self_rw" ON public.profiles;
 CREATE POLICY "p_self_rw" ON public.profiles FOR ALL
@@ -57,27 +57,30 @@ CREATE POLICY "p_self_rw" ON public.profiles FOR ALL
 
 -- ---------- wallet_balances ----------
 CREATE TABLE IF NOT EXISTS public.wallet_balances (
-  user_id uuid PRIMARY KEY,
-  total_balance numeric NOT NULL DEFAULT 0,
-  available_balance numeric NOT NULL DEFAULT 0,
-  pending_balance numeric NOT NULL DEFAULT 0,
-  locked_balance numeric NOT NULL DEFAULT 0,
-  profit_share_balance numeric NOT NULL DEFAULT 0,
-  today_earned numeric NOT NULL DEFAULT 0,
-  monthly_earned numeric NOT NULL DEFAULT 0,
-  last_reset_date date NOT NULL DEFAULT current_date
+  user_id uuid PRIMARY KEY
 );
+ALTER TABLE public.wallet_balances
+  ADD COLUMN IF NOT EXISTS user_id              uuid,
+  ADD COLUMN IF NOT EXISTS total_balance        numeric NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS available_balance    numeric NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS pending_balance      numeric NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS locked_balance       numeric NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS profit_share_balance numeric NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS today_earned         numeric NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS monthly_earned       numeric NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS last_reset_date      date    NOT NULL DEFAULT current_date;
 ALTER TABLE public.wallet_balances ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "wb_self_read" ON public.wallet_balances;
 CREATE POLICY "wb_self_read" ON public.wallet_balances FOR SELECT USING (auth.uid() = user_id);
 
 -- ---------- platform_kill_switches ----------
 CREATE TABLE IF NOT EXISTS public.platform_kill_switches (
-  key text PRIMARY KEY,
-  enabled boolean NOT NULL DEFAULT false,
-  reason text,
-  updated_at timestamptz NOT NULL DEFAULT now()
+  key text PRIMARY KEY
 );
+ALTER TABLE public.platform_kill_switches
+  ADD COLUMN IF NOT EXISTS enabled    boolean NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS reason     text,
+  ADD COLUMN IF NOT EXISTS updated_at timestamptz NOT NULL DEFAULT now();
 ALTER TABLE public.platform_kill_switches ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "pks_read_all" ON public.platform_kill_switches;
 CREATE POLICY "pks_read_all" ON public.platform_kill_switches FOR SELECT USING (true);
@@ -88,11 +91,12 @@ ON CONFLICT (key) DO NOTHING;
 
 -- ---------- imperial_kill_switches ----------
 CREATE TABLE IF NOT EXISTS public.imperial_kill_switches (
-  key text PRIMARY KEY,
-  enabled boolean NOT NULL DEFAULT false,
-  reason text,
-  updated_at timestamptz NOT NULL DEFAULT now()
+  key text PRIMARY KEY
 );
+ALTER TABLE public.imperial_kill_switches
+  ADD COLUMN IF NOT EXISTS enabled    boolean NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS reason     text,
+  ADD COLUMN IF NOT EXISTS updated_at timestamptz NOT NULL DEFAULT now();
 ALTER TABLE public.imperial_kill_switches ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "iks_read_all" ON public.imperial_kill_switches;
 CREATE POLICY "iks_read_all" ON public.imperial_kill_switches FOR SELECT USING (true);
@@ -103,51 +107,60 @@ ON CONFLICT (key) DO NOTHING;
 
 -- ---------- account_freezes + my_active_freeze view ----------
 CREATE TABLE IF NOT EXISTS public.account_freezes (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL,
-  reason text,
-  until_at timestamptz NOT NULL,
-  created_at timestamptz NOT NULL DEFAULT now()
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid()
 );
+ALTER TABLE public.account_freezes
+  ADD COLUMN IF NOT EXISTS user_id    uuid,
+  ADD COLUMN IF NOT EXISTS reason     text,
+  ADD COLUMN IF NOT EXISTS until_at   timestamptz,
+  ADD COLUMN IF NOT EXISTS created_at timestamptz NOT NULL DEFAULT now();
 ALTER TABLE public.account_freezes ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "af_self_read" ON public.account_freezes;
 CREATE POLICY "af_self_read" ON public.account_freezes FOR SELECT USING (auth.uid() = user_id);
 
-CREATE OR REPLACE VIEW public.my_active_freeze AS
+DROP VIEW IF EXISTS public.my_active_freeze;
+CREATE VIEW public.my_active_freeze AS
   SELECT * FROM public.account_freezes
   WHERE user_id = auth.uid() AND until_at > now()
   ORDER BY until_at DESC LIMIT 1;
 
 -- ---------- achievements (heck_achievements 포함) ----------
 CREATE TABLE IF NOT EXISTS public.achievement_catalog (
-  code text PRIMARY KEY,
-  title text NOT NULL DEFAULT '',
-  description text,
-  created_at timestamptz NOT NULL DEFAULT now()
+  code text PRIMARY KEY
 );
+ALTER TABLE public.achievement_catalog
+  ADD COLUMN IF NOT EXISTS title       text NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS description text,
+  ADD COLUMN IF NOT EXISTS created_at  timestamptz NOT NULL DEFAULT now();
 ALTER TABLE public.achievement_catalog ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "ac_read_all" ON public.achievement_catalog;
 CREATE POLICY "ac_read_all" ON public.achievement_catalog FOR SELECT USING (true);
 
 CREATE TABLE IF NOT EXISTS public.user_achievements (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL,
-  code text NOT NULL,
-  unlocked_at timestamptz NOT NULL DEFAULT now(),
-  UNIQUE (user_id, code)
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid()
 );
+ALTER TABLE public.user_achievements
+  ADD COLUMN IF NOT EXISTS user_id     uuid,
+  ADD COLUMN IF NOT EXISTS code        text,
+  ADD COLUMN IF NOT EXISTS unlocked_at timestamptz NOT NULL DEFAULT now();
+DO $$ BEGIN
+  ALTER TABLE public.user_achievements ADD CONSTRAINT user_achievements_user_code_uniq UNIQUE (user_id, code);
+EXCEPTION WHEN duplicate_object THEN NULL; WHEN duplicate_table THEN NULL; END $$;
 ALTER TABLE public.user_achievements ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "ua_self" ON public.user_achievements;
 CREATE POLICY "ua_self" ON public.user_achievements FOR SELECT USING (auth.uid() = user_id);
 
 CREATE TABLE IF NOT EXISTS public.user_achievement_progress (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL,
-  code text NOT NULL,
-  value numeric NOT NULL DEFAULT 0,
-  updated_at timestamptz NOT NULL DEFAULT now(),
-  UNIQUE (user_id, code)
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid()
 );
+ALTER TABLE public.user_achievement_progress
+  ADD COLUMN IF NOT EXISTS user_id    uuid,
+  ADD COLUMN IF NOT EXISTS code       text,
+  ADD COLUMN IF NOT EXISTS value      numeric NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS updated_at timestamptz NOT NULL DEFAULT now();
+DO $$ BEGIN
+  ALTER TABLE public.user_achievement_progress ADD CONSTRAINT user_achievement_progress_user_code_uniq UNIQUE (user_id, code);
+EXCEPTION WHEN duplicate_object THEN NULL; WHEN duplicate_table THEN NULL; END $$;
 ALTER TABLE public.user_achievement_progress ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "uap_self" ON public.user_achievement_progress;
 CREATE POLICY "uap_self" ON public.user_achievement_progress FOR SELECT USING (auth.uid() = user_id);
@@ -160,89 +173,98 @@ $$;
 
 -- ---------- guild ----------
 CREATE TABLE IF NOT EXISTS public.guild_members (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL,
-  guild_id uuid NOT NULL,
-  joined_at timestamptz NOT NULL DEFAULT now(),
-  UNIQUE (user_id, guild_id)
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid()
 );
+ALTER TABLE public.guild_members
+  ADD COLUMN IF NOT EXISTS user_id   uuid,
+  ADD COLUMN IF NOT EXISTS guild_id  uuid,
+  ADD COLUMN IF NOT EXISTS joined_at timestamptz NOT NULL DEFAULT now();
+DO $$ BEGIN
+  ALTER TABLE public.guild_members ADD CONSTRAINT guild_members_user_guild_uniq UNIQUE (user_id, guild_id);
+EXCEPTION WHEN duplicate_object THEN NULL; WHEN duplicate_table THEN NULL; END $$;
 ALTER TABLE public.guild_members ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "gm_self" ON public.guild_members;
 CREATE POLICY "gm_self" ON public.guild_members FOR SELECT USING (auth.uid() = user_id);
 
 CREATE TABLE IF NOT EXISTS public.guild_rankings (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  guild_id uuid NOT NULL,
-  rank int NOT NULL DEFAULT 0,
-  score numeric NOT NULL DEFAULT 0,
-  week_start date NOT NULL DEFAULT current_date
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid()
 );
+ALTER TABLE public.guild_rankings
+  ADD COLUMN IF NOT EXISTS guild_id   uuid,
+  ADD COLUMN IF NOT EXISTS rank       int     NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS score      numeric NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS week_start date    NOT NULL DEFAULT current_date;
 ALTER TABLE public.guild_rankings ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "gr_read_all" ON public.guild_rankings;
 CREATE POLICY "gr_read_all" ON public.guild_rankings FOR SELECT USING (true);
 
 -- ---------- withdrawals / deposits / transactions ----------
 CREATE TABLE IF NOT EXISTS public.withdrawal_requests (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL,
-  amount numeric NOT NULL DEFAULT 0,
-  method text NOT NULL DEFAULT 'bank',
-  status text NOT NULL DEFAULT 'pending',
-  priority smallint NOT NULL DEFAULT 100,
-  tier_at_request text NOT NULL DEFAULT 'normal',
-  tx_code text NOT NULL DEFAULT '',
-  process_by timestamptz NOT NULL DEFAULT now() + interval '24 hours',
-  approved_at timestamptz,
-  completed_at timestamptz,
-  rejected_reason text,
-  created_at timestamptz NOT NULL DEFAULT now()
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid()
 );
+ALTER TABLE public.withdrawal_requests
+  ADD COLUMN IF NOT EXISTS user_id          uuid,
+  ADD COLUMN IF NOT EXISTS amount           numeric NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS method           text    NOT NULL DEFAULT 'bank',
+  ADD COLUMN IF NOT EXISTS status           text    NOT NULL DEFAULT 'pending',
+  ADD COLUMN IF NOT EXISTS priority         smallint NOT NULL DEFAULT 100,
+  ADD COLUMN IF NOT EXISTS tier_at_request  text    NOT NULL DEFAULT 'normal',
+  ADD COLUMN IF NOT EXISTS tx_code          text    NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS process_by       timestamptz NOT NULL DEFAULT now() + interval '24 hours',
+  ADD COLUMN IF NOT EXISTS approved_at      timestamptz,
+  ADD COLUMN IF NOT EXISTS completed_at     timestamptz,
+  ADD COLUMN IF NOT EXISTS rejected_reason  text,
+  ADD COLUMN IF NOT EXISTS created_at       timestamptz NOT NULL DEFAULT now();
 ALTER TABLE public.withdrawal_requests ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "wr_self" ON public.withdrawal_requests;
 CREATE POLICY "wr_self" ON public.withdrawal_requests FOR SELECT USING (auth.uid() = user_id);
 
 CREATE TABLE IF NOT EXISTS public.deposit_requests (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL,
-  amount numeric NOT NULL DEFAULT 0,
-  method text NOT NULL DEFAULT 'bank',
-  status text NOT NULL DEFAULT 'pending',
-  created_at timestamptz NOT NULL DEFAULT now()
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid()
 );
+ALTER TABLE public.deposit_requests
+  ADD COLUMN IF NOT EXISTS user_id    uuid,
+  ADD COLUMN IF NOT EXISTS amount     numeric NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS method     text    NOT NULL DEFAULT 'bank',
+  ADD COLUMN IF NOT EXISTS status     text    NOT NULL DEFAULT 'pending',
+  ADD COLUMN IF NOT EXISTS created_at timestamptz NOT NULL DEFAULT now();
 ALTER TABLE public.deposit_requests ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "dr_self" ON public.deposit_requests;
 CREATE POLICY "dr_self" ON public.deposit_requests FOR SELECT USING (auth.uid() = user_id);
 
 CREATE TABLE IF NOT EXISTS public.transactions (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL,
-  kind text NOT NULL DEFAULT 'other',
-  amount numeric NOT NULL DEFAULT 0,
-  meta jsonb NOT NULL DEFAULT '{}'::jsonb,
-  created_at timestamptz NOT NULL DEFAULT now()
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid()
 );
+ALTER TABLE public.transactions
+  ADD COLUMN IF NOT EXISTS user_id    uuid,
+  ADD COLUMN IF NOT EXISTS kind       text    NOT NULL DEFAULT 'other',
+  ADD COLUMN IF NOT EXISTS amount     numeric NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS meta       jsonb   NOT NULL DEFAULT '{}'::jsonb,
+  ADD COLUMN IF NOT EXISTS created_at timestamptz NOT NULL DEFAULT now();
 ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "tx_self" ON public.transactions;
 CREATE POLICY "tx_self" ON public.transactions FOR SELECT USING (auth.uid() = user_id);
 
 -- ---------- slots / jackpot ----------
 CREATE TABLE IF NOT EXISTS public.slot_spins (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL,
-  game text NOT NULL DEFAULT '',
-  bet numeric NOT NULL DEFAULT 0,
-  win numeric NOT NULL DEFAULT 0,
-  created_at timestamptz NOT NULL DEFAULT now()
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid()
 );
+ALTER TABLE public.slot_spins
+  ADD COLUMN IF NOT EXISTS user_id    uuid,
+  ADD COLUMN IF NOT EXISTS game       text    NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS bet        numeric NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS win        numeric NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS created_at timestamptz NOT NULL DEFAULT now();
 ALTER TABLE public.slot_spins ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "ss_self" ON public.slot_spins;
 CREATE POLICY "ss_self" ON public.slot_spins FOR SELECT USING (auth.uid() = user_id);
 
 CREATE TABLE IF NOT EXISTS public.jackpot_pools (
-  id text PRIMARY KEY,
-  amount numeric NOT NULL DEFAULT 0,
-  updated_at timestamptz NOT NULL DEFAULT now()
+  id text PRIMARY KEY
 );
+ALTER TABLE public.jackpot_pools
+  ADD COLUMN IF NOT EXISTS amount     numeric NOT NULL DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS updated_at timestamptz NOT NULL DEFAULT now();
 ALTER TABLE public.jackpot_pools ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "jp_read_all" ON public.jackpot_pools;
 CREATE POLICY "jp_read_all" ON public.jackpot_pools FOR SELECT USING (true);
@@ -258,12 +280,16 @@ $$;
 
 -- ---------- empire founding seats ----------
 CREATE TABLE IF NOT EXISTS public.empire_founding_seats (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid,
-  seat_no int NOT NULL UNIQUE,
-  claimed_at timestamptz,
-  created_at timestamptz NOT NULL DEFAULT now()
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid()
 );
+ALTER TABLE public.empire_founding_seats
+  ADD COLUMN IF NOT EXISTS user_id    uuid,
+  ADD COLUMN IF NOT EXISTS seat_no    int,
+  ADD COLUMN IF NOT EXISTS claimed_at timestamptz,
+  ADD COLUMN IF NOT EXISTS created_at timestamptz NOT NULL DEFAULT now();
+DO $$ BEGIN
+  ALTER TABLE public.empire_founding_seats ADD CONSTRAINT empire_founding_seats_seat_no_uniq UNIQUE (seat_no);
+EXCEPTION WHEN duplicate_object THEN NULL; WHEN duplicate_table THEN NULL; END $$;
 ALTER TABLE public.empire_founding_seats ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "efs_owner" ON public.empire_founding_seats;
 CREATE POLICY "efs_owner" ON public.empire_founding_seats FOR SELECT
@@ -299,7 +325,20 @@ $$;
 
 COMMIT;
 
+-- ---------- 자가 검증 (트랜잭션 밖) ----------
+-- 모든 user_id 컬럼이 실제로 존재하는지 확인. 빠진 게 있으면 행 출력됨.
+SELECT 'MISSING user_id COLUMN' AS issue, t AS tablename
+FROM unnest(ARRAY[
+  'user_roles','wallet_balances','account_freezes',
+  'user_achievements','user_achievement_progress','guild_members',
+  'withdrawal_requests','deposit_requests','transactions',
+  'slot_spins','empire_founding_seats'
+]::text[]) AS t
+WHERE NOT EXISTS (
+  SELECT 1 FROM information_schema.columns
+  WHERE table_schema='public' AND table_name = t AND column_name='user_id'
+);
+
 -- =====================================================================
--- DONE. 다음:
---   docs/independence/WINDOWS_RUNBOOK_KO.md 따라 FULL CLONE 진행
+-- DONE. 다음:  docs/independence/WINDOWS_RUNBOOK_KO.md 따라 FULL CLONE 진행
 -- =====================================================================
