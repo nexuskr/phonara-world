@@ -1,70 +1,67 @@
-# /complete-profile → dashboard 롤백 루프 복구 계획
+# `/complete-profile` nickname NOT NULL 에러 복구
 
-## 목표
+## 증상
 
-`/complete-profile` 저장 직후 잠깐 대시보드로 이동했다가 다시 `/complete-profile`로 되돌아오는 루프를 끊습니다.
+```
+null value in column "nickname" of relation "profiles" violates not-null constraint
+POST .../profiles?on_conflict=id  400 (Bad Request)
+```
 
-## 현재 진단
+업서트 페이로드에 `nickname` 컬럼이 없는데 독립 백엔드(`wyhhdyrvqtoejvusnhva`)의 `profiles.nickname`은 `NOT NULL` 제약을 갖고 있어 INSERT 경로(트리거가 row를 만들지 못한 경우)에서 실패.
 
-코드상 루프는 아래 조건에서 발생할 가능성이 큽니다.
+롤백 루프는 직전 수정으로 해결됨 — 이번 건은 별개의 저장 실패.
 
-1. `CompleteProfile.tsx` 는 저장 성공 시 무조건 `/dashboard` 로 이동
-2. 전역 `useAdultGate()` 는 모든 일반 페이지에서 `profiles.is_adult` 또는 `profiles.profile_completed` 가 false/NULL 이면 다시 `/complete-profile` 로 강제 이동
-3. 그런데 현재 `CompleteProfile.tsx` 저장 로직은 `profiles.update(...).eq("id", user.id)` 만 사용하므로:
-   - `profiles` 행이 아직 없으면 아무 것도 저장되지 않을 수 있음
-   - `is_adult` 는 직접 업데이트하지 않고 DB 트리거/서버 계산에 의존
-   - 저장 직후 재조회 검증 없이 바로 `/dashboard` 로 이동함
+## 수정 범위 (프론트 1파일 + 선택적 SQL)
 
-즉, **클라이언트는 저장 성공으로 간주했지만 전역 게이트는 아직 미완료 상태로 판단** 하면서 되돌림이 발생할 수 있습니다.
+### 1. `src/pages/CompleteProfile.tsx` — `nickname` 자동 채움
 
-## 구현 범위
+`submit()`의 upsert 페이로드에 `nickname` 폴백을 추가한다. 우선순위:
+1. 기존 `profiles.nickname` 값 (있으면 유지)
+2. `user.user_metadata.nickname` / `name` / `full_name`
+3. `real_name` (사용자가 방금 입력한 값)
+4. 이메일 local-part
+5. `user_<auth.uid 앞 8자>`
 
-이번 수정은 프론트엔드만 최소 범위로 손봅니다.
+```ts
+// upsert 직전
+const { data: existing } = await supabase
+  .from("profiles").select("nickname").eq("id", user.id).maybeSingle();
 
-### 1) `CompleteProfile.tsx` 저장 로직 안정화
+const meta = (user.user_metadata ?? {}) as Record<string, any>;
+const emailLocal = (user.email ?? "").split("@")[0] || "";
+const nickname =
+  existing?.nickname?.trim() ||
+  meta.nickname || meta.name || meta.full_name ||
+  form.realName?.trim() ||
+  emailLocal ||
+  `user_${user.id.slice(0, 8)}`;
+```
 
-- `update` 단독 호출 대신, 현재 사용자 기준으로 **행이 없을 때도 안전한 저장 방식**으로 보강
-- 저장 후 즉시 `profiles` 를 다시 읽어서 아래 필드를 검증
-  - `profile_completed`
-  - `is_adult`
-  - `birth_date`
-- 검증이 통과한 경우에만 `/dashboard` 로 이동
-- 검증 실패 시 사용자에게 토스트를 보여주고 현재 페이지에 머물게 처리
+그리고 upsert 객체에 `nickname` 추가. (기존 행이 있으면 같은 값으로 덮어써도 무해, 신규 INSERT 시에는 NOT NULL 제약 해소)
 
-### 2) `/complete-profile` 초기 진입 로직 보강
+### 2. (선택) phase5-recovery.sql v3 패치 스니펫
 
-- 기존 `profile_completed === true` 만 보지 않고
-  - `profile_completed`
-  - `is_adult`
-를 함께 확인해, 반쯤 저장된 상태에서 잘못 `/dashboard` 로 보내지 않도록 정리
+원인이 `handle_new_user` 트리거 실행 안 됨(tgenabled=0) → INSERT 경로가 client로 떨어진 것. 근본 복구는 트리거 활성화이지만, 안전망으로 컬럼 기본값을 부여하는 idempotent 스니펫도 같이 제공:
 
-### 3) 게이트 조건 일관성 정리
+```sql
+ALTER TABLE public.profiles
+  ALTER COLUMN nickname SET DEFAULT '';
 
-- `useAdultGate()` 와 `AdultGate` 의 판정 조건이 `CompleteProfile` 저장 완료 조건과 완전히 같도록 맞춤
-- 필요하면 `profile_completed && is_adult` 를 단일 완료 기준으로 통일
+-- 기존 NULL이 있다면 백필(있을 리는 없지만 안전)
+UPDATE public.profiles SET nickname = COALESCE(NULLIF(nickname, ''), 'user_' || substr(id::text, 1, 8))
+WHERE nickname IS NULL OR nickname = '';
+```
 
-## 왜 이 방향이 안전한가
+(NOT NULL 자체를 풀면 향후 서비스 정합성에 영향 가므로 DEFAULT만 부여.)
 
-- 백엔드/관리형 연결 정보는 건드리지 않음
-- 관리형 `ketlqzfaplppmupaiwft` 에 어떤 변경도 하지 않음
-- 현재 독립 백엔드 상태와 무관하게, **행 미생성 / 트리거 미동작 / 저장 직후 반영 지연** 에 모두 방어적으로 대응 가능
-- 수정 범위가 작고 롤백이 쉬움
+## 검증
 
-## 수정 대상 파일
+1. 새 계정 회원가입 → `/complete-profile` → 양식 작성 → "완료하고 시작하기"
+2. 토스트 "프로필 저장이 완전히 반영되지 않았습니다" 안 뜨고 `/dashboard` 이동
+3. `select id, nickname, real_name, profile_completed, is_adult from profiles where id = '<new>'` 로 모든 컬럼 채워졌는지 확인
 
-- `src/pages/CompleteProfile.tsx`
-- `src/hooks/use-adult-gate.ts`
-- 필요 시 `src/components/AdultGate.tsx`
+## 안전성
 
-## 완료 기준
-
-1. `/complete-profile` 제출 후 즉시 다시 되돌아오지 않음
-2. 저장 직후 `/dashboard` 유지
-3. `profiles` 행이 없거나 일부 필드가 비어 있는 경우에도 사용자에게 명확한 실패 메시지 노출
-4. 기존 성인 인증 게이트 동작은 유지
-
-## 사용자 확인 포인트
-
-- 저장 후 주소가 `/dashboard` 에 그대로 머무는지
-- 새로고침 후에도 다시 `/complete-profile` 로 가지 않는지
-- 콘솔의 `profiles` 400/404 또는 RPC 404 가 더 이상 루프를 유발하지 않는지
+- 관리형 백엔드(`ketlqzfaplppmupaiwft`) 무변경
+- 프론트 1파일, 영향 범위 `/complete-profile` 저장 경로에 한정
+- 머니플로 / RPC / 인증 게이트 코드 무변경
