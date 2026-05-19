@@ -3,7 +3,7 @@
  * 1/8s throttle, 최대 분당 3회.
  */
 import { useEffect, useRef } from "react";
-import { toast } from "sonner";
+import { notify } from "@/lib/notify";
 import type { LobbyEmperor } from "./types";
 
 const COPY = [

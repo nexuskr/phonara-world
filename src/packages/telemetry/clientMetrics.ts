@@ -58,7 +58,7 @@ function deviceMeta(): Record<string, string | number | boolean> {
 function currentRoute(): string {
   try {
     const p = window.location.pathname || "/";
-    return /^\/[a-z0-9/_\-]{0,80}$/i.test(p) ? p : "/";
+    return /^\/[a-z0-9/_-]{0,80}$/i.test(p) ? p : "/";
   } catch { return "/"; }
 }
 

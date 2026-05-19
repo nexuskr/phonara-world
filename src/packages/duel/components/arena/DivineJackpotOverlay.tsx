@@ -17,7 +17,7 @@ export function DivineJackpotOverlay({ open, winnerName, onDone }: Props) {
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
-    let stopTime = Date.now() + 3000;
+    const stopTime = Date.now() + 3000;
     (async () => {
       try {
         const mod = await import("canvas-confetti");

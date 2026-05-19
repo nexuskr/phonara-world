@@ -20,7 +20,7 @@ export function newDeck(): Card[] {
 export function shuffle<T>(arr: T[], seedHash?: string): T[] {
   // Optional seeded shuffle (Fisher-Yates with hash-derived RNG when seed given).
   const a = arr.slice();
-  let rng = mulberry32(seedHash ? hashStr(seedHash) : (Math.random() * 2 ** 32) >>> 0);
+  const rng = mulberry32(seedHash ? hashStr(seedHash) : (Math.random() * 2 ** 32) >>> 0);
   for (let i = a.length - 1; i > 0; i--) {
     const j = Math.floor(rng() * (i + 1));
     [a[i], a[j]] = [a[j], a[i]];

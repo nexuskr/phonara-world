@@ -77,17 +77,17 @@ async function getWorker(): Promise<Worker | null> {
 }
 
 function send<T>(payload: Record<string, unknown>, transfer: Transferable[] = []): Promise<T | null> {
-  return new Promise(async (resolve) => {
-    const w = await getWorker();
-    if (!w) return resolve(null);
-    const id = nextId++;
-    inflight.set(id, (msg) => resolve(msg as T));
-    try {
-      w.postMessage({ id, ...payload }, transfer);
-    } catch {
-      inflight.delete(id);
-      resolve(null);
-    }
+  return new Promise((resolve) => {
+    getWorker().then((w) => {
+      if (!w) return resolve(null);
+      const id = nextId++;
+      inflight.set(id, (msg) => resolve(msg as T));
+      try {
+        w.postMessage({ id, ...payload }, transfer);
+      } catch {
+        inflight.delete(id);
+        resolve(null);
+      }
     // 안전망: 1.5s 내 미응답 시 main fallback 으로 위임
     setTimeout(() => {
       if (inflight.has(id)) {
