@@ -1,107 +1,58 @@
-# P0-3 — 인증/세션 안정화 (지구상 최고사양)
+# PR-P0-4 — 출금/체결 안정화 (Client-Layer Hardening)
 
-## 목표
+머니플로 8경로(`request_withdrawal`, `apex_request_cashout`, `apex_place_bet_v2`, `imperial_place_phon_bet`, `_settle`, `_apply_house_edge_split`, `stake_phon`, `swap_*`) 본문은 **git diff = 0**. 클라이언트 처리 레이어(훅·UI·에러 매핑)만 강화한다.
 
-출시를 막는 인증 불안 요소를 철벽으로 제거.
+## 현황 진단
 
-- 무한 리다이렉트 0
-- `getUser()` /user 403 폭주 제거 (single-flight + cache)
-- `refreshSession` race condition 제거 (mutex)
-- 세션 만료 시 강제 로그아웃 대신 자동 재연결 → 실패 시만 재로그인 유도
-- 모든 인증 로직 단일 진입점화
+- `src/packages/wallet/hooks/useWithdraw.ts` 내부에 `mapWithdrawError`가 존재하지만 파일-로컬. 다른 출금 경로(`useApexCashout`)는 inline 매핑 사용 → 메시지·코드 누수.
+- `account_frozen`은 토스트 한 줄로만 안내. 동결 사유/해제 시점/CS 채널이 없음.
+- 멱등 키 hit("이미 처리 중") 안내가 `apex_place_bet_v2` 쪽에만 존재. 출금 경로는 무처리.
+- LPI 실패 코드(`lpi_claim_race`, `lpi_terminal_state_immutable`, `crid_param_mismatch` 등)는 `src/lib/trading/errors.ts`에만 있고 출금/체결 공유 미흡.
+- 출금 흐름 중 예기치 못한 throw(네트워크/JSON 파싱)는 표면화 안 됨 → 흰 화면 위험.
 
-## 발견된 문제 (auth 로그 기반)
+## 변경 계획
 
-1. `403: invalid claim: missing sub claim` (`bad_jwt`) — `useAuthReady` + `useAuthBridge` + `useRequireAuth` 가 각자 독립적으로 `hasVerifiedSession()` 호출 → `auth.getUser()` /user 가 페이지 1회 진입에 3~5회 발사
-2. `useAuthBridge` 에 refresh 실패 시 재시도/backoff 없음. token refresh race 시 동시 다중 호출 가능
-3. `Auth.tsx` 가 무조건 `/secure-auth` 로 Navigate → 이미 인증된 사용자도 거기로 가서 다시 dashboard 로 튐 (잠재 redirect loop)
-4. `useRequireAuth` 는 `db.user` (localStorage) 만 보고 ready 판단 — broken local session + 서버 unverified 케이스 race
-5. `AuthErrorBoundary` 부재 — auth-bridge 내부 예외가 React tree 까지 buble
+### 1. 공용 에러 매퍼 (신규)
+`src/lib/withdrawal/errors.ts`
+- `WithdrawErrorCode` union: `account_frozen | step_up_required | pin_mismatch | below_min | insufficient_funds | daily_limit | rate_limited | kill_switch | duplicate_in_flight | aal2_required | velocity | lpi_* | oracle_* | unknown`
+- `parseWithdrawError(raw): { code, title, description, actionable }` — `useWithdraw`의 기존 매퍼 + `useApexCashout` inline + `mapTradingError`의 LPI 룰을 단일 RULES 테이블로 통합.
+- 라우팅/입력 보정 힌트(`resetPin`, `gotoStep`, `cooldownMs`) 함께 반환.
 
-## 변경 사항
+### 2. `useWithdraw.ts` 리팩터 (시그니처 동일)
+- 내부 `mapWithdrawError` 제거 → `parseWithdrawError` 위임.
+- `duplicate_in_flight` / `idempotency_hit` 케이스 추가: toast `notify.info("이미 처리 중입니다", { description: "10초 내 결과가 표시돼요." })` + `submitting` 상태 10s 유지.
+- `account_frozen` 발생 시 toast 대신 `AccountFrozenDialog` 열기.
+- public API 변경 없음.
 
-### 1) `src/lib/auth/authSingleFlight.ts` (신규)
-- `verifySessionOnce()` 모듈 싱글톤. 동시 호출은 단일 in-flight Promise 공유.
-- 결과는 5s TTL 캐시 + `onAuthStateChange` 발생 시 무효화.
-- 내부적으로 `auth.getSession()` → `auth.getUser()` 1회만.
+### 3. `useApexCashout.ts` 통합
+- inline 매핑 삭제 → `parseWithdrawError` 사용 (`aal2_required`/`velocity` 포함). 동작 동일, 메시지 일관성 확보.
 
-### 2) `src/lib/auth/refreshMutex.ts` (신규)
-- `safeRefreshSession()` mutex. 동시 호출은 같은 Promise 반환.
-- 실패 시 exp backoff (500ms → 1s → 2s → 4s, cap 4회). 최종 실패면 `bad_jwt` 분기 → `clearBrokenLocalSession()`.
+### 4. UI 컴포넌트 (신규, 모두 lazy)
+- `src/components/withdrawal/AccountFrozenDialog.tsx` — 사유 라벨, 자동 보호 안내, "고객센터 문의" 버튼(`/support` 또는 `mailto`), "내 활동 보기" 보조 CTA. shadcn `AlertDialog` + Warm King 톤.
+- `src/components/withdrawal/IdempotencyHintBanner.tsx` — 멱등 hit 시 모달 상단에 7s 진행바 + "잠시만요". 자동 닫힘.
+- `src/components/withdrawal/WithdrawalErrorBoundary.tsx` — `<Wallet>` 트리 wrap. throw 시 "출금 화면을 다시 불러올게요" + Retry. `App.tsx` 미수정(범위 제한). `Wallet.tsx`에서 출금 다이얼로그 영역만 감쌈.
 
-### 3) `src/lib/auth-recovery.ts` (보강)
-- `hasVerifiedSession()` 내부를 `verifySessionOnce()` 로 위임 (외부 시그니처 동일, 후방호환).
+### 5. 트레이딩 측 일관화
+- `src/lib/trading/errors.ts`에 `duplicate_in_flight` → "이미 처리 중인 주문입니다" 메시지는 그대로 유지. `parseWithdrawError`가 같은 룰 테이블 import.
 
-### 4) `src/hooks/use-auth-bridge.ts` (보강)
-- 단일 `useRef` mounted 가드로 unmount race 차단.
-- `TOKEN_REFRESHED` 핸들러에서 mutex 통과한 결과만 사용.
-- `INITIAL_SESSION` 이벤트 우선 (Supabase v2 권장) — `getSession()` 별도 호출 제거 (중복 /user 차단).
-- bad_jwt 감지 시: 토스트 1회 + `clearBrokenLocalSession()` + SIGNED_OUT 이벤트 자연 발생 대기 (redirect 강제 X).
+### 6. 문서
+- `docs/operations/withdrawal-flow.md` 신규: 8개 에러 코드 → 사용자 메시지 → 권장 액션 매트릭스, 멱등/AAL2/Frozen 시나리오 다이어그램.
 
-### 5) `src/hooks/use-auth-ready.ts` (보강)
-- `verifySessionOnce()` 위임. /user 폭주 해결.
+## 머니플로 가드
 
-### 6) `src/hooks/use-require-auth.ts` (보강)
-- redirect loop guard: 이미 `/secure-auth` 경로면 nav 호출 skip.
-- `returnTo` 쿼리 파라미터로 원래 경로 보존.
-
-### 7) `src/pages/Auth.tsx` (보강)
-- 이미 verified session 있으면 `/dashboard` 로 리다이렉트 (loop 사전 차단).
-- 미인증 시만 `/secure-auth` 로 Navigate.
-
-### 8) `src/components/auth/AuthErrorBoundary.tsx` (신규)
-- App 루트에 마운트.
-- 자식 트리의 auth 관련 throw 를 잡아서 "자동 재연결 중..." UI → 3초 후 자동 복구 시도 → 실패 시 "다시 로그인" CTA.
-
-### 9) `src/App.tsx` (한 줄 추가)
-- 기존 ErrorBoundary 바깥에 `<AuthErrorBoundary>` 1회 마운트.
-
-### 10) `docs/operations/auth-flow.md` (신규)
-- 현재 인증 흐름 다이어그램(텍스트) + P0-3 변경점 + 디버깅 가이드.
-
-## 가드레일
-
-- money-flow 8경로 git diff = 0 (인증 레이어만 수정, RPC 트랜잭션 미터치)
-- UI/UX 변화 = AuthErrorBoundary 의 fallback 1개만 (정상 흐름 0 변화)
-- Layer 1 gz 영향 < 1KB (auth 헬퍼는 작음)
-- `@pkg/auth/*` 별도 생성 대신 기존 `src/hooks/auth/` + `src/lib/auth/` 구조 유지 (마이그레이션 비용 최소화)
-
-## 기술 상세
-
-### single-flight 캐시 키
-```ts
-type CachedVerify = { ts: number; user: User | null };
-const TTL_MS = 5_000;
-let inflight: Promise<CachedVerify> | null = null;
-```
-
-### refresh mutex
-```ts
-let refreshInflight: Promise<Session | null> | null = null;
-async function safeRefreshSession() {
-  if (refreshInflight) return refreshInflight;
-  refreshInflight = doRefreshWithBackoff().finally(() => { refreshInflight = null; });
-  return refreshInflight;
-}
-```
-
-### redirect loop guard
-```ts
-if (location.pathname === "/secure-auth" || location.pathname === "/auth") return;
-nav(`/secure-auth?returnTo=${encodeURIComponent(location.pathname)}`);
-```
+- 변경 파일 grep 검증: `request_withdrawal`, `apex_request_cashout`, `imperial_place_phon_bet`, `apex_place_bet_v2`, `_apply_house_edge_split`, `_settle`, `stake_phon`, `phon_swap_*` 본문 0줄 수정.
+- RPC 호출 시그니처 동일. 클라 측 wrapper만 변경.
 
 ## 예상 효과
 
-| 지표 | Before | After |
-|---|---|---|
-| 페이지 1회 진입 시 `/user` 호출 | 3~5회 | 1회 |
-| `bad_jwt` 발생 시 동작 | 503 후 무한 루프 | silent recover |
-| refresh race 시 동시 호출 | N개 | 1개 (mutex) |
-| 이미 로그인된 상태에서 /auth 진입 | dashboard로 튐 (loop 가능) | 즉시 dashboard navigate |
+- 출금/체결 에러 메시지 100% 한국어 친화, raw 코드 노출 0.
+- `account_frozen` UX: toast → dialog로 격상, CS 채널 명시.
+- 멱등 hit 시 사용자 재클릭 → 중복 토스트 폭주 차단.
+- LPI/oracle 실패 메시지 동일 룰테이블로 일관화.
 
-## 비범위 (P0-3 미포함)
+## 영향 범위
 
-- OAuth provider 추가 (현행 유지)
-- MFA/AAL2 변경 (별도 PR)
-- 백엔드 RL (P0-2 + 미래 인프라)
+- 신규: 5 파일 (`errors.ts`, dialog/banner/boundary, 문서).
+- 수정: `useWithdraw.ts`, `useApexCashout.ts`, `Wallet.tsx` (boundary 마운트 1줄).
+- 미수정: money-flow RPC, AAL2 게이트, `App.tsx`.
+- Layer 1 gz 영향: < 1.5KB (다이얼로그/배너 lazy).
