@@ -12,7 +12,7 @@ export function CoachV2Panel() {
       const { data, error } = await supabase.functions.invoke("apex-coach-v2", { body: {} });
       if (error) throw error;
       setResult(data);
-      if (data?.loss_protect_armed) notify.warning("Loss Protection 가동", "위험도 임계치 초과");
+      if (data?.loss_protect_armed) notify.warning("Loss Protection 가동", { description: "위험도 임계치 초과" });
     } catch (e: any) { notify.error("Coach 응답 실패", e?.message ?? String(e)); }
     finally { setBusy(false); }
   };
