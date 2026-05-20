@@ -699,6 +699,74 @@ export type Database = {
         }
         Relationships: []
       }
+      apex_chat_messages: {
+        Row: {
+          created_at: string
+          drand_round: number | null
+          drand_signature: string | null
+          id: string
+          message: string
+          room_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          drand_round?: number | null
+          drand_signature?: string | null
+          id?: string
+          message: string
+          room_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          drand_round?: number | null
+          drand_signature?: string | null
+          id?: string
+          message?: string
+          room_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apex_chat_messages_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "apex_chat_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      apex_chat_rooms: {
+        Row: {
+          created_at: string
+          drand_round: number | null
+          host_user_id: string | null
+          id: string
+          is_public: boolean
+          name: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          drand_round?: number | null
+          host_user_id?: string | null
+          id?: string
+          is_public?: boolean
+          name: string
+          type?: string
+        }
+        Update: {
+          created_at?: string
+          drand_round?: number | null
+          host_user_id?: string | null
+          id?: string
+          is_public?: boolean
+          name?: string
+          type?: string
+        }
+        Relationships: []
+      }
       apex_crash_bets: {
         Row: {
           auto_cashout_x: number | null
@@ -1091,6 +1159,110 @@ export type Database = {
           id?: string
           public_key_b64?: string
           rotated_at?: string | null
+        }
+        Relationships: []
+      }
+      apex_squad_mirrors: {
+        Row: {
+          amount_phon: number
+          created_at: string
+          id: string
+          idem_key: string
+          mirror_user_id: string
+          source_roll_id: string
+          squad_id: string
+        }
+        Insert: {
+          amount_phon: number
+          created_at?: string
+          id?: string
+          idem_key: string
+          mirror_user_id: string
+          source_roll_id: string
+          squad_id: string
+        }
+        Update: {
+          amount_phon?: number
+          created_at?: string
+          id?: string
+          idem_key?: string
+          mirror_user_id?: string
+          source_roll_id?: string
+          squad_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apex_squad_mirrors_squad_id_fkey"
+            columns: ["squad_id"]
+            isOneToOne: false
+            referencedRelation: "apex_squad_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      apex_squad_rooms: {
+        Row: {
+          created_at: string
+          current_bet_mirror: Json | null
+          host_user_id: string
+          id: string
+          member_ids: Json
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_bet_mirror?: Json | null
+          host_user_id: string
+          id?: string
+          member_ids?: Json
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_bet_mirror?: Json | null
+          host_user_id?: string
+          id?: string
+          member_ids?: Json
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      apex_tournaments: {
+        Row: {
+          bracket: Json
+          created_at: string
+          end_at: string
+          id: string
+          name: string
+          prize_pool_phon: number
+          season_id: string
+          start_at: string
+          status: string
+        }
+        Insert: {
+          bracket?: Json
+          created_at?: string
+          end_at: string
+          id?: string
+          name: string
+          prize_pool_phon?: number
+          season_id: string
+          start_at: string
+          status?: string
+        }
+        Update: {
+          bracket?: Json
+          created_at?: string
+          end_at?: string
+          id?: string
+          name?: string
+          prize_pool_phon?: number
+          season_id?: string
+          start_at?: string
+          status?: string
         }
         Relationships: []
       }
@@ -11296,6 +11468,7 @@ export type Database = {
         Args: { _id: string; _meta?: Json; _new_progress: number; _uid: string }
         Returns: undefined
       }
+      _apex_is_squad_member: { Args: { _squad: string }; Returns: boolean }
       _apply_house_edge_split: {
         Args: { _ref_id: string; _total_phon: number }
         Returns: Json
@@ -12353,6 +12526,7 @@ export type Database = {
         }
         Returns: string
       }
+      apex_create_squad: { Args: never; Returns: Json }
       apex_get_current_races: {
         Args: never
         Returns: {
@@ -12409,8 +12583,20 @@ export type Database = {
           wagered_phon: number
         }[]
       }
+      apex_join_squad: { Args: { _squad_id: string }; Returns: Json }
       apex_log_kakao_share: {
         Args: { _kind: string; _ref_id?: string }
+        Returns: Json
+      }
+      apex_mirror_bet: {
+        Args: {
+          _amount_phon: number
+          _game_code: string
+          _idem_key: string
+          _params: Json
+          _source_roll_id: string
+          _squad_id: string
+        }
         Returns: Json
       }
       apex_place_bet_v2: {
@@ -12447,6 +12633,10 @@ export type Database = {
       }
       apex_request_cashout: {
         Args: { _address: string; _amount_usdt: number; _network: string }
+        Returns: Json
+      }
+      apex_send_chat_message: {
+        Args: { _message: string; _room_id: string }
         Returns: Json
       }
       apex_settle_race: { Args: { _race_id: string }; Returns: Json }
