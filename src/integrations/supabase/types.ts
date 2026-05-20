@@ -1031,6 +1031,45 @@ export type Database = {
         }
         Relationships: []
       }
+      apex_randomness_requests: {
+        Row: {
+          client_seed: string | null
+          composed_seed: string | null
+          created_at: string
+          drand_randomness: string | null
+          drand_round: number | null
+          game: string
+          id: string
+          round_ref: string
+          server_pubkey: string | null
+          server_signature: string | null
+        }
+        Insert: {
+          client_seed?: string | null
+          composed_seed?: string | null
+          created_at?: string
+          drand_randomness?: string | null
+          drand_round?: number | null
+          game: string
+          id?: string
+          round_ref: string
+          server_pubkey?: string | null
+          server_signature?: string | null
+        }
+        Update: {
+          client_seed?: string | null
+          composed_seed?: string | null
+          created_at?: string
+          drand_randomness?: string | null
+          drand_round?: number | null
+          game?: string
+          id?: string
+          round_ref?: string
+          server_pubkey?: string | null
+          server_signature?: string | null
+        }
+        Relationships: []
+      }
       apex_signing_keys: {
         Row: {
           alg: string
@@ -12392,6 +12431,19 @@ export type Database = {
           _params?: Json
         }
         Returns: Json
+      }
+      apex_record_randomness: {
+        Args: {
+          _client_seed: string
+          _composed_seed: string
+          _drand_randomness: string
+          _drand_round: number
+          _game: string
+          _round_ref: string
+          _server_pubkey: string
+          _server_signature: string
+        }
+        Returns: string
       }
       apex_request_cashout: {
         Args: { _address: string; _amount_usdt: number; _network: string }
