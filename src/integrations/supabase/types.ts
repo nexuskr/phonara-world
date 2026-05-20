@@ -699,6 +699,112 @@ export type Database = {
         }
         Relationships: []
       }
+      apex_crash_bets: {
+        Row: {
+          auto_cashout_x: number | null
+          cashout_x: number | null
+          created_at: string
+          id: string
+          idempotency_key: string
+          payout_phon: number
+          round_id: string
+          settled_at: string | null
+          stake_phon: number
+          status: string
+          user_id: string
+        }
+        Insert: {
+          auto_cashout_x?: number | null
+          cashout_x?: number | null
+          created_at?: string
+          id?: string
+          idempotency_key: string
+          payout_phon?: number
+          round_id: string
+          settled_at?: string | null
+          stake_phon: number
+          status?: string
+          user_id: string
+        }
+        Update: {
+          auto_cashout_x?: number | null
+          cashout_x?: number | null
+          created_at?: string
+          id?: string
+          idempotency_key?: string
+          payout_phon?: number
+          round_id?: string
+          settled_at?: string | null
+          stake_phon?: number
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apex_crash_bets_round_id_fkey"
+            columns: ["round_id"]
+            isOneToOne: false
+            referencedRelation: "apex_crash_rounds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      apex_crash_rounds: {
+        Row: {
+          busted_at: string | null
+          crash_x: number | null
+          created_at: string
+          ed25519_pubkey_id: string | null
+          ed25519_signature: string | null
+          id: string
+          nonce: number
+          public_seed: string
+          round_no: number
+          server_seed: string | null
+          server_seed_hash: string
+          started_at: string | null
+          status: string
+        }
+        Insert: {
+          busted_at?: string | null
+          crash_x?: number | null
+          created_at?: string
+          ed25519_pubkey_id?: string | null
+          ed25519_signature?: string | null
+          id?: string
+          nonce?: number
+          public_seed: string
+          round_no?: number
+          server_seed?: string | null
+          server_seed_hash: string
+          started_at?: string | null
+          status?: string
+        }
+        Update: {
+          busted_at?: string | null
+          crash_x?: number | null
+          created_at?: string
+          ed25519_pubkey_id?: string | null
+          ed25519_signature?: string | null
+          id?: string
+          nonce?: number
+          public_seed?: string
+          round_no?: number
+          server_seed?: string | null
+          server_seed_hash?: string
+          started_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apex_crash_rounds_ed25519_pubkey_id_fkey"
+            columns: ["ed25519_pubkey_id"]
+            isOneToOne: false
+            referencedRelation: "apex_signing_keys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       apex_daily_cap: {
         Row: {
           count: number
@@ -789,6 +895,30 @@ export type Database = {
           kind?: string
           ref_id?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      apex_signing_keys: {
+        Row: {
+          alg: string
+          created_at: string
+          id: string
+          public_key_b64: string
+          rotated_at: string | null
+        }
+        Insert: {
+          alg?: string
+          created_at?: string
+          id?: string
+          public_key_b64: string
+          rotated_at?: string | null
+        }
+        Update: {
+          alg?: string
+          created_at?: string
+          id?: string
+          public_key_b64?: string
+          rotated_at?: string | null
         }
         Relationships: []
       }
@@ -11952,6 +12082,34 @@ export type Database = {
         Returns: Json
       }
       apex_claim_daily_vault: { Args: never; Returns: Json }
+      apex_crash_cashout: {
+        Args: { _current_x: number; _idem_key: string; _round_id: string }
+        Returns: number
+      }
+      apex_crash_get_round: {
+        Args: { _round_no: number }
+        Returns: {
+          busted_at: string
+          crash_x: number
+          ed25519_public_key_b64: string
+          ed25519_signature: string
+          nonce: number
+          public_seed: string
+          round_no: number
+          server_seed: string
+          server_seed_hash: string
+          status: string
+        }[]
+      }
+      apex_crash_place_bet: {
+        Args: {
+          _auto_cashout: number
+          _idem_key: string
+          _round_id: string
+          _stake: number
+        }
+        Returns: string
+      }
       apex_get_live_bigwins: {
         Args: { _limit?: number }
         Returns: {
