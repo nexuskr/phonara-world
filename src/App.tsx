@@ -120,6 +120,7 @@ const ForgotPassword = lazy(() => import("./pages/ForgotPassword.tsx"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword.tsx"));
 // Phase 4 P1 — Observer Mode onboarding (lazy: not on critical path)
 const ImperialWelcomeDialog = lazy(() => import("./components/onboarding/ImperialWelcomeDialog"));
+const ImperialDeepLinkListener = lazy(() => import("./components/nav/ImperialDeepLinkListener"));
 const DailyLoginRewardToast = lazy(() => import("./components/onboarding/DailyLoginRewardToast"));
 const CompleteProfile = lazy(() => import("./pages/CompleteProfile.tsx"));
 const AuthCallback = lazy(() => import("./pages/AuthCallback.tsx"));
@@ -281,7 +282,9 @@ const App = () => (
           {EntropyChip && (
             <Suspense fallback={null}><EntropyChip /></Suspense>
           )}
-          {/* v19 Phase 0-R: BigWinShareHost / AchievementUnlockListener / LobbyFab / ImperialDeepLinkListener 마운트 해제 */}
+          {/* v19 Phase 0-R: BigWinShareHost / AchievementUnlockListener / LobbyFab 마운트 해제 */}
+          {/* PR-P0-6: hardened deep-link listener re-mount */}
+          <Suspense fallback={null}><ImperialDeepLinkListener /></Suspense>
           {/* Phase 4 P1 Observer Mode — welcome + daily login (lazy, suspended) */}
           <Suspense fallback={null}>
             <ImperialWelcomeDialog />
