@@ -255,6 +255,7 @@ export default function ApexHealth() {
               <Stat k="apex_play_mock_game freeze" v="git diff = 0 ✅" />
               <Stat k="RLS" v="self-select only ✅" />
             </Card>
+            <Phase5KpiCard />
           </>
         )}
         {tab === "bundle" && (
