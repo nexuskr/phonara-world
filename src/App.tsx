@@ -168,6 +168,8 @@ const ApexSlots        = lazy(() => import("./pages/apex/games/Slots.tsx"));
 const ApexSportsbook   = lazy(() => import("./pages/apex/Sportsbook.tsx"));
 const ApexCommunity    = lazy(() => import("./pages/apex/Community.tsx"));
 const ApexHealth       = lazy(() => import("./pages/apex/Health.tsx"));
+const ApexVerify       = lazy(() => import("./pages/apex/Verify.tsx"));
+const ApexCrashV2      = lazy(() => import("./packages/apex/crash/LiveCrashV2.tsx"));
 // v19 Phase 0-R: 글로벌 오버레이 17종 마운트 전면 해제. PracticeModeGate 만 라우트 가드용으로 보존.
 import { PracticeModeGate } from "./components/practice/PracticeModeGate";
 
