@@ -21,7 +21,8 @@ const ORDER: DisplayCurrency[] = ["KRW", "USDT", "PHON"];
 export default function MultiCurrencyBalance({
   className,
   compact = false,
-}: { className?: string; compact?: boolean }) {
+  inline = false,
+}: { className?: string; compact?: boolean; inline?: boolean }) {
   const [db] = useDB();
   const { phon } = useMyPower();
   const [pref, setPref] = useCurrencyPref();
@@ -39,6 +40,50 @@ export default function MultiCurrencyBalance({
     { key: "USDT", icon: Coins, native: usdt, label: "USDT 잔고" },
     { key: "PHON", icon: Sparkles, native: phonBal, label: "PHON 토큰" },
   ];
+
+  if (inline) {
+    return (
+      <div className={cn("flex min-w-0 items-center gap-2", className)}>
+        <div className="min-w-0 rounded-full border border-border/70 bg-card/80 px-3 py-1.5 backdrop-blur">
+          <div className="flex items-center gap-2">
+            <div className="min-w-0">
+              <div className="text-[9px] font-black uppercase tracking-[0.24em] text-muted-foreground">총 자산</div>
+              <div className="truncate text-sm font-black tabular-nums text-money-strong">{totalDisplay}</div>
+            </div>
+            <div className="flex shrink-0 gap-1 rounded-full bg-muted/40 p-1">
+              {ORDER.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setPref(c)}
+                  className={cn(
+                    "min-h-8 rounded-full px-2.5 text-[10px] font-black transition",
+                    pref === c
+                      ? "bg-primary text-primary-foreground shadow"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                  aria-pressed={pref === c}
+                  aria-label={`표시 통화 ${LABEL[c]}`}
+                >
+                  {LABEL[c]}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="hidden min-w-0 lg:flex items-center gap-1.5 rounded-full border border-border/60 bg-card/65 px-2 py-1 backdrop-blur">
+          {rows.map(({ key, icon: Icon, native }) => (
+            <div key={key} className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-bold tabular-nums text-foreground">
+              <Icon className="size-3 text-primary" />
+              <span className="text-muted-foreground">{LABEL[key]}</span>
+              <span>{formatCurrency(native, key, { compact: true })}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={cn("rounded-xl border border-border bg-card/60 backdrop-blur p-4", className)}>
