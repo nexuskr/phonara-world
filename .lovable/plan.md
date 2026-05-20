@@ -1,54 +1,89 @@
-# P1-C Final — Stake/Rollbit 압살 마무리
+# P1-C Hyperion Final — Red/Yellow → Green 일괄 승격
 
-P0~P1-C에서 이미 처리된 항목(Layout hotfix, Hero 카피, CollectionHubTabs Crown 제거)을 기반으로, 남은 4개 영역만 마무리한다. 머니플로 8경로 / P0 엔진 / Crown 백엔드는 절대 손대지 않는다.
+Hyperion Dissection 보고서의 모든 🔴/🟡를 🟢로 전환하고, 모바일 하단 탭 중복(첨부 스크린샷)을 포함한 잔여 UI 결함을 마무리한다. 머니플로 8경로 / Crown 백엔드 RPC·테이블·트리거는 절대 무변경.
 
-## 1. Mobile Bottom Nav 5탭 최종화
+## 1. Blocker (🔴 → 🟢)
 
-`src/components/nav/MobileBottomNav.tsx`(기존 컴포넌트)을 5탭 고정으로 통일.
+### 1-1. `imperial_get_onboarding_state` 401 (P0)
+- migration: `GRANT EXECUTE ON FUNCTION public.imperial_get_onboarding_state() TO anon, authenticated;`
+- function 본문은 무변경 (이미 SECURITY DEFINER + 내부 `auth.uid()` 가드).
 
-- 홈 `/dashboard`
-- 무료돈벌기 `/earn`
-- 실시간대결 `/duel`
-- 실시간예측 `/trade`
-- 내PHON `/phon`
+### 1-2. `withdrawal_status` enum `paid` 누락
+- migration: `ALTER TYPE withdrawal_status ADD VALUE IF NOT EXISTS 'paid';`
+- 기존 워커가 `paid`로 마킹하려다 22P02로 실패하던 흐름 정상화. completed/paid 별칭 흐름은 워커 코드 무변경(머니플로 8경로 미포함 확인).
 
-`env(safe-area-inset-bottom)` + `visualViewport` resize 리스너로 키보드 올라올 때 nav 숨김. active tab은 `imperial` glow variant.
+### 1-3. `check_achievements` 400
+- 시그니처/파라미터 drift 점검 후 클라 호출부(`src/lib/achievements.ts` 등) 인자 정렬. RPC 본문 무변경.
 
-## 2. Home 라이브 베팅 피드 (Tier S 카드 5번째)
+### 1-4. `platform_kill_switches.reason` 의미 반전
+- migration: 기존 row의 `reason` 텍스트를 enabled 상태와 일치하도록 정리(`UPDATE ... SET reason = CASE WHEN enabled THEN '활성화' ELSE '비활성화' END WHERE key IN ('phon_betting','phon_staking','phon_swap')`).
+- 관리자 토글 UI에 enabled 상태 텍스트를 reason과 분리해서 명시 (혼동 방지).
 
-신규 컴포넌트 `src/components/dashboard/v3/LiveBetFeed.tsx`:
+### 1-5. `uptime_pings.ok NOT NULL` 위반
+- chaos-probe/public-status edge에서 INSERT 시 `ok` boolean 기본 false 보강. edge function only, DB 무변경.
 
-- 공개 RPC `get_live_activity_60s` + `get_whale_strikes_24h` 머지 → 마스킹 닉/금액/win-loss
-- 1.8s 간격으로 새 항목 unshift, 최대 12개 유지, framer-motion `AnimatePresence` slide-in
-- 승=green token(`text-success`), 패=red token(`text-destructive`)
-- 30s마다 RPC 재폴 + `useMarketChannel` realtime 보조
-- `<DashboardHeroV3>` 직하단 + Tier S 그리드 우측 컬럼에 마운트
+### 1-6. Supabase linter 0011 search_path
+- 영향 큰 user-callable SECURITY DEFINER 함수에 `SET search_path = public, pg_temp` 누락분 일괄 추가. baseline 테이블 갱신.
 
-Tier S 카드 5개 점검: 무료돈벌기 / 실시간대결 / 실시간예측 / 내PHON / Whale Strike Rail — 기존 카드 그대로 두고 hover pulse + "지금 N명 참여중" 칩만 추가.
+### 1-7. `/secure-auth` CLS 0.131 → < 0.05
+- 폼 컨테이너 `min-h`, 로고 `width/height` 명시, Pretendard `font-display: swap` + size-adjust, skeleton 고정 높이.
 
-## 3. Crown UI Strict 0 sweep
+## 2. Layout 통일 (이미 적용분 검증 + Mobile Nav 중복 제거)
 
-`scripts/check-no-crown-ui.mjs` 실행 → 잔존 1건 확인 후 lucide `Crown` → `Sparkles`/`Gem`, "왕관"/"👑" 문자열 → "PHON 보상"/"✨"로 치환. 토스트 카피 포함. 단, 백엔드 RPC `award_crown` 등 이름/로직은 무변경.
+- `StakeStyleSidebar.tsx` `useLayoutEffect` + top-level classList — 이미 적용. 회귀 테스트만.
+- `App.tsx` 정적 import — 이미 적용. 회귀 테스트만.
+- **첨부 스크린샷 이슈**: 모바일 하단에 구버전 4탭(홈/트레이딩/[FAB]/게임/내제국)이 살아있음. 신규 5탭(홈/무료돈벌기/실시간대결/실시간예측/내PHON)으로 단일화.
+  - 현재 마운트된 구버전 Nav 컴포넌트(예: `PhonaraNav` + 중앙 FAB) 식별 → 신규 `MobileBottomNav5`로 교체.
+  - `Layout`/`App.tsx`에서 중복 Nav 마운트 제거. 단 1개의 Nav만 렌더.
+  - safe-area: `env(safe-area-inset-bottom)`, `--kb-inset` CSS var를 `visualViewport.resize`로 갱신, 키보드 올라올 때 hide.
 
-## 4. P2 UX 마무리 (UI only)
+## 3. Bottom Navigation 5탭 최종
 
-- 친구추천: `/referral` 카드 1개로 통합, 중복 위젯 제거
-- 배지: `<EmpireLevelBadge/>` 단일 출처, 다른 곳의 ad-hoc 뱃지 hide
-- 슬롯 로비: `Casino.tsx` 그리드 spacing/aspect 정리 + 배당표 collapsible
-- 패키지/잔액/등급: `<PowerHeader/>` 한 줄 통일
-- Admin IA: `/admin` 좌측 그룹을 Ops / Money / Growth / System 4그룹으로 폴딩
+| 탭 | 라우트 | 아이콘 |
+| --- | --- | --- |
+| 홈 | `/dashboard` | Home |
+| 무료돈벌기 | `/earn` | Gift |
+| 실시간대결 | `/duel` | Swords |
+| 실시간예측 | `/trade` | TrendingUp |
+| 내PHON | `/phon` | Gem |
 
-## 5. 검증
+active = `imperial` glow variant, haptic on tap.
+
+## 4. Hero & Home 라이브 피드
+
+- Hero 카피 이미 적용. 회귀만.
+- 신규 `src/components/dashboard/v3/LiveBetFeed.tsx`:
+  - 소스: `get_live_activity_60s` + `get_whale_strikes_24h` 머지
+  - 1.8s 간격 `AnimatePresence` slide-in, 최대 12행, win=success/lose=destructive 토큰
+  - 30s RPC 재폴 + `useMarketChannel` realtime 보조
+  - `DashboardHeroV3` 직하단, Tier S 5장(무료돈벌기/실시간대결/실시간예측/내PHON/Whale Strike) 위에 배치
+  - 라벨: "지금 전 세계에서 벌어지고 있는 실시간 베팅"
+
+## 5. Crown UI Strict 0
+
+- `scripts/check-no-crown-ui.mjs` 실행 → 잔존 건 lucide `Crown` → `Sparkles`/`Gem`, "왕관"/"👑" → "PHON 보상"/"✨". 토스트 카피 포함.
+- 백엔드 `award_crown` 등 이름/로직은 무변경.
+
+## 6. 27 버그 회귀 표
+
+체크리스트 폼으로 27개 항목 일괄 확인 후 보고 본문에 OK/FAIL 매트릭스 첨부 (코드 무수정, 검증만).
+
+## 7. 성능
+
+- Pretendard `font-display: swap` + preconnect
+- 비-critical 라우트 `React.lazy` 점검
+- `touch-action: manipulation` 모바일 인터랙티브 요소
+- LCP < 1.8s / CLS < 0.05 목표, Lighthouse 모바일 5뷰포트 측정 준비
+
+## 8. 검증 게이트
 
 - `check-no-crown-ui.mjs` = 0
 - `check-money-flow-freeze.mjs` 8경로 PASS
 - `check-operator-isolation.mjs` PASS
-- PC 1440 / Mobile 375·390 sidebar 깜빡임 0 육안 확인
+- Supabase linter 0011 잔존 0 (user-callable 한정)
+- PC 1440 / Mobile 375·390 sidebar 점프 0, Bottom Nav 단일 5탭
 - Build error 0
 
 ## 기술 세부
 
-- 신규 파일: `src/components/dashboard/v3/LiveBetFeed.tsx`
-- 수정 파일(추정): `MobileBottomNav.tsx`, `DashboardV3.tsx`(피드 마운트), `Casino.tsx`, `/admin` 레이아웃, `Referral.tsx`, 잔여 Crown 사용처 1~3개
-- DB/migration/edge function 변경 없음
-- 머니플로 8경로(`award_crown`, Treasury, Founding Season, imperial_place_phon_bet, _settle, _apply_house_edge_split, withdrawal, deposit) git diff = 0 유지
+신규 migration 1개 (GRANT + enum + reason cleanup + search_path patch). 신규 컴포넌트: `LiveBetFeed.tsx`, `MobileBottomNav5.tsx`(없을 경우). 수정: `App.tsx`/`Layout` Nav 단일화, `Casino.tsx`/`Referral.tsx` 잔여 UI, 잔존 Crown 사용처. 머니플로 8경로(`award_crown`, `_apply_house_edge_split`, `imperial_place_phon_bet`, `_settle`, Treasury, Founding, withdrawal, deposit) 본문 git diff = 0 유지.
