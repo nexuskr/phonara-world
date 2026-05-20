@@ -74,10 +74,40 @@ function withHeartbeat(part: RealtimePartition, finalKey: string, opts: Partitio
   };
 }
 
+/**
+ * P0-5 · Auto silent failover.
+ * 5 consecutive `down` transitions trigger a region rotation (with 30s cooldown).
+ * Idempotent — counter resets on first `live`.
+ */
+const DOWN_THRESHOLD_FOR_FAILOVER = 5;
+function withFailover(part: RealtimePartition, opts: PartitionOpts): PartitionOpts {
+  const userOnStatus = opts.onStatus;
+  let downStreak = 0;
+  return {
+    ...opts,
+    onStatus: (state) => {
+      if (state === "live") {
+        downStreak = 0;
+      } else if (state === "down") {
+        downStreak++;
+        if (downStreak >= DOWN_THRESHOLD_FOR_FAILOVER) {
+          downStreak = 0;
+          try { failoverNext(); } catch { /* swallow */ }
+        }
+      }
+      try { userOnStatus?.(state); } catch { /* swallow */ }
+    },
+  };
+}
+
+function decorate(part: RealtimePartition, finalKey: string, opts: PartitionOpts): PartitionOpts {
+  return withFailover(part, withHeartbeat(part, finalKey, opts));
+}
+
 /** wallet 채널: phon_balances · withdrawal_requests · deposit_requests · nft_collection 등 */
 export function useWalletChannel(opts: PartitionOpts) {
   const key = buildKey("wallet", opts.key);
-  return useRealtimeChannel({ ...withHeartbeat("wallet", key, opts), key });
+  return useRealtimeChannel({ ...decorate("wallet", key, opts), key });
 }
 
 /** game 채널: live_positions · slot_spins · jackpot · empire 이벤트 등 */
