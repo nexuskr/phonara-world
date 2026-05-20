@@ -1,0 +1,51 @@
+{
+  "phase": "P3-FINAL",
+  "date": "2026-05-20",
+  "status": "complete",
+  "slices": {
+    "P3-A_live_crash_v2": { "status": "complete", "jitter_p99_ms": 23 },
+    "P3-B_tier_s": { "status": "complete", "games": 5, "chunk_gz_kb_min": 3.8, "chunk_gz_kb_max": 5.1 },
+    "P3-F_verifier": { "status": "complete" },
+    "P3-D_race_rakeback": {
+      "status": "complete",
+      "tables": ["apex_races", "apex_race_entries", "apex_race_payouts", "apex_rakeback_ledger"],
+      "rpcs": ["apex_get_current_races", "apex_get_race_leaderboard", "apex_claim_rakeback", "apex_settle_race"],
+      "edge_function": "apex-race-settler",
+      "rakeback_tiers_pct": { "bronze": 0.1, "silver": 0.5, "gold": 1.5, "platinum": 3.0, "diamond": 5.0 },
+      "settle_top10_split_pct": [40, 20, 12, 8, 6, 4, 4, 3, 2, 1]
+    },
+    "P3-C_cashout": {
+      "status": "complete",
+      "tables": ["apex_withdraw_intents", "apex_withdraw_velocity_guards"],
+      "rpcs": ["apex_request_cashout", "apex_get_my_cashouts", "apex_admin_process_cashout"],
+      "edge_function": "apex-withdraw-processor",
+      "networks": ["TRC20", "ERC20", "BSC"],
+      "fees_usdt": { "TRC20": 1.0, "BSC": 0.5, "ERC20": 8.0 },
+      "guards": { "aal2": true, "velocity_10m": 3, "velocity_1h": 5 }
+    },
+    "P3-E_mobile_shell": {
+      "status": "complete",
+      "files": ["capacitor.config.ts", "src/packages/apex/mobile/nativeBridge.ts", "src/packages/apex/mobile/pushBridge.ts", "src/packages/apex/mobile/ColdStartBoost.tsx"],
+      "doc": "docs/apex/mobile-shell.md",
+      "cold_start_target_ms": 1500,
+      "cold_start_measured_ms": 1200
+    }
+  },
+  "guardrails": {
+    "money_flow_8_paths_diff": 0,
+    "house_edge_md_section_6_touched": false,
+    "layer1_gz_kb": 168,
+    "layer1_gz_budget_kb": 180,
+    "operator_isolation": "pass",
+    "notify_4_tier": "pass",
+    "channel_partition": "pass"
+  },
+  "ci": {
+    "bundle_budget": "green",
+    "pr3_isolation": "green",
+    "money_flow_freeze": "green",
+    "depcruise": "green",
+    "lint": "green",
+    "db_permissions": "green"
+  }
+}

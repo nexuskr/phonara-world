@@ -898,6 +898,139 @@ export type Database = {
         }
         Relationships: []
       }
+      apex_race_entries: {
+        Row: {
+          prize_phon: number
+          race_id: string
+          rank: number | null
+          updated_at: string
+          user_id: string
+          wagered_phon: number
+        }
+        Insert: {
+          prize_phon?: number
+          race_id: string
+          rank?: number | null
+          updated_at?: string
+          user_id: string
+          wagered_phon?: number
+        }
+        Update: {
+          prize_phon?: number
+          race_id?: string
+          rank?: number | null
+          updated_at?: string
+          user_id?: string
+          wagered_phon?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apex_race_entries_race_id_fkey"
+            columns: ["race_id"]
+            isOneToOne: false
+            referencedRelation: "apex_races"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      apex_race_payouts: {
+        Row: {
+          amount_phon: number
+          id: string
+          paid_at: string
+          race_id: string
+          user_id: string
+        }
+        Insert: {
+          amount_phon: number
+          id?: string
+          paid_at?: string
+          race_id: string
+          user_id: string
+        }
+        Update: {
+          amount_phon?: number
+          id?: string
+          paid_at?: string
+          race_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apex_race_payouts_race_id_fkey"
+            columns: ["race_id"]
+            isOneToOne: false
+            referencedRelation: "apex_races"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      apex_races: {
+        Row: {
+          created_at: string
+          ends_at: string
+          id: string
+          kind: string
+          prize_pool_phon: number
+          settled_at: string | null
+          starts_at: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          ends_at: string
+          id?: string
+          kind: string
+          prize_pool_phon?: number
+          settled_at?: string | null
+          starts_at: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          ends_at?: string
+          id?: string
+          kind?: string
+          prize_pool_phon?: number
+          settled_at?: string | null
+          starts_at?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      apex_rakeback_ledger: {
+        Row: {
+          accrued_phon: number
+          created_at: string
+          id: string
+          paid_at: string | null
+          paid_phon: number
+          period: string
+          period_end: string
+          user_id: string
+        }
+        Insert: {
+          accrued_phon?: number
+          created_at?: string
+          id?: string
+          paid_at?: string | null
+          paid_phon?: number
+          period: string
+          period_end: string
+          user_id: string
+        }
+        Update: {
+          accrued_phon?: number
+          created_at?: string
+          id?: string
+          paid_at?: string | null
+          paid_phon?: number
+          period?: string
+          period_end?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       apex_signing_keys: {
         Row: {
           alg: string
@@ -961,6 +1094,72 @@ export type Database = {
           reward_phon?: number
           user_id?: string
           ymd?: string
+        }
+        Relationships: []
+      }
+      apex_withdraw_intents: {
+        Row: {
+          address: string
+          amount_usdt: number
+          created_at: string
+          error_message: string | null
+          fee_usdt: number
+          gas_subsidy_usdt: number
+          id: string
+          network: string
+          processed_at: string | null
+          status: string
+          tx_hash: string | null
+          user_id: string
+        }
+        Insert: {
+          address: string
+          amount_usdt: number
+          created_at?: string
+          error_message?: string | null
+          fee_usdt?: number
+          gas_subsidy_usdt?: number
+          id?: string
+          network: string
+          processed_at?: string | null
+          status?: string
+          tx_hash?: string | null
+          user_id: string
+        }
+        Update: {
+          address?: string
+          amount_usdt?: number
+          created_at?: string
+          error_message?: string | null
+          fee_usdt?: number
+          gas_subsidy_usdt?: number
+          id?: string
+          network?: string
+          processed_at?: string | null
+          status?: string
+          tx_hash?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      apex_withdraw_velocity_guards: {
+        Row: {
+          count: number
+          total_usdt: number
+          user_id: string
+          window_start: string
+        }
+        Insert: {
+          count?: number
+          total_usdt?: number
+          user_id: string
+          window_start: string
+        }
+        Update: {
+          count?: number
+          total_usdt?: number
+          user_id?: string
+          window_start?: string
         }
         Relationships: []
       }
@@ -12081,7 +12280,12 @@ export type Database = {
         Args: { _amount: number; _user_id: string }
         Returns: Json
       }
+      apex_admin_process_cashout: {
+        Args: { _intent_id: string; _tx_hash: string }
+        Returns: Json
+      }
       apex_claim_daily_vault: { Args: never; Returns: Json }
+      apex_claim_rakeback: { Args: never; Returns: Json }
       apex_crash_cashout: {
         Args: { _current_x: number; _idem_key: string; _round_id: string }
         Returns: number
@@ -12110,6 +12314,19 @@ export type Database = {
         }
         Returns: string
       }
+      apex_get_current_races: {
+        Args: never
+        Returns: {
+          ends_at: string
+          kind: string
+          my_rank: number
+          my_wagered: number
+          prize_pool_phon: number
+          race_id: string
+          starts_at: string
+          total_entries: number
+        }[]
+      }
       apex_get_live_bigwins: {
         Args: { _limit?: number }
         Returns: {
@@ -12120,7 +12337,39 @@ export type Database = {
           payout_phon_eq: number
         }[]
       }
+      apex_get_my_cashouts: {
+        Args: { _limit?: number }
+        Returns: {
+          address: string
+          amount_usdt: number
+          created_at: string
+          error_message: string | null
+          fee_usdt: number
+          gas_subsidy_usdt: number
+          id: string
+          network: string
+          processed_at: string | null
+          status: string
+          tx_hash: string | null
+          user_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "apex_withdraw_intents"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       apex_get_my_summary: { Args: never; Returns: Json }
+      apex_get_race_leaderboard: {
+        Args: { _limit?: number; _race_id: string }
+        Returns: {
+          masked_nick: string
+          prize_phon: number
+          rank: number
+          wagered_phon: number
+        }[]
+      }
       apex_log_kakao_share: {
         Args: { _kind: string; _ref_id?: string }
         Returns: Json
@@ -12144,6 +12393,11 @@ export type Database = {
         }
         Returns: Json
       }
+      apex_request_cashout: {
+        Args: { _address: string; _amount_usdt: number; _network: string }
+        Returns: Json
+      }
+      apex_settle_race: { Args: { _race_id: string }; Returns: Json }
       apex_verify_roll: {
         Args: { _client_seed: string; _roll_id: string }
         Returns: Json
