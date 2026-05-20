@@ -22,6 +22,15 @@ export default function ImperialDuelLobby() {
 
   return (
     <>
+      {/* Slice 2: 50~70대 즉시 인지 배너 */}
+      <div className="container pt-3">
+        <div className="rounded-2xl px-4 py-3 bg-gradient-to-r from-destructive/15 via-gold/15 to-primary/15 border border-gold/40 flex items-center gap-3 flex-wrap">
+          <span className="inline-block w-2 h-2 rounded-full bg-destructive animate-pulse" />
+          <span className="text-sm md:text-base font-black break-keep">
+            지금 <span className="text-gold tabular-nums">{totalSpec.toLocaleString()}명</span> 참여 중 · 약 1분 뒤 결과 · 이기면 <span className="text-money-strong">즉시 PHON 지급</span>
+          </span>
+        </div>
+      </div>
       <LobbyShell
         header={
           <ImperialHeaderHero
