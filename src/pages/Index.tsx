@@ -34,6 +34,7 @@ import LivePayoutSlaBadge from "@/components/landing/LivePayoutSlaBadge";
 import LivePulseStrip from "@/components/landing/LivePulseStrip";
 import ThreeSecondHero from "@/components/landing/ThreeSecondHero";
 import ApexEntryCardMobile from "@/components/landing/ApexEntryCardMobile";
+const LiveBetFeed = lazy(() => import("@/components/landing/LiveBetFeed"));
 import { markLandingStart } from "@/lib/funnel";
 
 // KST 자정 기준 경과 비율로 오늘 신규 가입자 추정 (베이스 1,180 + 시간대별 가중)
@@ -158,6 +159,11 @@ export default function Index() {
 
       {/* ApexForge 모바일 진입 카드 — 50~70대 한손 CTA. md+ 에서는 자동 숨김. */}
       <ApexEntryCardMobile />
+
+      {/* LIVE 베팅 피드 — 1.8s 갱신 */}
+      <Suspense fallback={null}><LiveBetFeed /></Suspense>
+
+
 
       {/* Hero */}
       <section className="relative z-10 container pt-10 pb-24 text-center">
