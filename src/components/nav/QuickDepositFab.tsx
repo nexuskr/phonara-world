@@ -40,7 +40,7 @@ function QuickDepositFabInner() {
         active:scale-95
       "
       style={{
-        bottom: "calc(72px + env(safe-area-inset-bottom) + 12px)",
+        bottom: "calc(72px + max(var(--safe-bottom), var(--kb-inset)) + 12px)",
         touchAction: "manipulation",
         WebkitTapHighlightColor: "transparent",
       }}
