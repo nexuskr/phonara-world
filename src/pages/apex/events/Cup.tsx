@@ -34,7 +34,7 @@ export default function ApexCup() {
 
   useEffect(() => { load(); const t = setInterval(load, 30_000); return () => clearInterval(t); }, []);
 
-  if (loading) return <div className="p-4"><LoadingList lines={6} /></div>;
+  if (loading) return <div className="p-4"><LoadingList rows={6} /></div>;
   if (!season) return <EmptyState title="진행중인 컵 없음" description="다음 시즌이 곧 시작됩니다." />;
 
   const entriesCount = season?.entries_count ?? leaderboard.length;
