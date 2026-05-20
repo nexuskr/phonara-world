@@ -1,23 +1,14 @@
-import { lazy, Suspense, useState, useCallback, useEffect } from "react";
+import { useEffect } from "react";
 import MobileBottomNav from "./MobileBottomNav";
-import QuickDepositFab from "./QuickDepositFab";
-
-// MoreSheet uses vaul + several icons → lazy to keep Layer 1 lean.
-const MoreSheet = lazy(() => import("./MoreSheet"));
 
 /**
- * MobileShell — 단일 진입점.
- * - MobileBottomNav (5탭, 항상 마운트, md+ 자동 숨김)
- * - MoreSheet (오픈 시 lazy)
- * - QuickDepositFab (로그인 + 허용 경로에서만 표시)
+ * MobileShell — 모바일 단일 진입점.
+ * P1-C v8: FAB(QuickDepositFab) + MoreSheet 제거.
+ * 오직 MobileBottomNav5 (홈/무료돈벌기/실시간대결/실시간예측/내PHON) 만 렌더.
  */
 export default function MobileShell() {
-  const [moreOpen, setMoreOpen] = useState(false);
-  const openMore = useCallback(() => setMoreOpen(true), []);
-
   useEffect(() => {
     if (typeof window === "undefined") return;
-
     const root = document.documentElement;
     const setMetrics = () => {
       const vv = window.visualViewport;
@@ -27,13 +18,11 @@ export default function MobileShell() {
       root.style.setProperty("--app-vh", `${height}px`);
       root.style.setProperty("--kb-inset", `${keyboardInset}px`);
     };
-
     setMetrics();
     window.addEventListener("resize", setMetrics);
     window.addEventListener("orientationchange", setMetrics);
     window.visualViewport?.addEventListener("resize", setMetrics);
     window.visualViewport?.addEventListener("scroll", setMetrics);
-
     return () => {
       window.removeEventListener("resize", setMetrics);
       window.removeEventListener("orientationchange", setMetrics);
@@ -42,15 +31,5 @@ export default function MobileShell() {
     };
   }, []);
 
-  return (
-    <>
-      <MobileBottomNav onMoreOpen={openMore} />
-      <QuickDepositFab />
-      {moreOpen && (
-        <Suspense fallback={null}>
-          <MoreSheet open={moreOpen} onOpenChange={setMoreOpen} />
-        </Suspense>
-      )}
-    </>
-  );
+  return <MobileBottomNav />;
 }
