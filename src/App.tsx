@@ -291,7 +291,8 @@ const App = () => (
 
               {/* ApexForge — Phase 2: 9-tab hybrid overlay */}
               <Route path="/apex" element={<ApexShell />}>
-                <Route index               element={<ApexHome />} />
+                <Route index               element={<LandingApocalypse />} />
+                <Route path="home"         element={<ApexHome />} />
                 <Route path="games"        element={<ApexGames />} />
                 <Route path="games/dice"   element={<ApexDice />} />
                 <Route path="games/crash"  element={<ApexCrash />} />
