@@ -1,56 +1,100 @@
-# Phase 4 Final Close-Out — 5-Slice Mega Push
+# Phase 5 — Ultimate Endgame
 
-## Goal
-Phase 4 완전 종료. P4-B PWA Final + P4-C Health Polish + P4-E Global i18n/Currency/Chat + VRF Production Secret + Attestation Fire-and-Forget를 한 턴에 압살.
+5개 슬라이스(P5-A ~ P5-E)로 ApexForge를 진짜 지구상 유일무이한 베팅 플랫폼으로 마감. 본 플랜은 **P5-A Tier S+ Expansion**을 이번 턴 1단계 압살 범위로 잡고, B/C/D/E는 후속 턴 골격을 명시한다.
 
-## Slices
+## P5-A — Tier S+ Expansion (이번 턴 압살 대상)
 
-### S1. VRF Production Secret (Edge)
-- Supabase Edge Secret 등록 요청: `APEX_VRF_ED25519_SK` (PKCS8 base64), `APEX_VRF_ED25519_PK` (raw base64).
-- `supabase/functions/apex-vrf-oracle/index.ts` 보강: SK/PK 둘 다 있을 때만 prod 모드, 부재 시 ephemeral fallback + `imperial_log_observability(sev='warn', event='vrf_ephemeral_fallback')`. 응답 헤더 `x-vrf-mode: prod|ephemeral`.
-- 재배포.
+신규 게임 5종 추가. 각 게임은 lazy chunk + HybridRenderer(WebGPU/WASM/CPU) + VRF v2.5(Drand+Ed25519) attestation 자동 호출.
 
-### S2. P4-B PWA Final
-- `public/sw.js` 확장: navigation NetworkFirst(3s) + offline.html(이미 있음) + assets cache-first + push 강화 (BigWin/Race/Cashout tag 분기, deep-link).
-- `@pkg/apex/pwa/InstallPrompt.tsx` (lazy, gz ≤ 6KB): `beforeinstallprompt` 캡처, localStorage `apex:install_prompt_v1` 1회 디듀프, A/B variant(`useAbVariant`) bottom-sheet vs top-banner. Landing 마운트(`<Suspense fallback={null}>`).
-- `public/manifest.webmanifest`: shortcuts 3종 (Race / Cashout / Verify) 추가 — 기존 키 보존.
-- 가드: registerSW.ts 미리보기 차단 로직 유지, money-flow 미터치.
+### 신규 게임
+1. **Crash Multi-Cashout** — 단일 라운드에서 partial cashout 3-step (33% / 66% / 100% 슬라이더). `apex_play_mock_game(game_code='crash_v2_mc')`에 client_partial 메타만 추가. 머니플로 본문 무변경.
+2. **Hashdice** — 서버 시드 + client seed + nonce → SHA-256 → 0~9999 매핑. Over/Under 베팅.
+3. **Tower** — 8층 × 4칸 중 1개가 안전. 라운드 시작 시 8 row 전부 미리 VRF로 결정 (verifier에 노출).
+4. **Dragon Tiger** — 2-card 단순 비교. 베팅 3종(Dragon/Tiger/Tie) + 사이드 betting(Big/Small).
+5. **Provably-Fair Roulette V2** — 0/00 더블제로 + 동시 칩 ≥ 10. 결과 wheel 회전 애니메이션은 WASM-SIMD 가속.
 
-### S3. P4-C Health Dock Polish
-- `src/pages/apex/Health.tsx` 카드 추가 (UI only):
-  - **Run-book** 카드 (정적 링크 4개: phase4 launch bible / GO-NOGO / mobile-shell / phase3 complete).
-  - **Oracle Status** 카드: `useVrfTrace`로 최근 1건 fetch + Drand round / latency(ms) / mode badge. 30s 폴.
-  - **Region Health + Apocalypse** 통합 패널: `admin_get_realtime_region_health` + kill-switch 상태 6종 한 카드.
-- 신규 코드는 `@pkg/apex/health/*` 에 lazy chunk (≤ 8KB gz).
+### 디렉터리
+```text
+src/packages/apex/games/
+  crash-multi/        # CrashMultiCashout.tsx + slider.tsx
+  hashdice/           # Hashdice.tsx
+  tower/              # Tower.tsx
+  dragon-tiger/       # DragonTiger.tsx
+  roulette-v2/        # RouletteV2.tsx
+src/pages/apex/games/
+  CrashMC.tsx Hashdice.tsx Tower.tsx DragonTiger.tsx RouletteV2.tsx
+supabase/functions/
+  apex-game-catalog/  # 신규 게임 메타 + RTP/house-edge 노출 (read-only)
+docs/apex/
+  house-edge.md       # §6에 5종 추가 (수식 0 터치, 표만 확장)
+```
 
-### S4. P4-E Global (i18n/Currency/Live Chat)
-- i18n: 기존 `src/lib/i18n.ts`에 `pt`/`es`/`zh` 추가 — `src/locales/{pt,es,zh}.ts` 부분 번역 파일(공통/네비/landing/wallet 최소) + fallback chain `pt→en→ko` 등. NAMESPACES 변경 없음.
-- 통화: `src/lib/displayCurrency.ts` 확장 — BTC/USD 환산 상수 추가 (BTC=1e9 PHON sentinel, USD=1300 PHON). `useCurrencyPref` value set 확장 (`'BTC'|'USD'` 추가).
-- 라이브 채팅: `@pkg/apex/support/LiveChatFab.tsx` floating + minimized 토글. 외부 위젯 미사용(개인정보), in-app `support_tickets` 빠른 폼만 + ko/en 토글. App 루트 lazy 마운트.
+### 라우팅
+```text
+/apex/games/crash-mc
+/apex/games/hashdice
+/apex/games/tower
+/apex/games/dragon-tiger
+/apex/games/roulette-v2
+```
+ApexShell 라우트 + Games 카탈로그 페이지에 카드 5개 추가(이미지 0, CSS gradient).
 
-### S5. Attestation Fire-and-Forget
-- 신규: `@pkg/apex/oracle/attestRound.ts` — `attestRound(game, roundRef, clientSeed?)` → `supabase.functions.invoke('apex-vrf-oracle', { body: {...} })` + `imperial_log_observability` 호출. 실패 swallow + warn notify.
-- 신규: `@pkg/apex/oracle/useAttestOnSettle.ts` — 외부 hook. 게임 컴포넌트가 `useAttestOnSettle({game, roundRef})`만 호출. 머니플로 파일은 0 터치.
-- Crash V2 / TierS 셸 컴포넌트의 **최상위(wrapper)** 에서만 hook 호출 — 정산 코드 라인 불변. (실제로는 새 wrapper 추가 없이, 이미 가벼운 디스플레이 컴포넌트(VrfTraceCard 위치)에 동시 호출 가능하지만 본 슬라이스에서는 단순 export만 제공하고 실제 마운트는 후속 PR로 yield)
+### 머니플로 / 가드레일
+- 신규 게임은 모두 기존 `apex_play_mock_game` RPC 재사용. **새 RPC 0개**.
+- house-edge §6 수식 무변경. 신규 게임 RTP는 메타데이터 카탈로그에만 기재.
+- 각 게임 페이지 wrapper에서 `useAttestOnSettle({ game, roundRef })` 호출 → VRF 자동 트레이스.
+- Chunk 예산: 각 게임 ≤ 80KB gz (vite manualChunks `apex-game-*`).
+- Layer 1 영향 0 (전부 lazy import).
+- realtime 신규 채널 0. `useGameChannel`만 사용.
 
-## Guardrails
-- `scripts/check-money-flow-freeze.mjs` 8/8 PASS 재실행.
-- 신규 코드 전부 `@pkg/apex/*` 하위 + lazy. Layer 1 gz ≤ 180KB 유지.
-- 4-tier notify (`@/lib/notify`)만 사용, raw sonner 금지.
-- realtime은 `@pkg/realtime/use*Channel` 만, 본 슬라이스는 realtime 신규 채널 없음.
-- operator 격리(`pages/admin/**` 미터치).
-- House Edge §6, money-flow 8경로 git diff = 0.
+### Verifier 확장
+- `/apex/verify/:roundId`에 게임별 결과 재현 로직 추가 (5종). Drand round + composed_seed → 결정값.
+- `src/packages/apex/lib/fair/` 에 게임별 deterministic decoder export 5개.
 
-## Secret Request
-별도 메시지로 `APEX_VRF_ED25519_SK`, `APEX_VRF_ED25519_PK` 두 개를 `secrets--add_secret` 호출 (PKCS8 base64 / raw base64).
+### 실측 지표 목표
+- 각 게임 첫 진입 LCP ≤ 1.4s (4G mid-tier)
+- 각 게임 chunk gz ≤ 80KB
+- 60s 벤치 60fps avg / p1 ≥ 50fps
+- Money-flow freeze 8/8 PASS
 
-## Out of Scope (Phase 5 seed)
-- Tier S+: Crash multi-cashout / Hashdice / Tower.
-- 커뮤니티: 채팅방 + 토너먼트 룸.
-- 대규모 이벤트: Apocalypse Cup 시즌, Drand beacon round verifier UI 확장.
+## P5-B — Community Layer (다음 턴)
+- `apex_chat_rooms` + `apex_chat_messages` (`drand_round` stamp 필수, admin RLS)
+- `apex_squad_rooms` (3인 팀) + `apex_squad_mirrors` (친구 베팅 미러)
+- `@pkg/apex/community/` (ChatRoom / SquadRoom / MirrorToggle)
+- Tournament 룸 = Race v2 (`apex_tournaments` 테이블)
+- Realtime: `useChatChannel('apex:room:<id>')`
 
-## Report
-완료 후 한 번에:
-- 변경 파일 목록.
-- 실측: Layer 1 gz / chunk(slot/installprompt/livechat) / VRF latency(ms) / i18n 전환 time / freeze 8/8.
-- Phase 5 seed.
+## P5-C — Apocalypse Cup (다음 턴)
+- `apex_cup_seasons` + `apex_cup_brackets` (round_id, drand_round)
+- Edge: `apex-cup-settler` (cron `0 0 1 * *` 월 1일 KST)
+- `@pkg/apex/events/CupBracket.tsx` + `CupLeaderboard.tsx` + `CupPrizePool.tsx`
+- $1M PHON 풀은 treasury split 1% 누적 (수식 무변경, 1% 슬리브 신설)
+
+## P5-D — VRF v3 Threshold (다음 턴)
+- tBLS 5-of-9 노드: Cloudflare Workers ×3, AWS Lambda ×3, GCP Cloud Run ×3
+- `apex-vrf-oracle-v3` Edge — 5개 partial signature aggregator
+- `APEX_VRF_TBLS_*` secrets 9세트
+- Fallback chain: tBLS → Ed25519(v2.5) → Ephemeral
+- Health Dock OracleStatusCard에 노드 5/9 quorum 칩
+
+## P5-E — Cross-Chain Liquidity + AI Coach v2 (다음 턴)
+- SOL / SUI / APT 입출금 라우트 + CCTP v2 native USDC bridging
+- `apex-cashout-processor` 체인 매핑 확장
+- AI Coach v2: `apex-ai-coach` Edge (Gemini 2.5 Flash) + Tier S 5종 실시간 추천
+- 손실 보호 자동 트리거 ≥ 손실 1k PHON / 1h
+- ElevenLabs 황제 보이스(ko/en) 사전 녹음 12개 → R2 호스팅
+
+## 보고 흐름
+P5-A 슬라이스 완료 후 정해진 양식:
+```text
+✅ P5-A Tier S+ Expansion 지구상 1개뿐인 최고사양 완료
+- 변경 파일 목록
+- git diff 요약 (머니플로 diff=0)
+- 실측 지표 (chunk gz / LCP / FPS / 8/8 freeze)
+- 다음 슬라이스 계획 (P5-B Community Layer)
+```
+
+마지막 P5-E 완료 시:
+```text
+✅ Phase 5 완전 압살 종료. ApexForge — 이제 진짜 지구상 유일무이한 베팅 플랫폼의 왕좌를 차지했다.
+```
