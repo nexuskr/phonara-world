@@ -99,3 +99,47 @@ export function regionalKey(part: string, key: string): string {
   const stripped = key.startsWith(`${part}:`) ? key.slice(part.length + 1) : key;
   return `${r}:${part}:${stripped}`;
 }
+
+/* ============================================================
+ * P0-5 · Silent region failover
+ *
+ * 채널이 일정 횟수 이상 errored/down 으로 떨어지면 라운드로빈으로
+ * 다음 region 으로 회전한다. setRegion()을 통해 신규 채널부터
+ * 새 prefix 가 적용되며, 기존 채널은 자연 정리 후 재구독 시 새 region 사용.
+ * ============================================================ */
+const FAILOVER_ORDER: RealtimeRegion[] = ["ap", "us", "eu"];
+let _failoverAttempts = 0;
+let _lastFailoverAt = 0;
+const MIN_FAILOVER_INTERVAL_MS = 30_000; // 같은 region 으로 폭주 회전 방지
+
+export function failoverNext(): RealtimeRegion {
+  const now = Date.now();
+  // 너무 잦은 회전 방지 — 30s cooldown
+  if (now - _lastFailoverAt < MIN_FAILOVER_INTERVAL_MS) {
+    return getRegion();
+  }
+  const cur = getRegion();
+  const idx = FAILOVER_ORDER.indexOf(cur);
+  const next = FAILOVER_ORDER[(idx + 1) % FAILOVER_ORDER.length];
+  if (next === cur) return cur;
+  _failoverAttempts += 1;
+  _lastFailoverAt = now;
+  setRegion(next);
+  if (import.meta.env.DEV) {
+    // eslint-disable-next-line no-console
+    console.info(`[PHONARA REALTIME] region failover ${cur} → ${next} (attempt #${_failoverAttempts})`);
+  }
+  return next;
+}
+
+export function getFailoverState(): {
+  region: RealtimeRegion;
+  attempts: number;
+  lastFailoverAt: number;
+} {
+  return {
+    region: getRegion(),
+    attempts: _failoverAttempts,
+    lastFailoverAt: _lastFailoverAt,
+  };
+}
