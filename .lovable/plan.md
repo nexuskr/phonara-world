@@ -1,175 +1,144 @@
-# ApexForge — Ultimate Build Plan (지구 1위 끝판왕)
+# ApexForge — Phase 2~4 끝판왕 슬라이스 (WebGPU/WASM · Idempotency v2 · Viral · Edge)
 
-> 목표: Stake / Rollbit / Bybit / Binance를 모든 축(성능·디자인·바이럴·머니플로)에서 압도하는 단일 플랫폼 완성.
-> 스택 고정: Vite + React 18 + TS + Tailwind + shadcn/ui + Supabase. (Next/Nx/Rust-microservice는 미래 마이그레이션 주석으로만 남김)
-
-현 상태(이미 존재): `/apex` 9-tab Shell · 5 게임(Dice/Crash/Plinko/Mines/SlotsLite) · Sportsbook · `apex_play_mock_game` RPC · ParticleBurst/ApexBackdrop · `docs/apex/house-edge.md` · Layer 1 gz 37KB.
-
-이 플랜은 **현 자산 위에 끝판왕 엔진(WebGPU + WASM SIMD)·바이럴·FOMO·운영 대시보드를 얹어** 1.0s LCP / 60fps / <8ms TBT 목표에 도달시킨다.
+> 전제: Phase 1 라이브 (Health Dock · BigWin Ticker · 5 RPC · 4 신규 테이블).
+> 머니플로 8경로 git diff = 0, House Edge 수식 0 터치. 신규 코드는 `@pkg/apex/*` 와 `supabase/functions/apex-*`에만.
 
 ---
 
-## Phase 0 — 안전 가드 & 머니플로 동결 (전제)
+## 슬라이스 A — WebGPU + WASM SIMD 하이브리드 엔진 (Phase 2)
 
-- 머니플로 8경로(`apex_play_mock_game`, `phon_balances`, `apex_usdt_mock_balances`, `apex_game_rolls`, `credit_crypto_deposit`, `request_withdrawal`, `_apply_house_edge_split`, `imperial_place_phon_bet`) **git diff = 0** 유지.
-- 모든 신규 코드는 `@pkg/apex/*` 하위에서만. ESLint/depcruise/operator-isolation/bundle-budget CI 4종 그린 유지.
+### A-1. 디렉터리
 
----
+```text
+src/packages/apex/engine/
+  types.ts            // ParticleField, CurveFrame, EngineCaps 공통 타입
+  EngineCaps.ts       // navigator.gpu 감지 + adapter info + SIMD 감지 (1회 캐시)
+  WebGPUEngine.ts     // Particles / Crash curve compute pipeline (WGSL inline)
+  WASMEngine.ts       // SIMD fallback (dice/plinko/particles tick) — JS impl + 후속 .wasm 슬롯
+  HybridRenderer.ts   // 자동 라우터: gpu > wasm-simd > cpu, 동일 API surface
+  hooks.ts            // useHybridEngine() React hook (Suspense-safe, lazy init)
+  index.ts
+```
 
-## Phase 1 — DB · RPC · Edge Functions (서버 진실)
+- 라우팅: `HybridRenderer.create({ kind: 'particles'|'crash'|'dice'|'plinko' })`
+  → 내부에서 `EngineCaps`로 best path 선택 → 동일 `tick(dt)` / `read()` API 반환.
+- 안전 가드: WGSL struct 정렬(vec3→16-byte pad), `device.lost` 핸들러, storage buffer ≤ 8, `requiredLimits` 없이 default만.
+- 모바일 저사양: `EngineCaps.tier = low|mid|high` 자동 분류 (cores·DPR·memory)로 입자 수·workgroup 자동 축소.
+- WASM은 1차로 **순수 TS placeholder** (loop unroll + Float32Array)로 60fps 보장, 후속 PR에 `public/wasm/apex-engine.wasm` 슬롯 (이미 디렉터리/glue 로딩 코드만 준비).
 
-### 1-1. DB 스키마 보강 (migration)
-- `apex_game_rolls(id, user_id, game_code, bet_phon, bet_usdt, multiplier, payout_phon, payout_usdt, result jsonb, server_seed_hash, client_seed, nonce, idempotency_key UNIQUE, created_at)`
-  - `UNIQUE(user_id, idempotency_key)` → 더블 결제 차단
-  - RLS: 본인 SELECT만. INSERT는 SECURITY DEFINER RPC만.
-- `apex_usdt_mock_balances(user_id PK, balance numeric default 0, updated_at)` RLS 본인 SELECT.
-- `apex_daily_cap(user_id, ymd, count)` (50회/day) — 이미 RPC 내부 체크 시 테이블화.
-- `apex_vault_claims(user_id, ymd UNIQUE per user, reward_phon, opened_at)`.
-- `apex_kakao_shares(user_id, kind, ref_id, created_at)` — 공유 추적.
+### A-2. 기존 게임 비침습 주입
 
-### 1-2. RPC (모두 SECURITY DEFINER, 머니플로 idempotent)
-- `apex_play_mock_game(_game_code, _bet_phon, _bet_usdt, _params, _idempotency_key)` — 기존 + idempotency.
-- `apex_claim_daily_vault()` — 1일 1회 골드 박스.
-- `apex_get_my_summary()` — 24h rolls/RTP/streak.
-- `apex_get_live_bigwins(_limit)` — 전체 공개, 마스킹 닉.
-- `apex_verify_roll(_roll_id, _client_seed)` — Provably Fair 검증.
+- `Crash.tsx` / `Slots.tsx` / `Dice.tsx` / `Plinko.tsx` / `ApexBackdrop.tsx`
+  - `engine?: HybridEngine` prop 추가 (기본값 = `useHybridEngine(kind)`).
+  - 기존 캔버스 draw 루프는 유지하되, **데이터 소스만** engine.read()로 교체.
+  - 머니플로 호출(`apex_play_mock_game`) 0 터치.
+- ApexBackdrop는 `/apex/games/*`에서 OFF (LCP -300ms 즉시 회수).
 
-### 1-3. Edge Functions (3개)
-- `apex-play-game` — RPC 래퍼 + 클라 IP/UA 로깅(공정성). `verify_jwt=true`.
-- `apex-daily-vault-cron` — 매일 00:00 KST 만료 리셋.
-- `apex-verify-submission` — server_seed 공개 + 해시 검증.
+### A-3. Health Dock 연동
 
----
-
-## Phase 2 — WebGPU + WASM SIMD 하이브리드 엔진
-
-### 2-1. WASM SIMD (Provably Fair + Logic)
-- 1차: **TypeScript + `WebAssembly` 단순 모듈** (AssemblyScript or 직접 wat→wasm) — Rust 툴체인 부재 시 fallback.
-  - `pf_sha256_batch(seed, nonces[]) -> hashes[]` (f32x4 SIMD)
-  - `dice_roll_batch / plinko_drop_batch / mines_grid_batch`
-  - 클라 검증 전용 (서버 결과 != 클라 결과 시 anomaly 로그)
-- 미래 주석: `// FUTURE: replace with Rust wasm-pack (target=web) for 3-5× speedup`
-- 위치: `src/lib/wasm/apex-pf/` + `public/wasm/apex-pf.wasm` (이 빌드는 작은 placeholder + JS fallback. Rust 빌드는 후속 PR.)
-
-### 2-2. WebGPU Compute (대량 병렬 시각 효과)
-- `@pkg/apex/gpu/`
-  - `device.ts` — `navigator.gpu` 감지 + fallback. 미지원 시 CPU/Canvas2D 경로.
-  - `particles.compute.wgsl` — 1024 particle 위치/속도/수명 업데이트 (workgroup 64).
-  - `crash-curve.compute.wgsl` — 4096-sample 곡선 좌표 1프레임에 계산.
-  - `plinko-physics.compute.wgsl` — 12행 × 100 ball 위치 batch.
-- 통합: `useGpuParticles()`, `useGpuCrashCurve()` 훅 → PixiJS/Canvas2D는 **render only**.
-- 안전 가드: `requiredLimits.maxStorageBuffersPerShaderStage` 체크, struct alignment 표 준수, device.lost 핸들러.
-
-### 2-3. PixiJS v8 (Render only)
-- `@pkg/apex/render/pixi.ts` — Application 단일 인스턴스, scene graph로 게임 공유.
-- Crash/Plinko/Slots 캔버스를 PixiJS Container로 교체. WebGPU 결과 → texture upload.
-- 미지원 브라우저: Canvas2D fallback (현재 코드 유지).
+- `/apex/health` GPU/WASM 탭에 EngineCaps 실측 + 활성 엔진(gpu/wasm/cpu) + 프레임당 compute 시간(ms) 노출.
 
 ---
 
-## Phase 3 — 5 게임 + Sportsbook 폴리시 (HE 정확)
+## 슬라이스 B — 5게임 멱등화 wrapper (Phase 3, Money Flow 안전)
 
-- 모든 게임 `useApexGame` 단일 진입점 유지(머니플로 0 터치).
-- **Crash**: GPU 곡선 + fpsCap 60, shadowBlur 0, AutoCashout 슬라이더.
-- **Plinko**: GPU physics, 12 row, risk(low/med/high) HE 1%.
-- **Mines**: 5×5, 1~24 mines, cashout-anytime, HE 1%.
-- **Dice**: over/under, HE 1%.
-- **Slots Lite**: 3-reel rAF + ease, HE 3%.
-- **Sportsbook**: PHON + USDT 동시 슬립, 동적 odds(`oracle_prices` 활용).
-- 머니플로 검증: `_apply_house_edge_split` 동일 패턴으로 5만 spin RTP 시뮬 → `reports/apex-rtp.{date}.md` CI.
+### B-1. 클라이언트 멱등키
 
----
+- `@pkg/apex/lib/idempotency.ts`
+  - `newIdemKey(gameCode)` = `crypto.randomUUID()` (게임코드 prefix).
+  - sessionStorage 5분 캐시(`apex:idem:<key>`) → 페이지 새로고침해도 동일 베팅 dedupe.
+- `useIdempotentBet(gameCode)` hook
+  - `{ pending, lastResult, place(params, bet) }` 노출.
+  - 동시 호출 시 in-flight Promise 재사용 → 중복 클릭 100% 차단.
+  - Result UX: "이미 처리중…" → "✅ 처리 완료" → 3초 후 idle.
 
-## Phase 4 — Korean Viral + Free Rewards + 카카오/네이버
+### B-2. RPC wrapper (머니플로 FREEZE 유지)
 
-- `@pkg/apex/viral/`
-  - **KakaoTalk Sticker Pack 12종**: `public/stickers/apex/{01..12}.png` (PNG 320×320, transparent). Web Share API + `kakao.link` SDK (publishable key only).
-  - **Naver Band Share**: `https://band.us/plugin/share?body=...&route=...`
-  - **Referral**: 기존 `referral_code` 재사용. `/apex/r/:code` 진입 시 시그널 부여.
-- `/apex/free` — 7개 일일 미션 + Free Rewards ticker(realtime) + 리더보드 Top 20.
-- KakaoTalk 공유 시 `apex_kakao_shares` 적재 → 1일 1회 +500 PHON 미션 보상.
+- `apex_play_mock_game` 원본 본문 **무변경**.
+- 신규 SECURITY DEFINER `apex_place_bet_v2(_game_code, _bet_phon, _bet_usdt, _params, _idem_key)`
+  - 1) `apex_game_rolls`에 `idempotency_key` 기존 row 있으면 즉시 그 row 반환 (no double charge).
+  - 2) 없으면 `apex_play_mock_game(...)` 호출 → 결과 row의 `idempotency_key` UPDATE.
+  - 3) `apex_daily_cap` upsert (50/day).
+  - **머니 이동 자체는 기존 RPC가 수행** → diff = 0.
+- API 래퍼 `placeBetIdempotent()` 추가, 5게임 컴포넌트는 이 wrapper만 호출.
 
----
+### B-3. UX
 
-## Phase 5 — FOMO·ApexBackdrop·UX 극한 폴리시
-
-(이전 진단의 Tier S/A 통합 — 머니플로 0 터치)
-
-| 작업 | 효과 |
-|---|---|
-| ApexBackdrop: 모바일 32p, shadowBlur 0, DPR 1.5, `/apex/games/*`에서 OFF | LCP -300ms |
-| Crash curve = WebGPU 단일 stroke | 35-45 → 60fps |
-| Slots `setInterval` → rAF + ease-out 600ms | TBT -80ms |
-| `<DailyVaultCountdown />` 분리 + memo | Home 리렌더 90%↓ |
-| `useApexGame` idle prefetch supabase + Games chunk | 첫 베팅 -500ms |
-| `ParticleBurst` 입자 절반·1-burst(저사양) | 60-120ms 회수 |
-| `canvas-confetti` → `@pkg/apex/effects/confetti.ts` 단일화 | gz -5~10KB |
-| SW: `/apex/*` HTML network-first, assets SWR | 재방문 LCP -40% |
-| Live ticker, Floating BigWin, Daily Vault countdown, First-bet bonus 토스트 | FOMO 강화 |
+- `<IdempotentBetButton>` 공용 컴포넌트 — pending spinner + 5초 timeout fallback + retry 1회.
 
 ---
 
-## Phase 6 — 9-tab ApexShell + Health Dock (통합 버튼)
+## 슬라이스 C — KakaoTalk / Naver Band 12-스티커 자동 공유 (Phase 4)
 
-- Shell: Home / Games / Sportsbook / NFT Lootbox / Daily Vault / Win Reels / Free Rewards / Community / My Apex (현 7+More → 9 직접 노출 모바일 bottom-bar는 5+More 유지).
-- **Apex Health Dock** `/apex/health` (admin AAL2 또는 `?dev=1`) — 한 화면 통합 진단:
-  1. Vitals (LCP/INP/CLS/FPS realtime)
-  2. GPU/WASM (device caps, compute time/frame)
-  3. Money Flow Audit (rolls/RTP/idempotency hits)
-  4. Bundle Map (`reports/bundle-budget.latest.json`)
-  5. PWA/SW (scope, cache size)
-  6. Viral (Kakao/Band 공유 카운트, 전환율)
-- 우상단 `<ApexHealthFab />` 토글.
+### C-1. 스티커 자산
 
----
+- `public/stickers/apex/01..12.png` (PNG 320×320 transparent).
+- 1차는 **CSS+SVG로 12종 절차적 생성** → 빌드 의존성 0, 즉시 PWA 캐시.
+  - 카테고리: BigWin(3) · Jackpot(3) · Milestone(3) · Streak(3).
+- `@pkg/apex/viral/stickers.ts` — index → meta(label, palette, emoji).
 
-## Phase 7 — 산출물 & CI
+### C-2. 공유 시트
 
-- `docs/apex/house-edge.md` 확장: 5게임 + Sportsbook 수식 + 시뮬 결과 표.
-- `MIGRATION.md` 갱신: WebGPU/WASM 도입 노트 + 미래 Rust 마이그레이션 단계.
-- `size-limit.config.json` 에 `^(Crash|Plinko|Mines|Slots|Sportsbook)-[^/]+\\.js$` 90KB 게이트 추가.
-- `scripts/apex-rtp-sim.ts` — 50,000 spin Monte Carlo, CI nightly.
-- `scripts/check-apex-money-flow.mjs` — 8경로 + 신규 idempotency 컬럼 diff = 0 검증.
+- `<ApexShareSheet kind="bigwin|jackpot|milestone" amount mult />`
+  - 채널: Kakao(웹 공유 API + share URL) · Band(`band.us/plugin/share`) · X · Web Share API · 클립보드.
+  - 공유 직후 `apex_log_kakao_share(kind, refId)` 호출 → 미션 진행도 +1.
+  - 5만 PHON 이상 빅윈/Jackpot 시 자동 오픈 (1회 디듀프).
 
----
+### C-3. 통합 지점
 
-## Technical details (개발자용)
-
-- WGSL struct alignment 표 엄수 (vec3 → 16-byte pad).
-- `navigator.gpu` + `requestAdapter()` 둘 다 null 가드 → CPU fallback.
-- WASM은 `public/wasm/`에 두고 client-only `import()`. SSR/edge 번들 금지.
-- Edge Function CORS: `npm:@supabase/supabase-js@2/cors` 사용. 모든 응답에 `corsHeaders`.
-- 머니플로 idempotency: 클라 `crypto.randomUUID()` 1회 생성 → RPC `_idempotency_key`로 전달, DB UNIQUE 위반 시 기존 row 반환(아이덴포턴트).
-- PixiJS v8 + WebGPU: `Application.init({ preference: 'webgpu' })`, 실패 시 'webgl2' fallback.
-- Kakao SDK는 publishable JS key만 (in-code OK). Naver Band는 URL 스킴.
+- BigWin: Crash/Slots/Plinko `multiplier ≥ 10×` 또는 payout ≥ 50k PHON.
+- Milestone: 첫 베팅, 일일 미션 클리어, 7일 streak.
+- Health Dock "Viral" 탭에 공유 카운트 24h/7d/total 표시.
 
 ---
 
-## 산출 순서 (실행시)
+## 슬라이스 D — Supabase Edge Functions 3종 (Deno)
 
-1. **migration**: 신규 테이블/컬럼 + RLS + RPC 5종.
-2. **edge functions**: `apex-play-game`, `apex-daily-vault-cron`, `apex-verify-submission`.
-3. **engine**: WASM placeholder + WebGPU compute 3종 + Pixi 통합 + CPU fallback.
-4. **games 폴리시**: Crash/Plinko/Mines/Slots/Dice + Sportsbook idempotency.
-5. **viral**: Kakao sticker pack 12종 + Band 공유 + referral 통합.
-6. **fomo/ux**: ApexBackdrop·ParticleBurst·confetti dedupe·SW caching.
-7. **shell**: 9-tab + Health Dock + FAB.
-8. **docs/ci**: house-edge.md, MIGRATION.md, size-limit, RTP sim, money-flow guard.
+### D-1. `supabase/functions/apex-bigwin-notifier/index.ts`
+- POST 트리거 (DB trigger AFTER INSERT on apex_game_rolls multiplier ≥ 10).
+- 5분 디듀프 (user_id+game). 결과: realtime broadcast on `wallet:apex_bigwins` 채널.
+- `verify_jwt = false` (DB trigger 호출).
 
-각 단계 끝마다 `bundle-budget` / `money-flow-freeze` / `operator-isolation` / `lint` 4 게이트 그린 확인.
+### D-2. `supabase/functions/apex-vault-claim-processor/index.ts`
+- POST { idem_key } → `apex_claim_daily_vault()` 래퍼 + 응답에 `next_claim_at` 계산.
+- 클라이언트 직접 RPC 호출과 호환(이 엣지는 푸시·이메일 fan-out 전용).
+- `verify_jwt = true`.
+
+### D-3. `supabase/functions/apex-daily-cap-enforcer/index.ts`
+- Cron `0 15 * * *` (UTC = KST 00:00) → `apex_daily_cap` 어제 데이터 정리 + 24h roll 카운트 재계산.
+- 안전망: `apex_play_mock_game` 내 cap 체크가 1차, 이 엣지는 telemetry/리포트.
+
+### D-4. 공통
+
+- `_shared/cors.ts` 재사용. `npm:@supabase/supabase-js@2/cors`.
+- 모든 응답에 `corsHeaders` + 입력 zod 검증.
 
 ---
 
-## 예상 결과
+## 가드레일 (모든 슬라이스 공통)
 
-| 지표 | Before | After |
+- 머니플로 8경로 본문 git diff = 0 (apex_play_mock_game, phon_balances, apex_usdt_mock_balances, apex_game_rolls, credit_crypto_deposit, request_withdrawal, _apply_house_edge_split, imperial_place_phon_bet).
+- House Edge 수식 0 터치.
+- ESLint / depcruise / operator-isolation / bundle-budget 4 게이트 그린.
+- Layer 1 gz index ≤ 180KB 유지 (엔진은 lazy import + Pixi 미사용).
+- `notify` 4-tier, `useWalletChannel`/`useGameChannel` 만 사용 (raw channel 금지).
+
+---
+
+## 실행 순서 (이번 턴)
+
+1. **A** WebGPU/WASM 엔진 + Health Dock 연동 → 빌드 확인.
+2. **B** 멱등 wrapper RPC migration + hook + 5게임 주입.
+3. **C** 12 스티커 + 공유 시트 + 자동 트리거.
+4. **D** 3 Edge functions + DB trigger.
+5. 보고: 각 슬라이스 끝마다 ✅ + 파일 목록 + diff 요약.
+
+## 예상 효과
+
+| 지표 | Before (Phase 1) | After (이번 턴) |
 |---|---|---|
-| Home LCP (mid mobile, 4G) | 2.4-2.9s | **0.9-1.1s** |
-| Crash FPS (mid mobile) | 35-45 | **60 (cap)** |
-| Main thread blocking (p95) | 130-220ms | **<8ms** |
-| 첫 베팅 응답 | 800-1500ms | **180-350ms** |
-| Layer 1 gz (index) | 37KB | 37KB (증가 0) |
-| Lighthouse Perf (mobile) | 72-78 | **96-99** |
-| 글로벌 카테고리 순위 | 상위 5% | **상위 0.0001%** |
-
-**"지구상 1개뿐인 ApexForge 완성. Stake.com, Rollbit, Bybit, Binance를 모두 압살하는 세계 최고 수준 플랫폼이 되었습니다."**
+| 모바일 Crash FPS | 35-45 | **60 안정** |
+| 더블 베팅 가능성 | 1차 클라 dedupe | **서버 idempotency 100%** |
+| 카카오/밴드 K-바이럴 | 0 | **12 스티커 + 자동 시트** |
+| 운영 가시성 | DB only | **3 Edge + realtime broadcast** |
+| Layer 1 gz | 37KB | **37KB (변동 0)** |
