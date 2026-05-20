@@ -243,68 +243,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       <main className="relative">{children}</main>
 
-      {/* Mobile bottom nav — 5 tabs with center FAB */}
-      {user && (
-        <nav
-          className="md:hidden fixed left-1/2 -translate-x-1/2 z-40 w-[calc(100%-1rem-env(safe-area-inset-left)-env(safe-area-inset-right))] max-w-md"
-          style={{ bottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
-        >
-          <div className="glass-strong rounded-2xl px-2 py-2 flex items-end justify-between shadow-2xl neon-border relative overflow-visible">
-            {BOTTOM_NAV.map((item) => {
-              const Icon = item.icon;
-              const active = isBottomActive(item, loc.pathname);
-
-              if (item.fab) {
-                return (
-                  <NavLink key={item.to} to={item.to} className="relative -mt-8 flex-1 flex justify-center">
-                    <div
-                      className={`relative w-[68px] h-[68px] rounded-full flex items-center justify-center press bg-gradient-to-br from-[hsl(var(--gold))] via-[hsl(var(--gold))] to-[hsl(var(--pink))] glow-pink-xl imperial-jackpot-breathe transition-transform duration-300 hover:scale-110 ${
-                        active ? "ring-2 ring-[hsl(var(--pink)/0.7)]" : "ring-1 ring-[hsl(var(--gold)/0.5)]"
-                      }`}
-                    >
-                      <div className="absolute inset-0 rounded-full bg-[hsl(var(--pink)/0.35)] blur-2xl -z-10 animate-pulse" />
-                      <div className="absolute inset-[3px] rounded-full bg-gradient-to-br from-[hsl(var(--gold)/0.95)] to-[hsl(var(--pink)/0.85)] flex items-center justify-center">
-                        <Icon className="w-7 h-7 text-background drop-shadow-[0_2px_6px_rgba(0,0,0,0.45)]" />
-                      </div>
-                      <span className="absolute -bottom-5 text-[10px] font-imperial tracking-[0.22em] text-[hsl(var(--gold))] drop-shadow-[0_0_8px_hsl(var(--gold)/0.7)]">
-                        {item.label.toUpperCase()}
-                      </span>
-                    </div>
-                  </NavLink>
-                );
-              }
-
-              return (
-                <NavLink key={item.to} to={item.to} className="flex-1 press">
-                  <div
-                    className={`relative flex flex-col items-center gap-1 py-1.5 rounded-xl transition-all duration-300 ${
-                      active ? "bg-[hsl(var(--gold)/0.08)]" : "hover:bg-muted/30"
-                    }`}
-                  >
-                    {active && (
-                      <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-8 h-[3px] rounded-full bg-gradient-to-r from-[hsl(var(--gold))] to-[hsl(var(--pink))] shadow-[0_0_14px_hsl(var(--gold)/0.85)]" />
-                    )}
-                    <Icon
-                      className={`w-5 h-5 transition-all duration-200 ${
-                        active
-                          ? "text-[hsl(var(--gold))] scale-110 drop-shadow-[0_0_8px_hsl(var(--gold)/0.7)]"
-                          : "text-muted-foreground group-hover:text-foreground"
-                      }`}
-                    />
-                    <span
-                      className={`text-[10px] font-bold tracking-wide transition-colors ${
-                        active ? "text-foreground" : "text-muted-foreground"
-                      }`}
-                    >
-                      {item.label}
-                    </span>
-                  </div>
-                </NavLink>
-              );
-            })}
-          </div>
-        </nav>
-      )}
+      {/* P1-C v8: 모바일 하단탭 단일화 - MobileShell 만 렌더 */}
 
       {/* v19 Phase 0-R: FloatingChat 마운트 해제 */}
     </div>
