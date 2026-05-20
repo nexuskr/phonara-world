@@ -1,6 +1,6 @@
 import { memo, useCallback } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Home, Gamepad2, Wallet, MoreHorizontal, Sparkles, type LucideIcon } from "lucide-react";
+import { Home, Gamepad2, Swords, MoreHorizontal, Sparkles, type LucideIcon } from "lucide-react";
 import { useAuthReady } from "@/hooks/use-auth-ready";
 
 /**
@@ -18,22 +18,22 @@ import { useAuthReady } from "@/hooks/use-auth-ready";
  * /apex/*, /auth*, /secure-auth*, /legal*, /admin* 에서는 자동 숨김 (각 화면에 자체 셸 존재).
  */
 
-type TabId = "home" | "apex" | "games" | "wallet" | "more";
+type TabId = "home" | "apex" | "duel" | "games" | "more";
 
 type Tab = {
   id: TabId;
   to?: string;
   label: string;
   icon: LucideIcon;
-  emphasis?: "gold";
+  emphasis?: "gold" | "crimson";
 };
 
 const TABS: Tab[] = [
-  { id: "home",   to: "/",                          label: "홈",       icon: Home },
-  { id: "apex",   to: "/apex",                      label: "에이펙스", icon: Sparkles, emphasis: "gold" },
-  { id: "games",  to: "/games",                     label: "게임",     icon: Gamepad2 },
-  { id: "wallet", to: "/wallet?tab=withdraw",       label: "출금",     icon: Wallet },
-  { id: "more",                                      label: "더보기",   icon: MoreHorizontal },
+  { id: "home",   to: "/",      label: "홈",       icon: Home },
+  { id: "apex",   to: "/apex",  label: "에이펙스", icon: Sparkles, emphasis: "gold" },
+  { id: "duel",   to: "/duel",  label: "대관전",   icon: Swords,   emphasis: "crimson" },
+  { id: "games",  to: "/games", label: "게임",     icon: Gamepad2 },
+  { id: "more",                  label: "더보기",   icon: MoreHorizontal },
 ];
 
 const HIDDEN_PREFIX = ["/apex", "/auth", "/secure-auth", "/legal", "/admin", "/welcome", "/guide", "/landing", "/safe", "/forgot-password", "/reset-password", "/auth/callback", "/complete-profile", "/live/", "/r/", "/i/", "/c/", "/unsubscribe"];
@@ -43,8 +43,8 @@ function isActivePath(pathname: string, to?: string) {
   const base = to.split("?")[0];
   if (base === "/")     return pathname === "/" || pathname === "/dashboard";
   if (base === "/apex") return pathname === "/apex" || pathname.startsWith("/apex/");
+  if (base === "/duel") return pathname === "/duel" || pathname.startsWith("/duel/");
   if (base === "/games")return pathname === "/games" || pathname.startsWith("/games/") || pathname.startsWith("/casino");
-  if (base === "/wallet")return pathname === "/wallet" || pathname.startsWith("/wallet/");
   return pathname === base;
 }
 

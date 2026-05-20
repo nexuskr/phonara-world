@@ -63,9 +63,10 @@
     --shadow-elegant: 0 30px 80px -20px hsl(44 80% 53% / 0.35);
     --shadow-glass: 0 8px 32px hsl(240 50% 1% / 0.7), inset 0 1px 0 hsl(44 95% 65% / 0.06);
     --transition-smooth: cubic-bezier(0.22, 1, 0.36, 1);
-    /* Mobile bottom nav height (used by safe-area utilities + floating-dock).
+  /* Mobile bottom nav height (used by safe-area utilities + floating-dock).
        72px nav + safe-area-bottom (MobileBottomNav v2). Desktop overrides to 0. */
     --bottom-nav-h: calc(72px + env(safe-area-inset-bottom));
+    --desktop-sidebar-w: 232px;
   }
   @media (min-width: 768px) {
     :root { --bottom-nav-h: 0px; }
@@ -74,6 +75,10 @@
 @layer base {
   @media (max-width: 767px) {
     body { padding-bottom: var(--bottom-nav-h); }
+  }
+  /* Desktop sidebar — only when StakeStyleSidebar is mounted (toggled by component). */
+  @media (min-width: 768px) {
+    html.has-desktop-sidebar body { padding-left: var(--desktop-sidebar-w); }
   }
 }
 @layer utilities {
