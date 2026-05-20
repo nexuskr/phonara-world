@@ -29,6 +29,14 @@ export default function ApexWinReels() {
   const [liked, setLiked] = useState(false);
   const reel = REELS[idx % REELS.length];
 
+  // Phase 6: dispatch a bigwin event whenever the visible reel crosses the threshold,
+  // so EmperorVoicePlayer auto-trigger fires (8s cooldown + mute respected internally).
+  useEffect(() => {
+    if (reel.amount >= BIGWIN_THRESHOLD_PHON) {
+      window.dispatchEvent(new CustomEvent(BIGWIN_EVENT, { detail: { payout: reel.amount } }));
+    }
+  }, [idx, reel.amount]);
+
   function next() {
     setIdx((i) => i + 1);
     setLiked(false);
