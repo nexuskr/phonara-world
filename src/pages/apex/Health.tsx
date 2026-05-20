@@ -198,6 +198,41 @@ export default function ApexHealth() {
             </Card>
           </>
         )}
+        {tab === "perf" && (
+          <>
+            <Card title="Tier S 60s 벤치마크 (5 games)">
+              <div className="text-xs text-muted-foreground mb-3">
+                target: mid-tier device 60fps avg / p1 ≥ 50fps. money-flow 0 터치 (시각만).
+              </div>
+              <div className="space-y-2">
+                {["crash", "dice", "mines", "plinko", "slots"].map(g => (
+                  <div key={g} className="flex items-center justify-between gap-2">
+                    <span className="text-sm capitalize">{g}</span>
+                    <div className="flex items-center gap-2">
+                      {bench[g] && (
+                        <span className="font-mono text-xs text-amber-300">
+                          {bench[g].fps}fps · p1 {bench[g].p1}fps
+                        </span>
+                      )}
+                      <button
+                        onClick={() => runBench(g)}
+                        disabled={!!benching}
+                        className="rounded bg-primary/20 px-2 py-1 text-xs text-primary disabled:opacity-50"
+                      >
+                        {benching === g ? "…" : "Run"}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+            <Card title="WebGPU/WASM Active">
+              <Stat k="Backend" v={backend?.toUpperCase() ?? "…"} />
+              <Stat k="Tier" v={caps?.tier ?? "—"} />
+              <Stat k="Compute avg" v={stats ? `${stats.computeMs}ms` : "—"} />
+            </Card>
+          </>
+        )}
         {tab === "money" && (
           <>
             <Card title="내 24h 요약">
