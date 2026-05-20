@@ -1,126 +1,115 @@
-# P1-C Hyperion Final v8 — Red/Yellow → Green + Trading Hotfix
+# P1-C Hyperion Final v9 — 27 Bug Sweep + 출시 직전 마무리
 
-Hyperion Dissection 보고서의 모든 🔴/🟡를 🟢로 전환하고, 모바일 하단 탭 중복(첨부 스크린샷)을 포함한 잔여 UI 결함을 마무리한다. 머니플로 8경로 / Crown 백엔드 RPC·테이블·트리거는 절대 무변경.
+이전 v8에서 누락/미적용된 항목을 전부 재검증하고, 사용자가 새로 보고한 27개 이슈를 우선순위대로 묶어 한 번에 해결합니다. 머니플로 8경로 / Crown 백엔드 RPC·테이블·트리거 / P0 인증·체결·슬롯 엔진은 **무변경 원칙** 유지.
 
-## 1. Blocker (🔴 → 🟢)
+---
 
-### 1-1. `imperial_get_onboarding_state` 401 (P0)
-- migration: `GRANT EXECUTE ON FUNCTION public.imperial_get_onboarding_state() TO anon, authenticated;`
-- function 본문은 무변경 (이미 SECURITY DEFINER + 내부 `auth.uid()` 가드).
+## 0. 즉시 검증 (v8 실제 적용 여부)
 
-### 1-2. `withdrawal_status` enum `paid` 누락
-- migration: `ALTER TYPE withdrawal_status ADD VALUE IF NOT EXISTS 'paid';`
-- 기존 워커가 `paid`로 마킹하려다 22P02로 실패하던 흐름 정상화. completed/paid 별칭 흐름은 워커 코드 무변경(머니플로 8경로 미포함 확인).
+1. `withdrawal_status` enum 에 `paid` 정말 추가됐는지 DB 직접 확인 (스크린샷에 `invalid input value for enum withdrawal_status: "paid"` 가 여전히 뜸 → **미적용 확정**)
+2. `imperial_get_onboarding_state` 401 — GRANT 실제로 anon/authenticated 부여됐는지 확인 (스크린샷에 401 여전)
+3. `check_achievements` 400 Bad Request 원인 추적 (페이로드/서명 mismatch)
+4. `support_tickets` 테이블/스키마 캐시 누락 (`Could not find the table 'public.support_tickets'`)
+5. `close_position_phon` 400 — v8 PnL 보정 후에도 실패하는 케이스 로그 확인
 
-### 1-3. `check_achievements` 400
-- 시그니처/파라미터 drift 점검 후 클라 호출부(`src/lib/achievements.ts` 등) 인자 정렬. RPC 본문 무변경.
+→ 이 5건을 **단일 migration + 1회 캐시 reload** 로 일괄 처리.
 
-### 1-4. `platform_kill_switches.reason` 의미 반전
-- migration: 기존 row의 `reason` 텍스트를 enabled 상태와 일치하도록 정리(`UPDATE ... SET reason = CASE WHEN enabled THEN '활성화' ELSE '비활성화' END WHERE key IN ('phon_betting','phon_staking','phon_swap')`).
-- 관리자 토글 UI에 enabled 상태 텍스트를 reason과 분리해서 명시 (혼동 방지).
+## 1. Critical Blocker (사용자 27 중 즉시 차단)
 
-### 1-5. `uptime_pings.ok NOT NULL` 위반
-- chaos-probe/public-status edge에서 INSERT 시 `ok` boolean 기본 false 보강. edge function only, DB 무변경.
+- **#1 TOTP 6자리 입력 후 등록 안 됨** — `RecoverTotp` / Security 설정 페이지에서 `verify` 호출 후 state 미갱신 + 라우팅 누락 수정
+- **#13 트레이딩 진입 실패 "PHON 베팅이 잠시 멈춰있어요"** — kill switch `phon_betting` 강제 OFF 확인 + `open_position_phon` 400 응답 humanError 매핑 + 실 RPC 호출 페이로드 정합
+- **#21 PHON↔원화 스왑 AAL2 재요청** — TOTP 이미 보유 사용자는 `aal=aal2` 세션에서 재인증 skip, 클라이언트 가드 조기 종료
+- **#10 트레이딩 상단 숫자 변동 시 화면 떨림** — 헤더 컨테이너 `min-h` 고정 + `tabular-nums` + `contain: layout` 추가, 숫자 wrapper 절대 reflow 금지
+- **#5 출금 PIN 입력창 키패드 가려짐 (iPhone 11)** — `visualViewport` 기반 `scrollIntoView({block:'center'})` + bottom-sheet `pb-[env(keyboard-inset-height)]`
 
-### 1-6. Supabase linter 0011 search_path
-- 영향 큰 user-callable SECURITY DEFINER 함수에 `SET search_path = public, pg_temp` 누락분 일괄 추가. baseline 테이블 갱신.
+## 2. Trading 완전 복원 (#12, #14)
 
-### 1-7. `/secure-auth` CLS 0.131 → < 0.05
-- 폼 컨테이너 `min-h`, 로고 `width/height` 명시, Pretendard `font-display: swap` + size-adjust, skeleton 고정 높이.
+- 레버리지: 버튼 chip + **드래그 슬라이더** 동시 제공 (Bybit/Binance 스타일). 1x~Max 연속, 5/10/25/50/75/100 snap, haptic.
+- **Isolated / Cross 모드 토글 복원**: 기존 `margin_mode` 컬럼 사용. UI 토글 + 모드별 청산가 재계산 + 경고 모달.
+- 모바일에서 슬라이더 트랙 `touch-action: pan-x`, `min-h-11` 보장.
 
-## 2. Layout 통일 (이미 적용분 검증 + Mobile Nav 중복 제거)
+## 3. UX/Navigation 통합 (#2, #4, #11, #20, #25)
 
-- `StakeStyleSidebar.tsx` `useLayoutEffect` + top-level classList — 이미 적용. 회귀 테스트만.
-- `App.tsx` 정적 import — 이미 적용. 회귀 테스트만.
-- **첨부 스크린샷 이슈**: 모바일 하단에 구버전 4탭(홈/트레이딩/[FAB]/게임/내제국)이 살아있음. 신규 5탭(홈/무료돈벌기/실시간대결/실시간예측/내PHON)으로 단일화.
-  - 현재 마운트된 구버전 Nav 컴포넌트(예: `PhonaraNav` + 중앙 FAB) 식별 → 신규 `MobileBottomNav5`로 교체.
-  - `Layout`/`App.tsx`에서 중복 Nav 마운트 제거. 단 1개의 Nav만 렌더.
-  - safe-area: `env(safe-area-inset-bottom)`, `--kb-inset` CSS var를 `visualViewport.resize`로 갱신, 키보드 올라올 때 hide.
+- **#2 친구추천 메뉴 독립**: Bottom Nav 옆 또는 "내 제국" 상단에 "친구초대로 ₩30,000" 카드 1개 + 전용 `/referral` 라우트 강화 (How-it-works 3step, 코드 복사 1탭, 카톡/LINE/X 공유 단일 row).
+- **#4 배지/업적 단일화**: `/my/badges` 통합 페이지 — Empire Tier · Crown Aura · NFT · Achievements 4섹션 1스크롤.
+- **#11 잔액 표시 통합**: 우상단 칩을 `<MultiCurrencyBalance />` 한 줄 (PHON · ₩ · USDT) 토글 회전 또는 펼침.
+- **#20 Live 페이지 로고 누락**: `<PhonaraLogo />` 헤더 마운트.
+- **#25 등급 통합**: VIP Pass / Empire Tier / Coin Master 3중 표시 → "Empire Tier" 단일 축, VIP는 부가 뱃지로만 노출.
 
-## 3. Bottom Navigation 5탭 최종
+## 4. Crown → PHON 통합 (#23)
 
-| 탭 | 라우트 | 아이콘 |
-| --- | --- | --- |
-| 홈 | `/dashboard` | Home |
-| 무료돈벌기 | `/earn` | Gift |
-| 실시간대결 | `/duel` | Swords |
-| 실시간예측 | `/trade` | TrendingUp |
-| 내PHON | `/phon` | Gem |
+- Crown 백엔드 RPC/테이블/트리거 **무변경** (메모리 원칙).
+- UI 레이어에서만 Crown 노출 제거: `CrownAura`/`CrownEvent` 토스트 → "PHON 보너스 +N"로 카피 치환. 잔여 Crown 텍스트 일괄 검색 후 PHON 통일.
 
-active = `imperial` glow variant, haptic on tap.
+## 5. Content/Copy (#7, #8, #22)
 
-## 4. Hero & Home 라이브 피드
+- **#7 운영원칙 페이지** (`/legal/operating-principles`): Stake/Rollbit 스타일 — TOC 좌측, 카드형 8섹션 (공정성/RNG, 출금정책, 책임도박, KYC, AML, 분쟁해결, 보안, 연락처).
+- **#8 1:1 상담 챗봇 기본응답**: FAQ intent matcher (출금/입금/베팅/계정/보안/기타) → 즉시 자동응답 + "상담사 연결" 폴백. `support_tickets` 테이블 복구 포함.
+- **#22 "제국의 결혼식" → "NFT 합성 (Fusion)"** 카피 교체.
 
-- Hero 카피 이미 적용. 회귀만.
-- 신규 `src/components/dashboard/v3/LiveBetFeed.tsx`:
-  - 소스: `get_live_activity_60s` + `get_whale_strikes_24h` 머지
-  - 1.8s 간격 `AnimatePresence` slide-in, 최대 12행, win=success/lose=destructive 토큰
-  - 30s RPC 재폴 + `useMarketChannel` realtime 보조
-  - `DashboardHeroV3` 직하단, Tier S 5장(무료돈벌기/실시간대결/실시간예측/내PHON/Whale Strike) 위에 배치
-  - 라벨: "지금 전 세계에서 벌어지고 있는 실시간 베팅"
+## 6. Slot/Game Polish (#9, #15, #16, #17, #18)
 
-## 5. Crown UI Strict 0
+- **#9 대관전(VIP룸) 진입 카드**: Home/Casino 상단 50-70대 가독성 카드 1탭 진입.
+- **#15 슬롯 첫 로드 지연/끊김**: 스프라이트 preload + `requestIdleCallback` 으로 사운드 lazy + spin 프레임 `transform: translateZ(0)`.
+- **#16 볼륨/잔고 정리**: 슬롯 HUD 재배치 — 상단 잔고 1줄, 우하단 볼륨/세팅 단일 아이콘 그룹.
+- **#17 배당표/룰**: spin 영역 하단 첫 화면에 paytable 칩 + 펼침 패널 (스크롤 강제 X).
+- **#18 슬롯 로고/폰트**: Phonara 로고 + 디자인 토큰 typography 통일.
 
-- `scripts/check-no-crown-ui.mjs` 실행 → 잔존 건 lucide `Crown` → `Sparkles`/`Gem`, "왕관"/"👑" → "PHON 보상"/"✨". 토스트 카피 포함.
-- 백엔드 `award_crown` 등 이름/로직은 무변경.
+## 7. Empire/Atelier (#19, #24)
 
-## 6. 트레이딩 화면 긴급 수정 (신규)
+- **#19 패키지 중복 정리**: `/packages` 카드 dedupe — Tier별 1개씩만, 비교표 단일 행렬.
+- **#24 Atelier "지갑으로 이동" → "내 NFT 컬렉션 보기"** → `/empire/collection`.
 
-### 6-1. 청산/X 버튼 "청산실패" 오류
-- 증상: `<LivePositionsTable>` 청산 버튼 → "잠시 후 다시 시도해주세요. 폐하의 자산은 안전합니다" 토스트 후 실패.
-- 진단: `close_live_position` RPC 호출부 인자 drift 또는 `imperial_kill_switches.betting` 게이트 오해석으로 추정. RPC 본문/머니플로 무변경 — 호출부만 정렬:
-  - 클라이언트에서 RPC 시그니처 실측(`\df+ close_live_position`) → 인자명/타입 일치 확인
-  - kill switch가 `withdrawal`/`betting`만 차단하고 close는 항상 허용되는지 확인 (필요 시 클라이언트 가드 분기 조정)
-  - 실패 시 error.code/message를 토스트에 함께 노출(디버그용 admin-only)
-- 변경 범위: `src/components/trade/LivePositionsTable.tsx`(또는 동등 파일) + 호출 헬퍼 1개. RPC/트리거 무변경.
+## 8. Admin 1인 운영 최적화 (#27)
 
-### 6-2. 모바일 레버리지 슬라이더 미표시
-- 증상: 모바일(<768px)에서 RealBetSlip/TradePanel의 Leverage Slider + Isolated/Cross 토글이 보이지 않음.
-- 진단: 슬라이더 컨테이너가 `hidden md:flex` 또는 collapse 상태로 묶여 있을 가능성 + `useMyPower().maxLeverage` 로딩 전 null 처리로 unmount.
-- 수정:
-  - 슬라이더 섹션 모바일 노출 (`flex md:flex`로 변경, BottomSheet 내 sticky)
-  - Bybit/Binance식 슬라이더 UI: 1x/5x/10x/25x/50x/100x preset chip + 미세 슬라이더 + Isolated/Cross 라디오
-  - `maxLeverage` 로딩 중에는 skeleton, 로딩 후 cap 적용
-- 변경 범위: `src/components/trade/RealBetSlip.tsx` 또는 `LeverageSlider.tsx`. 머니플로 무관(`live_positions` INSERT 트리거가 서버에서 cap 강제).
+- `/admin` 사이드바 재정렬: 핵심 5탭만 노출(현황/출금큐/유저/베팅/킬스위치), 나머지는 "고급" 접힘.
+- AAL2 보호 유지, Stake/Rollbit급 1-page dashboard (KPI 8 + 펜딩 액션 inbox).
 
-## 7. 27 버그 회귀 표
+## 9. 기타 (#3, #6, #26)
 
-체크리스트 폼으로 27개 항목 일괄 확인 후 보고 본문에 OK/FAIL 매트릭스 첨부 (코드 무수정, 검증만).
+- **#3 지문(WebAuthn) 인증**: `@simplewebauthn/browser` 등록/검증 플로우 추가 — Security 페이지 토글, 미지원 디바이스 graceful disable.
+- **#6 라이브 피드 속도**: `LiveBetFeed` 1.8s + Empire 내부 동작 throttle 검증, 비활성 탭 시 polling 일시정지.
+- **#26 매직링크 반복 본인인증**: `profiles.kyc_completed_at` 체크 후 이미 완료 시 `/welcome/identity` skip → 직행 `/dashboard`.
 
-## 8. 성능
+## 10. Yellow 폴리시
 
-- Pretendard `font-display: swap` + preconnect
-- 비-critical 라우트 `React.lazy` 점검
-- `touch-action: manipulation` 모바일 인터랙티브 요소
-- LCP < 1.8s / CLS < 0.05 목표, Lighthouse 모바일 5뷰포트 측정 준비
+- `/secure-auth` hero `<img fetchpriority="high">` + 고정 aspect-ratio
+- `<link rel="preload" as="font" type="font/woff2" crossorigin>` Pretendard Regular/Bold 2종
+- 27버그 회귀 매트릭스 자동 스크립트 `scripts/qa-matrix-v9.mjs` 생성 → 결과 `reports/qa-matrix-v9.json`
 
-## 9. 검증 게이트
+## 11. Publish & Export
 
-- `check-no-crown-ui.mjs` = 0
-- `check-money-flow-freeze.mjs` 8경로 PASS
-- `check-operator-isolation.mjs` PASS
-- Supabase linter 0011 잔존 0 (user-callable 한정)
-- PC 1440 / Mobile 375·390 sidebar 점프 0, Bottom Nav 단일 5탭
-- 모바일 트레이딩 슬라이더 가시성 + 청산 정상 작동
-- Build error 0
+- 백엔드(migration/edge)는 저장 즉시 자동 배포 — 보고
+- 프론트는 사용자가 직접 **Publish → Update** 1클릭 필요 (대신 눌러줄 수 없음) → 안내
+- Export: GitHub 양방향 sync 또는 코드 편집기 하단 "Download codebase" (Paid 워크스페이스)
 
+---
 
-## 7. 성능
+## 기술 상세 (참고)
 
-- Pretendard `font-display: swap` + preconnect
-- 비-critical 라우트 `React.lazy` 점검
-- `touch-action: manipulation` 모바일 인터랙티브 요소
-- LCP < 1.8s / CLS < 0.05 목표, Lighthouse 모바일 5뷰포트 측정 준비
+```text
+migrations/
+  v9_blockers.sql        -- enum paid 재확인, GRANT, support_tickets 복구, schema reload
+src/
+  components/trading/
+    LeverageSlider.tsx   -- 신규 (드래그 + chip + haptic)
+    MarginModeToggle.tsx -- 신규 (isolated/cross)
+    PhonOrderPanel.tsx   -- 슬라이더/토글 마운트, 헤더 min-h 고정
+  components/wallet/
+    MultiCurrencyBalance.tsx -- 우상단 통합 잔액
+  pages/
+    Referral.tsx         -- 친구초대 단독 페이지 강화
+    my/Badges.tsx        -- 배지 단일화
+    legal/OperatingPrinciples.tsx
+  hooks/
+    useWebAuthn.ts       -- 지문/Face ID
+    useStepUpGuard.ts    -- AAL2 이미 보유 시 skip
+  lib/
+    crownToPhon.ts       -- 카피 매퍼
+scripts/
+  qa-matrix-v9.mjs
+reports/
+  qa-matrix-v9.json
+```
 
-## 8. 검증 게이트
-
-- `check-no-crown-ui.mjs` = 0
-- `check-money-flow-freeze.mjs` 8경로 PASS
-- `check-operator-isolation.mjs` PASS
-- Supabase linter 0011 잔존 0 (user-callable 한정)
-- PC 1440 / Mobile 375·390 sidebar 점프 0, Bottom Nav 단일 5탭
-- Build error 0
-
-## 기술 세부
-
-신규 migration 1개 (GRANT + enum + reason cleanup + search_path patch). 신규 컴포넌트: `LiveBetFeed.tsx`, `MobileBottomNav5.tsx`(없을 경우). 수정: `App.tsx`/`Layout` Nav 단일화, `Casino.tsx`/`Referral.tsx` 잔여 UI, 잔존 Crown 사용처. 머니플로 8경로(`award_crown`, `_apply_house_edge_split`, `imperial_place_phon_bet`, `_settle`, Treasury, Founding, withdrawal, deposit) 본문 git diff = 0 유지.
+머니플로 8경로 (`open_position_phon`, `close_position_phon`, `swap_phon_krw`, `request_withdrawal`, `imperial_place_phon_bet`, `_settle`, `_apply_house_edge_split`, `apply_token_burn`) 본문 무변경 — `git diff = 0` 자동 검증 PASS 후에만 완료 보고.
