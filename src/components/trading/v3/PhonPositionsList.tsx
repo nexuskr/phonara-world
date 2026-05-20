@@ -39,9 +39,12 @@ export default function PhonPositionsList() {
   return (
     <div className="space-y-2">
       {rows.map((p) => {
-        const mark = prices[p.symbol] ?? p.entry;
+        // mark가 0/NaN/undefined일 때 entry로 폴백 (priceStore 미초기화 시 frac이 -100이 되어
+        // close_position_phon의 'invalid_pnl' (-1..100 범위) 에러를 유발하던 버그 차단)
+        const rawMark = Number(prices[p.symbol]);
+        const mark = Number.isFinite(rawMark) && rawMark > 0 ? rawMark : p.entry;
         const dir = p.side === "long" ? 1 : -1;
-        const pnlPct = ((mark - p.entry) / p.entry) * dir * 100;
+        const pnlPct = p.entry > 0 ? ((mark - p.entry) / p.entry) * dir * 100 : 0;
         const pnlPhon = (pnlPct / 100) * p.margin * p.leverage;
         const positive = pnlPct >= 0;
         return (
