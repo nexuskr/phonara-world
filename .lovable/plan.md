@@ -1,119 +1,107 @@
-# PR-P0-2 — Rate Limiting & Global Polling Optimization (Phase 2)
+# P0-3 — 인증/세션 안정화 (지구상 최고사양)
 
-## Goal
-모든 클라이언트 폴링을 단일 **Adaptive PollingManager**로 통합해 background/idle/저전력 단말에서 RPC 호출량을 60–80% 감소시킨다. 머니플로 8경로와 사용자 UI는 무변경.
+## 목표
 
-## What gets built
+출시를 막는 인증 불안 요소를 철벽으로 제거.
 
-### 1. PollingManager (신규 코어)
-**`src/lib/polling/PollingManager.ts`** — 단일 글로벌 싱글톤.
+- 무한 리다이렉트 0
+- `getUser()` /user 403 폭주 제거 (single-flight + cache)
+- `refreshSession` race condition 제거 (mutex)
+- 세션 만료 시 강제 로그아웃 대신 자동 재연결 → 실패 시만 재로그인 유도
+- 모든 인증 로직 단일 진입점화
 
-- Priority queue: `critical | high | normal | low | cosmetic` (5단계)
-- Adaptive interval = `base × visibilityMul × activityMul × deviceMul × backoffMul`
-  - `visibilityMul`: 보임=1, 숨김=∞ (skip)
-  - `activityMul`: 마지막 user input <30s=1.0, <2m=1.5, <10m=2.5, idle=4.0
-  - `deviceMul`: high=1.0 / mid=1.3 / low=2.0 (`@pkg/performance/device`)
-  - `backoffMul`: 연속 실패 시 exp + jitter (1→2→4→8, cap 30s × base)
-- Concurrency cap: 동시 in-flight ≤ 4 (priority preempt)
-- Tracked ledger 연동(`@pkg/runtime` trackInterval) — Phase 2 Visibility 호환
-- Money-flow 카테고리는 등록 불가(throw) — 가드 fail-closed
+## 발견된 문제 (auth 로그 기반)
 
-### 2. Hook surface
-**`src/hooks/polling/useGlobalPolling.ts`**
+1. `403: invalid claim: missing sub claim` (`bad_jwt`) — `useAuthReady` + `useAuthBridge` + `useRequireAuth` 가 각자 독립적으로 `hasVerifiedSession()` 호출 → `auth.getUser()` /user 가 페이지 1회 진입에 3~5회 발사
+2. `useAuthBridge` 에 refresh 실패 시 재시도/backoff 없음. token refresh race 시 동시 다중 호출 가능
+3. `Auth.tsx` 가 무조건 `/secure-auth` 로 Navigate → 이미 인증된 사용자도 거기로 가서 다시 dashboard 로 튐 (잠재 redirect loop)
+4. `useRequireAuth` 는 `db.user` (localStorage) 만 보고 ready 판단 — broken local session + 서버 unverified 케이스 race
+5. `AuthErrorBoundary` 부재 — auth-bridge 내부 예외가 React tree 까지 buble
+
+## 변경 사항
+
+### 1) `src/lib/auth/authSingleFlight.ts` (신규)
+- `verifySessionOnce()` 모듈 싱글톤. 동시 호출은 단일 in-flight Promise 공유.
+- 결과는 5s TTL 캐시 + `onAuthStateChange` 발생 시 무효화.
+- 내부적으로 `auth.getSession()` → `auth.getUser()` 1회만.
+
+### 2) `src/lib/auth/refreshMutex.ts` (신규)
+- `safeRefreshSession()` mutex. 동시 호출은 같은 Promise 반환.
+- 실패 시 exp backoff (500ms → 1s → 2s → 4s, cap 4회). 최종 실패면 `bad_jwt` 분기 → `clearBrokenLocalSession()`.
+
+### 3) `src/lib/auth-recovery.ts` (보강)
+- `hasVerifiedSession()` 내부를 `verifySessionOnce()` 로 위임 (외부 시그니처 동일, 후방호환).
+
+### 4) `src/hooks/use-auth-bridge.ts` (보강)
+- 단일 `useRef` mounted 가드로 unmount race 차단.
+- `TOKEN_REFRESHED` 핸들러에서 mutex 통과한 결과만 사용.
+- `INITIAL_SESSION` 이벤트 우선 (Supabase v2 권장) — `getSession()` 별도 호출 제거 (중복 /user 차단).
+- bad_jwt 감지 시: 토스트 1회 + `clearBrokenLocalSession()` + SIGNED_OUT 이벤트 자연 발생 대기 (redirect 강제 X).
+
+### 5) `src/hooks/use-auth-ready.ts` (보강)
+- `verifySessionOnce()` 위임. /user 폭주 해결.
+
+### 6) `src/hooks/use-require-auth.ts` (보강)
+- redirect loop guard: 이미 `/secure-auth` 경로면 nav 호출 skip.
+- `returnTo` 쿼리 파라미터로 원래 경로 보존.
+
+### 7) `src/pages/Auth.tsx` (보강)
+- 이미 verified session 있으면 `/dashboard` 로 리다이렉트 (loop 사전 차단).
+- 미인증 시만 `/secure-auth` 로 Navigate.
+
+### 8) `src/components/auth/AuthErrorBoundary.tsx` (신규)
+- App 루트에 마운트.
+- 자식 트리의 auth 관련 throw 를 잡아서 "자동 재연결 중..." UI → 3초 후 자동 복구 시도 → 실패 시 "다시 로그인" CTA.
+
+### 9) `src/App.tsx` (한 줄 추가)
+- 기존 ErrorBoundary 바깥에 `<AuthErrorBoundary>` 1회 마운트.
+
+### 10) `docs/operations/auth-flow.md` (신규)
+- 현재 인증 흐름 다이어그램(텍스트) + P0-3 변경점 + 디버깅 가이드.
+
+## 가드레일
+
+- money-flow 8경로 git diff = 0 (인증 레이어만 수정, RPC 트랜잭션 미터치)
+- UI/UX 변화 = AuthErrorBoundary 의 fallback 1개만 (정상 흐름 0 변화)
+- Layer 1 gz 영향 < 1KB (auth 헬퍼는 작음)
+- `@pkg/auth/*` 별도 생성 대신 기존 `src/hooks/auth/` + `src/lib/auth/` 구조 유지 (마이그레이션 비용 최소화)
+
+## 기술 상세
+
+### single-flight 캐시 키
 ```ts
-useGlobalPolling({ key, intervalMs, priority, owner, run })
+type CachedVerify = { ts: number; user: User | null };
+const TTL_MS = 5_000;
+let inflight: Promise<CachedVerify> | null = null;
 ```
-- key 중복 등록 시 reference count + 가장 짧은 interval 채택
-- 언마운트 시 dec; 0이 되면 해제
-- 반환: `{ lastRun, lastError, manualRun }`
 
-### 3. 마이그레이션 대상 (raw `setInterval` → useGlobalPolling)
-사용자 영역 cosmetic/social polling 위주 — money-flow / kernel / admin 비대상.
+### refresh mutex
+```ts
+let refreshInflight: Promise<Session | null> | null = null;
+async function safeRefreshSession() {
+  if (refreshInflight) return refreshInflight;
+  refreshInflight = doRefreshWithBackoff().finally(() => { refreshInflight = null; });
+  return refreshInflight;
+}
+```
 
-| 파일 | 기존 ms | priority |
+### redirect loop guard
+```ts
+if (location.pathname === "/secure-auth" || location.pathname === "/auth") return;
+nav(`/secure-auth?returnTo=${encodeURIComponent(location.pathname)}`);
+```
+
+## 예상 효과
+
+| 지표 | Before | After |
 |---|---|---|
-| `src/hooks/use-live-fomo-counters.ts` | 12s | normal |
-| `src/hooks/use-friend-ranking.ts` | 60s | low |
-| `src/hooks/use-now-tick.ts` (clock) | 1s | cosmetic (visible-only) |
-| `src/components/fomo/LiveTradingCounter.tsx` | 12s | low |
-| `src/components/trading/v3/PhonLiveSocialProof.tsx` | – | low |
-| `src/components/trading/v3/HotCoinRail.tsx` | – | normal |
-| `src/components/empire/ImperialLiveWinsRail.tsx` | – | low |
-| `src/components/lobby/v3/ProximityFomoToast.tsx` | – | cosmetic |
-| `src/packages/wallet/hooks/useDepositCountdown.ts` | 1s | normal (visible-only) |
-| `src/packages/duel/hooks/useFomoOracle.ts` | – | low |
-| `src/packages/apex/landing/LandingBigWinTicker.tsx` | – | cosmetic |
-| `src/packages/apex/landing/LandingRaceCountdown.tsx` | – | cosmetic |
-| `src/packages/apex/components/ApexBigWinTicker.tsx` | – | cosmetic |
-| `src/packages/apex/games/SlotsLiteGame.tsx` (UI tick) | – | cosmetic |
+| 페이지 1회 진입 시 `/user` 호출 | 3~5회 | 1회 |
+| `bad_jwt` 발생 시 동작 | 503 후 무한 루프 | silent recover |
+| refresh race 시 동시 호출 | N개 | 1개 (mutex) |
+| 이미 로그인된 상태에서 /auth 진입 | dashboard로 튐 (loop 가능) | 즉시 dashboard navigate |
 
-**제외 (raw setInterval 유지)**:
-- `useDepositRealtime` / `useDeposit` / `useCrashRound` — money-flow 8경로
-- `bybit-feed.ts` — oracle feed
-- `admin/*` (ImperialActivationPanel, Phase1LiveMonitor, DuelHealthDashboard, ImperialCircuitPanel, RegionHealth, Sprint4Dashboard, CommandCenter) — operator 청크 격리, 별도 PR
-- `runtime.idle.ts`, `clientMetrics.ts`, `visible-interval.ts` — infra primitives
-- `useDuelRoom` / `useSpectatorSync` / `useOddsEngine` / `useApexRace` / `useVrfTrace` — 게임 엔진 실시간 (별도 검토 후 P0-3)
+## 비범위 (P0-3 미포함)
 
-### 4. Rate Guard
-**`src/lib/api/rateGuard.ts`** — per-(user, endpoint) sliding window + exp backoff.
-- API: `guarded(endpoint, fn, { maxPerMin?=120, burst?=10 })`
-- 초과 시 즉시 throw `RateLimitedError`(retry-after) — 호출자가 backoff 결정
-- PollingManager가 자동 wrap (manual fetch는 opt-in)
-- 머니플로 RPC allowlist는 가드 우회(deny-list 검사 후 통과)
-
-### 5. Health Dock 카드
-**`src/components/admin/PollingStatusCard.tsx`** (admin 전용, operator 청크) — `/admin/ops/self-heal`에 1장 추가.
-- active pollers (count by priority)
-- calls/min (마지막 60s rolling)
-- saved requests (visibility/activity로 skip한 누적)
-- top 5 owners by call volume
-
-## Guardrails (절대 불변)
-- **머니플로 8경로 git diff = 0**: `imperial_place_phon_bet`, `_settle`, `_apply_house_edge_split`, `request_withdrawal`, `credit_crypto_deposit`, `swap_*`, `stake_*`, `subscribe_vip_pass_phon` 호출부 무변경
-- **UI/카피 변경 0**: 사용자 가시 영역 텍스트·색·간격 무변경
-- **money_flow 카테고리 등록 차단**: PollingManager가 throw — fail-closed
-- **Layer 1 번들 영향 < 2KB gz**: PollingManager는 single tiny module, treeshake-safe, admin 카드는 operator 청크
-- **Phase 2 ledger 호환**: 모든 등록은 `trackInterval`로 tracked ledger 적재
-
-## Technical details
-
-### File map
-```text
-NEW  src/lib/polling/PollingManager.ts          ~180 LOC
-NEW  src/hooks/polling/useGlobalPolling.ts       ~70 LOC
-NEW  src/lib/api/rateGuard.ts                    ~90 LOC
-NEW  src/components/admin/PollingStatusCard.tsx  ~120 LOC (operator chunk)
-EDIT 14 cosmetic/social hook & component files (setInterval → useGlobalPolling)
-EDIT src/pages/admin/ops/SelfHeal.tsx (mount PollingStatusCard)
-NEW  docs/operations/polling-manager.md (운영 가이드)
-```
-
-### Adaptive math (예시)
-```text
-base=12s, visible, idle 5분, mid device, no failures
-→ 12 × 1 × 2.5 × 1.3 × 1 = 39s
-base=12s, hidden tab
-→ skip(0 call)
-base=12s, visible, active <30s, high device, 2 fails
-→ 12 × 1 × 1 × 1 × 4 = 48s (backoff)
-```
-
-### Test plan
-1. Dev: open `/admin/ops/self-heal` → PollingStatusCard에서 active pollers 확인
-2. 백그라운드 탭 2분 → calls/min == 0, saved requests 증가
-3. idle 10분 → low priority pollers interval 4x
-4. 머니플로 grep: 8 RPC 함수 호출부 변경 0건 (`git diff --stat` 확인)
-5. Layer 1 번들: bundle-budget.mjs PASS (180KB 유지)
-
-## Expected outcome
-- 백그라운드 RPC 호출량: 30/min → 0
-- idle 10분 클라이언트 RPC 호출량: 60/min → 12–18/min (70% 감소)
-- 평균 활성 클라이언트 RPC 호출량: 30% 감소 (adaptive)
-- Layer 1 gz 영향: +1.5KB 예상
-- 사용자 가시 변화: 0
-
-## Out of scope (P0-3 이후)
-- Admin operator 폴링(`Phase1LiveMonitor`, `CommandCenter` 등) 통합
-- Game engine real-time(`useDuelRoom`, `useApexRace`) 통합
-- Oracle feed(`bybit-feed`) 통합
-- Backend rate limiting (no-backend-rate-limiting directive 유지)
+- OAuth provider 추가 (현행 유지)
+- MFA/AAL2 변경 (별도 PR)
+- 백엔드 RL (P0-2 + 미래 인프라)
