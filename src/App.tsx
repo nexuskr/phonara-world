@@ -62,7 +62,7 @@ const ClientMetricsBinder = lazy(() => import("@/components/system/ClientMetrics
 const ReviewerMaskRoot = lazy(() => import("./components/ReviewerMaskRoot").then((m) => ({ default: m.ReviewerMaskRoot })));
 const ReviewerBadge = lazy(() => import("./components/ReviewerBadge"));
 const MobileShell = lazy(() => import("./components/nav/MobileShell"));
-const StakeStyleSidebar = lazy(() => import("./components/nav/StakeStyleSidebar"));
+import StakeStyleSidebar from "./components/nav/StakeStyleSidebar";
 
 const Auth = lazy(() => import("./pages/Auth.tsx"));
 const Dashboard = lazy(() => import("./pages/Dashboard.tsx"));
@@ -292,8 +292,8 @@ const App = () => (
             <DailyLoginRewardToast />
             <ApexLiveChatFab />
           </Suspense>
-          {/* PC 영구 좌측 사이드바 — md+ 노출, 라우트별 자동 숨김. */}
-          <Suspense fallback={null}><StakeStyleSidebar /></Suspense>
+          {/* PC 영구 좌측 사이드바 — md+ 노출, 라우트별 자동 숨김. (정적 import, 깜빡임 0) */}
+          <StakeStyleSidebar />
           {/* 모바일 한손 조작 셸 — 5탭 + 더보기 시트 + 빠른 입금 FAB. md+ 자동 숨김. */}
           <Suspense fallback={null}><MobileShell /></Suspense>
           <Suspense fallback={<RouteFallback />}>

@@ -1,4 +1,9 @@
-import { memo, useEffect } from "react";
+import { memo, useLayoutEffect } from "react";
+
+// 첫 페인트 전 has-desktop-sidebar 즉시 부여 (md+ CSS 전용, 모바일 무영향)
+if (typeof document !== "undefined") {
+  document.documentElement.classList.add("has-desktop-sidebar");
+}
 import { NavLink, useLocation } from "react-router-dom";
 import {
   Gem, Home, Swords, Sparkles, Gamepad2, Dice5, TrendingUp, Radio,
@@ -70,14 +75,13 @@ function StakeStyleSidebarInner() {
   const loc = useLocation();
   const hidden = HIDDEN_PREFIX.some((p) => loc.pathname.startsWith(p));
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const root = document.documentElement;
     if (hidden) {
       root.classList.remove("has-desktop-sidebar");
-      return;
+    } else {
+      root.classList.add("has-desktop-sidebar");
     }
-    root.classList.add("has-desktop-sidebar");
-    return () => root.classList.remove("has-desktop-sidebar");
   }, [hidden]);
 
   if (hidden) return null;

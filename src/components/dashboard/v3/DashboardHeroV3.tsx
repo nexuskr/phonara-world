@@ -82,22 +82,31 @@ export default function DashboardHeroV3({
         initial={reduced ? false : { opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.15 }}
-        className="relative z-10 mt-7 font-imperial font-black text-3xl md:text-6xl leading-tight text-center"
+        className="relative z-10 mt-7 font-imperial font-black text-2xl md:text-5xl leading-[1.15] text-center max-w-4xl px-4"
         style={{ textShadow: "0 0 40px hsla(258,80%,60%,0.45)" }}
       >
-        폰을 켜는 순간,
-        <br />
         <span
           className="bg-clip-text text-transparent"
           style={{
             backgroundImage:
-              "linear-gradient(135deg, hsl(48 100% 78%) 0%, hsl(44 95% 60%) 50%, hsl(38 70% 45%) 100%)",
+              "linear-gradient(135deg, hsl(48 100% 82%) 0%, hsl(44 95% 62%) 50%, hsl(38 70% 48%) 100%)",
             textShadow: "0 0 60px hsla(44,100%,60%,0.45)",
           }}
         >
-          너는 이미 우주 황제다.
+          오늘 사람들이 가장 많이 참여 중인
         </span>
+        <br />
+        실시간 리워드 챌린지
       </motion.h1>
+
+      <motion.p
+        initial={reduced ? false : { opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.3 }}
+        className="relative z-10 mt-4 text-sm md:text-lg text-foreground/80 font-semibold text-center px-4"
+      >
+        무료 예측 · 무료돈벌기 · 실시간 보상 · PHON 받기
+      </motion.p>
 
       {/* Hero stats */}
       <div className="relative z-10 mt-7 flex items-center gap-3 md:gap-6">
