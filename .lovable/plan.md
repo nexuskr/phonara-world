@@ -64,9 +64,46 @@ active = `imperial` glow variant, haptic on tap.
 - `scripts/check-no-crown-ui.mjs` 실행 → 잔존 건 lucide `Crown` → `Sparkles`/`Gem`, "왕관"/"👑" → "PHON 보상"/"✨". 토스트 카피 포함.
 - 백엔드 `award_crown` 등 이름/로직은 무변경.
 
-## 6. 27 버그 회귀 표
+## 6. 트레이딩 화면 긴급 수정 (신규)
+
+### 6-1. 청산/X 버튼 "청산실패" 오류
+- 증상: `<LivePositionsTable>` 청산 버튼 → "잠시 후 다시 시도해주세요. 폐하의 자산은 안전합니다" 토스트 후 실패.
+- 진단: `close_live_position` RPC 호출부 인자 drift 또는 `imperial_kill_switches.betting` 게이트 오해석으로 추정. RPC 본문/머니플로 무변경 — 호출부만 정렬:
+  - 클라이언트에서 RPC 시그니처 실측(`\df+ close_live_position`) → 인자명/타입 일치 확인
+  - kill switch가 `withdrawal`/`betting`만 차단하고 close는 항상 허용되는지 확인 (필요 시 클라이언트 가드 분기 조정)
+  - 실패 시 error.code/message를 토스트에 함께 노출(디버그용 admin-only)
+- 변경 범위: `src/components/trade/LivePositionsTable.tsx`(또는 동등 파일) + 호출 헬퍼 1개. RPC/트리거 무변경.
+
+### 6-2. 모바일 레버리지 슬라이더 미표시
+- 증상: 모바일(<768px)에서 RealBetSlip/TradePanel의 Leverage Slider + Isolated/Cross 토글이 보이지 않음.
+- 진단: 슬라이더 컨테이너가 `hidden md:flex` 또는 collapse 상태로 묶여 있을 가능성 + `useMyPower().maxLeverage` 로딩 전 null 처리로 unmount.
+- 수정:
+  - 슬라이더 섹션 모바일 노출 (`flex md:flex`로 변경, BottomSheet 내 sticky)
+  - Bybit/Binance식 슬라이더 UI: 1x/5x/10x/25x/50x/100x preset chip + 미세 슬라이더 + Isolated/Cross 라디오
+  - `maxLeverage` 로딩 중에는 skeleton, 로딩 후 cap 적용
+- 변경 범위: `src/components/trade/RealBetSlip.tsx` 또는 `LeverageSlider.tsx`. 머니플로 무관(`live_positions` INSERT 트리거가 서버에서 cap 강제).
+
+## 7. 27 버그 회귀 표
 
 체크리스트 폼으로 27개 항목 일괄 확인 후 보고 본문에 OK/FAIL 매트릭스 첨부 (코드 무수정, 검증만).
+
+## 8. 성능
+
+- Pretendard `font-display: swap` + preconnect
+- 비-critical 라우트 `React.lazy` 점검
+- `touch-action: manipulation` 모바일 인터랙티브 요소
+- LCP < 1.8s / CLS < 0.05 목표, Lighthouse 모바일 5뷰포트 측정 준비
+
+## 9. 검증 게이트
+
+- `check-no-crown-ui.mjs` = 0
+- `check-money-flow-freeze.mjs` 8경로 PASS
+- `check-operator-isolation.mjs` PASS
+- Supabase linter 0011 잔존 0 (user-callable 한정)
+- PC 1440 / Mobile 375·390 sidebar 점프 0, Bottom Nav 단일 5탭
+- 모바일 트레이딩 슬라이더 가시성 + 청산 정상 작동
+- Build error 0
+
 
 ## 7. 성능
 
