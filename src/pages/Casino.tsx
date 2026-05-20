@@ -105,20 +105,29 @@ export default function CasinoLobby() {
   return (
     <CasinoLayout>
       <div className="container py-6 space-y-6">
-        <div className="flex items-baseline gap-3">
-          <h1 className="font-imperial text-2xl md:text-3xl text-gradient-imperial tracking-[0.18em]">
-            슬롯 카지노
-          </h1>
-          <span className="text-[11px] text-muted-foreground tracking-wide hidden sm:inline">
-            Phonara 자체 슬롯 엔진 · Provably Fair
-          </span>
+        <div className="space-y-2">
+          <div className="flex items-baseline gap-3 flex-wrap">
+            <h1 className="font-imperial text-2xl md:text-3xl text-gradient-imperial tracking-[0.18em]">
+              슬롯 카지노
+            </h1>
+            <span className="text-[11px] text-muted-foreground tracking-wide">
+              Phonara 자체 슬롯 엔진 · Provably Fair
+            </span>
+          </div>
+          {/* P1-C Slice 3 — Stake.com급 상단 정보 칩 (RTP·최대배율·최소베팅) */}
+          <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-emerald-400/40 bg-emerald-500/10 text-emerald-200 font-bold">RTP 96.0~96.8%</span>
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-amber-400/40 bg-amber-500/10 text-amber-200 font-bold">최대 5000×</span>
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-pink-400/40 bg-pink-500/10 text-pink-200 font-bold">최소 베팅 100 PHON</span>
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-border bg-card/40 text-muted-foreground">NFT 보유 시 RTP +0.5%</span>
+          </div>
         </div>
 
         <div className="imperial-card p-4 flex items-start gap-3">
           <Sparkles className="w-5 h-5 text-primary mt-0.5" />
           <div className="text-xs text-muted-foreground leading-relaxed">
             <strong className="text-foreground">Practice / Real 모드</strong> — DEMO는 무료 칩으로 즉시 체험,
-            REAL은 PHON 토큰으로 진짜 베팅. Cosmic Emperor NFT 보유 시 RTP +0.5% 자동 적용.
+            REAL은 PHON 토큰으로 진짜 베팅. 각 게임 진입 시 배당표·규칙·보너스를 한눈에 확인할 수 있습니다.
           </div>
         </div>
 
