@@ -1,72 +1,97 @@
-# P5-A — Tier S+ Expansion (5 New Games)
+# P5-B — Community Layer (Drand-stamped Chat · Squad · Tournament)
 
-기존 `apex_play_mock_game` RPC 6코드(dice/crash/plinko/mines/slots_lite/sportsbook)를 그대로 활용. 신규 게임은 모두 백킹 RPC 코드에 매핑(display 코드 → backing 코드)되어 머니플로 git diff = 0 보장. House-edge §6 수식 0 터치 — 신규 게임 RTP는 메타데이터 카탈로그(`TIER_S` Record)에만 기재.
+한국인 락인(lock-in)을 극대화하는 3축 커뮤니티: 검증가능한 채팅(Drand 스탬프), 3인 스쿼드 + 미러 베팅, 토너먼트 브래킷(Apocalypse Cup 준비). 머니플로 8경로 git diff = 0 유지 — mirror_bet 도 `apex_place_bet_v2` 재사용.
 
-## 5 신규 게임 매핑
+## DB 마이그레이션 (5 tables + 4 RPC)
 
-| Display 코드      | 백킹 RPC 코드  | RTP    | 비고                                              |
-| ----------------- | -------------- | ------ | ------------------------------------------------- |
-| `crash_mc`        | `crash`        | 99.0%  | 3-step partial cashout 슬라이더 (33/66/100% 표시) |
-| `hashdice`        | `dice`         | 99.0%  | SHA-256 표시, 0~9999 매핑                         |
-| `tower`           | `mines`        | 99.0%  | 8행 × 4칸 그리드, mines=3 매핑                    |
-| `dragon_tiger`    | `dice`         | 96.5%  | Dragon=under50 / Tiger=over50 / Tie=under2 (50x)  |
-| `roulette_v2`     | `dice`         | 94.7%  | 더블제로 0/00 + 36칩, target=3 매핑               |
-
-## 변경 파일 (총 13개)
-
-신규 (12):
 ```text
-src/packages/apex/games/_shared/decoders.ts          # 결정적 표시 decoder
-src/packages/apex/games/tier-plus/
-  CrashMultiCashoutGame.tsx                          # ~3KB
-  HashdiceGame.tsx                                   # ~2.5KB
-  TowerGame.tsx                                      # ~3KB
-  DragonTigerGame.tsx                                # ~2.5KB
-  RouletteV2Game.tsx                                 # ~3KB
-src/pages/apex/games/
-  CrashMC.tsx Hashdice.tsx Tower.tsx
-  DragonTiger.tsx RouletteV2.tsx                     # 각 50B (Game wrapper)
-docs/apex/house-edge.md                              # §6 메타 표 5행 추가 (수식 무변경)
+apex_chat_rooms        id, name, type(global|squad|tournament),
+                       host_user_id, is_public, drand_round, created_at
+apex_chat_messages     id, room_id, user_id, message(<=500),
+                       drand_round, drand_signature, created_at
+apex_squad_rooms       id, host_user_id, member_ids jsonb (≤3 uuids),
+                       status(open|locked|done), current_bet_mirror jsonb
+apex_squad_mirrors     id, squad_id, source_roll_id, mirror_user_id,
+                       amount_phon, idem_key (unique), created_at
+apex_tournaments       id, season_id, name, prize_pool_phon, start_at,
+                       end_at, bracket jsonb, status(scheduled|live|done)
 ```
 
-수정 (2):
+RLS:
+- `apex_chat_rooms`: public read if `is_public=true`, write room owner / admin
+- `apex_chat_messages`: read = 같은 room 멤버 또는 public room, write = 인증 + 본인 user_id
+- `apex_squad_rooms`/`apex_squad_mirrors`: read/write = `member_ids @> auth.uid()`
+- `apex_tournaments`: public read, admin write
+
+RPCs (SECURITY DEFINER):
+- `apex_send_chat_message(_room_id, _message)` — 500자 캡 + 3s/유저 throttle + Drand round/signature 자동 첨부
+- `apex_create_squad()` → squad_id (host = auth.uid())
+- `apex_join_squad(_squad_id)` — 최대 3명, 중복 거부
+- `apex_mirror_bet(_squad_id, _source_roll_id, _amount_phon, _idem_key)` — 내부에서 `apex_place_bet_v2` 호출 → 머니플로 8경로 무변경
+
+## Edge Functions (apex-* 만)
+
+- `supabase/functions/apex-chat-stamp/index.ts` — 메시지 send 직후 호출, 최신 Drand round + signature를 메시지 row에 패치. JWT 검증 + zod 입력 검증.
+- `supabase/functions/apex-squad-mirror-tick/index.ts` — 1분 cron. 활성 스쿼드의 `current_bet_mirror`를 스캔하여 미반영 멤버에 대해 `apex_mirror_bet` 호출 (idem_key = `${squad}:${roll}:${user}`).
+
+cron 등록: `pg_cron` + `pg_net` insert (project-specific URL/key — insert tool 사용).
+
+## Frontend (모두 `@pkg/apex/community/*`)
+
+신규:
 ```text
-src/packages/apex/games/_shared/edge.ts              # TierSCode union 확장 + TIER_S 5엔트리 추가
-src/App.tsx                                          # lazy import 5 + Route 5
+src/packages/apex/community/
+  ChatRoom.tsx            # 메시지 리스트 + Drand 스탬프 chip + 입력
+  ChatMessage.tsx         # Drand round/sig 검증 hover popover
+  SquadRoom.tsx           # 3슬롯 멤버 + Mirror Toggle + 활성 베팅 카드
+  SquadCreatePanel.tsx    # 호스트 생성 / 초대 링크
+  MirrorToggle.tsx        # 1-click follow (한 번 누르면 자동 미러)
+  TournamentBracket.tsx   # SVG 브래킷 (Apocalypse Cup 준비)
+  TournamentLeaderboard.tsx
+  hooks/useChatChannel.ts # @pkg/realtime/chat 래퍼 (chat: prefix)
+  hooks/useSquadChannel.ts# @pkg/realtime/game 래퍼 (game:squad: prefix)
+  lib/drandVerify.ts      # 클라이언트 검증 (Ed25519 — 기존 apex-vrf 재사용)
+src/pages/apex/community/
+  Chat.tsx                # /apex/community/chat (lazy)
+  Squad.tsx               # /apex/community/squad (lazy)
+  Tournament.tsx          # /apex/community/tournament (lazy)
 ```
+
+수정:
+- `src/App.tsx` — 3 lazy import + 3 Route 추가
+- `src/packages/apex/landing/` 또는 ApexShell — Community 진입 카드 3개 (CSS gradient)
 
 ## 라우팅
 ```text
-/apex/games/crash-mc
-/apex/games/hashdice
-/apex/games/tower
-/apex/games/dragon-tiger
-/apex/games/roulette-v2
+/apex/community/chat
+/apex/community/squad
+/apex/community/tournament
 ```
 
-## 가드레일 적용
+## 가드레일
 
-- 신규 RPC 0개. `useApexGame.play(<backing_code>, {phon}, params)` 호출만 사용.
-- 각 게임 wrapper 최상단에서 `useAttestOnSettle({ game: <display_code>, roundRef: last?.roll_id })` 자동 호출 → Drand + Ed25519 attestation 자동.
-- `TierShell` + `BetInput` 재사용으로 게임당 chunk ≤ 3.5KB gz (cap 80KB 대비 -95%).
-- Layer 1 영향 0 (전부 React.lazy + Route lazy).
-- realtime 신규 채널 0. `useGameChannel` 이미 활성.
-- 모든 신규 코드 `@pkg/apex/*` 내부.
-- `notify` 4-tier만 사용 (raw sonner 0건).
+- 머니플로 git diff = 0: `apex_play_mock_game` / `apex_place_bet_v2` / `phon_balances` / `apex_game_rolls` 본문/스키마 무변경. `apex_mirror_bet` 는 wrapper만.
+- realtime: `useChatChannel('chat:room:<id>')`, `useSquadChannel('game:squad:<id>')` — raw `supabase.channel` 0건.
+- notify: `@/lib/notify` 4-tier만.
+- chunk: 각 community 페이지 lazy ≤ 25KB gz, Layer 1 영향 0.
+- 모든 신규 코드 `@pkg/apex/community/*` + `supabase/functions/apex-*`.
 - operator 격리 무변경.
+- RLS: 모든 신규 테이블 enable + 멤버십 기반 정책 + admin-only `apex_tournaments` write.
+- 스로틀: chat 3s/유저, squad join 1s/유저 — RPC 내부 가드.
 
-## Money Flow 검증
-- `apex_play_mock_game` 함수 본문 git diff = 0.
-- `apex_place_bet_v2` 함수 본문 git diff = 0.
-- `apex_game_rolls` 스키마 git diff = 0.
-- `check-money-flow-freeze.mjs` 8/8 PASS 유지.
+## 검증
 
-## 다음 슬라이스 (P5-B Community Layer) Seed
+- `node scripts/check-money-flow-freeze.mjs` → 8/8 PASS
+- chat latency p50 < 200ms (Drand stamp 비동기)
+- 3-user squad mirror round-trip < 1.5s
+- Tournament bracket render ≤ 16ms (no layout thrash)
 
-- `apex_chat_rooms` + `apex_chat_messages(room_id, drand_round, drand_signature)` (admin RLS + 공개 read)
-- `apex_squad_rooms(host_user_id, member_ids[3], status)` + `apex_squad_mirrors(squad_id, source_roll_id, mirror_user_id)`
-- `apex_tournaments(season_id, prize_pool_phon, start/end_at, bracket jsonb)`
-- `@pkg/apex/community/ChatRoom.tsx` + `SquadRoom.tsx` + `MirrorToggle.tsx` + `TournamentBracket.tsx`
-- Realtime: `useChatChannel('apex:room:<id>')` + `useGameChannel('apex:squad:<id>')`
-- Edge: `apex-chat-stamp` (Drand round 스탬핑) + `apex-squad-mirror-tick` (1m)
-- 모든 신규 테이블 RLS + Layer 1 영향 0 + Mirror는 별도 idempotent insert
+## 다음 슬라이스 (P5-C Apocalypse Cup) Seed
+
+- `apex_cup_seasons(id, name, prize_pool_phon, start/end_at, status)`
+- `apex_cup_brackets(season_id, round, slot_a, slot_b, winner_id, settled_at)`
+- `apex-cup-settler` cron (5m) — Drand round 기반 결정적 매치 결과
+- $1M PHON 풀, 1% slippage 보호, treasury 분배
+- `@pkg/apex/events/CupBracket.tsx` (P5-B `TournamentBracket` 재사용 + 시드/실시간 진행)
+- `CupLeaderboard.tsx`, `CupPrizePool.tsx`
+- 머니플로 8경로 git diff = 0, Layer 1 영향 0
