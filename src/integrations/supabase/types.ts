@@ -699,6 +699,36 @@ export type Database = {
         }
         Relationships: []
       }
+      apex_cashout_chains: {
+        Row: {
+          chain_code: string
+          created_at: string
+          enabled: boolean
+          fee_bps: number
+          label: string
+          min_phon: number
+          native: boolean
+        }
+        Insert: {
+          chain_code: string
+          created_at?: string
+          enabled?: boolean
+          fee_bps?: number
+          label: string
+          min_phon?: number
+          native?: boolean
+        }
+        Update: {
+          chain_code?: string
+          created_at?: string
+          enabled?: boolean
+          fee_bps?: number
+          label?: string
+          min_phon?: number
+          native?: boolean
+        }
+        Relationships: []
+      }
       apex_chat_messages: {
         Row: {
           created_at: string
@@ -872,6 +902,133 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      apex_cup_brackets: {
+        Row: {
+          created_at: string
+          drand_round: number | null
+          id: string
+          player_a_id: string | null
+          player_b_id: string | null
+          round: number
+          season_id: string
+          settled_at: string | null
+          slot_index: number
+          winner_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          drand_round?: number | null
+          id?: string
+          player_a_id?: string | null
+          player_b_id?: string | null
+          round: number
+          season_id: string
+          settled_at?: string | null
+          slot_index: number
+          winner_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          drand_round?: number | null
+          id?: string
+          player_a_id?: string | null
+          player_b_id?: string | null
+          round?: number
+          season_id?: string
+          settled_at?: string | null
+          slot_index?: number
+          winner_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apex_cup_brackets_season_id_fkey"
+            columns: ["season_id"]
+            isOneToOne: false
+            referencedRelation: "apex_cup_seasons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      apex_cup_entries: {
+        Row: {
+          created_at: string
+          eliminated_at: string | null
+          entry_paid_phon: number
+          final_rank: number | null
+          id: string
+          season_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          eliminated_at?: string | null
+          entry_paid_phon?: number
+          final_rank?: number | null
+          id?: string
+          season_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          eliminated_at?: string | null
+          entry_paid_phon?: number
+          final_rank?: number | null
+          id?: string
+          season_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apex_cup_entries_season_id_fkey"
+            columns: ["season_id"]
+            isOneToOne: false
+            referencedRelation: "apex_cup_seasons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      apex_cup_seasons: {
+        Row: {
+          bracket_size: number
+          created_at: string
+          drand_seed_round: number | null
+          end_at: string | null
+          entry_fee_phon: number
+          id: string
+          name: string
+          prize_pool_phon: number
+          settled_at: string | null
+          start_at: string
+          status: string
+        }
+        Insert: {
+          bracket_size?: number
+          created_at?: string
+          drand_seed_round?: number | null
+          end_at?: string | null
+          entry_fee_phon?: number
+          id?: string
+          name: string
+          prize_pool_phon?: number
+          settled_at?: string | null
+          start_at?: string
+          status?: string
+        }
+        Update: {
+          bracket_size?: number
+          created_at?: string
+          drand_seed_round?: number | null
+          end_at?: string | null
+          entry_fee_phon?: number
+          id?: string
+          name?: string
+          prize_pool_phon?: number
+          settled_at?: string | null
+          start_at?: string
+          status?: string
+        }
+        Relationships: []
       }
       apex_daily_cap: {
         Row: {
@@ -1108,9 +1265,13 @@ export type Database = {
           drand_round: number | null
           game: string
           id: string
+          participating_nodes: Json | null
+          quorum_k: number | null
+          quorum_n: number | null
           round_ref: string
           server_pubkey: string | null
           server_signature: string | null
+          vrf_version: string | null
         }
         Insert: {
           client_seed?: string | null
@@ -1120,9 +1281,13 @@ export type Database = {
           drand_round?: number | null
           game: string
           id?: string
+          participating_nodes?: Json | null
+          quorum_k?: number | null
+          quorum_n?: number | null
           round_ref: string
           server_pubkey?: string | null
           server_signature?: string | null
+          vrf_version?: string | null
         }
         Update: {
           client_seed?: string | null
@@ -1132,9 +1297,13 @@ export type Database = {
           drand_round?: number | null
           game?: string
           id?: string
+          participating_nodes?: Json | null
+          quorum_k?: number | null
+          quorum_n?: number | null
           round_ref?: string
           server_pubkey?: string | null
           server_signature?: string | null
+          vrf_version?: string | null
         }
         Relationships: []
       }
@@ -12492,6 +12661,17 @@ export type Database = {
         Args: { _amount: number; _user_id: string }
         Returns: Json
       }
+      apex_admin_cup_create_season: {
+        Args: {
+          _bracket_size: number
+          _end_at: string
+          _entry_fee_phon: number
+          _name: string
+          _prize_pool_phon: number
+          _start_at: string
+        }
+        Returns: string
+      }
       apex_admin_process_cashout: {
         Args: { _intent_id: string; _tx_hash: string }
         Returns: Json
@@ -12527,6 +12707,20 @@ export type Database = {
         Returns: string
       }
       apex_create_squad: { Args: never; Returns: Json }
+      apex_cup_enter: {
+        Args: { _idem_key?: string; _season_id: string }
+        Returns: Json
+      }
+      apex_cup_get_leaderboard: {
+        Args: { _limit?: number; _season_id: string }
+        Returns: {
+          eliminated_at: string
+          entry_paid_phon: number
+          final_rank: number
+          user_id: string
+        }[]
+      }
+      apex_cup_get_season: { Args: { _season_id: string }; Returns: Json }
       apex_get_current_races: {
         Args: never
         Returns: {
