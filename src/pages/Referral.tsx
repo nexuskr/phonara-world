@@ -108,6 +108,22 @@ export default function Referral() {
       <HubTabs hub="legacy" />
       <div className="container pt-4 pb-12 animate-liquid-in space-y-6">
 
+        {/* Slice 2: 50~70대 즉시 인지용 큰 카피 배너 */}
+        <section className="rounded-3xl p-5 md:p-6 bg-gradient-to-br from-gold/20 via-primary/10 to-accent/15 border border-gold/40">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-full bg-gold/20 border border-gold/40 flex items-center justify-center font-black text-gold tabular-nums text-lg">1</div>
+            <div className="text-base md:text-lg font-bold break-keep">아래 <span className="text-gold">내 코드</span>를 카톡으로 보냅니다</div>
+          </div>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center font-black text-primary tabular-nums text-lg">2</div>
+            <div className="text-base md:text-lg font-bold break-keep">친구가 가입하면 <span className="text-money-strong">₩5,000 즉시 지급</span></div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-accent/20 border border-accent/40 flex items-center justify-center font-black text-accent tabular-nums text-lg">3</div>
+            <div className="text-base md:text-lg font-bold break-keep">친구가 충전하면 <span className="text-money-strong">최대 ₩25,000 추가</span></div>
+          </div>
+        </section>
+
         <EmpireTreePreview />
 
         {/* HERO */}
