@@ -7,6 +7,7 @@ import { Gem, Trophy, Lock} from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import PaymentStickyCTA from "@/components/missions/PaymentStickyCTA";
+import CollectionHubTabs from "@/components/collection/CollectionHubTabs";
 
 type Ach = {
   key: string; name: string; description: string; category: string;
