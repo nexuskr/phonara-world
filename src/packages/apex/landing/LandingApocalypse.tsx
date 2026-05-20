@@ -8,6 +8,7 @@ const LandingBigWinTicker = lazy(() => import("./LandingBigWinTicker"));
 const LandingRaceCountdown = lazy(() => import("./LandingRaceCountdown"));
 const TierSTeaserGrid = lazy(() => import("./TierSTeaserGrid"));
 const TrustStrip = lazy(() => import("./TrustStrip"));
+const InstallPrompt = lazy(() => import("../pwa/InstallPrompt"));
 
 export default function LandingApocalypse() {
   return (
@@ -65,6 +66,10 @@ export default function LandingApocalypse() {
 
       <Suspense fallback={null}>
         <TrustStrip />
+      </Suspense>
+
+      <Suspense fallback={null}>
+        <InstallPrompt />
       </Suspense>
     </div>
   );
