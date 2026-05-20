@@ -30,6 +30,10 @@ export type { ConnState, ChannelBinding };
 export { subscribeRealtime };
 /** Region sharding (PR-N) — re-export for admin / debug. */
 export { detectRegion, getRegion, setRegion, type RealtimeRegion } from "./regions";
+/** P0-5 · Silent failover utilities — admin / status card. */
+export { failoverNext, getFailoverState } from "./regions";
+/** P0-5 · Realtime registry stats — admin RealtimeStatusCard. */
+export { getRealtimeStats } from "@/hooks/use-realtime-channel";
 
 const LOG = "[PHONARA REALTIME]";
 
