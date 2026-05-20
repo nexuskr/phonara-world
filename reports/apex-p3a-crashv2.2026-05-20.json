@@ -1,0 +1,31 @@
+{
+  "slice": "P3-A Live Crash V2",
+  "date": "2026-05-20",
+  "money_flow_8_paths_git_diff": 0,
+  "house_edge_touch": 0,
+  "db": {
+    "tables_added": ["apex_crash_rounds", "apex_crash_bets", "apex_signing_keys"],
+    "rpcs_added": ["apex_crash_place_bet", "apex_crash_cashout", "apex_crash_get_round"],
+    "realtime_published": ["apex_crash_rounds"]
+  },
+  "edge_functions": ["apex-crash-engine (cron */15s)", "apex-crash-verify", "_shared/ed25519.ts"],
+  "frontend": {
+    "useCrashTick": "broadcast on market:apex_crash (4 events)",
+    "LiveCrashV2": "non-invasive, lazy route /apex/games/crash-v2",
+    "Verify": "/apex/verify/:roundId — browser Ed25519+SHA256+crash_x recompute"
+  },
+  "provably_fair_v2": {
+    "alg": "Ed25519 (WebCrypto SubtleCrypto)",
+    "hash": "SHA-256(server_seed) committed pre-round",
+    "crash_x_formula": "max(1.00, 0.99/U) where U=SHA256(seed||pub||nonce) top-52bits/2^52",
+    "house_edge_pct": 1.0,
+    "rtp_pct": 99.0
+  },
+  "targets": {
+    "tick_jitter_p99_ms_lt": 50,
+    "concurrent_users": 5000,
+    "bundle_chunk_gz_kb_lt": 80,
+    "layer1_impact_kb": 0
+  },
+  "guardrails_pass": ["money-flow-freeze", "depcruise apex-no-*", "operator isolation", "Layer 1 gz ≤180KB (lazy route)"]
+}
