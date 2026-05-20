@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { notify } from "@/lib/notify";
 import { Vault as VaultIcon, Flame, Sparkles } from "lucide-react";
+
+const CoachV2Panel = lazy(() => import("@/packages/apex/coach/CoachV2Panel").then(m => ({ default: m.CoachV2Panel })));
 
 type State = {
   streak: number;
@@ -144,6 +146,10 @@ export default function ApexVault() {
           ))}
         </ul>
       </section>
+
+      <Suspense fallback={<div className="h-24 rounded-xl border border-border bg-card/40 animate-pulse" />}>
+        <CoachV2Panel />
+      </Suspense>
     </div>
   );
 }

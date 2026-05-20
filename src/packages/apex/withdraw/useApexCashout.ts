@@ -1,5 +1,5 @@
 /**
- * P3-C — Cross-Chain Cashout client wrapper.
+ * P3-C + Phase 6 — Cross-Chain Cashout client wrapper.
  * AAL2 required (server enforces). Existing request_withdrawal 무변경.
  */
 import { useEffect, useState } from "react";
@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { notify } from "@/lib/notify";
 import { useWalletChannel } from "@pkg/realtime";
 
-export type CashoutNetwork = "TRC20" | "ERC20" | "BSC";
+export type CashoutNetwork = "TRC20" | "ERC20" | "BSC" | "SOL" | "SUI" | "APT" | "CCTP_V2";
 
 export interface CashoutIntent {
   id: string; network: CashoutNetwork; address: string;
@@ -17,7 +17,10 @@ export interface CashoutIntent {
   error_message: string | null;
 }
 
-const NETWORK_FEE: Record<CashoutNetwork, number> = { TRC20: 1.0, BSC: 0.5, ERC20: 8.0 };
+const NETWORK_FEE: Record<CashoutNetwork, number> = {
+  TRC20: 1.0, BSC: 0.5, ERC20: 8.0,
+  SOL: 0.25, SUI: 0.20, APT: 0.20, CCTP_V2: 0.50,
+};
 
 export function feePreview(network: CashoutNetwork): number { return NETWORK_FEE[network]; }
 

@@ -1,5 +1,11 @@
-import { useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Heart, Share2, ChevronUp, Flame } from "lucide-react";
+
+const EmperorVoicePlayer = lazy(() =>
+  import("@/packages/apex/voice/EmperorVoicePlayer").then(m => ({ default: m.EmperorVoicePlayer }))
+);
+const BIGWIN_EVENT = "phonara:bigwin";
+const BIGWIN_THRESHOLD_PHON = 1_000_000;
 
 type Reel = {
   user: string;
@@ -23,6 +29,14 @@ export default function ApexWinReels() {
   const [liked, setLiked] = useState(false);
   const reel = REELS[idx % REELS.length];
 
+  // Phase 6: dispatch a bigwin event whenever the visible reel crosses the threshold,
+  // so EmperorVoicePlayer auto-trigger fires (8s cooldown + mute respected internally).
+  useEffect(() => {
+    if (reel.amount >= BIGWIN_THRESHOLD_PHON) {
+      window.dispatchEvent(new CustomEvent(BIGWIN_EVENT, { detail: { payout: reel.amount } }));
+    }
+  }, [idx, reel.amount]);
+
   function next() {
     setIdx((i) => i + 1);
     setLiked(false);
@@ -30,6 +44,9 @@ export default function ApexWinReels() {
 
   return (
     <div className="space-y-3">
+      <Suspense fallback={null}>
+        <EmperorVoicePlayer slot="ko/win_big" autoEvent={BIGWIN_EVENT} autoThreshold={BIGWIN_THRESHOLD_PHON} silent />
+      </Suspense>
       <header className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl md:text-3xl font-black apex-gradient-text">Win Reels</h1>
