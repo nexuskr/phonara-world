@@ -11,6 +11,29 @@
   "lang": "ko",
   "dir": "ltr",
   "categories": ["finance", "productivity", "lifestyle"],
+  "shortcuts": [
+    {
+      "name": "Race",
+      "short_name": "Race",
+      "description": "Live wager race + rakeback",
+      "url": "/apex/race",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Cashout",
+      "short_name": "Cashout",
+      "description": "Cross-chain withdraw (TRC/ERC/BSC)",
+      "url": "/apex/cashout",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Verify",
+      "short_name": "Verify",
+      "description": "Provably-Fair Verifier",
+      "url": "/apex/verify",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ],
   "icons": [
     {
       "src": "/icon-192.png",
