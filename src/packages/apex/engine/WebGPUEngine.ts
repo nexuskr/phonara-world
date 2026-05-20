@@ -55,7 +55,7 @@ export class WebGPUEngine implements HybridEngine {
     device.lost.then((info) => { if (info.reason !== "destroyed") this.lost = true; });
     const module = device.createShaderModule({ code: WGSL });
     this.pipeline = device.createComputePipeline({ layout: "auto", compute: { module, entryPoint: "main" } });
-    this.cfgBuf = device.createBuffer({ size: 16, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+    this.cfgBuf = device.createBuffer({ size: 16, usage: BUF.UNIFORM | BUF.COPY_DST });
   }
 
   static async create(opts: CreateOptions): Promise<WebGPUEngine | null> {
@@ -73,8 +73,8 @@ export class WebGPUEngine implements HybridEngine {
     if (n <= this.capacity && this.outBuf) return;
     try { this.outBuf?.destroy(); this.readBuf?.destroy(); } catch {}
     const bytes = Math.max(64, n * 4);
-    this.outBuf = this.device.createBuffer({ size: bytes, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC });
-    this.readBuf = this.device.createBuffer({ size: bytes, usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST });
+    this.outBuf = this.device.createBuffer({ size: bytes, usage: BUF.STORAGE | BUF.COPY_SRC });
+    this.readBuf = this.device.createBuffer({ size: bytes, usage: BUF.MAP_READ | BUF.COPY_DST });
     this.capacity = n;
   }
 
