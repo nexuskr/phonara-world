@@ -1,4 +1,4 @@
-# P1-C Hyperion Final — Red/Yellow → Green 일괄 승격
+# P1-C Hyperion Final v8 — Red/Yellow → Green + Trading Hotfix
 
 Hyperion Dissection 보고서의 모든 🔴/🟡를 🟢로 전환하고, 모바일 하단 탭 중복(첨부 스크린샷)을 포함한 잔여 UI 결함을 마무리한다. 머니플로 8경로 / Crown 백엔드 RPC·테이블·트리거는 절대 무변경.
 
