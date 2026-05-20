@@ -1,105 +1,42 @@
-# P0-7 — 결제/입금 흐름 안정화
+# P0-8 — Session / Auth Stabilization
 
-## 목표
+P0 마지막 단계. 인증/세션 흐름의 race, multi-tab 불일치, 401 처리, refresh 폭주를 철벽화한다. money-flow 8경로는 무관 — RPC/SQL diff 0.
 
-입금/결제 흐름의 race condition · idempotency · 다중 탭 동기화 · 모니터링 폴링을 철벽으로 안정화. 머니플로 8경로 RPC 본문 git diff = 0, RPC wrapper만 사용.
+## 변경 파일 (신규/수정)
 
-## 현재 상태 (조사 결과)
+**신규**
+- `src/lib/auth/authBroadcast.ts` — `BroadcastChannel('phonara:auth')` 래퍼 (SSR/미지원 환경 no-op). `publish(event, payload)` / `subscribe(handler)` / `setLastEvent` 디버그 스냅샷.
+- `src/lib/auth/sessionHealth.ts` — refresh history(ring buffer 20), 401 recover count, multi-tab peer 카운트, last event ts 를 메모리+`sessionStorage` 백업으로 노출. admin 패널에서 읽기.
+- `src/lib/auth/recover401.ts` — `recoverFrom401(retry: () => Promise<T>)`: 1회 silent `safeRefreshSession()` 재시도 후 재실행, 실패 시 graceful `supabase.auth.signOut({ scope: 'local' })` + broadcast.
+- `src/hooks/auth/useMultiTabAuthSync.ts` — App 루트 마운트 1회. SIGNED_IN/SIGNED_OUT/TOKEN_REFRESHED 수신 시 다른 탭에 broadcast, 다른 탭에서 SIGNED_OUT 수신 시 로컬 store flush + soft reload(현재 라우트 유지).
+- `src/components/admin/ops/SessionHealthCard.tsx` — `/admin/ops/session-health` 패널. multi-tab peers, 최근 refresh, 401 recover 횟수, last event 표시. 15s 자동 갱신.
+- `src/pages/admin/ops/SessionHealth.tsx` — 신규 페이지. AAL2 게이트 재사용. App 라우터에 등록.
+- `docs/operations/auth-flow.md` — P0-3~P0-8 전체 시나리오, multi-tab sync, 401 recover, refresh single-flight 다이어그램 갱신.
 
-- `src/packages/wallet/hooks/useDeposit.ts` — coin/bank/voucher 오케스트레이션. **머니플로 FREEZE 파일**, 본문 미변경.
-- `src/packages/wallet/hooks/useDepositRealtime.ts` — single-intent UPDATE 구독. FREEZE 파일.
-- 모니터링 폴링: `useDeposit.ts` 내부 `setInterval(pollPending, 30_000)` — PollingManager 비연동 (백그라운드/idle 가드 약함).
-- `src/components/empire/PhonaraPayPanel.tsx` — `supabase.channel(...)` raw 구독 + 다중 탭 dedup 없음 + 모든 UPDATE 수신.
-- `src/hooks/deposit/*`, `src/lib/deposit/*` 없음.
-- idempotency: `clientReqIdRef = crypto.randomUUID()` 한번 — localStorage 캐시/재진입 가드 없음.
+**수정**
+- `src/lib/auth/refreshMutex.ts` — 성공/실패를 `sessionHealth.recordRefresh()` 에 기록. 동작 시그니처는 그대로.
+- `src/hooks/use-auth-bridge.ts` — `useMultiTabAuthSync()` 호출, mounted guard는 유지 + pending deep link flush (`window.dispatchEvent(new CustomEvent('phonara:auth-ready'))`) `ImperialDeepLinkListener` 와 연동. `SIGNED_OUT` 수신 시 broadcast.
+- `src/App.tsx` — `/admin/ops/session-health` 라우트 추가 (`AdminAal2Gate` 안쪽).
 
-## 변경 범위
+## 핵심 안정화 포인트
 
-### 신규: `src/lib/deposit/`
-
-1. **`depositIdempotencyCache.ts`**
-   - `getOrMintIdemKey(scope, payloadHash)` — localStorage `phonara:dep:idem:{scope}` JSON `{key, hash, ts}`, 10분 TTL.
-   - `isDuplicateInFlight(key)` — 같은 key가 cache에 있고 status≠filled 면 true.
-   - `markIdemConsumed(key)` — TTL 즉시 만료.
-   - `hashDepositPayload({method,amount,bank?,voucher?})` — SHA-256 8byte prefix.
-
-2. **`depositToastDedupe.ts`**
-   - module-scope `Map<intentId, ts>` + `BroadcastChannel('phonara:dep:fill')` 브로드캐스트.
-   - `claimFilledToast(intentId): boolean` — 30s 내 첫 호출만 true. BroadcastChannel 으로 타 탭 suppression.
-   - SW push와 페이지 양쪽에서 같은 키로 dedupe.
-
-### 신규: `src/hooks/deposit/`
-
-3. **`useDepositMonitoring.ts`**
-   - PollingManager 어댑터: priority `high`, category `cosmetic`, baseMs 30_000.
-   - intent active 동안만 register, filled/expired 시 unregister.
-   - visibility는 PollingManager가 처리 → useDeposit 내부 `setInterval` 제거 대상 (옵션 props로 wiring만, FREEZE 파일 본문 변경 X).
-   - **money-flow 가드**: register 시 category 강제 `"cosmetic"` (truth는 RPC가 책임, polling은 UX hint).
-
-4. **`useManualDepositSync.ts`**
-   - 한국 계좌이체/voucher → admin 처리 상태 동기화.
-   - `deposit_requests` (해당 `id=eq.{id}`) realtime + BroadcastChannel `phonara:dep:manual:{id}` mutex.
-   - 단일 탭만 RPC poll 수행 (leader election: `Date.now()+random` 최소값이 5s 내 broadcast 안 받으면 자기가 leader).
-   - approved/rejected 상태 전이 시 1회만 toast (depositToastDedupe 재사용).
-
-5. **`useFillBroadcast.ts`**
-   - 가벼운 어댑터: `useDepositRealtime`의 `onFilled` 콜백 안에서 `claimFilledToast(id)` 체크해서 fall-through 시 토스트/burst skip.
-   - useDeposit 본문 변경 없이 콜백 합성용.
-
-### 수정 (FREEZE 외)
-
-6. **`src/components/empire/PhonaraPayPanel.tsx`**
-   - `supabase.channel(...)` raw 호출 → `useWalletChannel`로 교체 (ESLint no-raw-channel 통과).
-   - filled 처리 전에 `claimFilledToast(intent.id)` 게이트 → 다중 탭 dedup.
-   - intent 필터 `filter:'id=eq.{id}'`로 좁혀서 모든 UPDATE 수신 폭주 제거.
-
-7. **`src/packages/wallet/hooks/useDeposit.ts`** (FREEZE — **본문 무변경**)
-   - 변경 금지. `useDepositMonitoring` wiring은 별도 PR에서. 이번 P0-7에서는 FREEZE 보호.
-   - 대신 PhonaraPayPanel 경로만 폴링 가드 + dedup 적용.
-
-### 문서
-
-8. **`docs/operations/deposit-flow.md`** 신규
-   - 입금 race 시나리오 (다중 탭, SW+page 동시 fill, manual transfer admin 승인 동기화)
-   - Idempotency 키 라이프사이클 (10분 TTL, payload hash, 서버 dedup 관계)
-   - Manual transfer leader election 동작
-   - Toast dedup 메커니즘 (BroadcastChannel + module Map)
+1. **Refresh single-flight**: 이미 P0-3에서 `safeRefreshSession` 으로 in-flight 공유 + 4회 backoff. P0-8에서 sessionHealth 계측만 추가 — 시그니처/로직 무변경.
+2. **Multi-tab sync**: `BroadcastChannel('phonara:auth')` 단일 채널, payload `{type, ts, tabId}`. 한 탭의 SIGNED_OUT 이 즉시 다른 탭에 전파되어 stale UI를 막는다. SIGNED_IN/TOKEN_REFRESHED 는 cache invalidate 만 트리거.
+3. **401 자동 복구**: `recoverFrom401(fn)` — 1회 silent refresh 후 재실행, 실패 시 로컬 세션만 정리(서버 signOut 호출 X → 다른 탭 영향 최소). 호출부는 P0-8 범위 밖(개별 RPC에 적용은 P1).
+4. **useAuthBridge 강화**: mounted guard 유지 + multi-tab sync 마운트 + deep-link ready 이벤트 발사로 `ImperialDeepLinkListener` 의 pending intent flush 보장.
+5. **Admin observability**: `/admin/ops/session-health` — multi-tab peer 수, 최근 refresh 20건, 401 recover 카운트, broadcast last event.
 
 ## 가드레일
 
-- **money-flow 8경로 git diff = 0**: `useDeposit.ts`/`useDepositRealtime.ts` 등 FREEZE 파일 본문 무변경. `scripts/check-money-flow-freeze.mjs` PASS.
-- **RPC wrapper만 사용**: `submit_deposit` / `create_crypto_deposit_intent` / `get_my_pending_deposits` 직접 변경 X.
-- UI 변화 0 — 토스트 1회 보장 외 시각적 변화 없음.
-- Layer 1 gz 영향 < 1KB (모두 lib/hook 신규, lazy 경로).
-- 모든 push/realtime은 `use*Channel` 래퍼.
+- money-flow 8경로 RPC 본문 git diff = 0 (인증 레이어 전부 client-side).
+- 모든 신규 코드는 `src/lib/auth/*` / `src/hooks/auth/*` / `src/components/admin/ops/*` / `src/pages/admin/ops/*` 에만.
+- Layer 1 gz 영향 < 1KB (admin 패널은 operator chunk).
+- UI 변화: 없음 (admin 패널 신규 1개만).
+- `supabase.auth.signOut({ scope: 'local' })` 사용 — 서버 broadcast 회피.
 
-## 기술 노트
+## 다음 단계 (P1)
 
-```text
-PhonaraPayPanel (tab A) ──┐
-                          ├── BroadcastChannel('phonara:dep:fill') ──► claimFilledToast(id)
-PhonaraPayPanel (tab B) ──┘                                              │
-                                                                         ▼
-SW push 'deposit_filled' ───────────────────────────────────────────► 1회만 toast
-```
-
-```text
-Manual transfer (bank/voucher):
-  tab A elects leader → polls admin status every 30s (PollingManager)
-  tab B listens BroadcastChannel('phonara:dep:manual:{id}')
-  leader leaves → next tab elects after 5s heartbeat timeout
-```
-
-## 파일 목록
-
-- 신규: `src/lib/deposit/depositIdempotencyCache.ts`
-- 신규: `src/lib/deposit/depositToastDedupe.ts`
-- 신규: `src/hooks/deposit/useDepositMonitoring.ts`
-- 신규: `src/hooks/deposit/useManualDepositSync.ts`
-- 신규: `src/hooks/deposit/useFillBroadcast.ts`
-- 수정: `src/components/empire/PhonaraPayPanel.tsx` (raw channel → wrapper + dedup)
-- 신규: `docs/operations/deposit-flow.md`
-
-## 다음 (P0-8 예고)
-
-세션/인증 안정화 (token refresh race, multi-tab session sync, 401 자동 복구).
+P0 종료 → P1 전환:
+- 개별 RPC 호출부에 `recoverFrom401` 적용 (운영 핫스팟 우선).
+- session health 메트릭을 anomaly_events 로 적재.
+- Imperial Duel Phase 5 (Mode B → Mode A 점진 전환) 검토.
