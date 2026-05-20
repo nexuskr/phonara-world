@@ -1,64 +1,81 @@
-# P0-8 — Session / Auth Stabilization (FINAL · 압살 모드)
+# PR-P1-A — Crown UI 완전 제거 + PHON 리브랜딩 + 5탭 Bottom Navigation
 
-P0의 마지막 단계. 인증/세션 흐름의 race / multi-tab / 401 / refresh storm을
-client-only 레이어로 철벽 안정화한다. **money-flow 8경로 git diff = 0**.
+P1+P2 통합 작업의 **첫 번째 PR**. 머니플로 git diff=0, 백엔드(award_crown / crown_events / empire_levels) 무변경, UI 레이어만 손댐.
 
-## 변경 파일
+## 목표
 
-### 신규 (7)
-- `src/lib/auth/authBroadcast.ts` — `BroadcastChannel('phonara:auth')` 래퍼.
-  publish/subscribe, `TAB_ID`, self-echo 차단, SSR/미지원 환경 no-op.
-- `src/lib/auth/sessionHealth.ts` — refresh ring buffer(20) + 401 recover OK/Fail
-  카운터 + 8s TTL peer 추적 + 3s heartbeat.
-- `src/lib/auth/recover401.ts` — `recoverFrom401(fn)`:
-  401/bad_jwt 감지 → `safeRefreshSession()` 1회 → 재실행 → 재실패 시
-  `supabase.auth.signOut({ scope: 'local' })` + `publishAuthEvent('SIGNED_OUT')`.
-  `scope: 'local'` 이라 서버 세션은 유지 → 의도치 않은 타탭 SIGNED_OUT 폭발 방지.
-- `src/hooks/auth/useMultiTabAuthSync.ts` — App 루트(=useAuthBridge) 1회 마운트.
-  Supabase onAuthStateChange → broadcast, 수신 시 `invalidateSessionCache()` +
-  SIGNED_OUT 시 local store user=null. 강제 reload 없음.
-- `src/components/admin/ops/SessionHealthCard.tsx` — KPI 4종 + Last event +
-  Active peers + Refresh history table. 15s 자동 갱신.
-- `src/pages/admin/ops/SessionHealth.tsx` — 새 admin 페이지.
-- `docs/operations/auth-flow.md` — P0-3 ~ P0-8 전체 다이어그램 + multi-tab
-  시나리오 + 401 recover 사용법.
+1. **Crown 단어/이모지/뱃지/카드/토스트/위젯/카피를 사용자 화면에서 100% 제거**
+2. **PHON을 보상의 단일 브랜드로 통일** (단어 매핑 규칙 적용)
+3. **5탭 Bottom Navigation을 모바일 OS 기준으로 재구축** (홈 / 무료돈벌기 / 실시간대결 / 실시간예측 / 내PHON)
 
-### 편집 (3)
-- `src/lib/auth/refreshMutex.ts` — `safeRefreshSession()` 성공/실패를
-  `sessionHealth.recordRefresh()` 에 기록. 로직/시그니처 무변경.
-- `src/hooks/use-auth-bridge.ts` — `useMultiTabAuthSync()` 호출 1줄 추가.
-- `src/pages/admin/_AdminRoutes.tsx` — `ops/session-health` 라우트 등록
-  (lazy + Suspense, operator chunk).
+## 단어 매핑 (사용자 노출 전부)
 
-## 주요 안정화 포인트
+| Before | After |
+|---|---|
+| Crown / 👑 | PHON Bonus / PHON Reward |
+| Crown Level | VIP Level |
+| Crown Point | PHON Point |
+| Crown Multiplier · Empire Crown Booster | PHON Booster · VIP Boost |
+| Crown War / Crown Aura | PHON War / PHON Glow |
+| "크라운 폭발" 등 한글 카피 | "PHON 폭발" / "PHON 잭팟" |
 
-1. **Refresh single-flight + 계측**: P0-3 single-flight 그대로 + sessionHealth
-   ring buffer 로 admin 가시화.
-2. **Multi-tab broadcast**: 단일 `BroadcastChannel('phonara:auth')`,
-   `{type, ts, tabId}` payload, self-echo 차단, heartbeat 겸용으로 peer 추적.
-3. **401 silent recover**: 1회 silent refresh → 재실행 → graceful local signOut.
-   다른 탭 폭발 방지 위해 `scope: 'local'` 사용.
-4. **Multi-tab SIGNED_OUT 자연 전파**: 강제 reload 금지. local store user=null +
-   cache invalidate 만 하고 Supabase SDK 의 자체 SIGNED_OUT 발사에 맡김.
-5. **Admin 관측성**: `/admin/ops/session-health` 에서 peer 수 / refresh 성공율 /
-   401 복구 카운터 / last event 실시간 확인.
+## 새로 만들 파일
+
+- `src/lib/rewards/rewardAdapter.ts`
+  - `grantPhonReward(amount, meta)` / `grantVipReward(...)` / `formatRewardLabel(kind)` 제공.
+  - 내부적으로 기존 `award_crown` RPC를 호출하지만, 클라 노출 텍스트·이모지는 PHON으로만 변환.
+  - 토스트 prefix 통일: `💎 PHON` / `👑VIP`(VIP Pass만 유지).
+- `src/lib/branding/crownGlossary.ts`
+  - 정적 매핑 테이블 + `phonize(text)` 헬퍼 (i18n 후처리, 기존 카피 우회).
+- `src/components/nav/BottomNav5.tsx`
+  - 5탭 thumb-zone 네이티브 탭바. `safe-area-inset-bottom` 대응, 48dp+ tap target, `touch-action: manipulation`, haptic glow.
+  - 탭: 홈(`/`), 무료돈벌기(`/earn`), 실시간대결(`/duel`), 실시간예측(`/trade`), 내PHON(`/phon`).
+  - 활성 탭 = PHON 골드 인디케이터 + Imperial pulse-halo (기존 토큰 재사용).
+- `eslint-rules/no-crown-in-ui.js` (또는 간단 grep 스크립트 `scripts/check-no-crown-ui.mjs`)
+  - `src/components/**`, `src/pages/**` 내 `Crown`·`👑`·`크라운` 노출 패턴 차단 (admin/operator 청크 + `src/lib/rewards/*` 화이트리스트).
+
+## 편집할 파일
+
+- **Nav 교체**
+  - `src/components/Layout.tsx` · `src/components/layout/SlimShell.tsx` · `src/components/nav/MobileShell.tsx` → 기존 `PhonaraNav` / `MobileBottomNav` 대신 `BottomNav5` 마운트.
+  - `src/components/nav/PhonaraNav.tsx` · `src/components/nav/MobileBottomNav.tsx` · `src/packages/ui/nav/MainTabs.tsx` → deprecated 표시 후 BottomNav5로 redirect (다음 PR에서 삭제).
+- **Crown UI 제거 / PHON 치환**
+  - `src/components/empire/WhaleStrikeRail.tsx`, `WhaleStrikeRailV3.tsx`, `CrownAura.tsx`, `EmpireLevelBadge.tsx`, `BaronPromotionDialog.tsx`, `EmpireBoosterTimer.tsx`, `EmpirePopulationPulse.tsx`, `VipArrivalAnnouncer.tsx`, `VipPassBadge.tsx`
+  - `src/lib/crown.ts` → 내부 유지하되 export를 `rewardAdapter`로 wrap. 토스트 문구만 PHON으로.
+  - `src/components/FloatingChat.tsx` · `src/components/ui/floating-dock.tsx` · `src/lib/ui/floating-slots.ts` → 아이콘/문구 PHON 토큰화.
+- **카피·라벨 일괄 치환**
+  - `src/i18n/locales/ko/*.json` (및 en/ja 있으면), `@pkg/core/i18n/glossary`, `src/lib/glossary.ts` — Crown 문자열 grep → PHON 매핑.
+  - `Index.tsx` 헤더/Hero에 남은 `Crown` import 제거 (lucide `Crown` 아이콘 → `Gem`/`Sparkles`).
+- **Admin/Operator 화면도 라벨만 PHON으로** (백엔드 데이터·컬럼명은 그대로).
+  - `src/pages/admin/**` Crown War / Crown Funnel 등 탭 제목 → "PHON War" / "PHON Funnel".
 
 ## 가드레일
 
-- money-flow 8경로 RPC 본문 git diff = **0** (인증 레이어는 무관).
-- 모든 신규 코드는 `src/lib/auth/*` / `src/hooks/auth/*` /
-  `src/components/admin/ops/*` / `src/pages/admin/ops/*` 안에만.
-- Admin 페이지는 기존 operator chunk 격리(PR-K) 에 자동 포함 — Layer 1 영향 0.
-- 신규 user-facing 코드 (broadcast + sessionHealth + recover401 + 훅) 합산
-  gz < 1KB 목표.
-- `recoverFrom401` 은 P0-8 에서 인프라만 제공. 실제 RPC 호출부 적용은 **P1** 에서.
+- **머니플로 8경로 git diff = 0**: `imperial_place_phon_bet/_settle/_apply_house_edge_split`, `request_withdrawal`, `credit_crypto_deposit`, `subscribe_vip_pass_phon`, `award_crown`, `claim_daily_attendance_v2`. SQL/Edge 절대 미수정.
+- **백엔드 컬럼·RPC명 무변경**: `crown_events`, `empire_levels`, `award_crown` 그대로. 클라 표시만 변환.
+- **Operator 청크 격리 유지**: `BottomNav5`는 user chunk only, admin route 무관.
+- **Layer 1 gz 영향 최소**: BottomNav5는 단일 컴포넌트 (~3KB), 기존 nav 2~3개 제거로 net 감소 예상.
+- **회귀 방지**: `scripts/check-no-crown-ui.mjs` CI 추가, 신규 PR에서 Crown 단어 노출 시 fail.
 
-## P0 완료 선언 & P1 전환 계획
+## 검증
 
-P0-1 ~ P0-8 모두 완료 → **출시 Blocker 0**.
+1. `git diff` 머니플로 8경로 = 0 라인.
+2. `scripts/check-no-crown-ui.mjs` 통과 (user-facing 컴포넌트에 Crown 0건).
+3. 모바일 뷰포트(375×812)에서 BottomNav5 5탭 탭 가능, safe-area 정상.
+4. Dashboard / Wallet / Slot / Duel / Trade 페이지에서 "👑", "Crown", "크라운" 표기 0건 (시각 확인).
+5. `/admin/ops/imperial-command` 정상 동작 (백엔드 무변경 확인).
 
-**P1 (안정성 강화 + 운영 자동화)**
-1. `recoverFrom401` 핫스팟 RPC 호출부 적용 (deposit/withdraw/intent 최우선).
-2. sessionHealth 메트릭을 `anomaly_events` 에 24h 윈도우로 적재 (failure spike 감지).
-3. Imperial Duel Phase 5 (Mass Rollout) 사전 점검.
-4. Operator chunk 사이즈 모니터링 자동화 (size-limit threshold tune).
+## 산출 보고 형식
+
+PR-P1-A 완료 시 다음 형식으로 보고:
+
+```
+✅ PR-P1-A 완료
+- 삭제/대체된 컴포넌트: ...
+- PHON 치환 라벨 수: N개
+- 새 BottomNav 5탭 매핑: ...
+- 머니플로 git diff: 0
+다음: PR-P1-B (Hero + Home + Flow State Engine)
+```
+
+PR-P1-B / PR-P1-C는 본 PR 머지 후 별도 plan으로 제출.
