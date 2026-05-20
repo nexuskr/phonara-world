@@ -187,11 +187,11 @@ export default function PhonOrderPanel({ symbol, price }: Props) {
         </button>
       </div>
 
-      {/* Leverage chips */}
+      {/* Leverage chips + drag slider (Bybit-style) */}
       <div>
         <div className="flex items-center justify-between mb-1.5">
           <div className="flex items-center gap-1 text-[11px] font-black tracking-[0.15em] text-muted-foreground">
-            <Zap className="w-3 h-3 text-amber-300" /> 레버리지
+            <Zap className="w-3 h-3 text-amber-300" /> 레버리지 <span className="text-amber-200 tabular-nums ml-1">{effLev}x</span>
           </div>
           <span className="text-[10px] text-muted-foreground">
             폐하 한도 <span className="text-amber-300 font-black">{cap}x</span>
@@ -221,6 +221,22 @@ export default function PhonOrderPanel({ symbol, price }: Props) {
               </button>
             );
           })}
+        </div>
+        {/* Drag slider — 1x ~ cap (모바일에서 미세 조정용) */}
+        <div className="mt-3 px-1" style={{ touchAction: "pan-x" }}>
+          <input
+            type="range"
+            min={1}
+            max={Math.max(cap, 1)}
+            step={1}
+            value={Math.min(leverage, cap)}
+            onChange={(e) => setLeverage(Number(e.target.value))}
+            aria-label="레버리지 슬라이더"
+            className="w-full h-11 accent-amber-400 cursor-pointer"
+          />
+          <div className="flex justify-between text-[9px] font-bold tabular-nums text-muted-foreground/70 mt-0.5 px-0.5">
+            <span>1x</span><span>{Math.max(2, Math.round(cap/4))}x</span><span>{Math.max(3, Math.round(cap/2))}x</span><span>{Math.max(4, Math.round(cap*0.75))}x</span><span>{cap}x</span>
+          </div>
         </div>
       </div>
 
