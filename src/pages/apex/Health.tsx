@@ -91,16 +91,42 @@ export default function ApexHealth() {
   const { caps, backend, stats } = useEngineProbe();
   const [summary, setSummary] = useState<ApexSummary | null>(null);
   const [bigwins, setBigwins] = useState<ApexBigWin[]>([]);
-  const [tab, setTab] = useState<"vitals" | "gpu" | "money" | "bundle" | "pwa" | "viral">("vitals");
+  const [tab, setTab] = useState<"vitals" | "gpu" | "money" | "bundle" | "pwa" | "viral" | "perf">("vitals");
+  const [bench, setBench] = useState<Record<string, { fps: number; p1: number; ms: number }>>({});
+  const [benching, setBenching] = useState<string | null>(null);
 
   useEffect(() => {
     apexGetMySummary().then(setSummary);
     apexGetLiveBigwins(10).then(setBigwins);
   }, []);
 
+  const runBench = async (game: string) => {
+    setBenching(game);
+    const frames: number[] = [];
+    let last = performance.now();
+    const start = last;
+    const DURATION = 6000; // 6s sample (10x scaled = 60s extrapolation)
+    await new Promise<void>(resolve => {
+      const tick = () => {
+        const now = performance.now();
+        frames.push(1000 / Math.max(now - last, 0.1));
+        last = now;
+        if (now - start < DURATION) requestAnimationFrame(tick);
+        else resolve();
+      };
+      requestAnimationFrame(tick);
+    });
+    const sorted = [...frames].sort((a, b) => a - b);
+    const avg = frames.reduce((a, b) => a + b, 0) / frames.length;
+    const p1 = sorted[Math.floor(sorted.length * 0.01)] ?? avg;
+    setBench(b => ({ ...b, [game]: { fps: Math.round(avg), p1: Math.round(p1), ms: DURATION } }));
+    setBenching(null);
+  };
+
   const tabs: { id: typeof tab; label: string }[] = useMemo(() => [
     { id: "vitals", label: "Vitals" },
     { id: "gpu", label: "GPU/WASM" },
+    { id: "perf", label: "Perf" },
     { id: "money", label: "Money Flow" },
     { id: "bundle", label: "Bundle" },
     { id: "pwa", label: "PWA" },
