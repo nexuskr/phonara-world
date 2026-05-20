@@ -44,6 +44,9 @@ export default function ApexWinReels() {
 
   return (
     <div className="space-y-3">
+      <Suspense fallback={null}>
+        <EmperrorVoiceMount />
+      </Suspense>
       <header className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl md:text-3xl font-black apex-gradient-text">Win Reels</h1>
