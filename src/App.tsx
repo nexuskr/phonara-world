@@ -150,6 +150,7 @@ const Avatar = lazy(() => import("./pages/Avatar.tsx"));
 const AvatarStudio = lazy(() => import("./pages/AvatarStudio.tsx"));
 const Lobby = lazy(() => import("./pages/Lobby.tsx"));
 const Landing = lazy(() => import("./pages/Landing.tsx"));
+const FlowRouter = lazy(() => import("./components/flow/FlowRouter.tsx"));
 const Welcome = lazy(() => import("./pages/Welcome.tsx"));
 const DevConsole = lazy(() => import("./pages/DevConsole.tsx"));
 const ImperialDuelLobby = lazy(() => import("./pages/ImperialDuelLobby.tsx"));
@@ -298,7 +299,7 @@ const App = () => (
           <Suspense fallback={<RouteFallback />}>
             <MaintenanceGate>
             <Routes>
-              <Route path="/" element={<Landing />} />
+              <Route path="/" element={<FlowRouter><Landing /></FlowRouter>} />
               {/* Phase 4 P4-A — Landing Apocalypse + Meta-safe SEO */}
               <Route path="/landing" element={<LandingApocalypse />} />
               <Route path="/safe" element={<SafePublic />} />
