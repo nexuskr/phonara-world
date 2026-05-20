@@ -21,7 +21,9 @@
     "e2e": "playwright test --config=e2e/playwright.config.ts --project=mobile-ios",
     "e2e:all": "playwright test --config=e2e/playwright.config.ts",
     "e2e:critical": "playwright test --config=e2e/playwright.config.ts --project=mobile-ios --grep @critical",
-    "e2e:report": "playwright show-report"
+    "e2e:report": "playwright show-report",
+    "predev": "bunx tsx scripts/generate-sitemap.ts",
+    "prebuild": "bunx tsx scripts/generate-sitemap.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

@@ -1,102 +1,72 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://phonara.world/</loc>
+    <lastmod>2026-05-20</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
-    <xhtml:link rel="alternate" hreflang="ko" href="https://phonara.world/?lang=ko"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://phonara.world/?lang=en"/>
-    <xhtml:link rel="alternate" hreflang="ja" href="https://phonara.world/?lang=ja"/>
-    <xhtml:link rel="alternate" hreflang="vi" href="https://phonara.world/?lang=vi"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://phonara.world/"/>
+  </url>
+  <url>
+    <loc>https://phonara.world/safe</loc>
+    <lastmod>2026-05-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://phonara.world/apex</loc>
+    <lastmod>2026-05-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://phonara.world/apex/games</loc>
+    <lastmod>2026-05-20</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://phonara.world/apex/games/pump</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://phonara.world/apex/games/wheel</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://phonara.world/apex/games/limbo</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://phonara.world/apex/games/keno</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://phonara.world/apex/games/hilo</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://phonara.world/apex/games/crash-v2</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://phonara.world/apex/race</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://phonara.world/trust</loc>
-    <changefreq>hourly</changefreq>
-    <priority>0.95</priority>
-    <xhtml:link rel="alternate" hreflang="ko" href="https://phonara.world/trust?lang=ko"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://phonara.world/trust?lang=en"/>
-    <xhtml:link rel="alternate" hreflang="ja" href="https://phonara.world/trust?lang=ja"/>
-    <xhtml:link rel="alternate" hreflang="vi" href="https://phonara.world/trust?lang=vi"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://phonara.world/trust"/>
-  </url>
-  <url>
-    <loc>https://phonara.world/status</loc>
-    <changefreq>hourly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://phonara.world/guide</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="ko" href="https://phonara.world/guide?lang=ko"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://phonara.world/guide?lang=en"/>
-    <xhtml:link rel="alternate" hreflang="ja" href="https://phonara.world/guide?lang=ja"/>
-    <xhtml:link rel="alternate" hreflang="vi" href="https://phonara.world/guide?lang=vi"/>
-  </url>
-  <url>
-    <loc>https://phonara.world/packages</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.85</priority>
-    <xhtml:link rel="alternate" hreflang="ko" href="https://phonara.world/packages?lang=ko"/>
-    <xhtml:link rel="alternate" hreflang="en" href="https://phonara.world/packages?lang=en"/>
-    <xhtml:link rel="alternate" hreflang="ja" href="https://phonara.world/packages?lang=ja"/>
-    <xhtml:link rel="alternate" hreflang="vi" href="https://phonara.world/packages?lang=vi"/>
-  </url>
-  <url>
-    <loc>https://phonara.world/empire/hall</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.75</priority>
-  </url>
-  <url>
-    <loc>https://phonara.world/empire</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://phonara.world/hall-of-fame</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://phonara.world/global/live</loc>
-    <changefreq>hourly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://phonara.world/vision</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://phonara.world/global-intelligence</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://phonara.world/infrastructure</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.55</priority>
-  </url>
-  <url>
-    <loc>https://phonara.world/intelligence-loop</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.55</priority>
-  </url>
-  <url>
-    <loc>https://phonara.world/referral</loc>
+    <loc>https://phonara.world/fairness</loc>
     <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://phonara.world/auth</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://phonara.world/support</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
+    <priority>0.6</priority>
   </url>
 </urlset>
