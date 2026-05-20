@@ -3,19 +3,22 @@ import { initReactI18next } from "react-i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 import jaPartial from "@/locales/ja";
 import viPartial from "@/locales/vi";
+import ptPartial from "@/locales/pt";
+import esPartial from "@/locales/es";
+import zhPartial from "@/locales/zh";
 
 /**
- * Phonara i18n — Phase B (ko + en + ja + vi)
+ * Phonara i18n — Phase 4 P4-E (ko + en + ja + vi + pt + es + zh)
  *
  * P5 split: ko/en bundles are now in separate dynamic-import chunks
  * (`src/locales/ko.ts`, `src/locales/en.ts`). Only the active language
  * (and minimum fallbacks) is loaded at boot. Other languages are
  * fetched lazily on `languageChanged`.
  *
- * ja/vi remain partial-static (small files, fall back to en → ko).
+ * ja/vi/pt/es/zh remain partial-static (small files, fall back to en → ko).
  */
 
-const SUPPORTED = ["ko", "en", "ja", "vi"] as const;
+const SUPPORTED = ["ko", "en", "ja", "vi", "pt", "es", "zh"] as const;
 type Lang = (typeof SUPPORTED)[number];
 
 const NAMESPACES = [
@@ -35,6 +38,9 @@ const loaders: Record<Lang, () => Promise<Record<string, Record<string, unknown>
   en: () => import("@/locales/en").then((m) => m.default as Record<string, Record<string, unknown>>),
   ja: async () => jaPartial as unknown as Record<string, Record<string, unknown>>,
   vi: async () => viPartial as unknown as Record<string, Record<string, unknown>>,
+  pt: async () => ptPartial as unknown as Record<string, Record<string, unknown>>,
+  es: async () => esPartial as unknown as Record<string, Record<string, unknown>>,
+  zh: async () => zhPartial as unknown as Record<string, Record<string, unknown>>,
 };
 
 const loaded = new Set<Lang>();
@@ -80,7 +86,7 @@ i18n
   .init({
     resources: {},
     lng: initial,
-    fallbackLng: { ja: ["en", "ko"], vi: ["en", "ko"], default: ["ko"] },
+    fallbackLng: { ja: ["en", "ko"], vi: ["en", "ko"], pt: ["en", "ko"], es: ["en", "ko"], zh: ["en", "ko"], default: ["ko"] },
     supportedLngs: SUPPORTED as unknown as string[],
     ns: NAMESPACES,
     defaultNS: "common",
@@ -103,8 +109,8 @@ i18n
 export const i18nReady: Promise<void> = (async () => {
   await loadLanguage(initial);
   if (initial !== "ko") await loadLanguage("ko"); // global fallback
-  if ((initial === "ja" || initial === "vi") && !loaded.has("en")) {
-    await loadLanguage("en"); // ja/vi → en → ko fallback chain
+  if ((["ja", "vi", "pt", "es", "zh"] as Lang[]).includes(initial) && !loaded.has("en")) {
+    await loadLanguage("en"); // partial locales → en → ko fallback chain
   }
 })();
 
