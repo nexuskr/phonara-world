@@ -9,7 +9,7 @@
  *   - src/lib/branding/crownGlossary.ts — 매핑 정의
  *   - src/lib/crown.ts            — 레거시 백엔드 어댑터
  *   - src/integrations/supabase/  — 자동 생성
- *   - **/*.test.* / **/*.spec.*
+ *   - test/spec files
  *
  * 모드:
  *   - 기본 (baseline): 카운트만 출력, exit 0
