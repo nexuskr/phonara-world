@@ -229,6 +229,20 @@ export default function ImperialDuelArena() {
           50% { box-shadow: 0 0 22px hsl(38 92% 60% / 0.55), inset 0 0 14px hsl(330 90% 55% / 0.28); }
         }`}</style>
 
+        {/* P1-C Slice 3 — 50~70대 즉시 인지 큰 카피 (Arena 본체) */}
+        <div className="mb-4 rounded-2xl border-2 border-amber-400/55 bg-gradient-to-r from-amber-500/15 via-pink-500/10 to-amber-500/15 p-4 text-center">
+          <div className="flex items-center justify-center gap-2 mb-1">
+            <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-[11px] tracking-[0.24em] font-black uppercase text-emerald-300">지금 진행 중</span>
+          </div>
+          <div className="font-imperial text-2xl md:text-3xl text-amber-50 leading-tight">
+            1분 대결 · <span className="text-pink-300">이기면 즉시 지갑 입금</span>
+          </div>
+          <div className="text-xs md:text-sm text-amber-200/80 mt-1">
+            왼쪽 또는 오른쪽만 고르세요. 결과는 1분 안에 PHON으로 들어옵니다.
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-3">
           <div className="space-y-3">
             {result && state === "settled" && (
