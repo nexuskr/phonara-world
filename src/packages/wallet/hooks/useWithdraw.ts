@@ -11,6 +11,7 @@ import { useCallback, useRef, useState } from "react";
 import { requestWithdrawal } from "@/lib/wallet";
 import { notify } from "@/lib/notify";
 import { DEFAULT_KOREAN_BANK_DISPLAY } from "@/lib/koreanBanks";
+import { parseWithdrawError, emitAccountFrozen } from "@/lib/withdrawal/errors";
 
 export type WithdrawMethod = "bank" | "coin";
 
@@ -40,70 +41,6 @@ export interface UseWithdrawOpts {
   onSuccess?: () => void;
   /** 서버가 step_up_required 를 반환했을 때 호출 — true 반환 시 출금 자동 재시도. */
   requireStepUp?: (label?: string) => Promise<boolean>;
-}
-
-/** 서버 에러 → 사용자 친화 한국어 알림 매핑. raw 코드는 절대 노출하지 않음. */
-function mapWithdrawError(rawMsg: string, minWithdraw: number): { title: string; description: string } {
-  const m = rawMsg.toLowerCase();
-
-  if (m.includes("account_frozen")) {
-    return {
-      title: "계정이 일시 보호 중입니다",
-      description: "이상 활동이 감지되어 자동 보호가 적용됐어요. 자세한 사항은 고객센터로 문의해 주세요.",
-    };
-  }
-  if (m.includes("step_up_required")) {
-    return {
-      title: "추가 인증이 필요해요",
-      description: "잠시 후 인증 창이 열립니다. 등록한 인증 앱의 6자리 코드를 입력해 주세요.",
-    };
-  }
-  if (m.includes("pin mismatch") || m.includes("invalid pin") || m.includes("wrong_pin")) {
-    return {
-      title: "출금 비밀번호가 일치하지 않습니다",
-      description: "6자리 출금 비밀번호를 다시 입력해 주세요.",
-    };
-  }
-  if (m.includes("below_min")) {
-    return {
-      title: "최소 출금 금액 미만입니다",
-      description: `최소 ${minWithdraw.toLocaleString()} PHON부터 출금이 가능합니다.`,
-    };
-  }
-  if (m.includes("insufficient_funds")) {
-    return {
-      title: "출금 가능 잔액이 부족합니다",
-      description: "현재 사용 가능 잔액을 확인해 주세요.",
-    };
-  }
-  if (m.includes("daily_withdraw_limit") || m.includes("daily_limit")) {
-    return {
-      title: "오늘 출금 한도를 모두 사용하셨어요",
-      description: "자정에 한도가 초기화됩니다.",
-    };
-  }
-  if (m.includes("rate_limited") || m.includes("too_many")) {
-    return {
-      title: "잠시 후 다시 시도해 주세요",
-      description: "짧은 시간에 요청이 너무 많아요.",
-    };
-  }
-  if (m.includes("kill_switch") || m.includes("withdrawals_halt")) {
-    return {
-      title: "출금이 일시 중단되었습니다",
-      description: "점검 또는 보안 사유로 일시 중단된 상태입니다. 잠시 후 다시 시도해 주세요.",
-    };
-  }
-  if (m.includes("unauthenticated") || m.includes("not_authenticated")) {
-    return {
-      title: "로그인이 필요해요",
-      description: "다시 로그인 후 출금을 진행해 주세요.",
-    };
-  }
-  return {
-    title: "출금을 처리하지 못했어요",
-    description: "잠시 후 다시 시도해 주세요. 문제가 지속되면 고객센터로 문의해 주세요.",
-  };
 }
 
 export function useWithdraw({ available, minWithdraw, onSuccess, requireStepUp }: UseWithdrawOpts) {
