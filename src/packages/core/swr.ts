@@ -52,7 +52,14 @@ export interface SwrOptions {
   ttl?: number;
   /** Total stale window in ms (default 5min). Beyond swr the cache is dropped. */
   swr?: number;
+  /** P0-5 · min interval (ms) between focus-triggered refetches. Default 30s. */
+  focusThrottle?: number;
+  /** P0-5 · keep previous data during background refresh (no flicker). Default true. */
+  keepPrevious?: boolean;
 }
+
+// P0-5 · last focus refetch timestamp per key (stampede guard)
+const LAST_FOCUS_FETCH = new Map<string, number>();
 
 export async function swrFetch<T>(
   key: PublicKey,
