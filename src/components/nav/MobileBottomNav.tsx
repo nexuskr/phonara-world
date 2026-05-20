@@ -54,9 +54,6 @@ function MobileBottomNavInner(_props: Props) {
 
   if (HIDDEN_PREFIX.some((p) => loc.pathname.startsWith(p))) return null;
 
-
-  if (HIDDEN_PREFIX.some((p) => loc.pathname.startsWith(p))) return null;
-
   return (
     <nav
       aria-label="모바일 하단 네비게이션"
@@ -66,7 +63,7 @@ function MobileBottomNavInner(_props: Props) {
         border-t border-border/50
       "
       style={{
-        paddingBottom: "env(safe-area-inset-bottom)",
+        paddingBottom: "max(var(--safe-bottom), var(--kb-inset))",
       }}
     >
       <ul className="flex items-stretch justify-between gap-3 px-3 h-[72px]">
