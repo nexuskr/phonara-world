@@ -26,6 +26,7 @@ import { DegradeModeBanner } from "./components/system/DegradeModeBanner";
 import { DynamicIslandPill } from "@/packages/native/components/DynamicIslandPill";
 import { ClientMetricsBinder } from "@/components/system/ClientMetricsBinder";
 import { registerSW } from "./lib/pwa/registerSW";
+import MobileShell from "./components/nav/MobileShell";
 
 installGlobalErrorLogging();
 registerSW();
@@ -282,6 +283,8 @@ const App = () => (
             <DailyLoginRewardToast />
             <ApexLiveChatFab />
           </Suspense>
+          {/* 모바일 한손 조작 셸 — 5탭 + 더보기 시트 + 빠른 입금 FAB. md+ 자동 숨김. */}
+          <MobileShell />
           <Suspense fallback={<RouteFallback />}>
             <MaintenanceGate>
             <Routes>
