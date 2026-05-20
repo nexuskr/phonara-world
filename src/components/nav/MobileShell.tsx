@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, useCallback } from "react";
+import { lazy, Suspense, useState, useCallback, useEffect } from "react";
 import MobileBottomNav from "./MobileBottomNav";
 import QuickDepositFab from "./QuickDepositFab";
 
@@ -14,6 +14,34 @@ const MoreSheet = lazy(() => import("./MoreSheet"));
 export default function MobileShell() {
   const [moreOpen, setMoreOpen] = useState(false);
   const openMore = useCallback(() => setMoreOpen(true), []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const root = document.documentElement;
+    const setMetrics = () => {
+      const vv = window.visualViewport;
+      const height = vv?.height ?? window.innerHeight;
+      const offsetTop = vv?.offsetTop ?? 0;
+      const keyboardInset = Math.max(0, window.innerHeight - height - offsetTop);
+      root.style.setProperty("--app-vh", `${height}px`);
+      root.style.setProperty("--kb-inset", `${keyboardInset}px`);
+    };
+
+    setMetrics();
+    window.addEventListener("resize", setMetrics);
+    window.addEventListener("orientationchange", setMetrics);
+    window.visualViewport?.addEventListener("resize", setMetrics);
+    window.visualViewport?.addEventListener("scroll", setMetrics);
+
+    return () => {
+      window.removeEventListener("resize", setMetrics);
+      window.removeEventListener("orientationchange", setMetrics);
+      window.visualViewport?.removeEventListener("resize", setMetrics);
+      window.visualViewport?.removeEventListener("scroll", setMetrics);
+    };
+  }, []);
+
   return (
     <>
       <MobileBottomNav onMoreOpen={openMore} />
