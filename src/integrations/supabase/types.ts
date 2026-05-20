@@ -9534,6 +9534,42 @@ export type Database = {
         }
         Relationships: []
       }
+      support_tickets: {
+        Row: {
+          admin_reply: string | null
+          body: string
+          created_at: string
+          id: string
+          source: string
+          status: string
+          subject: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_reply?: string | null
+          body: string
+          created_at?: string
+          id?: string
+          source?: string
+          status?: string
+          subject?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_reply?: string | null
+          body?: string
+          created_at?: string
+          id?: string
+          source?: string
+          status?: string
+          subject?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       suppressed_emails: {
         Row: {
           created_at: string
