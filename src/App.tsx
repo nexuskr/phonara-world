@@ -282,6 +282,8 @@ const App = () => (
                 <Route path="games"        element={<ApexGames />} />
                 <Route path="games/dice"   element={<ApexDice />} />
                 <Route path="games/crash"  element={<ApexCrash />} />
+                <Route path="games/crash-v2" element={<ApexCrashV2 />} />
+                <Route path="verify/:roundId" element={<ApexVerify />} />
                 <Route path="games/plinko" element={<ApexPlinko />} />
                 <Route path="games/mines"  element={<ApexMines />} />
                 <Route path="games/slots"  element={<ApexSlots />} />
