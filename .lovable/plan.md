@@ -1,63 +1,66 @@
-# PR-P0-5 — Realtime / Cache Stabilization
+# PR-P0-6 — Push / Deep-link Stabilization
 
-머니플로 8경로 git diff = 0. realtime/cache 레이어만 강화. UI 변화 0.
+푸시 알림과 딥링크 흐름을 철벽화. money-flow 8경로 git diff = 0.
 
 ## 현황 진단
 
-- `useRealtimeChannel` (단일 진입점) — dedup·StrictMode-safe·exp 백오프 재연결·focus/online resume·auth resume·폴링 폴백까지 이미 구현. 다만:
-  - **rapid mount/unmount race**: 라우트 바운스 시 `teardown → ensureChannel` 즉시 호출 → Supabase가 동일 키 채널 폐기 전 새 .on() 시도 시 "subscribe twice" 가능.
-  - **hidden-tab subscription leak**: 백그라운드 30분 이상 방치되어도 채널 유지 → 불필요 fan-out.
-  - **region failover**: PR-N regions.ts 는 휴리스틱 선택만, 채널 반복 실패 시 다른 region 으로 자동 fallback 없음.
-- `@pkg/core/swr.ts` — INFLIGHT dedup + LS + stale-while-revalidate 이미 있음. 다만:
-  - **focusThrottle 없음**: 탭 복귀할 때마다 fetcher 가능 → stampede.
-  - **stale → fresh jump**: 800ms 폴 후 setState 한 번 → flicker.
-  - **optimistic mutate** 미지원.
-- 관리자 모니터링: `PollingStatusCard` 있음. realtime 측 가시화 없음.
+- `src/lib/push.ts` — `subscribePush / unsubscribePush / isPushActive` 만 있음. VAPID 키는 하드코딩, 변경 감지 가드 없음 → 키 회전 시 옛 endpoint 가 좀비로 남음.
+- `src/hooks/push/` 디렉토리 자체가 없음 — `usePushSubscription` hook 신규 필요.
+- `push_send_log` 서버 cap 은 있지만 클라이언트 측 예측 캡 없음 → 사용자에게 "왜 안 와요?" 혼동.
+- `ImperialDeepLinkListener` 는 App.tsx 에서 해제 상태(주석 "v19 Phase 0-R: 마운트 해제"). 강화판 재마운트 필요.
+- SW (`public/sw-push.js`) `notificationclick` — `tag` 만 dedup, 동일 알림 빠른 더블클릭 시 `focus → navigate` 2회 가능. 메시지 채널을 통한 in-app 라우팅도 없음(SW 가 직접 navigate).
+- 미인증 deep-link 처리 없음 — auth 페이지로 가도 `returnTo` 없이 `/dashboard` 로 떨어짐 (P0-3 의 `useRequireAuth` returnTo 는 SPA 내부에서만 작동).
 
 ## 변경 계획
 
-### 1. `src/hooks/use-realtime-channel.ts` — race & visibility 가드
-- `teardown(key, reason)` 에 **50ms grace timer**: 50ms 안에 새 consumer 가 동일 key 로 attach 하면 채널 유지(StrictMode + 라우트 전환 안정).
-- **idle visibility unsubscribe**: `document.hidden === true` 가 **5분** 지속되면 채널을 `pendingRemove` 마킹하고 supabase 채널 해제 (listener 는 메모리 유지). 가시 복귀 시 자동 재구독.
-- **연속 실패 카운터 → region rotate hook**: 5회 연속 errored 시 `onRegionFailover?.(currentRegion)` 콜백 fire (선택), 그리고 `regions.failoverNext()` 호출.
+### 1. `src/lib/push/pushVapidGuard.ts` (신규)
+- `getVapidFingerprint(key)` — VAPID 공개키의 SHA-256 8-byte prefix 를 localStorage `phonara:push:vapid_fp` 와 비교.
+- `ensureVapidConsistent()` — fingerprint mismatch 시 기존 subscription 자동 `unsubscribe()` + DB `push_subscriptions` 제거 + 새 키로 silent 재구독. fingerprint 저장.
+- `subscribePush()` 흐름의 첫 단계로 호출.
 
-### 2. `src/packages/realtime/regions.ts` — silent failover
-- `failoverNext(): RealtimeRegion` 추가 — `ap → us → eu → ap` 라운드로빈, `setRegion()` 호출 후 신규 채널부터 새 region prefix 적용. 기존 채널은 자연 정리.
-- `getFailoverState(): { region, attempts, lastFailoverAt }` admin 가시화용.
-- DEV 콘솔에 `[REALTIME] region failover ap→us` 로그.
+### 2. `src/lib/push/pushRateLimit.ts` (신규)
+- localStorage `phonara:push:daily:{YYYY-MM-DD}` = received count.
+- `recordPushReceived()` — SW → page postMessage 핸들러에서 카운트.
+- `getDailyPushCap()` — 3/day. `isPushCapped()` boolean.
+- 단순 hint UX 용 (서버 cap 이 진실의 원천 — UI 안내만).
 
-### 3. `src/packages/realtime/index.ts` — wrappers 에 failover 자동 연결
-- `withHeartbeat` 옆에 `withFailover` 데코레이터 추가: onStatus 가 `down` 5연속 시 `failoverNext()` 호출. 멱등.
+### 3. `src/hooks/push/usePushSubscription.ts` (신규)
+- 상태: `permission / isActive / loading / capped`.
+- `enable() / disable()` 액션 → `subscribePush`/`unsubscribePush` 래핑 + VAPID guard 적용.
+- mount 시 1회 `ensureVapidConsistent()` 자동 호출 (silent — UI 토스트 없음).
 
-### 4. `src/packages/core/swr.ts` — stampede & jump 방지
-- `focusThrottle?: number` (default 30s): visibilitychange visible 이벤트 시 마지막 fetch 후 throttle 이하이면 skip.
-- `keepPrevious: boolean` (default true): fresh 전환 시 setState 콜백을 **previous data 보존 + fade 토큰** 형태로 보고. UI jump 0.
-- `mutate(key, updater | value, opts?)`: optimistic update — MEM 즉시 갱신 + LS 동기화 + 옵션 `revalidate=true` 시 백그라운드 refresh.
-- `useSwr` 의 stale→fresh 폴(800ms) 제거 → INFLIGHT promise 직접 then 으로 한 번에 setState (flicker 차단).
+### 4. `src/components/nav/ImperialDeepLinkListener.tsx` (신규 / 강화 재마운트)
+- 지원 경로: `/dashboard`, `/wallet`, `/packages`, `/vip`, `/apex/*`, `/duel`, `/cup`, `/empire/*`, `/trust`, `/legal/*`.
+- `?from=push&intent=<kind>` 쿼리 파싱 → `phonara:imperial-focus` CustomEvent dispatch (기존 컨슈머와 호환).
+- **미인증 가드**: `supabase.auth.getSession()` 이 null 이면 현재 URL 을 localStorage `phonara:push:pending_deep_link` 에 저장 + `navigate(/auth?returnTo=${encodeURIComponent(currentPath)})`.
+- SIGNED_IN 이벤트 onAuthStateChange 구독 → pending deep link 있으면 즉시 navigate + 키 삭제.
+- **background → foreground 처리**: `document.visibilitychange` visible 시 pending deep link 1회 flush.
+- **클릭 race 방지**: 동일 deep-link URL 을 500ms 안에 두 번 받으면 무시 (in-memory `lastHandledAt + lastUrl` mutex).
+- App.tsx 에 다시 마운트.
 
-### 5. `src/components/admin/RealtimeStatusCard.tsx` (신규)
-- 활성 채널 수, region, 재구독 카운트(누적 errored→retry), 마지막 failover 시각. 15s 갱신.
-- `/admin/ops/region-health` 페이지의 `PollingStatusCard` 옆에 마운트(기존 위치 패턴 따름).
+### 5. `public/sw-push.js` 강화
+- `notificationclick` 에 in-flight Promise mutex (`self.__nc_lock`) — 동일 tag 동시 처리 1회만.
+- `clients.matchAll` 에서 같은 origin client 있으면 `postMessage({type:"deep-link", url})` 후 focus — listener 가 router 로 처리. 클라이언트 없을 때만 `openWindow`.
+- `tag` 기본을 알림 ID 단위로 부여 (`data.id || data.kind`) — 중복 알림 1개만 표시.
 
-### 6. 문서
-- `docs/operations/realtime-cache.md` 신규: race 가드/visibility/region failover/SWR 정책 한 페이지.
+### 6. `docs/operations/push-deep-link.md` (신규)
+VAPID 회전 / fingerprint 가드 / daily cap / deep-link 매트릭스 / 미인증 returnTo / 클릭 race 가드 한 페이지.
 
 ## 머니플로 가드
 
-- 변경 파일 grep: `request_withdrawal`, `apex_request_cashout`, `imperial_place_phon_bet`, `apex_place_bet_v2`, `_apply_house_edge_split`, `_settle`, `stake_phon`, `phon_swap_*` 호출/본문 0건 수정.
-- realtime/SWR 레이어만 수정. PRJ_FREEZE_RAW_CHANNEL 화이트리스트 무변경.
+- 변경 파일 어디에도 `request_withdrawal / apex_request_cashout / imperial_place_phon_bet / apex_place_bet_v2 / _apply_house_edge_split / _settle / stake_phon / phon_swap_*` 호출/본문 0건. `src/hooks/push/*`, `src/lib/push/*`, `src/components/nav/*`, `public/sw-push.js` 만.
 
 ## 예상 효과
 
-- 라우트 바운스 재구독 폭주: 50ms grace 로 사실상 0.
-- 백그라운드 탭 5분+ 채널 fan-out: 0 (resume 시 즉시 재구독).
-- SWR stampede: focusThrottle 30s + INFLIGHT 로 동일 키 동시 fetch 최대 1.
-- stale→fresh UI jump: keepPrevious + 단일 setState 로 깜빡임 제거.
-- 채널 5연속 실패 → 자동 region rotate (사용자 무중단).
+- VAPID 회전 시 좀비 endpoint 0 — 사용자 액션 없이 silent 재구독.
+- "오늘 알림 더 안 와요?" 혼동 0 — `usePushSubscription.capped` 로 UI 안내.
+- 미인증 deep-link → 로그인 후 원래 경로 100% 복귀.
+- 동일 알림 더블탭 race / SW 동시 처리 race 0.
+- background → foreground 전환 시 pending deep link 자동 처리.
 
 ## 영향 범위
 
-- 신규: 2 파일 (`RealtimeStatusCard.tsx`, `realtime-cache.md`).
-- 수정: 4 파일 (`use-realtime-channel.ts`, `realtime/regions.ts`, `realtime/index.ts`, `core/swr.ts`).
-- 미수정: money-flow RPC, useWalletChannel public API, swrFetch 시그니처(옵션 추가만).
-- Layer 1 gz 영향: < 1KB.
+- 신규: 4 파일 (`pushVapidGuard.ts`, `pushRateLimit.ts`, `usePushSubscription.ts`, `ImperialDeepLinkListener.tsx`, `docs/operations/push-deep-link.md`).
+- 수정: 2 파일 (`src/lib/push.ts` VAPID guard hook-in, `public/sw-push.js` mutex+postMessage, `src/App.tsx` listener 재마운트).
+- 미수정: money-flow RPC, 기존 컴포넌트 UI.
+- Layer 1 gz 영향: < 1.5KB (Listener 는 가벼움, hooks 는 동적 사용 시점에만).
