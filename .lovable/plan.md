@@ -1,144 +1,119 @@
-# PROJECT TITAN ∞ — Phonara Mobile-First Rebuild (FINAL v3)
+# PR-P0-2 — Rate Limiting & Global Polling Optimization (Phase 2)
 
-3초 안에 "무료로 참여 가능한 게 있네 / 복잡하지 않네 / 한 번 눌러볼까"를 만든다. Mobile First / Mobile Only / One-Hand / Clarity > Features / Trust > Complexity / Speed > Everything.
+## Goal
+모든 클라이언트 폴링을 단일 **Adaptive PollingManager**로 통합해 background/idle/저전력 단말에서 RPC 호출량을 60–80% 감소시킨다. 머니플로 8경로와 사용자 UI는 무변경.
 
-## 절대 규칙
+## What gets built
 
-- 머니플로 8경로 git diff = 0 (award_crown / Treasury / Founding Season / reward engine / withdrawal / PHON ledger / settlement / wallet)
-- Crown 백엔드 완전 유지 — UI 에서만 100% 제거 + PHON 리브랜딩
-- imperial-duel → "실시간 대결" (리네이밍만, 기능 유지)
-- PR 당 최대 5~8개 변경 / Master PR 금지 / 모두 rollback 가능
-- 사용자 페이지는 Tier S/A/B만 노출, C는 라우트 유지 + UI 숨김
+### 1. PollingManager (신규 코어)
+**`src/lib/polling/PollingManager.ts`** — 단일 글로벌 싱글톤.
 
----
+- Priority queue: `critical | high | normal | low | cosmetic` (5단계)
+- Adaptive interval = `base × visibilityMul × activityMul × deviceMul × backoffMul`
+  - `visibilityMul`: 보임=1, 숨김=∞ (skip)
+  - `activityMul`: 마지막 user input <30s=1.0, <2m=1.5, <10m=2.5, idle=4.0
+  - `deviceMul`: high=1.0 / mid=1.3 / low=2.0 (`@pkg/performance/device`)
+  - `backoffMul`: 연속 실패 시 exp + jitter (1→2→4→8, cap 30s × base)
+- Concurrency cap: 동시 in-flight ≤ 4 (priority preempt)
+- Tracked ledger 연동(`@pkg/runtime` trackInterval) — Phase 2 Visibility 호환
+- Money-flow 카테고리는 등록 불가(throw) — 가드 fail-closed
 
-## SPRINT P0 — Release Blocker (UI 변경 금지)
-
-### PR-P0-1 인프라
-- `setVisibleInterval` 전역 (visibilitychange로 background RPC 정지)
-- GodModePanel 중복 realtime 채널 제거
-- Cloudflare + Edge Rate Limit 문서화 (코드 변경 없음)
-
-### PR-P0-2 인증 (#1·#3·#5·#26)
-- OTP 6자리 입력 후 자동 이동
-- WebAuthn(지문) 복구
-- 출금 비밀번호 키패드 가림 (visualViewport + scrollIntoView)
-- Magic Link KYC 1회 후 반복 제거
-
-### PR-P0-3A 트레이딩 (#10·#13·#14)
-- 숫자 떨림 (tabular-nums + rAF 스로틀)
-- Long/Short 체결 오류 + "잠시 멈춰있어요" 제거
-- Isolated / Cross 모드 복구
-
-### PR-P0-3B 슬롯·스테이킹 (#15·#21)
-- sprite preload + WebGL fallback
-- 슬롯 회전 끊김 제거
-- staking 추가 버튼 + 2FA 재인증 알림 제거
-
-### P0 완료 조건
-로그인 99.9% / 체결 99% / 출금 오류 <1% / 슬롯 프레임드랍 0 / **UI·카피 변경 0건**
-
----
-
-## SPRINT P1 — Architecture + Routing + PHON
-
-### PR-P1-1 Reward Adapter
-- 신규: `src/core/reward/rewardAdapter.ts` — `grantPhonReward()` / `grantVipReward()` / `grantReferralReward()` 내부에서만 `award_crown` 호출
-- ESLint: 프론트에서 `award_crown` 직접 호출 금지
-- 사용자 화면 용어 매핑: Crown → PHON Bonus, Crown Level → VIP Level, Crown Point → PHON Point, Empire Crown Booster → PHON Booster
-- UI 삭제: CrownAura, CrownBadge, Crown Progress, Crown Widget, Crown 메뉴/라우트
-- **백엔드 (award_crown, crown_events, Founding Season, Baron 승급, Whale Strike, Empire Booster) 전부 유지**
-
-### PR-P1-2 Bottom Navigation (5탭, 한 손 도달)
-```text
-홈 │ 게임 │ 실시간 대결 │ 실시간 예측 │ PHON
+### 2. Hook surface
+**`src/hooks/polling/useGlobalPolling.ts`**
+```ts
+useGlobalPolling({ key, intervalMs, priority, owner, run })
 ```
-- 48dp 이상 터치 타겟
-- `viewport-fit=cover` + `env(safe-area-inset-*)`
-- 라벨 한글 단독, 큰 글씨
+- key 중복 등록 시 reference count + 가장 짧은 interval 채택
+- 언마운트 시 dec; 0이 되면 해제
+- 반환: `{ lastRun, lastError, manualRun }`
 
-### PR-P1-3 Landing Rebuild (Above The Fold)
-- 최상단: **[실시간 참여 카운터]** (지금 N명 참여 중)
-- Headline: **"지금 사람들이 무료로 참여 중인 실시간 PHON 챌린지"**
-- Sub: **"무료 예측 · 무료 미션 · 실시간 게임 · 참여 보상"**
-- CTA1: "무료 시작하기" / CTA2: "체험 모드"
-- 신뢰 라인: 가입 → 참여 → 보상 확인 (3-step 시각화)
-- 아래 섹션: 오늘 인기 참여 TOP 5 · 실시간 지급 피드 · 오늘의 미션 · 무료 보상 받기
+### 3. 마이그레이션 대상 (raw `setInterval` → useGlobalPolling)
+사용자 영역 cosmetic/social polling 위주 — money-flow / kernel / admin 비대상.
 
-### PR-P1-4 Flow Engine (`useFlowState()` 단일)
+| 파일 | 기존 ms | priority |
+|---|---|---|
+| `src/hooks/use-live-fomo-counters.ts` | 12s | normal |
+| `src/hooks/use-friend-ranking.ts` | 60s | low |
+| `src/hooks/use-now-tick.ts` (clock) | 1s | cosmetic (visible-only) |
+| `src/components/fomo/LiveTradingCounter.tsx` | 12s | low |
+| `src/components/trading/v3/PhonLiveSocialProof.tsx` | – | low |
+| `src/components/trading/v3/HotCoinRail.tsx` | – | normal |
+| `src/components/empire/ImperialLiveWinsRail.tsx` | – | low |
+| `src/components/lobby/v3/ProximityFomoToast.tsx` | – | cosmetic |
+| `src/packages/wallet/hooks/useDepositCountdown.ts` | 1s | normal (visible-only) |
+| `src/packages/duel/hooks/useFomoOracle.ts` | – | low |
+| `src/packages/apex/landing/LandingBigWinTicker.tsx` | – | cosmetic |
+| `src/packages/apex/landing/LandingRaceCountdown.tsx` | – | cosmetic |
+| `src/packages/apex/components/ApexBigWinTicker.tsx` | – | cosmetic |
+| `src/packages/apex/games/SlotsLiteGame.tsx` (UI tick) | – | cosmetic |
+
+**제외 (raw setInterval 유지)**:
+- `useDepositRealtime` / `useDeposit` / `useCrashRound` — money-flow 8경로
+- `bybit-feed.ts` — oracle feed
+- `admin/*` (ImperialActivationPanel, Phase1LiveMonitor, DuelHealthDashboard, ImperialCircuitPanel, RegionHealth, Sprint4Dashboard, CommandCenter) — operator 청크 격리, 별도 PR
+- `runtime.idle.ts`, `clientMetrics.ts`, `visible-interval.ts` — infra primitives
+- `useDuelRoom` / `useSpectatorSync` / `useOddsEngine` / `useApexRace` / `useVrfTrace` — 게임 엔진 실시간 (별도 검토 후 P0-3)
+
+### 4. Rate Guard
+**`src/lib/api/rateGuard.ts`** — per-(user, endpoint) sliding window + exp backoff.
+- API: `guarded(endpoint, fn, { maxPerMin?=120, burst?=10 })`
+- 초과 시 즉시 throw `RateLimitedError`(retry-after) — 호출자가 backoff 결정
+- PollingManager가 자동 wrap (manual fetch는 opt-in)
+- 머니플로 RPC allowlist는 가드 우회(deny-list 검사 후 통과)
+
+### 5. Health Dock 카드
+**`src/components/admin/PollingStatusCard.tsx`** (admin 전용, operator 청크) — `/admin/ops/self-heal`에 1장 추가.
+- active pollers (count by priority)
+- calls/min (마지막 60s rolling)
+- saved requests (visibility/activity로 skip한 누적)
+- top 5 owners by call volume
+
+## Guardrails (절대 불변)
+- **머니플로 8경로 git diff = 0**: `imperial_place_phon_bet`, `_settle`, `_apply_house_edge_split`, `request_withdrawal`, `credit_crypto_deposit`, `swap_*`, `stake_*`, `subscribe_vip_pass_phon` 호출부 무변경
+- **UI/카피 변경 0**: 사용자 가시 영역 텍스트·색·간격 무변경
+- **money_flow 카테고리 등록 차단**: PollingManager가 throw — fail-closed
+- **Layer 1 번들 영향 < 2KB gz**: PollingManager는 single tiny module, treeshake-safe, admin 카드는 operator 청크
+- **Phase 2 ledger 호환**: 모든 등록은 `trackInterval`로 tracked ledger 적재
+
+## Technical details
+
+### File map
 ```text
-정상:
-  first_visit  → Landing → Quick Start → Practice Mode → Home
-  return_user  → Home
-
-비정상:
-  email 미인증  → /verify
-  KYC 진행중    → /kyc/pending
-  freeze        → /safe-mode
-  maintenance   → /status
+NEW  src/lib/polling/PollingManager.ts          ~180 LOC
+NEW  src/hooks/polling/useGlobalPolling.ts       ~70 LOC
+NEW  src/lib/api/rateGuard.ts                    ~90 LOC
+NEW  src/components/admin/PollingStatusCard.tsx  ~120 LOC (operator chunk)
+EDIT 14 cosmetic/social hook & component files (setInterval → useGlobalPolling)
+EDIT src/pages/admin/ops/SelfHeal.tsx (mount PollingStatusCard)
+NEW  docs/operations/polling-manager.md (운영 가이드)
 ```
-- 진입 시 라우팅 결정 **1회만** 실행
-- 금지: Landing → Guide → Landing / Home → Guide / 랜덤 이동
 
-### PR-P1-5 성능
-- React.lazy + Suspense (Admin/Atelier/heavy 3D)
-- Lounge framer-motion IntersectionObserver pause + `prefers-reduced-motion`
-- Pretendard `font-display: swap` + LCP preload
-- Target: Mobile LCP < 2.0s / FCP < 1.2s / TTI < 3.0s
+### Adaptive math (예시)
+```text
+base=12s, visible, idle 5분, mid device, no failures
+→ 12 × 1 × 2.5 × 1.3 × 1 = 39s
+base=12s, hidden tab
+→ skip(0 call)
+base=12s, visible, active <30s, high device, 2 fails
+→ 12 × 1 × 1 × 1 × 4 = 48s (backoff)
+```
 
----
+### Test plan
+1. Dev: open `/admin/ops/self-heal` → PollingStatusCard에서 active pollers 확인
+2. 백그라운드 탭 2분 → calls/min == 0, saved requests 증가
+3. idle 10분 → low priority pollers interval 4x
+4. 머니플로 grep: 8 RPC 함수 호출부 변경 0건 (`git diff --stat` 확인)
+5. Layer 1 번들: bundle-budget.mjs PASS (180KB 유지)
 
-## PAGE PRIORITY ENGINE
+## Expected outcome
+- 백그라운드 RPC 호출량: 30/min → 0
+- idle 10분 클라이언트 RPC 호출량: 60/min → 12–18/min (70% 감소)
+- 평균 활성 클라이언트 RPC 호출량: 30% 감소 (adaptive)
+- Layer 1 gz 영향: +1.5KB 예상
+- 사용자 가시 변화: 0
 
-- **Tier S (항상)**: 홈 / 게임 / 실시간 대결 / 실시간 예측 / PHON
-- **Tier A (조건)**: 친구초대 / VIP / 미션 / 출금
-- **Tier B (조건부)**: NFT / Atelier
-- **Tier C (사용자 숨김, 라우트 유지)**: Admin / Operator / Debug / Legacy / Test / GodMode
-
-## DELETE POLICY
-
-- **Hard Delete**: GodModePanel · CockpitV2 · apex-vrf-oracle-v1 · legacy · debug · test
-- **Lazy Hide**: Admin 전체 / NFT Atelier / heavy 3D
-- **UI 제거 + 데이터 유지 + Adapter**: AchievementsV3 → PHON Collection
-- **Rename + Keep**: imperial-duel → "실시간 대결"
-
----
-
-## SPRINT P2 — UX / UI (11 bug, 3 PR 분할)
-
-- 친구추천 분리 · 업적 단일화 · 실시간 대결 노출 강화 · 잔액 UI 단순화 (PHON+KRW+USDT 한 줄)
-- 슬롯 UI 재배치 · 패키지 중복 제거 · 등급 단일화
-- 레버리지 슬라이더 Bybit급 · 라이브 피드 속도 / 동작 최소화 · 폰트·로고 통일
-- Admin IA 1인 운영 단순화
-
-## SPRINT P3 — Retention (출시 후)
-
-Daily Mission · PHON Hunt · Daily Prediction · Streak Reward · Slot Event · Whale Event · AI Coach
-
----
-
-## 입출금 정책 (전역 카피)
-
-1. **코인 입출금** (BTC/USDT/USDC) — 주력
-2. **한국 원화 계좌이체** — 빠른 한국 은행 출금
-3. 상품권 수동 (기존)
-- Stripe/PG 자동 결제 제안 금지
-
-## 첫 방문 KPI
-
-- 3초: "무료 참여 가능한 보상이 있다" 인지
-- 10초: 첫 행동
-- 30초: 첫 보상 경험
-- 60초: 재방문 이유 확보
-
-## 금지 사항
-
-페이지 132개 재증식 / 중복 시스템 / 랜덤 라우팅 / FOMO 컴포넌트 중첩 / Crown UI 재등장 / 사용자 혼란
-
----
-
-## 실행 순서
-
-PR-P0-1 → P0-2 → P0-3A → P0-3B → **"P0 완료" 보고 + QA** → P1-1 → P1-2 → P1-3 → P1-4 → P1-5 → **"P1 완료" 보고** → P2 (3 PR) → P3.
-
-승인 시 **PR-P0-1 (인프라, UI 변경 없음)** 부터 진입합니다. 각 PR 완료 시 `"P0-1 완료"` 형식으로 보고합니다.
+## Out of scope (P0-3 이후)
+- Admin operator 폴링(`Phase1LiveMonitor`, `CommandCenter` 등) 통합
+- Game engine real-time(`useDuelRoom`, `useApexRace`) 통합
+- Oracle feed(`bybit-feed`) 통합
+- Backend rate limiting (no-backend-rate-limiting directive 유지)
