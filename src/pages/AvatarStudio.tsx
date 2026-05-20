@@ -53,7 +53,7 @@ export default function AvatarStudio() {
         return;
       }
       if (p.rarity === "legendary") {
-        notify.success(`👑 ${p.name} — 이건 오직 폐하만이 가질 수 있는 위엄입니다.`);
+        notify.success(`💎 ${p.name} — 이건 오직 폐하만이 가질 수 있는 위엄입니다.`);
       } else {
         notify.success(`✨ ${p.name} 획득 완료.`);
       }

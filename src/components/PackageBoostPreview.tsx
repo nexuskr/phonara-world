@@ -21,7 +21,7 @@ export default function PackageBoostPreview({
       <div className="flex items-center gap-1.5 text-[11px] font-bold mb-2">
         <Flame className={`w-3.5 h-3.5 ${isEmpire ? "text-gold" : "text-primary"}`} />
         <span className={isEmpire ? "text-gold" : "text-primary"}>
-          {isEmpire ? "👑 Empire · 첫 3일 사전 공지 가속 구간" : "오늘 시작 시 · 첫 3일 사전 공지 가속"}
+          {isEmpire ? "💎 Empire · 첫 3일 사전 공지 가속 구간" : "오늘 시작 시 · 첫 3일 사전 공지 가속"}
         </span>
       </div>
       <div className="space-y-1">

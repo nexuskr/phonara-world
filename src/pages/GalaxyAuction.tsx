@@ -149,7 +149,7 @@ export default function GalaxyAuction() {
           <DialogFooter>
             <Button variant="ghost" onClick={() => setPicked(null)}>취소</Button>
             <Button onClick={onBid} disabled={submitting} className="bg-gradient-imperial">
-              {submitting ? "처리 중..." : "👑 입찰"}
+              {submitting ? "처리 중..." : "💎 입찰"}
             </Button>
           </DialogFooter>
         </DialogContent>

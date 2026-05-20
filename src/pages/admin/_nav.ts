@@ -102,7 +102,7 @@ export const ADMIN_NAV: AdminNavSection[] = [
       { id: "report",        name: "AI 일일 리포트",      to: "/admin/ops/report",        icon: BarChart3 },
       { id: "thresholds",    name: "임계값 · SLA",        to: "/admin/ops/thresholds",    icon: Sliders },
       { id: "duel",          name: "⚔️ Imperial Duel (PHON)", to: "/admin/duel",          icon: Crown },
-      { id: "imperial-cmd",  name: "👑 Imperial Command",     to: "/admin/ops/imperial-command", icon: Crown },
+      { id: "imperial-cmd",  name: "💎 Imperial Command",     to: "/admin/ops/imperial-command", icon: Crown },
     ],
   },
   {
@@ -130,7 +130,7 @@ export const ADMIN_NAV: AdminNavSection[] = [
       { id: "bias",          name: "Demo Bias 슬라이더",  to: "/admin/game/bias",          icon: Sliders },
       { id: "nearmiss",      name: "Near-Miss 확률",      to: "/admin/game/nearmiss",      icon: Target },
       { id: "particles",     name: "Crown 파티클 강도",   to: "/admin/game/particles",     icon: Sparkles },
-      { id: "crown-trigger", name: "👑 Manual Crown",     to: "/admin/game/crown-trigger", icon: Rocket },
+      { id: "crown-trigger", name: "💎 Manual Crown",     to: "/admin/game/crown-trigger", icon: Rocket },
       { id: "slot-sfx",      name: "🔊 슬롯 사운드 SFX",  to: "/admin/game/slot-sfx",      icon: Sparkles },
     ],
   },

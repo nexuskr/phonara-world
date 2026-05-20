@@ -128,7 +128,7 @@ export default function AdvancedAnalytics() {
           )}
 
           {/* 티어 분포 */}
-          <Card title="👑 등급 분포">
+          <Card title="💎 등급 분포">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
               <DonutMini
                 size={180}

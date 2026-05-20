@@ -75,7 +75,7 @@ export default function FloatingChat() {
         >
           <MessageCircle className="w-6 h-6 text-gold" />
           {isEmpire && (
-            <span className="absolute -top-1 -right-1 w-5 h-5 bg-gold rounded-full flex items-center justify-center text-[10px] font-black text-black animate-pulse">👑</span>
+            <span className="absolute -top-1 -right-1 w-5 h-5 bg-gold rounded-full flex items-center justify-center text-[10px] font-black text-black animate-pulse">💎</span>
           )}
         </button>
       </FloatingSlot>
@@ -88,7 +88,7 @@ export default function FloatingChat() {
           <div className={`px-5 py-3 flex items-center gap-3 border-b border-border ${isEmpire ? "bg-gradient-gold/10" : ""}`}>
             <div className={`w-2.5 h-2.5 rounded-full animate-pulse ${isEmpire ? "bg-gold" : "bg-gold"}`} />
             <h2 className="font-bold flex-1 text-sm text-gold">
-              👑 AI 황제 자문관
+              💎 AI 황제 자문관
             </h2>
             <button onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground">
               <X className="w-4 h-4" />

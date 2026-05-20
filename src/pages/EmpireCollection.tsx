@@ -48,7 +48,7 @@ export default function EmpireCollection() {
   return (
     <div className="container mx-auto max-w-3xl py-6 px-4 space-y-6">
       <header className="space-y-1.5 text-center">
-        <h1 className="font-imperial text-3xl text-gradient-imperial tracking-wider">👑 내 NFT 컬렉션</h1>
+        <h1 className="font-imperial text-3xl text-gradient-imperial tracking-wider">💎 내 NFT 컬렉션</h1>
         <p className="text-xs text-muted-foreground">NFT는 단순 이미지가 아니라 <b className="text-amber-300">레버리지의 힘</b>입니다.</p>
       </header>
 

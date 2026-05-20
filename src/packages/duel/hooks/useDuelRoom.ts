@@ -5,7 +5,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { DuelObjectKind, DuelRoom, Duelist } from "../types";
 
-const EMOJIS = ["👑", "🐉", "🦅", "🦁", "🐺", "🦊", "🐅", "🐻"];
+const EMOJIS = ["💎", "🐉", "🦅", "🦁", "🐺", "🦊", "🐅", "🐻"];
 const PALETTE = ["#F5C518", "#FF8A3D", "#F472B6", "#A78BFA", "#60A5FA", "#34D399", "#FB7185", "#C084FC"];
 const NAMES = ["황제#7821", "황제#3094", "황제#5527", "황제#1148", "황제#9013", "황제#4402", "황제#6675", "황제#2289"];
 

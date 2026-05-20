@@ -44,7 +44,7 @@ export default function ImperialRolloutPhasePanel() {
 
   return (
     <Card className="p-4">
-      <div className="text-xs font-bold mb-3">👑 Imperial Rollout Phase</div>
+      <div className="text-xs font-bold mb-3">💎 Imperial Rollout Phase</div>
       <div className="text-[11px] text-muted-foreground mb-3">
         현재: <span className="font-mono text-amber-300">
           {state ? `Phase ${state.phase} · ${state.status} · ${new Date(state.started_at).toLocaleString()}` : "비활성"}

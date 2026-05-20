@@ -101,7 +101,7 @@ export default function ImperialCommandCenter() {
     <div className="space-y-4">
       <header className="flex items-center justify-between">
         <div>
-          <h1 className="font-display font-black text-2xl">👑 Imperial Command Center</h1>
+          <h1 className="font-display font-black text-2xl">💎 Imperial Command Center</h1>
           <p className="text-xs text-muted-foreground mt-1">
             Phase 4 Limited Rollout — 5 패널 통합 · 15s 자동 갱신 (#{tick})
           </p>

@@ -9,7 +9,7 @@ import { triggerHaptic } from "@/packages/native";
 import type { KeyboardEvent } from "react";
 
 const SOVEREIGNS = [
-  { rank: 1, nick: "황제#7821", emoji: "👑", crowns: 482, color: "#F5C518" },
+  { rank: 1, nick: "황제#7821", emoji: "💎", crowns: 482, color: "#F5C518" },
   { rank: 2, nick: "황제#3094", emoji: "🦅", crowns: 367, color: "#F472B6" },
   { rank: 3, nick: "황제#5527", emoji: "🐉", crowns: 318, color: "#A78BFA" },
   { rank: 4, nick: "황제#1148", emoji: "🦁", crowns: 274, color: "#FF8A3D" },

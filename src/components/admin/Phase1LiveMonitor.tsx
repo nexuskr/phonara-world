@@ -57,7 +57,7 @@ export default function Phase1LiveMonitor() {
     try {
       const { error } = await supabase.rpc("imperial_rollout_activate", { _phase: 1 } as any);
       if (error) throw error;
-      notify.imperial("👑 Phase 1 Observer Mode 활성화 완료");
+      notify.imperial("💎 Phase 1 Observer Mode 활성화 완료");
       await refresh();
     } catch (e: any) {
       notify.error("Phase 1 활성화 실패", { description: e?.message ?? "AAL2 필요할 수 있습니다." });

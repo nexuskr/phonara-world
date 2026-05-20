@@ -28,7 +28,7 @@ function fmt(n: number | null): string {
 function labelFor(kind: string): string {
   switch (kind) {
     case "withdrawal": return "💸 출금";
-    case "baron_promo": return "👑 VIP 승급";
+    case "baron_promo": return "💎 VIP 승급";
     case "crown_boom":  return "✨ 보너스 폭발";
     case "founding_seat": return "🏛️ 시즌 좌석";
     default: return "🔥 빅윈";

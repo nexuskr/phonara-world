@@ -64,7 +64,7 @@ export default function AttendanceCard() {
 
       if (milestoneBonusStreak > 0) {
         toast({
-          title: `👑 ${milestoneBonusStreak}일 연속 달성! +${formatKRW(totalGain)}`,
+          title: `💎 ${milestoneBonusStreak}일 연속 달성! +${formatKRW(totalGain)}`,
           description: `황제 배지 획득 · Empire 경험치 +50`,
         });
       } else {

@@ -29,7 +29,7 @@ export default function EmpireHall() {
   const { booster } = useEmpireBooster();
   const { snap: warSnap, remainingMs, isFinaleWindow } = useCrownWar(15000);
 
-  useEffect(() => { document.title = "👑 나의 제국 · Empire Hall"; }, []);
+  useEffect(() => { document.title = "💎 나의 제국 · Empire Hall"; }, []);
 
   useEffect(() => {
     if (!user) return;

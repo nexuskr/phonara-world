@@ -98,7 +98,7 @@ export default function Vip() {
       if (error) throw error;
       const expires = (data as any)?.expires_at;
       notify.success(
-        `👑VIP ${pendingTier.toUpperCase()} 활성화${expires ? ` · 만료 ${new Date(expires).toLocaleDateString()}` : ""}`,
+        `💎VIP ${pendingTier.toUpperCase()} 활성화${expires ? ` · 만료 ${new Date(expires).toLocaleDateString()}` : ""}`,
       );
       await vip.refresh();
       qc.invalidateQueries({ queryKey: ["vip"] });

@@ -82,7 +82,7 @@ export default function SecureAuth() {
     try {
       const { error } = await supabase.auth.signInWithPassword({ email: e, password });
       if (error) throw error;
-      toast({ title: "환영합니다 👑" });
+      toast({ title: "환영합니다 💎" });
       postAuthRedirect(false);
     } catch (err: any) {
       toast({ title: "로그인 실패", description: err.message, variant: "destructive" });

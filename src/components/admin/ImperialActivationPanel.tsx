@@ -65,7 +65,7 @@ export default function ImperialActivationPanel() {
           _payload: { tier: 1, source: "command_center", activated_by: uid },
         });
       } catch { /* observability is best-effort */ }
-      notify.success("👑 Phase 1 Observer 활성화 완료");
+      notify.success("💎 Phase 1 Observer 활성화 완료");
       setTimeout(refresh, 1500);
     } catch (e) {
       notify.error(describeError(e));
@@ -81,7 +81,7 @@ export default function ImperialActivationPanel() {
       <div className="flex items-center justify-between mb-3">
         <div>
           <div className="text-xs font-bold flex items-center gap-2">
-            👑 Phase 1 Hyperion Activation
+            💎 Phase 1 Hyperion Activation
             {isLive ? (
               <Badge variant="default" className="bg-emerald-500/20 text-emerald-200 border-emerald-400/40">
                 LIVE

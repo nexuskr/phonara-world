@@ -24,7 +24,7 @@ export default function ReplayLanding() {
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
-    document.title = "👑 Crown Reveal · Phonara Empire";
+    document.title = "💎 Crown Reveal · Phonara Empire";
     if (!token) return;
     (async () => {
       const { data: r } = await supabase.rpc("get_public_crown_replay", { _token: token });
@@ -70,7 +70,7 @@ export default function ReplayLanding() {
           transition={{ type: "spring", damping: 9, stiffness: 110 }}
           className="text-7xl"
         >
-          👑
+          💎
         </motion.div>
 
         <motion.div

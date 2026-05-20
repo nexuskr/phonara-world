@@ -521,7 +521,7 @@ const TIERS = [
   { n: "FREE",    sub: "지금 가입하면",    reward: "1×",   limit: "50만",  jp: "4%",  color: "from-muted to-muted/50", emoji: "🪙" },
   { n: "STARTER", sub: "첫 입금 5만+",   reward: "1.5×", limit: "100만", jp: "6%",  color: "from-secondary/30 to-secondary/10", emoji: "🚀" },
   { n: "VIP",     sub: "누적 100만+",   reward: "6×",   limit: "500만", jp: "12%", color: "from-primary/30 to-primary/10", emoji: "💎" },
-  { n: "GOD",     sub: "누적 1,000만+", reward: "10×",  limit: "5,000만",jp: "28%", color: "from-accent/30 to-accent/10", emoji: "👑" },
+  { n: "GOD",     sub: "누적 1,000만+", reward: "10×",  limit: "5,000만",jp: "28%", color: "from-accent/30 to-accent/10", emoji: "💎" },
   { n: "EMPIRE",  sub: "황실 직속",      reward: "20×+", limit: "∞",     jp: "65%", color: "from-gold to-gold/50", emoji: "🏰" },
 ];
 

@@ -17,7 +17,7 @@ type Row = {
 };
 
 const TIER_EMOJI: Record<string, string> = {
-  empire: "👑",
+  empire: "💎",
   god: "💎",
   vip: "⚡",
   normal: "🚀",

@@ -64,7 +64,7 @@ export default function CoinMasterLounge() {
             <Perk icon={Zap} title="출금 우선 처리" desc="대기열 최우선 — 평균 30분 이내 정산" />
             <Perk icon={Coins} title="코인 입금 보너스 +10%" desc="일반 +8% 대비 +2%p 추가" />
             <Perk icon={ShieldCheck} title="AML 한도 +50%" desc="일일 출금 한도 1.5배 자동 상향" />
-            <Perk icon={Sparkles} title="전용 배지 · 라이브챗 골드" desc="이름 옆 👑 표시 + 24h VIP 채팅" />
+            <Perk icon={Sparkles} title="전용 배지 · 라이브챗 골드" desc="이름 옆 💎 표시 + 24h VIP 채팅" />
           </div>
         </div>
       </section>

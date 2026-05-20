@@ -64,7 +64,7 @@ export default function Profile() {
     { id: "first",    name: t("badges.first.name"),    emoji: "🚀", desc: t("badges.first.desc"),    rarity: "common",    got: u.xp >= 100, progress: Math.min(100, u.xp) },
     { id: "vip",      name: t("badges.vip.name"),      emoji: "💎", desc: t("badges.vip.desc"),      rarity: "rare",      got: ["VIP","GOD","EMPIRE"].includes(u.tier) },
     { id: "god",      name: t("badges.god.name"),      emoji: "⚡", desc: t("badges.god.desc"),      rarity: "epic",      got: ["GOD","EMPIRE"].includes(u.tier) },
-    { id: "empire",   name: t("badges.empire.name"),   emoji: "👑", desc: t("badges.empire.desc"),   rarity: "legendary", got: u.tier === "EMPIRE" },
+    { id: "empire",   name: t("badges.empire.name"),   emoji: "💎", desc: t("badges.empire.desc"),   rarity: "legendary", got: u.tier === "EMPIRE" },
     { id: "streak3",  name: t("badges.streak3.name"),  emoji: "🌱", desc: t("badges.streak3.desc"),  rarity: "common",    got: u.streak >= 3,  progress: Math.min(100, (u.streak/3)*100) },
     { id: "streak7",  name: t("badges.streak7.name"),  emoji: "🔥", desc: t("badges.streak7.desc"),  rarity: "rare",      got: u.streak >= 7,  progress: Math.min(100, (u.streak/7)*100) },
     { id: "streak30", name: t("badges.streak30.name"), emoji: "🏆", desc: t("badges.streak30.desc"), rarity: "epic",      got: u.streak >= 30, progress: Math.min(100, (u.streak/30)*100) },

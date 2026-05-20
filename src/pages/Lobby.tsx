@@ -36,7 +36,7 @@ export default function Lobby() {
         <div className="min-w-0">
           <div className="eyebrow-imperial text-[10px]">제국 로비</div>
           <h1 className="h-imperial text-base imperial-halfoff-text tracking-[0.18em] truncate">
-            👑 {FOMO.lobbyTitle}
+            💎 {FOMO.lobbyTitle}
           </h1>
           <p className="text-[11px] text-pink/80 mt-0.5 truncate">
             {FOMO.lobbyCrowd(187)}

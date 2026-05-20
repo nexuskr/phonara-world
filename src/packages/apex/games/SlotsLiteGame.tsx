@@ -7,7 +7,7 @@ import { ApexFairBadge } from "./ProvablyFairBadge";
 import { useApexGame } from "./useApexGame";
 import type { HybridEngine } from "../engine";
 
-const SYMS = ["💎", "🍒", "⭐", "7️⃣", "👑", "🍋"];
+const SYMS = ["💎", "🍒", "⭐", "7️⃣", "💎", "🍋"];
 
 export default function SlotsLiteGame({ engine }: { engine?: HybridEngine }) {
   void engine;
