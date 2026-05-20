@@ -318,6 +318,7 @@ const App = () => (
                 <Route path="community/chat"       element={<ApexCommunityChat />} />
                 <Route path="community/squad"      element={<ApexCommunitySquad />} />
                 <Route path="community/tournament" element={<ApexCommunityTournament />} />
+                <Route path="events/cup"           element={<ApexEventsCup />} />
                 <Route path="free"         element={<ApexFreeMoney />} />
                 <Route path="vault"        element={<ApexVault />} />
                 <Route path="reels"        element={<ApexWinReels />} />
