@@ -145,13 +145,9 @@ class PollingManagerImpl {
       stop: () => {},
     };
 
-    // adaptive scheduler: 최소 틱 = baseMs (더 느려질 수만 있음).
-    // RuntimeCategory 는 4-value enum (money_flow/cosmetic/admin/unknown).
-    // PollCategory → RuntimeCategory 매핑.
-    const runtimeCat: RuntimeCategory =
-      category === "admin" ? "admin"
-      : category === "money_flow" ? "money_flow"
-      : "cosmetic";
+    // adaptive scheduler. RuntimeCategory 는 4-value enum.
+    // money_flow 는 위에서 throw 되었으므로 여기서는 admin/그외만.
+    const runtimeCat: RuntimeCategory = category === "admin" ? "admin" : "cosmetic";
 
     const tick = async () => {
       // adaptive interval gate
