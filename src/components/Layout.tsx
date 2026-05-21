@@ -1,251 +1,253 @@
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
-  Gem, Zap,
-  Wallet,
-  LogOut,
-  ShieldCheck,
-  User as UserIcon,
+  Home as HomeIcon,
   TrendingUp,
+  Zap,
+  Radio,
+  Wallet,
+  Gem,
+  LogOut,
+  User as UserIcon,
   Menu,
   Coins,
-  Home as HomeIcon,
   Gamepad2,
-  Radio} from "lucide-react";
+} from "lucide-react";
 import { useDB } from "@/lib/store";
-import React from "react";
-import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
-import { useAdminNotifications } from "@/hooks/use-admin-notifications";
-import { useUserNotifications } from "@/hooks/use-user-notifications";
 import TopHUD, { TopHUDCompact } from "./TopHUD";
 import LanguageSwitcher from "./LanguageSwitcher";
 import FreezeBanner from "./FreezeBanner";
 import { useAchievementWatcher } from "@/hooks/use-achievement-watcher";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import ImperialLogo from "@/components/brand/ImperialLogo";
+import PhonaraLogo from "@/components/brand/PhonaraLogo"; // ← ImperialLogo → PhonaraLogo 변경
+import { motion, AnimatePresence } from "framer-motion";
 
-// v19 Phase 0-R: 글로벌 idle 오버레이 13종 전면 마운트 해제.
-// (FloatingChat, NeonNotificationFeed, BaronPromotionDialog, EmpireBoosterTimer,
-//  EmpireConcierge, ReplayShareGlobal, CrownWarFinaleModal, PowerHeader,
-//  FirstEmperorBurst, CrownThroneOverlay, ImperialInbox, QuickAccessStrip,
-//  EmpirePopulationPulse, ImperialHud)
-// 파일은 보존하여 다른 페이지에서 직접 import 가능.
+// ====================== NAV ======================
+type NavLeaf = { to: string; label: string; icon: React.ElementType; matches?: string[] };
 
-/**
- * Phonara — Cosmic Emperor V3 Grouped Navigation
- * Single source of truth for desktop sidebar, mobile sheet, and bottom-nav routing.
- */
-
-type IconType = typeof HomeIcon;
-type NavLeaf = { to: string; label: string; icon: IconType; matches?: string[] };
-
-// v19 Slice 7.5: 좌측 사이드바 슬림화 — 6개 평탄 리스트 + Admin 최하단
 const SIDEBAR_NAV: NavLeaf[] = [
-  { to: "/command", label: "홈",       icon: HomeIcon,    matches: ["/command", "/home", "/dashboard"] },
-  { to: "/trade",   label: "트레이딩",  icon: TrendingUp,  matches: ["/trade", "/arena"] },
-  { to: "/casino",  label: "수익게임",  icon: Zap,         matches: ["/casino", "/crash", "/jackpot", "/games"] },
-  { to: "/live",    label: "라이브",    icon: Radio,       matches: ["/live"] },
-  { to: "/wallet",  label: "지갑",      icon: Wallet,      matches: ["/wallet", "/secure-wallet", "/phon"] },
-  { to: "/empire",  label: "황실",      icon: Gem,       matches: ["/empire", "/packages", "/profile"] },
+  { to: "/command", label: "홈", icon: HomeIcon, matches: ["/command", "/home", "/dashboard"] },
+  { to: "/trade", label: "트레이딩", icon: TrendingUp, matches: ["/trade", "/arena"] },
+  { to: "/casino", label: "수익게임", icon: Zap, matches: ["/casino", "/crash", "/jackpot", "/games", "/slots"] },
+  { to: "/live", label: "라이브", icon: Radio, matches: ["/live"] },
+  { to: "/wallet", label: "지갑", icon: Wallet, matches: ["/wallet", "/secure-wallet", "/phon"] },
+  { to: "/empire", label: "황실", icon: Gem, matches: ["/empire", "/packages", "/profile"] },
 ];
 
-// Mobile bottom nav — 5 tabs, center FAB = PHON 허브
-type BottomItem = { to: string; matches: string[]; icon: IconType; label: string; fab?: boolean };
-const BOTTOM_NAV: BottomItem[] = [
-  { to: "/command", matches: ["/home", "/", "/command", "/dashboard"], icon: HomeIcon,   label: "홈" },
-  { to: "/trade",   matches: ["/trade", "/arena"],                     icon: TrendingUp, label: "트레이딩" },
-  { to: "/phon",    matches: ["/phon"],                                icon: Coins,      label: "PHON", fab: true },
-  { to: "/casino",  matches: ["/games", "/casino", "/crash", "/jackpot"], icon: Gamepad2, label: "게임" },
-  { to: "/empire",  matches: ["/profile", "/wallet", "/empire"],       icon: Gem,      label: "내 제국" },
+const BOTTOM_NAV = [
+  { to: "/command", icon: HomeIcon, label: "홈", matches: ["/command", "/home", "/dashboard"] },
+  { to: "/trade", icon: TrendingUp, label: "트레이딩", matches: ["/trade", "/arena"] },
+  { to: "/phon", icon: Coins, label: "PHON", fab: true, matches: ["/phon"] },
+  { to: "/casino", icon: Gamepad2, label: "게임", matches: ["/casino", "/games"] },
+  { to: "/empire", icon: Gem, label: "황실", matches: ["/empire", "/profile"] },
 ];
 
-function matchActive(matches: string[] | undefined, fallbackTo: string, pathname: string) {
-  const list = matches ?? [fallbackTo];
-  return list.some((m) => pathname === m || pathname.startsWith(m + "/"));
-}
-function isBottomActive(b: BottomItem, pathname: string) {
-  return matchActive(b.matches, b.to, pathname);
-}
+// ====================== Web Worker Particle ======================
+const NexusParticleBackground = () => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const workerRef = useRef<Worker | null>(null);
 
-function SlimMenu({
-  pathname,
-  isAdmin,
-  onNavigate,
-}: {
-  pathname: string;
-  isAdmin: boolean;
-  onNavigate?: () => void;
-}) {
-  return (
-    <div className="space-y-1">
-      {SIDEBAR_NAV.map((item) => {
-        const Icon = item.icon;
-        const active = matchActive(item.matches, item.to, pathname);
-        return (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            onClick={onNavigate}
-            className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 press ${
-              active
-                ? "bg-gradient-imperial text-primary-foreground glow-imperial"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
-            }`}
-          >
-            {active && (
-              <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-[3px] rounded-r bg-[hsl(var(--gold))] shadow-[0_0_12px_hsl(var(--gold)/0.8)]" />
-            )}
-            <Icon className={`w-4 h-4 ${active ? "" : "group-hover:text-primary transition-colors"}`} />
-            <span className="tracking-wide">{item.label}</span>
-          </NavLink>
-        );
-      })}
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-      {isAdmin && (
-        <>
-          <div className="my-3 border-t border-border/40" />
-          <NavLink
-            to="/admin"
-            onClick={onNavigate}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-bold transition ${
-                isActive
-                  ? "bg-primary/15 text-primary ring-1 ring-primary/30"
-                  : "text-primary/80 hover:bg-primary/10 hover:text-primary"
-              }`
-            }
-          >
-            <ShieldCheck className="w-4 h-4" />
-            <span>관리자</span>
-          </NavLink>
-        </>
-      )}
-    </div>
-  );
-}
+    const isMobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
 
+    if (typeof OffscreenCanvas !== 'undefined' && canvas.transferControlToOffscreen) {
+      const offscreen = canvas.transferControlToOffscreen();
+      workerRef.current = new Worker('/workers/particle-worker.js');
+
+      workerRef.current.postMessage({
+        type: 'init',
+        payload: { canvas: offscreen, isMobile, width: window.innerWidth, height: window.innerHeight }
+      }, [offscreen]);
+
+      const handleResize = () => workerRef.current?.postMessage({ type: 'resize', payload: { width: window.innerWidth, height: window.innerHeight } });
+      const handleMove = (e: MouseEvent | TouchEvent) => {
+        const x = 'touches' in e ? e.touches[0].clientX : e.clientX;
+        const y = 'touches' in e ? e.touches[0].clientY : e.clientY;
+        workerRef.current?.postMessage({ type: 'mousemove', payload: { x, y } });
+      };
+
+      window.addEventListener('resize', handleResize);
+      window.addEventListener('mousemove', handleMove);
+      window.addEventListener('touchmove', handleMove);
+
+      return () => {
+        window.removeEventListener('resize', handleResize);
+        window.removeEventListener('mousemove', handleMove);
+        window.removeEventListener('touchmove', handleMove);
+        workerRef.current?.terminate();
+      };
+    }
+  }, []);
+
+  return <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none z-[-1] mix-blend-screen will-change-transform" />;
+};
+
+// ====================== ZERO FLASH LAYOUT ======================
 export default function Layout({ children }: { children: React.ReactNode }) {
-  const [db, setDb] = useDB();
+  const [db] = useDB();
   const nav = useNavigate();
   const loc = useLocation();
   const user = db.user;
-  const { t } = useTranslation("nav");
-  useAchievementWatcher(loc.pathname);
-
-  useUserNotifications(user?.id);
-  useAdminNotifications(!!user?.isAdmin);
-  // v19 Phase 0-R: idle 오버레이 모두 제거
   const [sheetOpen, setSheetOpen] = useState(false);
 
+  useAchievementWatcher(loc.pathname);
+
+  const triggerHaptic = useCallback((intensity: "light" | "medium" | "heavy" = "medium") => {
+    if (navigator.vibrate) navigator.vibrate(intensity === "heavy" ? [10, 20, 10] : [6]);
+  }, []);
+
+  const isActive = (matches: string[] = [], to: string) =>
+    matches.some(m => loc.pathname === m || loc.pathname.startsWith(m + "/")) || loc.pathname === to;
+
   return (
-    <div className="min-h-screen md:pl-60 pb-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom)+0.75rem)] md:pb-6">
+    <div className="min-h-[100dvh] bg-[#0a0a0f] text-white overflow-hidden relative">
       <FreezeBanner />
+      <NexusParticleBackground />
 
-      {/* Desktop sidebar — grouped accordion */}
-      {user && (
-        <aside className="hidden md:flex fixed inset-y-0 left-0 z-30 w-60 flex-col glass-strong border-r border-primary/10">
-          <div className="px-5 py-5 border-b border-border/40">
-            <ImperialLogo to="/command" size="md" withWordmark withWorld={false} ariaLabel="PHONARA 홈" />
-
-          </div>
-          <nav className="flex-1 p-3 overflow-y-auto">
-            <SlimMenu pathname={loc.pathname} isAdmin={!!user.isAdmin} />
-          </nav>
-          <button
-            onClick={async () => {
-              await supabase.auth.signOut();
-              setDb((d) => ({ ...d, user: null }));
-              nav("/");
-            }}
-            className="m-3 flex items-center gap-2 px-3 py-2 rounded-xl text-xs glass hover:bg-muted/40 transition"
+      {/* DESKTOP SIDEBAR */}
+      <AnimatePresence mode="wait">
+        {user && (
+          <motion.aside
+            key="sidebar"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="hidden md:flex fixed inset-y-0 left-0 z-50 w-72 flex-col border-r border-white/10 backdrop-blur-3xl bg-black/80 shadow-[0_0_80px_-20px] shadow-cyan-500/40"
           >
-            <LogOut className="w-3.5 h-3.5" /> {t("logout")}
-          </button>
-        </aside>
-      )}
+            <div className="px-6 py-8 border-b border-white/10 flex items-center gap-3 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-purple-500/10 to-pink-500/10" />
+              <PhonaraLogo to="/command" size="lg" withWordmark withWorld className="drop-shadow-[0_0_45px_#00f5ff] relative z-10" />
+              <div className="ml-auto text-[10px] font-mono tracking-[3px] text-emerald-400">PHONARA • LIVE</div>
+            </div>
 
-      {/* Top bar */}
-      <header className="sticky top-0 z-40 glass border-b border-border/40">
-        <div className="container flex items-center justify-between h-14 md:h-16">
-          {/* Mobile hamburger + brand */}
-          <div className="flex items-center gap-2 md:hidden">
-            {user && (
-              <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-                <SheetTrigger asChild>
-                  <button
-                    aria-label="메뉴 열기"
-                    className="inline-flex items-center justify-center w-9 h-9 rounded-full glass border border-border/50 text-foreground hover:border-primary/50 transition press"
-                  >
-                    <Menu className="w-4 h-4" />
-                  </button>
-                </SheetTrigger>
-                <SheetContent side="left" className="w-72 p-0 bg-background/95 backdrop-blur-xl">
-                  <div className="px-5 py-5 border-b border-border/40">
-                    <div onClick={() => setSheetOpen(false)} className="inline-block">
-                      <ImperialLogo to="/command" size="md" withWordmark withWorld={false} />
-                    </div>
-                  </div>
-                  <div className="p-3 overflow-y-auto h-[calc(100%-180px)]">
-                    <SlimMenu pathname={loc.pathname} isAdmin={!!user.isAdmin} onNavigate={() => setSheetOpen(false)} />
-                  </div>
-                  <button
-                    onClick={async () => {
-                      setSheetOpen(false);
-                      await supabase.auth.signOut();
-                      setDb((d) => ({ ...d, user: null }));
-                      nav("/");
-                    }}
-                    className="m-3 flex items-center gap-2 px-3 py-2 rounded-xl text-xs glass hover:bg-muted/40 transition w-[calc(100%-1.5rem)]"
-                  >
-                    <LogOut className="w-3.5 h-3.5" /> {t("logout")}
-                  </button>
-                </SheetContent>
-              </Sheet>
-            )}
-            <ImperialLogo to={user ? "/command" : "/"} size="sm" withWordmark withWorld={false} />
+            <nav className="flex-1 px-3 py-8 space-y-1 overflow-y-auto">
+              {SIDEBAR_NAV.map((item) => {
+                const Icon = item.icon;
+                const active = isActive(item.matches, item.to);
+                return (
+                  <motion.div key={item.to} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }} onClick={() => triggerHaptic("light")}>
+                    <NavLink
+                      to={item.to}
+                      className={`group relative flex items-center gap-4 px-6 py-4.5 rounded-3xl text-base font-semibold tracking-wider transition-all duration-300 ${active
+                        ? "bg-gradient-to-r from-cyan-500/20 via-purple-500/15 to-pink-500/20 border border-cyan-400/40 shadow-[0_0_60px_-12px] shadow-cyan-400 text-white"
+                        : "hover:bg-white/5 text-zinc-400 hover:text-white"
+                      }`}
+                    >
+                      {active && <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-cyan-400/20 to-pink-400/20 blur-2xl -z-10" />}
+                      <div className={`p-3 rounded-2xl transition-all ${active ? "bg-white/10 scale-110" : "group-hover:bg-white/10"}`}>
+                        <Icon className={`w-5 h-5 transition-all ${active ? "text-cyan-400 drop-shadow-[0_0_18px_#67e8f9]" : ""}`} />
+                      </div>
+                      <span>{item.label}</span>
+                      {active && <div className="ml-auto w-2 h-2 bg-cyan-400 rounded-full animate-ping" />}
+                    </NavLink>
+                  </motion.div>
+                );
+              })}
+            </nav>
 
-          </div>
-          {/* Desktop spacer */}
-          <div className="hidden md:block" />
-
-          <div className="flex items-center gap-2">
-            <TopHUD />
-            <TopHUDCompact />
-            {/* v19 Phase 0-R: ImperialInbox 마운트 해제 */}
-            {user && (
-              <Link
-                to="/profile"
-                aria-label={t("my")}
-                className="md:hidden inline-flex items-center justify-center w-9 h-9 rounded-full glass border border-border/50 text-foreground hover:border-primary/50 transition press"
+            <div className="p-6 border-t border-white/10">
+              <button
+                onClick={async () => { triggerHaptic("heavy"); await supabase.auth.signOut(); nav("/"); }}
+                className="w-full flex items-center justify-center gap-3 py-4 rounded-3xl bg-white/5 hover:bg-red-500/10 hover:text-red-400 active:scale-95 transition-all"
               >
-                <UserIcon className="w-4 h-4" />
-              </Link>
-            )}
-            {!user && (
-              <>
-                <LanguageSwitcher />
-                <Link
-                  to="/secure-auth"
-                  className="px-3 py-1.5 rounded-full text-xs font-bold bg-gradient-imperial text-primary-foreground glow-imperial"
+                <LogOut className="w-4 h-4" /> 로그아웃
+              </button>
+            </div>
+          </motion.aside>
+        )}
+      </AnimatePresence>
+
+      {/* TOP HEADER - 수정된 버전 */}
+<header className="sticky top-0 z-50 h-16 md:h-20 border-b border-white/10 backdrop-blur-3xl bg-black/90 flex items-center px-4 md:px-8">
+  <div className="flex-1 flex items-center gap-4 min-w-0">  {/* min-w-0 추가 */}
+    {user && (
+      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+        <SheetTrigger asChild>
+          <motion.button 
+            whileTap={{ scale: 0.9 }} 
+            onClick={() => triggerHaptic()} 
+            className="md:hidden w-12 h-12 rounded-2xl border border-white/10 flex items-center justify-center bg-black/60 flex-shrink-0"
+          >
+            <Menu className="w-5 h-5" />
+          </motion.button>
+        </SheetTrigger>
+        <SheetContent side="left" className="w-80 p-0 bg-black/95 backdrop-blur-3xl border-r border-white/10" />
+      </Sheet>
+    )}
+
+    {/* 로고 - 모바일에서만 크게, 겹침 방지 */}
+    <div className="flex-shrink-0 md:hidden">
+      <PhonaraLogo to={user ? "/command" : "/"} size="md" withWordmark className="scale-90" />
+    </div>
+  </div>
+
+  {/* 오른쪽 HUD */}
+  <div className="flex items-center gap-3 flex-shrink-0">
+    <TopHUD />
+    <TopHUDCompact />
+    {user && (
+      <Link 
+        to="/profile" 
+        className="w-10 h-10 rounded-2xl glass border border-white/10 flex items-center justify-center hover:border-cyan-400/50 active:scale-95 transition-all flex-shrink-0"
+      >
+        <UserIcon className="w-5 h-5" />
+      </Link>
+    )}
+    {!user && <LanguageSwitcher />}
+  </div>
+</header>
+
+      {/* MAIN CONTENT */}
+      <AnimatePresence mode="wait">
+        <motion.main
+          key={loc.pathname}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.25, ease: "easeOut" }}
+          className="md:ml-72 min-h-[calc(100dvh-4rem)] pb-24 md:pb-8 relative"
+        >
+          {children}
+        </motion.main>
+      </AnimatePresence>
+
+      {/* MOBILE BOTTOM NAV */}
+      {user && (
+        <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden border-t border-white/10 bg-black/95 backdrop-blur-3xl safe-area-bottom">
+          <div className="flex items-center justify-around max-w-md mx-auto h-20 relative px-2">
+            {BOTTOM_NAV.map((item, idx) => {
+              const active = isActive(item.matches, item.to);
+              if (item.fab) {
+                return (
+                  <motion.div key={idx} whileTap={{ scale: 0.82 }} onClick={() => triggerHaptic("heavy")}>
+                    <Link to={item.to} className="absolute -top-10 left-1/2 -translate-x-1/2 w-20 h-20 rounded-full bg-gradient-to-br from-cyan-400 via-purple-500 to-pink-500 flex items-center justify-center shadow-[0_0_90px_-8px] shadow-cyan-400 border-[6px] border-black">
+                      <Coins className="w-9 h-9 text-black drop-shadow-2xl" />
+                    </Link>
+                  </motion.div>
+                );
+              }
+              return (
+                <NavLink
+                  key={idx}
+                  to={item.to}
+                  onClick={() => triggerHaptic()}
+                  className={`flex flex-col items-center justify-center flex-1 py-1.5 transition-all active:scale-95 ${active ? "text-cyan-400" : "text-zinc-400"}`}
                 >
-                  {t("enter")}
-                </Link>
-              </>
-            )}
+                  <motion.div animate={active ? { scale: 1.18 } : {}} transition={{ duration: 0.3 }}>
+                    <item.icon className={`w-7 h-7 mb-0.5 ${active ? "drop-shadow-[0_0_12px_#67e8f9]" : ""}`} />
+                  </motion.div>
+                  <span className="text-[10px] font-medium tracking-widest">{item.label}</span>
+                </NavLink>
+              );
+            })}
           </div>
-        </div>
-      </header>
-
-      {/* v19 Phase 0-R: EmpirePopulationPulse / ImperialHud / QuickAccessStrip / NeonNotificationFeed
-          / BaronPromotionDialog / EmpireBoosterTimer / EmpireConcierge / ReplayShareGlobal
-          / CrownWarFinaleModal / CrownThroneOverlay / PowerHeader / FirstEmperorBurst 모두 마운트 해제 */}
-
-      <main className="relative">{children}</main>
-
-      {/* P1-C v8: 모바일 하단탭 단일화 - MobileShell 만 렌더 */}
-
-      {/* v19 Phase 0-R: FloatingChat 마운트 해제 */}
+        </nav>
+      )}
     </div>
   );
 }
