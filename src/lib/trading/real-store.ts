@@ -5,6 +5,20 @@ import { subscribePostgres } from "@/lib/realtime-bus";
 import { mapTradingError } from "@/lib/trading/errors";
 import type { LivePosition, LiveTrade, MarginMode, Side } from "./types";
 
+/**
+ * useRealStore
+ *
+ * ARCHITECTURE (2026-05-22):
+ * - This store handles REAL trading state and operations.
+ * - All critical operations (open, close, liquidate) go through Backend RPCs.
+ * - Balance changes are expected to be handled atomically inside the RPCs (`live_open_position`, etc.).
+ * - After operations, we dispatch `wallet:refresh` as a temporary safety net.
+ *
+ * GOAL:
+ * - Once the backend RPCs fully guarantee atomic balance + position updates,
+ *   we can reduce reliance on the `wallet:refresh` event.
+ */
+
 function reasonLabel(reason: string): { title: string; variant: "success" | "error" | "info" } {
   switch (reason) {
     case "tp": return { title: "익절(TP) 자동 청산", variant: "success" };
@@ -40,13 +54,6 @@ export interface OpenArgs {
   tpPrice?: number;
   slPrice?: number;
   trailingOffset?: number;
-  /**
-   * v3.2: client-issued idempotency key. One UUID per logical user click.
-   * If the same click triggers retries (e.g. oracle_stale -> refresh -> retry),
-   * the SAME crid MUST be reused so the server can collapse duplicates and
-   * replay the original result. If omitted, the store auto-generates one
-   * (single-shot semantics).
-   */
   clientRequestId?: string;
 }
 
@@ -95,14 +102,12 @@ export const useRealStore = create<State>()((set, get) => ({
   },
 
   async open(args) {
-    // v3.2: 1 click = 1 crid. Caller may pass clientRequestId to reuse across retries.
     const crid =
       args.clientRequestId ??
       (typeof crypto !== "undefined" && "randomUUID" in crypto
         ? crypto.randomUUID()
         : `${Date.now()}-${Math.random().toString(36).slice(2)}`);
 
-    // 8s hard timeout via AbortController to prevent indefinite hangs.
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), 8000);
 
@@ -126,24 +131,18 @@ export const useRealStore = create<State>()((set, get) => ({
           p_client_request_id: crid,
         } as never,
       ).abortSignal(ctrl.signal);
+
       if (error) {
-        // v3.2 audit: failure path. Best-effort, do not block UI.
         try {
           await supabase.rpc("log_lpi_audit_failure", {
             p_client_request_id: crid,
             p_error_code: String(error.message ?? "unknown_error").slice(0, 500),
-            p_meta: {
-              symbol: args.symbol,
-              side: args.side,
-              leverage: args.leverage,
-              margin: args.margin,
-              mark_price: args.mark,
-              margin_mode: args.marginMode ?? "isolated",
-            } as any,
+            p_meta: { symbol: args.symbol, side: args.side, leverage: args.leverage, margin: args.margin } as any,
           } as never);
-        } catch { /* swallow audit error */ }
+        } catch {}
         return { error: mapTradingError(error.message) };
       }
+
       await get().load();
       if (typeof window !== "undefined") window.dispatchEvent(new Event("wallet:refresh"));
       return { id: data as string };
@@ -153,16 +152,9 @@ export const useRealStore = create<State>()((set, get) => ({
         await supabase.rpc("log_lpi_audit_failure", {
           p_client_request_id: crid,
           p_error_code: String(errMsg).slice(0, 500),
-          p_meta: {
-            symbol: args.symbol,
-            side: args.side,
-            leverage: args.leverage,
-            margin: args.margin,
-            mark_price: args.mark,
-            phase: "client_abort_or_network",
-          } as any,
+          p_meta: { symbol: args.symbol, side: args.side, leverage: args.leverage, phase: "client_abort_or_network" } as any,
         } as never);
-      } catch { /* noop */ }
+      } catch {}
       return { error: mapTradingError(errMsg) };
     } finally {
       clearTimeout(timer);
@@ -207,27 +199,13 @@ export const useRealStore = create<State>()((set, get) => ({
     return data as { liquidated: true; margin_lost: number };
   },
 
-  /**
-   * Realtime: 단일 connection을 realtime-bus가 fan-out.
-   * live_positions / live_trade_history 두 테이블 통합 구독.
-   */
   subscribe(userId) {
     const offPos = subscribePostgres(
-      {
-        key: `game:live_positions:${userId}`,
-        table: "live_positions",
-        event: "*",
-        filter: `user_id=eq.${userId}`,
-      },
+      { key: `game:live_positions:${userId}`, table: "live_positions", event: "*", filter: `user_id=eq.${userId}` },
       () => { get().load(); },
     );
     const offHist = subscribePostgres(
-      {
-        key: `wallet:live_trade_history:${userId}`,
-        table: "live_trade_history",
-        event: "INSERT",
-        filter: `user_id=eq.${userId}`,
-      },
+      { key: `wallet:live_trade_history:${userId}`, table: "live_trade_history", event: "INSERT", filter: `user_id=eq.${userId}` },
       (payload: any) => {
         notifyHistoryRow(payload?.new);
         get().load();
