@@ -1,13 +1,11 @@
 {
   "compilerOptions": {
-    "types": ["vitest/globals"],
     "target": "ES2020",
     "useDefineForClassFields": true,
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "skipLibCheck": true,
 
-    /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "isolatedModules": true,
@@ -15,7 +13,6 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
-    /* Linting */
     "strict": false,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
@@ -23,45 +20,7 @@
     "noFallthroughCasesInSwitch": false,
 
     "paths": {
-      "@/*": ["./src/*"],
-      "@pkg/core": ["./src/packages/core"],
-      "@pkg/core/*": ["./src/packages/core/*"],
-      "@pkg/ui": ["./src/packages/ui"],
-      "@pkg/ui/*": ["./src/packages/ui/*"],
-      "@pkg/wallet": ["./src/packages/wallet"],
-      "@pkg/wallet/*": ["./src/packages/wallet/*"],
-      "@pkg/earn": ["./src/packages/earn"],
-      "@pkg/earn/*": ["./src/packages/earn/*"],
-      "@pkg/game-engine": ["./src/packages/game-engine"],
-      "@pkg/game-engine/*": ["./src/packages/game-engine/*"],
-      "@pkg/trade": ["./src/packages/trade"],
-      "@pkg/trade/*": ["./src/packages/trade/*"],
-      "@pkg/live": ["./src/packages/live"],
-      "@pkg/live/*": ["./src/packages/live/*"],
-      "@pkg/avatar-nft": ["./src/packages/avatar-nft"],
-      "@pkg/avatar-nft/*": ["./src/packages/avatar-nft/*"],
-      "@pkg/referral": ["./src/packages/referral"],
-      "@pkg/referral/*": ["./src/packages/referral/*"],
-      "@pkg/analytics": ["./src/packages/analytics"],
-      "@pkg/analytics/*": ["./src/packages/analytics/*"],
-      "@pkg/performance": ["./src/packages/performance"],
-      "@pkg/performance/*": ["./src/packages/performance/*"],
-      "@pkg/telemetry": ["./src/packages/telemetry"],
-      "@pkg/telemetry/*": ["./src/packages/telemetry/*"],
-      "@pkg/realtime": ["./src/packages/realtime"],
-      "@pkg/realtime/*": ["./src/packages/realtime/*"],
-      "@pkg/operator": ["./src/packages/operator"],
-      "@pkg/operator/*": ["./src/packages/operator/*"],
-      "@pkg/runtime": ["./src/packages/runtime"],
-      "@pkg/runtime/*": ["./src/packages/runtime/*"],
-      "@pkg/entropy": ["./src/packages/entropy"],
-      "@pkg/entropy/*": ["./src/packages/entropy/*"],
-      "@pkg/risk": ["./src/packages/risk"],
-      "@pkg/risk/*": ["./src/packages/risk/*"],
-      "@pkg/duel": ["./src/packages/duel"],
-      "@pkg/duel/*": ["./src/packages/duel/*"],
-      "@pkg/games": ["./src/packages/games"],
-      "@pkg/games/*": ["./src/packages/games/*"]
+      "@/*": ["./src/*"]
     }
   },
   "include": ["src"],
