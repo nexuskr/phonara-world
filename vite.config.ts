@@ -1,38 +1,23 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react-swc";
-import path from "path";
-import compression from "vite-plugin-compression";
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react-swc'
 
-export default defineConfig(({ mode }) => ({
+export default defineConfig({
+  plugins: [react()],
   server: {
-    host: "::",
-    port: 8080,
-    hmr: {
-      overlay: false,
-    },
-  },
-  plugins: [
-    react(),
-    mode !== "development" && compression({ algorithm: "brotliCompress", ext: ".br", threshold: 1024 }),
-    mode !== "development" && compression({ algorithm: "gzip", ext: ".gz", threshold: 1024 }),
-  ].filter(Boolean),
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
-      "@pkg": path.resolve(__dirname, "./src/packages"),
-    },
+    port: 5173,
+    host: true,
   },
   build: {
-    chunkSizeWarningLimit: 800,
+    target: 'esnext',
     rollupOptions: {
       output: {
-        manualChunks(id) {
-          if (!id.includes("node_modules")) return;
-          if (id.includes("@supabase")) return "supabase";
-          if (id.includes("lucide-react")) return "icons";
-          if (id.includes("i18next")) return "i18n";
+        manualChunks: {
+          three: ['three'],
         },
       },
     },
   },
-}));
+  optimizeDeps: {
+    include: ['three'],
+  },
+})
