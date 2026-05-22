@@ -1,229 +1,134 @@
-import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { LoadingPage } from "@/components/ui/loading-state";
-import { notify } from "@/lib/notify";
-import { z } from "zod";
-import { AlertTriangle, Mail, RefreshCw } from "lucide-react";
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '../integrations/supabase/client';
 
 /**
- * AuthCallback
- *
- * Responsibilities:
- * - Handle Magic Link / OAuth / PKCE callback from Supabase
- * - Exchange code for session when necessary
- * - Route user to the correct destination based on profile & onboarding state
- *
- * Design principles (World-class standard):
- * - Single entry point for all post-auth routing
- * - Defensive programming: never let profile/package query failures break the flow
- * - Clear separation between error detection and routing logic
- * - Easy to extend for future onboarding steps (KYC, first deposit, etc.)
+ * Simple & Robust AuthCallback
+ * Handles Supabase magic links, password reset, OAuth callbacks
+ * Shows clear messages instead of blank screen on error
  */
-
-type LinkErrorKind = "expired" | "used" | "denied" | "generic" | null;
-
-function detectLinkError(): { kind: LinkErrorKind; description: string } {
-  if (typeof window === "undefined") return { kind: null, description: "" };
-
-  const hash = window.location.hash.startsWith("#") ? window.location.hash.slice(1) : window.location.hash;
-  const hashParams = new URLSearchParams(hash);
-  const url = new URL(window.location.href);
-
-  const error = hashParams.get("error") || url.searchParams.get("error") || "";
-  const code = hashParams.get("error_code") || url.searchParams.get("error_code") || "";
-  const desc = hashParams.get("error_description") || url.searchParams.get("error_description") || "";
-
-  if (!error && !code) return { kind: null, description: "" };
-  if (code === "otp_expired" || /expired/i.test(desc)) return { kind: "expired", description: desc };
-  if (/already.*used|invalid.*token/i.test(desc)) return { kind: "used", description: desc };
-  if (error === "access_denied") return { kind: "denied", description: desc };
-
-  return { kind: "generic", description: desc || error };
-}
-
-/**
- * Determines where to send the user after successful authentication.
- * This is the single source of truth for post-auth routing.
- */
-async function routeAfterAuth(userId: string, nav: ReturnType<typeof useNavigate>) {
-  try {
-    // 1. Check profile completion status
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("profile_completed")
-      .eq("id", userId)
-      .maybeSingle();
-
-    if (profileError) {
-      console.error("[AuthCallback] Profile query failed:", profileError);
-      // Fail open: send to dashboard and let the app handle missing profile
-      nav("/dashboard", { replace: true });
-      return;
-    }
-
-    if (!profile?.profile_completed) {
-      nav("/complete-profile", { replace: true });
-      return;
-    }
-
-    // 2. Check if user has any approved package (first deposit funnel)
-    const { data: packages, error: packageError } = await supabase
-      .from("package_purchases")
-      .select("id")
-      .eq("user_id", userId)
-      .eq("status", "approved")
-      .limit(1);
-
-    if (packageError) {
-      console.error("[AuthCallback] Package query failed:", packageError);
-      nav("/dashboard", { replace: true });
-      return;
-    }
-
-    if (!packages || packages.length === 0) {
-      nav("/wallet?tab=deposit&intent=first-deposit", { replace: true });
-      return;
-    }
-
-    // 3. Default happy path
-    nav("/dashboard", { replace: true });
-  } catch (error) {
-    console.error("[AuthCallback] Unexpected error in routeAfterAuth:", error);
-    // Final safety net
-    nav("/dashboard", { replace: true });
-  }
-}
-
 export default function AuthCallback() {
-  const nav = useNavigate();
-  const [msg, setMsg] = useState("로그인 확인 중…");
-  const [linkErr, setLinkErr] = useState<LinkErrorKind>(null);
-  const [resendEmail, setResendEmail] = useState("");
-  const [resending, setResending] = useState(false);
+  const navigate = useNavigate();
+  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
+  const [message, setMessage] = useState('인증 처리 중입니다...');
 
   useEffect(() => {
-    let cancelled = false;
-
-    const detected = detectLinkError();
-    if (detected.kind) {
-      setLinkErr(detected.kind);
-      return;
-    }
-
-    (async () => {
+    const processAuth = async () => {
       try {
-        const url = new URL(window.location.href);
-        const code = url.searchParams.get("code");
+        // Check for error in URL hash first (common with expired/failed links)
+        const hash = window.location.hash.startsWith('#') 
+          ? window.location.hash.slice(1) 
+          : window.location.hash;
+        
+        const hashParams = new URLSearchParams(hash);
+        const error = hashParams.get('error');
+        const errorCode = hashParams.get('error_code');
+        const errorDesc = hashParams.get('error_description');
+
+        if (error || errorCode) {
+          console.error('Auth error detected:', { error, errorCode, errorDesc });
+          setStatus('error');
+          setMessage(
+            errorDesc || 
+            (errorCode === 'otp_expired' ? '인증 링크가 만료되었습니다.' : '인증에 실패했습니다.')
+          );
+          return;
+        }
+
+        // Try to get current session
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+        if (sessionError) {
+          console.error('Session error:', sessionError);
+          setStatus('error');
+          setMessage('인증 세션을 가져오는데 실패했습니다.');
+          return;
+        }
+
+        if (session?.user) {
+          setStatus('success');
+          setMessage('인증이 완료되었습니다. 잠시 후 이동합니다...');
+          
+          setTimeout(() => {
+            navigate('/', { replace: true });
+          }, 1200);
+          return;
+        }
+
+        // Try exchanging code if present (PKCE flow)
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
 
         if (code) {
-          const { error } = await supabase.auth.exchangeCodeForSession(window.location.href);
-          if (error) throw error;
+          const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(window.location.href);
+          if (exchangeError) {
+            setStatus('error');
+            setMessage('인증 코드 처리에 실패했습니다.');
+            return;
+          }
+
+          setStatus('success');
+          setMessage('로그인이 완료되었습니다.');
+          setTimeout(() => navigate('/', { replace: true }), 1000);
+          return;
         }
 
-        const { data: sessionData } = await supabase.auth.getSession();
-
-        if (cancelled) return;
-
-        if (sessionData.session?.user?.id) {
-          notify.success("로그인 완료");
-          await routeAfterAuth(sessionData.session.user.id, nav);
-        } else {
-          setMsg("세션을 찾을 수 없습니다. 잠시 후 다시 시도해주세요.");
-          setTimeout(() => nav("/secure-auth", { replace: true }), 1800);
-        }
-      } catch (e: any) {
-        notify.error("로그인 실패", {
-          description: e?.message ?? "잠시 후 다시 시도해주세요.",
-        });
-        setTimeout(() => nav("/secure-auth", { replace: true }), 1500);
+        // No session and no code
+        setStatus('error');
+        setMessage('인증 정보를 찾을 수 없습니다. 다시 시도해주세요.');
+      } catch (err) {
+        console.error('AuthCallback unexpected error:', err);
+        setStatus('error');
+        setMessage('예상치 못한 오류가 발생했습니다.');
       }
-    })();
-
-    return () => { cancelled = true; };
-  }, [nav]);
-
-  async function resend() {
-    const validation = z.string().email().safeParse(resendEmail.trim());
-    if (!validation.success) {
-      notify.error("이메일 주소를 정확히 입력해주세요");
-      return;
-    }
-
-    setResending(true);
-    try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email: resendEmail.trim(),
-        options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
-      });
-      if (error) throw error;
-
-      notify.success("매직링크 재발송 완료", {
-        description: "메일함을 확인해주세요. 5분 내에 유효합니다.",
-      });
-    } catch (e: any) {
-      notify.error("재발송 실패", { description: e?.message });
-    } finally {
-      setResending(false);
-    }
-  }
-
-  if (linkErr) {
-    const titleMap: Record<Exclude<LinkErrorKind, null>, string> = {
-      expired: "매직링크가 만료되었습니다",
-      used: "이미 사용된 링크입니다",
-      denied: "접근이 거부되었습니다",
-      generic: "로그인 링크 처리 실패",
     };
 
-    return (
-      <div className="min-h-screen flex items-center justify-center px-4">
-        <div className="glass-strong rounded-3xl p-7 max-w-md w-full neon-border">
-          <div className="flex items-center gap-2 text-gold mb-2">
-            <AlertTriangle className="w-5 h-5" />
-            <span className="font-imperial font-black tracking-wider text-sm">MAGIC LINK</span>
-          </div>
-          <h1 className="font-imperial font-black text-2xl text-gradient-gold mb-2">
-            {titleMap[linkErr]}
-          </h1>
-          <p className="text-sm text-muted-foreground break-keep mb-5">
-            보안을 위해 매직링크는 1회 + 5분만 유효합니다. 아래에 이메일을 입력하면 새 링크를 즉시 보내드립니다.
-          </p>
-
-          <div className="flex items-center gap-2 glass rounded-xl px-3 py-2 mb-3">
-            <Mail className="w-4 h-4 text-muted-foreground shrink-0" />
-            <input
-              type="email"
-              value={resendEmail}
-              onChange={(e) => setResendEmail(e.target.value)}
-              placeholder="이메일 주소"
-              className="bg-transparent outline-none w-full text-sm"
-              autoFocus
-            />
-          </div>
-
-          <button
-            onClick={resend}
-            disabled={resending}
-            className="w-full min-h-[56px] rounded-2xl bg-gradient-gold text-gold-foreground font-display font-black flex items-center justify-center gap-2 glow-gold press disabled:opacity-50"
-            aria-label="매직링크 재발송"
-          >
-            <RefreshCw className={`w-4 h-4 ${resending ? "animate-spin" : ""}`} />
-            {resending ? "발송 중…" : "새 매직링크 받기"}
-          </button>
-
-          <Link to="/secure-auth" className="block text-center text-xs text-muted-foreground hover:text-primary mt-4 min-h-[36px] py-2">
-            로그인 페이지로 돌아가기
-          </Link>
-        </div>
-      </div>
-    );
-  }
+    processAuth();
+  }, [navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
-      <div className="glass-strong rounded-2xl p-8 max-w-sm w-full text-center">
-        <LoadingPage label={msg} />
+    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+      <div className="text-center max-w-md w-full">
+        {status === 'loading' && (
+          <>
+            <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            <p className="text-muted-foreground">{message}</p>
+          </>
+        )}
+
+        {status === 'success' && (
+          <>
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-500/10 text-2xl">
+              ✅
+            </div>
+            <p className="text-lg font-medium">{message}</p>
+          </>
+        )}
+
+        {status === 'error' && (
+          <>
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10 text-2xl">
+              ⚠️
+            </div>
+            <p className="mb-4 text-lg font-medium text-destructive">{message}</p>
+            
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={() => navigate('/secure-auth', { replace: true })}
+                className="w-full rounded-lg bg-primary py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+              >
+                로그인 페이지로 이동
+              </button>
+              
+              <button
+                onClick={() => navigate('/', { replace: true })}
+                className="w-full rounded-lg border py-3 text-sm font-medium hover:bg-accent"
+              >
+                홈으로 이동
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
