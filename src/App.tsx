@@ -157,11 +157,9 @@ const SignUp = () => {
 
       if (error) throw error;
 
-      // 성공 메시지 (이메일 확인 필요 여부에 따라 다름)
       setIsSuccess(true);
       setMessage('회원가입이 완료되었습니다! 이메일을 확인해주세요. (이메일 확인이 필요할 수 있습니다)');
 
-      // 3초 후 로그인 페이지로 이동
       setTimeout(() => {
         navigate('/login');
       }, 3000);
@@ -265,7 +263,8 @@ const Dashboard = () => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(()n    const checkSession = async () => {
+  useEffect(() => {
+    const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (session?.user) {
