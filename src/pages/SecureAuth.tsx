@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { Gem, ShieldCheck, Mail, Lock, ChevronDown, ChevronUp, Sparkles, Zap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import { toast } from "@/hooks/use-toast";
 import { useAuthReady } from "@/hooks/use-auth-ready";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
@@ -16,6 +15,8 @@ import { WELCOME_V19_KEY } from "@/pages/Welcome";
  * - All authentication redirects go through /auth/callback
  * - AuthCallback.tsx is the single source of truth for post-auth routing
  * - CompleteProfile is only used when needed (not forced on every signup)
+ *
+ * Updated: Removed Lovable dependency. Using native Supabase OAuth.
  */
 export default function SecureAuth() {
   const nav = useNavigate();
@@ -88,19 +89,22 @@ export default function SecureAuth() {
     } finally { setBusy(false); }
   }
 
+  // Lovable 의존 제거 완료 - Supabase 네이티브 OAuth 사용
   async function social(provider: "google" | "apple") {
     setBusy(true);
     try {
-      const result = await lovable.auth.signInWithOAuth(provider, {
-        redirect_uri: `${window.location.origin}/auth/callback`,
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
       });
-      if (result.error) throw result.error;
-      if (result.redirected) return;
-      // After OAuth, AuthCallback will handle routing based on profile status
-      nav("/auth/callback", { replace: true });
+      if (error) throw error;
     } catch (e: any) {
       toast({ title: "로그인 실패", description: e.message, variant: "destructive" });
-    } finally { setBusy(false); }
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
